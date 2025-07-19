@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -133,66 +134,65 @@
     <a href="index.html" class="voltar">
       <i class="fas fa-arrow-left"></i> Voltar
     </a>
-    
+
     <h2>Formulário de Consórcio</h2>
-    
+
     <form onsubmit="enviarChecklist(event, 'checklistConsorcio')">
 
       <label>Data da Visita *</label>
-      <input type="date" id="dataVisita" required>
+      <input type="date" name="dataVisita" id="dataVisita" required>
 
       <label>Nome do Cliente *</label>
-      <input type="text" required>
+      <input type="text" name="nomeCliente" required>
 
       <label>Nome da Fazenda *</label>
-      <input type="text" required>
+      <input type="text" name="nomeFazenda" required>
 
       <label>Telefone *</label>
-      <input type="tel" required>
+      <input type="tel" name="telefone" required>
 
       <label>Município *</label>
-      <input type="text" required>
+      <input type="text" name="municipio" required>
 
       <label>Modelo da Máquina *</label>
-      <input type="text" required>
+      <input type="text" name="modeloMaquina" required>
 
       <label>Horímetro *</label>
-      <input type="text">
+      <input type="text" name="horimetro" required>
 
       <label>Nome do Consultor *</label>
-      <input type="text" required>
+      <input type="text" name="nomeConsultor" required>
 
       <div class="checkbox-group">
         <label>
-          text
-          <input type="checkbox" name="checklist" value="opcao1">
+          Interesse em simulação
+          <input type="checkbox" name="checklist" value="simulacao">
         </label>
 
         <label>
-          text
-          <input type="checkbox" name="checklist" value="opcao2">
+          Interesse em cotas contempladas
+          <input type="checkbox" name="checklist" value="cotasContempladas">
         </label>
 
         <label>
-          text
-          <input type="checkbox" name="checklist" value="opcao3">
+          Deseja mais informações
+          <input type="checkbox" name="checklist" value="maisInformacoes">
         </label>
 
         <label>
-          text
-          <input type="checkbox" name="checklist" value="opcao4">
+          Quer visitar unidade
+          <input type="checkbox" name="checklist" value="visitarUnidade">
         </label>
       </div>
 
       <label>Observações</label>
-      <textarea rows="4" placeholder="Descreva aqui..."></textarea>
+      <textarea name="observacoes" rows="4" placeholder="Descreva aqui..."></textarea>
 
       <button type="submit">Enviar Checklist</button>
     </form>
   </div>
 
   <script>
-    // Preenche a data com o dia atual automaticamente
     window.addEventListener('DOMContentLoaded', () => {
       const hoje = new Date();
       const yyyy = hoje.getFullYear();
