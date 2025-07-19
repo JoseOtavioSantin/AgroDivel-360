@@ -4,7 +4,15 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Dashboard - Agro Divel</title>
+  
+  <!-- Ícone e Manifesto do PWA -->
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#1e1e2f" />
+  <link rel="icon" href="icons/icon-192.png" />
+
+  <!-- Estilos e Font Awesome -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
   <style>
     body {
       margin: 0;
@@ -20,6 +28,13 @@
 
     .header img {
       width: 200px;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 10px;
+      box-sizing: border-box;
     }
 
     .dashboard {
@@ -66,42 +81,59 @@
       text-decoration: none;
     }
 
-    
+    @media (max-width: 600px) {
+      .container {
+        max-width: 300px;
+      }
+    }
   </style>
 </head>
 <body>
 
-  <div class="header">
-    <img src="assets/logo.png" alt="Logo Agro Divel" />
-    <h1>Dashboard de Indicadores</h1>
-  </div>
-
-<div class="dashboard">
-  <a href="form-pecas.html" class="card">
-    <i class="fas fa-cogs"></i>
-    <p>Peças</p>
-  </a>
-
-  <a href="form-servicos.html" class="card">
-    <i class="fas fa-wrench"></i>
-    <p>Serviços</p>
-  </a>
-
-  <a href="form-PLM.html" class="card">
-    <i class="fa-solid fa-satellite"></i>
-    <p>PLM</p>
-  </a>
-
-    <div class="card">
-      <i class="fas fa-handshake"></i>
-      <p>Comercial</p>
+  <div class="container">
+    <div class="header">
+      <img src="assets/logo.png" alt="Logo Agro Divel" />
+      <h1>Dashboard de Indicadores</h1>
     </div>
 
-    <div class="card">
-      <i class="fas fa-piggy-bank"></i>
-      <p>Consórcio</p>
+    <div class="dashboard">
+      <a href="form-pecas.html" class="card">
+        <i class="fas fa-cogs"></i>
+        <p>Peças</p>
+      </a>
+
+      <a href="form-servicos.html" class="card">
+        <i class="fas fa-wrench"></i>
+        <p>Serviços</p>
+      </a>
+
+      <a href="form-PLM.html" class="card">
+        <i class="fa-solid fa-satellite"></i>
+        <p>PLM</p>
+      </a>
+
+
+      <a href="form-comercial.html" class="card">
+        <i class="fas fa-handshake"></i>
+        <p>Comercial</p>
+      </a>
+
+      <a href="form-consorcio.html" class="card">
+        <i class="fas fa-piggy-bank"></i>
+        <p>Consórcio</p>
+      </a>
+
     </div>
   </div>
+
+  <!-- Registro do Service Worker -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('service-worker.js')
+        .then(() => console.log('✅ Service Worker registrado com sucesso!'))
+        .catch((error) => console.error('❌ Erro ao registrar Service Worker:', error));
+    }
+  </script>
 
 </body>
 </html>

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Formulário - Peças</title>
+  <title>Formulário - Comercial</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <style>
     body {
@@ -94,30 +94,16 @@
       align-items: center;
       gap: 8px;
       color: white;
-      text-decoration: none !important;
+      text-decoration: none;
       font-size: 16px;
       font-weight: bold;
       margin: 20px 0;
       transition: 0.3s;
     }
 
-    .voltar:visited,
-    .voltar:focus,
-    .voltar:hover,
-    .voltar:active {
-      color: white;
-      text-decoration: none !important;
-    }
-
     .voltar:hover {
       color: #00bbf9;
       transform: translateX(-5px);
-    }
-
-    a,
-    a:visited {
-      color: inherit;
-      text-decoration: none;
     }
 
     @media (max-width: 600px) {
@@ -147,54 +133,54 @@
     <a href="index.html" class="voltar">
       <i class="fas fa-arrow-left"></i> Voltar
     </a>
-
-    <h2>Formulário de Peças</h2>
-
-    <form onsubmit="enviarChecklist(event, 'checklistPecas')">
+    
+    <h2>Formulário de Comercial</h2>
+    
+    <form onsubmit="enviarChecklist(event, 'checklistComercial')">
 
       <label>Data da Visita *</label>
       <input type="date" id="dataVisita" required>
 
       <label>Nome do Cliente *</label>
-      <input type="text" placeholder="Digite o nome" required>
+      <input type="text" required>
 
       <label>Nome da Fazenda *</label>
-      <input type="text" placeholder="Digite o nome da fazenda" required>
+      <input type="text" required>
 
       <label>Telefone *</label>
       <input type="tel" required>
 
       <label>Município *</label>
-      <input type="text" placeholder="Digite o município" required>
+      <input type="text" required>
 
       <label>Modelo da Máquina *</label>
-      <input type="text" placeholder="Digite o modelo da máquina" required>
+      <input type="text" required>
 
       <label>Horímetro *</label>
       <input type="text">
 
       <label>Nome do Consultor *</label>
-      <input type="text" placeholder="Digite o nome do consultor" required>
+      <input type="text" required>
 
       <div class="checkbox-group">
         <label>
-          Troca de Óleo
-          <input type="checkbox" name="checklist" value="oleo">
+          text
+          <input type="checkbox" name="checklist" value="opcao1">
         </label>
 
         <label>
-          Troca dos Filtros
-          <input type="checkbox" name="checklist" value="filtros">
+          text
+          <input type="checkbox" name="checklist" value="opcao2">
         </label>
 
         <label>
-          Revisão
-          <input type="checkbox" name="checklist" value="pneus">
+          text
+          <input type="checkbox" name="checklist" value="opcao3">
         </label>
 
         <label>
-          (Itens em Geral da cabine)
-          <input type="checkbox" name="checklist" value="cabine">
+          text
+          <input type="checkbox" name="checklist" value="opcao4">
         </label>
       </div>
 
@@ -205,18 +191,18 @@
     </form>
   </div>
 
-  <!-- Script para preencher data atual -->
   <script>
+    // Preenche a data com o dia atual automaticamente
     window.addEventListener('DOMContentLoaded', () => {
       const hoje = new Date();
       const yyyy = hoje.getFullYear();
       const mm = String(hoje.getMonth() + 1).padStart(2, '0');
       const dd = String(hoje.getDate()).padStart(2, '0');
-      document.getElementById('dataVisita').value = `${yyyy}-${mm}-${dd}`;
+      const dataAtual = `${yyyy}-${mm}-${dd}`;
+      document.getElementById('dataVisita').value = dataAtual;
     });
   </script>
 
-  <!-- Firebase -->
   <script type="module" src="firebase.js"></script>
 </body>
 </html>

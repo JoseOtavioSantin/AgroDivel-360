@@ -14,12 +14,13 @@
     }
 
     .container {
-      max-width: 300px;
+      max-width: 600px;
       margin: 40px auto;
       background-color: #2c2f3f;
       border-radius: 12px;
       padding: 30px;
       box-shadow: 0 0 10px rgba(0,0,0,0.3);
+      box-sizing: border-box;
     }
 
     h2 {
@@ -96,17 +97,32 @@
       text-decoration: none;
       font-size: 16px;
       font-weight: bold;
-      margin: 20px;
+      margin: 20px 0;
       transition: 0.3s;
-    }
-
-    .voltar i {
-      font-size: 18px;
     }
 
     .voltar:hover {
       color: #00bbf9;
       transform: translateX(-5px);
+    }
+
+    @media (max-width: 600px) {
+      .container {
+        max-width: 300px;
+        padding: 20px;
+      }
+
+      input, textarea, select {
+        width: 100%;
+      }
+
+      .checkbox-group label {
+        width: 100%;
+      }
+
+      button {
+        width: 100%;
+      }
     }
   </style>
 </head>
@@ -187,7 +203,6 @@
     });
   </script>
 
-  <!-- Firebase handler (certifique-se de que esse arquivo está no mesmo diretório) -->
   <script type="module" src="firebase.js"></script>
 </body>
 </html>
