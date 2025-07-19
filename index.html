@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard - Agro Divel</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background-color: #1e1e2f;
+      color: white;
+    }
+
+    .header {
+      padding: 20px;
+      text-align: center;
+    }
+
+    .header img {
+      width: 200px;
+    }
+
+    .dashboard {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      padding: 20px;
+      gap: 20px;
+    }
+
+    .card {
+      background-color: #2c2f3f;
+      border-radius: 12px;
+      padding: 40px;
+      width: 150px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+      text-align: center;
+      transition: all 0.3s ease;
+    }
+
+    .card:hover {
+      background-color: #3a3d55;
+      box-shadow: 0 0 15px rgba(255, 255, 255, 0.2);
+      cursor: pointer;
+      transform: translateY(-4px);
+    }
+
+    .card i {
+      font-size: 32px;
+      margin-bottom: 10px;
+      color: #ffffff;
+    }
+
+    .card p {
+      margin-top: 10px;
+      font-size: 18px;
+      font-weight: bold;
+      color: white;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <img src="assets/logo.png" alt="Logo Agro Divel" />
+    <h1>Dashboard de Indicadores</h1>
+  </div>
+
+<div class="dashboard">
+  <a href="form-pecas.html" class="card">
+    <i class="fas fa-cogs"></i>
+    <p>Peças</p>
+  </a>
+
+  <a href="form-servicos.html" class="card">
+    <i class="fas fa-wrench"></i>
+    <p>Serviços</p>
+  </a>
+
+  <a href="form-PLM.html" class="card">
+    <i class="fa-solid fa-satellite"></i>
+    <p>PLM</p>
+  </a>
+
+    <div class="card">
+      <i class="fas fa-handshake"></i>
+      <p>Comercial</p>
+    </div>
+
+    <div class="card">
+      <i class="fas fa-piggy-bank"></i>
+      <p>Consórcio</p>
+    </div>
+  </div>
+
+</body>
+</html>

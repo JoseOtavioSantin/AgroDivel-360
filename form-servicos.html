@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Formulário - Serviços</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background-color: #1e1e2f;
+      color: white;
+    }
+
+    .container {
+      max-width: 600px;
+      margin: 40px auto;
+      background-color: #2c2f3f;
+      border-radius: 12px;
+      padding: 30px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.3);
+    }
+
+    h2 {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 14px;
+      font-weight: bold;
+    }
+
+    input, textarea, select {
+      width: 95%;
+      padding: 12px;
+      border: none;
+      border-radius: 8px;
+      margin-bottom: 15px;
+      background-color: #f1f1f1;
+      font-size: 15px;
+    }
+
+    .checkbox-group {
+      margin-bottom: 20px;
+    }
+
+    .checkbox-group label {
+      width: 94%;
+      font-weight: normal;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background-color: #373b50;
+      padding: 12px 16px;
+      border-radius: 6px;
+      margin-bottom: 10px;
+      font-size: 14px;
+      line-height: 1.4;
+    }
+
+    .checkbox-group input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      margin-left: auto;
+    }
+
+    textarea {
+      resize: vertical;
+    }
+
+    button {
+      width: 99%;
+      padding: 12px;
+      background-color: #00bbf9;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #009ed1;
+    }
+
+    .voltar {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: white;
+      text-decoration: none;
+      font-size: 16px;
+      font-weight: bold;
+      margin: 20px;
+      transition: 0.3s;
+    }
+
+    .voltar i {
+      font-size: 18px;
+    }
+
+    .voltar:hover {
+      color: #00bbf9;
+      transform: translateX(-5px);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+
+    <a href="index.html" class="voltar">
+      <i class="fas fa-arrow-left"></i> Voltar
+    </a>
+    
+    <h2>Formulário de Serviços</h2>
+    
+    <form>
+
+      <label>Data da Visita *</label>
+      <input type="date" id="dataVisita" required>
+
+      <label>Nome do Cliente *</label>
+      <input type="text" required>
+
+      <label>Nome da Fazenda *</label>
+      <input type="text" required>
+
+      <label>Telefone *</label>
+      <input type="tel" required>
+
+      <label>Município *</label>
+      <input type="text" required>
+
+      <label>Modelo da Máquina *</label>
+      <input type="text" required>
+
+      <label>Horímetro *</label>
+      <input type="text">
+
+      <label>Nome do Consultor *</label>
+      <input type="text" required>
+
+      <div class="checkbox-group">
+        <label>
+          text
+          <input type="checkbox" name="checklist" value="oleo">
+        </label>
+
+        <label>
+          text
+          <input type="checkbox" name="checklist" value="filtros">
+        </label>
+
+        <label>
+          text
+          <input type="checkbox" name="checklist" value="pneus">
+        </label>
+
+        <label>
+          text
+          <input type="checkbox" name="checklist" value="cabine">
+        </label>
+      </div>
+
+      <label>Observações</label>
+      <textarea rows="4" placeholder="Descreva aqui..."></textarea>
+
+      <button type="submit">Enviar Checklist</button>
+    </form>
+  </div>
+
+  <script>
+    // Preenche a data com o dia atual automaticamente
+    window.addEventListener('DOMContentLoaded', () => {
+      const hoje = new Date();
+      const yyyy = hoje.getFullYear();
+      const mm = String(hoje.getMonth() + 1).padStart(2, '0');
+      const dd = String(hoje.getDate()).padStart(2, '0');
+      const dataAtual = `${yyyy}-${mm}-${dd}`;
+      document.getElementById('dataVisita').value = dataAtual;
+    });
+  </script>
+
+</body>
+</html>
