@@ -180,25 +180,16 @@
     </div>
   </div>
 
-  <script type="module" src="firebase.js"></script>
-
-  <script>
-    function abrirPopup() {
-      document.getElementById("popup").style.display = "block";
-      carregarInformacoes();
-    }
-
-    function fecharPopup() {
-      document.getElementById("popup").style.display = "none";
-    }
-
+  <script type="module">
     import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
     import { app } from './firebase.js';
 
     const db = getFirestore(app);
 
-    async function carregarInformacoes() {
+    window.abrirPopup = async function () {
+      document.getElementById("popup").style.display = "block";
       const popupBody = document.getElementById("popup-body");
+      popupBody.innerHTML = "<p>Carregando...</p>";
       try {
         const docNps = await getDoc(doc(db, "informativos", "nps"));
         const docFat = await getDoc(doc(db, "informativos", "faturamentodasemana"));
@@ -215,6 +206,10 @@
         console.error("Erro ao carregar:", e);
       }
     }
+
+    window.fecharPopup = function () {
+      document.getElementById("popup").style.display = "none";
+    };
 
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('service-worker.js')
