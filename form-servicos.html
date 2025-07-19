@@ -119,10 +119,8 @@
     </a>
     
     <h2>Formulário de Serviços</h2>
-
-    <form onsubmit="enviarChecklist(event, 'checklistServicos')">
     
-    <form>
+    <form onsubmit="enviarChecklist(event, 'checklistServicos')">
 
       <label>Data da Visita *</label>
       <input type="date" id="dataVisita" required>
@@ -189,5 +187,7 @@
     });
   </script>
 
+  <!-- Firebase handler (certifique-se de que esse arquivo está no mesmo diretório) -->
+  <script type="module" src="firebase.js"></script>
 </body>
 </html>
