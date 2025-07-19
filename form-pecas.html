@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -153,28 +154,28 @@
     <form onsubmit="enviarChecklist(event, 'checklistPecas')">
 
       <label>Data da Visita *</label>
-      <input type="date" id="dataVisita" required>
+      <input type="date" name="dataVisita" id="dataVisita" required>
 
       <label>Nome do Cliente *</label>
-      <input type="text" placeholder="Digite o nome" required>
+      <input type="text" name="nomeCliente" placeholder="Digite o nome" required>
 
       <label>Nome da Fazenda *</label>
-      <input type="text" placeholder="Digite o nome da fazenda" required>
+      <input type="text" name="nomeFazenda" placeholder="Digite o nome da fazenda" required>
 
       <label>Telefone *</label>
-      <input type="tel" required>
+      <input type="tel" name="telefone" required>
 
       <label>Município *</label>
-      <input type="text" placeholder="Digite o município" required>
+      <input type="text" name="municipio" placeholder="Digite o município" required>
 
       <label>Modelo da Máquina *</label>
-      <input type="text" placeholder="Digite o modelo da máquina" required>
+      <input type="text" name="modeloMaquina" placeholder="Digite o modelo da máquina" required>
 
       <label>Horímetro *</label>
-      <input type="text">
+      <input type="text" name="horimetro" required>
 
       <label>Nome do Consultor *</label>
-      <input type="text" placeholder="Digite o nome do consultor" required>
+      <input type="text" name="nomeConsultor" placeholder="Digite o nome do consultor" required>
 
       <div class="checkbox-group">
         <label>
@@ -199,7 +200,7 @@
       </div>
 
       <label>Observações</label>
-      <textarea rows="4" placeholder="Descreva aqui..."></textarea>
+      <textarea name="observacoes" rows="4" placeholder="Descreva aqui..."></textarea>
 
       <button type="submit">Enviar Checklist</button>
     </form>
