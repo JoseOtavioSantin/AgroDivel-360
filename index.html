@@ -1,16 +1,14 @@
+
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Indicar Interesse - Agro Divel</title>
-  
-  <!-- Ícone e Manifesto do PWA -->
+
   <link rel="manifest" href="manifest.json" />
   <meta name="theme-color" content="#1e1e2f" />
   <link rel="icon" href="icons/icon-192.png" />
-
-  <!-- Estilos e Font Awesome -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
   <style>
@@ -24,10 +22,62 @@
     .header {
       padding: 20px;
       text-align: center;
+      position: relative;
     }
 
     .header img {
       width: 200px;
+    }
+
+    .notification-icon {
+      position: absolute;
+      top: 95px;
+      right: -30px;
+      font-size: 24px;
+      cursor: pointer;
+      color: white;
+    }
+
+    .notification-icon:hover {
+      color: #00bbf9;
+    }
+
+    #popup {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 300px;
+      background-color: #2c2f3f;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.5);
+      display: none;
+      z-index: 999;
+    }
+
+    .popup h3 {
+      margin-top: 0;
+      font-size: 18px;
+      margin-bottom: 10px;
+    }
+
+    .popup p {
+      font-size: 14px;
+      margin: 5px 0;
+    }
+
+    .popup .fechar {
+      text-align: right;
+      margin-top: 10px;
+    }
+
+    .popup .fechar button {
+      background: none;
+      border: none;
+      color: #00bbf9;
+      font-size: 14px;
+      cursor: pointer;
     }
 
     .container {
@@ -75,8 +125,7 @@
       color: white;
     }
 
-    a,
-    a:visited {
+    a, a:visited {
       color: inherit;
       text-decoration: none;
     }
@@ -93,7 +142,18 @@
   <div class="container">
     <div class="header">
       <img src="assets/logo.png" alt="Logo Agro Divel" />
+      <i class="fas fa-bell notification-icon" onclick="abrirPopup()"></i>
       <h1>Indicar Interesse</h1>
+    </div>
+
+    <div class="popup" id="popup">
+      <h3>Informações do Dia</h3>
+      <div id="popup-body">
+        <p>Carregando...</p>
+      </div>
+      <div class="fechar">
+        <button onclick="fecharPopup()">Fechar</button>
+      </div>
     </div>
 
     <div class="dashboard">
@@ -101,33 +161,61 @@
         <i class="fas fa-cogs"></i>
         <p>Peças</p>
       </a>
-
       <a href="form-servicos.html" class="card">
         <i class="fas fa-wrench"></i>
         <p>Serviços</p>
       </a>
-
       <a href="form-PLM.html" class="card">
         <i class="fa-solid fa-satellite"></i>
         <p>PLM</p>
       </a>
-
-
       <a href="form-comercial.html" class="card">
         <i class="fas fa-handshake"></i>
         <p>Comercial</p>
       </a>
-
       <a href="form-consorcio.html" class="card">
         <i class="fas fa-piggy-bank"></i>
         <p>Consórcio</p>
       </a>
-
     </div>
   </div>
 
-  <!-- Registro do Service Worker -->
+  <script type="module" src="firebase.js"></script>
+
   <script>
+    function abrirPopup() {
+      document.getElementById("popup").style.display = "block";
+      carregarInformacoes();
+    }
+
+    function fecharPopup() {
+      document.getElementById("popup").style.display = "none";
+    }
+
+    import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+    import { app } from './firebase.js';
+
+    const db = getFirestore(app);
+
+    async function carregarInformacoes() {
+      const popupBody = document.getElementById("popup-body");
+      try {
+        const docNps = await getDoc(doc(db, "informativos", "nps"));
+        const docFat = await getDoc(doc(db, "informativos", "faturamentodasemana"));
+
+        const nps = docNps.exists() ? docNps.data().valor : "N/A";
+        const faturamento = docFat.exists() ? docFat.data().valor : "N/A";
+
+        popupBody.innerHTML = `
+          <p>📈 NPS da Semana: ${nps}%</p>
+          <p>💰 Faturamento da Semana: R$ ${Number(faturamento).toLocaleString()}</p>
+        `;
+      } catch (e) {
+        popupBody.innerHTML = "<p>Erro ao carregar dados.</p>";
+        console.error("Erro ao carregar:", e);
+      }
+    }
+
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('service-worker.js')
         .then(() => console.log('✅ Service Worker registrado com sucesso!'))
