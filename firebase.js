@@ -1,7 +1,6 @@
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-import { buscarInformativos } from './firebase.js';
 
 // Configuração do seu Firebase
 const firebaseConfig = {
@@ -70,22 +69,5 @@ window.enviarChecklist = async function (event, colecao) {
     console.error("❌ Erro ao salvar:", e);
     mostrarPopup("❌ Erro ao salvar os dados.", false);
   }
-
-    async function abrirPopup() {
-    const dados = await buscarInformativos();
-
-    document.getElementById("nps").textContent = `📈 NPS da Semana: ${dados.nps}%`;
-    document.getElementById("faturamento").textContent = `💰 Faturamento da Semana: R$ ${dados.faturamentodasemana}`;
-    document.getElementById("indicacoes").textContent = `📦 Indicações Hoje: ${dados.indicacoeshoje}`;
-    document.getElementById("agendamentos").textContent = `📅 Agendamentos Concluídos: ${dados.agendamentosconcluidos}`;
-
-    document.getElementById("popup").style.display = "block";
-  }
-
-  window.abrirPopup = abrirPopup;
-
-  window.fecharPopup = function () {
-    document.getElementById("popup").style.display = "none";
-  };
   
 };
