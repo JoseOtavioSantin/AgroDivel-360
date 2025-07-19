@@ -1,4 +1,4 @@
-// firebase.js
+
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
@@ -16,30 +16,57 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// Função genérica para qualquer formulário
+// Função para exibir popup
+function mostrarPopup(mensagem, sucesso = true) {
+  const popup = document.createElement("div");
+  popup.textContent = mensagem;
+  popup.style.position = "fixed";
+  popup.style.top = "20px";
+  popup.style.left = "50%";
+  popup.style.transform = "translateX(-50%)";
+  popup.style.padding = "12px 24px";
+  popup.style.borderRadius = "8px";
+  popup.style.zIndex = "9999";
+  popup.style.fontWeight = "bold";
+  popup.style.fontSize = "16px";
+  popup.style.boxShadow = "0 0 12px rgba(0,0,0,0.4)";
+  popup.style.backgroundColor = sucesso ? "#00bbf9" : "#ff4d4d";
+  popup.style.color = "white";
+
+  document.body.appendChild(popup);
+
+  setTimeout(() => {
+    popup.remove();
+  }, 3000);
+}
+
+// Função genérica de envio
 window.enviarChecklist = async function (event, colecao) {
   event.preventDefault();
 
+  const form = event.target;
+  const formData = new FormData(form);
+
   const dados = {
-    nomeCliente: document.querySelector('[placeholder="Digite o nome"]')?.value || '',
-    nomeFazenda: document.querySelector('[placeholder="Digite o nome da fazenda"]')?.value || '',
-    telefone: document.querySelector('[type="tel"]')?.value || '',
-    municipio: document.querySelector('[placeholder="Digite o município"]')?.value || '',
-    modelo: document.querySelector('[placeholder="Digite o modelo da máquina"]')?.value || '',
-    horimetro: document.querySelectorAll('input')[5]?.value || '',
-    consultor: document.querySelector('[placeholder="Digite o nome do consultor"]')?.value || '',
-    dataVisita: document.getElementById('dataVisita')?.value || '',
-    observacoes: document.querySelector('textarea')?.value || '',
-    checklist: Array.from(document.querySelectorAll('input[type=checkbox]:checked')).map(cb => cb.value),
+    nomeCliente: formData.get("nomeCliente") || "",
+    nomeFazenda: formData.get("nomeFazenda") || "",
+    telefone: formData.get("telefone") || "",
+    municipio: formData.get("municipio") || "",
+    modelo: formData.get("modeloMaquina") || "",
+    horimetro: formData.get("horimetro") || "",
+    consultor: formData.get("nomeConsultor") || "",
+    dataVisita: formData.get("dataVisita") || "",
+    observacoes: formData.get("observacoes") || "",
+    checklist: formData.getAll("checklist"),
     criadoEm: new Date().toISOString()
   };
 
   try {
     await addDoc(collection(db, colecao), dados);
-    alert("✅ Checklist enviado com sucesso!");
-    document.querySelector("form").reset();
+    mostrarPopup("✅ Checklist enviado com sucesso!");
+    form.reset();
   } catch (e) {
     console.error("❌ Erro ao salvar:", e);
-    alert("Erro ao salvar os dados.");
+    mostrarPopup("❌ Erro ao salvar os dados.", false);
   }
 };
