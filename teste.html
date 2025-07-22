@@ -227,15 +227,35 @@
   </script>
 
 
-  <div id="popup" style="display: none;">
-    <div style="text-align: center;">
-      <h3 style="font-size: 20px; margin-bottom: 12px;">🎉 Obrigado por contribuir!</h3>
-      <p style="font-size: 16px;">Você ajudou o nosso NPS a crescer. Estamos juntos! 💙</p>
-      <div style="margin: 20px 0; font-size: 48px; font-weight: bold; color: #00ffae;" id="npsValor">--</div>
-      <button onclick="fecharPopup()" style="padding: 10px 20px; border: none; border-radius: 8px; background-color: #00bbf9; color: white; font-weight: bold; cursor: pointer;">
-        Voltar
-      </button>
-    </div>
+  <div id="popup" style="
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: white;
+    color: #001439;
+    padding: 30px;
+    border-radius: 16px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+    width: 90%;
+    max-width: 400px;
+    text-align: center;
+    z-index: 1000;
+  ">
+    <h2 style="margin-top: 0; font-size: 22px;">🎉 Obrigado por contribuir!</h2>
+    <p style="font-size: 16px;">Você ajudou o nosso NPS a crescer. Estamos juntos! 💙</p>
+    <div id="npsValor" style="font-size: 48px; font-weight: bold; margin: 20px 0; color: #00bbf9;">--</div>
+    <button onclick="fecharPopup()" style="
+      padding: 12px 24px;
+      font-size: 16px;
+      background-color: #001439;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      margin-top: 10px;
+    ">Voltar</button>
   </div>
 
 
