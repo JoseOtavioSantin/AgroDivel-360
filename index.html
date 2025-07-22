@@ -200,15 +200,13 @@
       popupBody.innerHTML = "<p>Carregando...</p>";
       try {
         const docNps = await getDoc(doc(db, "informativos", "nps"));
-        const docFat = await getDoc(doc(db, "informativos", "faturamentodasemana"));
-
         const nps = docNps.exists() ? docNps.data().valor : "N/A";
-        const faturamento = docFat.exists() ? docFat.data().valor : "N/A";
 
         popupBody.innerHTML = `
-          <p>📈 NPS da Semana: ${nps}%</p>
-          <p>💰 Faturamento da Semana: R$ ${Number(faturamento).toLocaleString()}</p>
+          <p style="text-align: center; font-size: 16px; margin-bottom: 15px;">Com a sua ajuda, nosso NPS está subindo! 🚀</p>
+          <p style="text-align: center; font-size: 32px; font-weight: bold;">${nps}%</p>
         `;
+
       } catch (e) {
         popupBody.innerHTML = "<p>Erro ao carregar dados.</p>";
         console.error("Erro ao carregar:", e);
