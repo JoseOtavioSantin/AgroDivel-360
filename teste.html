@@ -54,30 +54,33 @@
       box-shadow: 0 0 10px rgba(0,0,0,0.5);
       display: none;
       z-index: 999;
+      text-align: center;
     }
 
-    .popup h3 {
-      margin-top: 0;
-      font-size: 18px;
-      margin-bottom: 10px;
+    #popup-body p {
+      font-size: 16px;
+      margin: 10px 0;
     }
 
-    .popup p {
-      font-size: 14px;
-      margin: 5px 0;
+    #popup-body p.nps {
+      font-size: 36px;
+      font-weight: bold;
+      margin-top: 20px;
     }
 
-    .popup .fechar {
-      text-align: right;
-      margin-top: 10px;
-    }
-
-    .popup .fechar button {
-      background: none;
+    .fechar button {
+      background-color: #00bbf9;
       border: none;
-      color: #00bbf9;
+      padding: 10px 20px;
+      color: white;
       font-size: 14px;
+      border-radius: 8px;
       cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+
+    .fechar button:hover {
+      background-color: #0096c7;
     }
 
     .container {
@@ -154,11 +157,10 @@
     </div>
 
     <div id="popup">
-      <h3>Informações do Dia</h3>
       <div id="popup-body">
         <p>Carregando...</p>
       </div>
-      <div class="fechar">
+      <div class="fechar" style="margin-top: 20px;">
         <button onclick="fecharPopup()">Fechar</button>
       </div>
     </div>
@@ -197,16 +199,16 @@
       document.getElementById("popup").style.display = "block";
       const popupBody = document.getElementById("popup-body");
       popupBody.innerHTML = "<p>Carregando...</p>";
+
       try {
         const docNps = await getDoc(doc(db, "informativos", "nps"));
-        const docFat = await getDoc(doc(db, "informativos", "faturamentodasemana"));
-
         const nps = docNps.exists() ? docNps.data().valor : "N/A";
-        const faturamento = docFat.exists() ? docFat.data().valor : "N/A";
 
         popupBody.innerHTML = `
-          <p>📈 NPS da Semana: ${nps}%</p>
-          <p>💰 Faturamento da Semana: R$ ${Number(faturamento).toLocaleString()}</p>
+          <p style="font-size: 16px; margin-bottom: 10px;">
+            Com a sua colaboração, nosso NPS segue crescendo!<br>Obrigado por fazer parte disso. 🙌
+          </p>
+          <p class="nps">${nps}%</p>
         `;
       } catch (e) {
         popupBody.innerHTML = "<p>Erro ao carregar dados.</p>";
@@ -224,73 +226,6 @@
         .catch((error) => console.error('❌ Erro ao registrar Service Worker:', error));
     }
   </script>
-
-
-  <div id="popup" style="
-    display: none;
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    background-color: white;
-    color: #001439;
-    padding: 30px;
-    border-radius: 16px;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
-    width: 90%;
-    max-width: 400px;
-    text-align: center;
-    z-index: 1000;
-  ">
-    <h2 style="margin-top: 0; font-size: 22px;">🎉 Obrigado por contribuir!</h2>
-    <p style="font-size: 16px;">Você ajudou o nosso NPS a crescer. Estamos juntos! 💙</p>
-    <div id="npsValor" style="font-size: 48px; font-weight: bold; margin: 20px 0; color: #00bbf9;">--</div>
-    <button onclick="fecharPopup()" style="
-      padding: 12px 24px;
-      font-size: 16px;
-      background-color: #001439;
-      color: white;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      margin-top: 10px;
-    ">Voltar</button>
-  </div>
-
-
-<script type="module">
-  import { app, db } from './firebase.js';
-  import { collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-
-  window.abrirPopup = async function () {
-    const popup = document.getElementById("popup");
-    const npsValor = document.getElementById("npsValor");
-
-    try {
-      const querySnapshot = await getDocs(collection(db, "nps"));
-      let resultado = "Nenhum dado encontrado";
-
-      querySnapshot.forEach((doc) => {
-        const dados = doc.data();
-        if (dados && dados.nota) {
-          resultado = `Nota de NPS: ${dados.nota}`;
-        }
-      });
-
-      npsValor.textContent = resultado;
-    } catch (error) {
-      npsValor.textContent = "Erro ao buscar NPS";
-      console.error(error);
-    }
-
-    popup.style.display = "block";
-  };
-
-  window.fecharPopup = function () {
-    const popup = document.getElementById("popup");
-    popup.style.display = "none";
-  };
-</script>
 
 </body>
 </html>
