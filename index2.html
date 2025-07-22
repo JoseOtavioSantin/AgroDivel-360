@@ -238,35 +238,32 @@
 
 <script type="module">
   import { app, db } from './firebase.js';
-  import { collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+  import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
   window.abrirPopup = async function () {
     const popup = document.getElementById("popup");
     const npsValor = document.getElementById("npsValor");
 
     try {
-      const querySnapshot = await getDocs(collection(db, "nps"));
-      let resultado = "Nenhum dado encontrado";
+      const ref = doc(db, "informativos", "nps");
+      const snap = await getDoc(ref);
 
-      querySnapshot.forEach((doc) => {
-        const dados = doc.data();
-        if (dados && dados.nota) {
-          resultado = `Nota de NPS: ${dados.nota}`;
-        }
-      });
-
-      npsValor.textContent = resultado;
+      if (snap.exists()) {
+        const dados = snap.data();
+        npsValor.textContent = `Nota de NPS: ${dados.valor}`;
+      } else {
+        npsValor.textContent = "NPS não encontrado.";
+      }
     } catch (error) {
-      npsValor.textContent = "Erro ao buscar NPS";
       console.error(error);
+      npsValor.textContent = "Erro ao buscar o NPS.";
     }
 
     popup.style.display = "block";
   };
 
   window.fecharPopup = function () {
-    const popup = document.getElementById("popup");
-    popup.style.display = "none";
+    document.getElementById("popup").style.display = "none";
   };
 </script>
 
