@@ -1,0 +1,277 @@
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Agro Divel 360</title>
+
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#1e1e2f" />
+  <link rel="icon" href="icons/icon-192.png" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300&display=swap" rel="stylesheet">
+
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background-color: #001439;
+      color: white;
+    }
+
+    .header {
+      padding: 20px;
+      text-align: center;
+      position: relative;
+    }
+
+    .header img {
+      width: 200px;
+    }
+
+    .notification-icon {
+      position: absolute;
+      top: 95px;
+      right: -30px;
+      font-size: 24px;
+      cursor: pointer;
+      color: white;
+    }
+
+    .notification-icon:hover {
+      color: #00bbf9;
+    }
+
+    #popup {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 300px;
+      background-color: #2c2f3f;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.5);
+      display: none;
+      z-index: 999;
+    }
+
+    .popup h3 {
+      margin-top: 0;
+      font-size: 18px;
+      margin-bottom: 10px;
+    }
+
+    .popup p {
+      font-size: 14px;
+      margin: 5px 0;
+    }
+
+    .popup .fechar {
+      text-align: right;
+      margin-top: 10px;
+    }
+
+    .popup .fechar button {
+      background: none;
+      border: none;
+      color: #00bbf9;
+      font-size: 14px;
+      cursor: pointer;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 10px;
+      box-sizing: border-box;
+    }
+
+    .dashboard {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      padding: 20px;
+      gap: 20px;
+    }
+
+    .frase-italico {
+      font-family: 'Poppins', sans-serif;
+      font-style: italic;
+      font-weight: 300;
+      font-size: 100%;
+    }
+
+    .card {
+      background-color: #ffffff;
+      border-radius: 12px;
+      padding: 40px;
+      width: 150px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+      text-align: center;
+      transition: all 0.3s ease;
+    }
+
+    .card:hover {
+      background-color: #3a3d55;
+      box-shadow: 0 0 15px rgba(255, 255, 255, 0.2);
+      cursor: pointer;
+      transform: translateY(-4px);
+    }
+
+    .card i {
+      font-size: 32px;
+      margin-bottom: 10px;
+      color: #001439;
+    }
+
+    .card p {
+      margin-top: 10px;
+      font-size: 18px;
+      font-weight: bold;
+      color: #001439;
+    }
+
+    a, a:visited {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    @media (max-width: 600px) {
+      .container {
+        max-width: 300px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <div class="header">
+      <img src="assets/logo.png" alt="Logo Agro Divel" />
+      <i class="fas fa-bell notification-icon" onclick="abrirPopup()"></i>
+      <h1 class="frase-italico">Selecione o setor e conecte o cliente à solução ideal.</h1>
+    </div>
+
+    <div id="popup">
+      <h3>Informações do Dia</h3>
+      <div id="popup-body">
+        <p>Carregando...</p>
+      </div>
+      <div class="fechar">
+        <button onclick="fecharPopup()">Fechar</button>
+      </div>
+    </div>
+
+    <div class="dashboard">
+      <a href="form-pecas.html" class="card">
+        <i class="fas fa-cogs"></i>
+        <p>Peças</p>
+      </a>
+      <a href="form-servicos.html" class="card">
+        <i class="fas fa-wrench"></i>
+        <p>Serviços</p>
+      </a>
+      <a href="form-PLM.html" class="card">
+        <i class="fa-solid fa-satellite"></i>
+        <p>PLM</p>
+      </a>
+      <a href="form-comercial.html" class="card">
+        <i class="fas fa-handshake"></i>
+        <p>Comercial</p>
+      </a>
+      <a href="form-consorcio.html" class="card">
+        <i class="fas fa-piggy-bank"></i>
+        <p>Consórcio</p>
+      </a>
+    </div>
+  </div>
+
+  <script type="module">
+    import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+    import { app } from './firebase.js';
+
+    const db = getFirestore(app);
+
+    window.abrirPopup = async function () {
+      document.getElementById("popup").style.display = "block";
+      const popupBody = document.getElementById("popup-body");
+      popupBody.innerHTML = "<p>Carregando...</p>";
+      try {
+        const docNps = await getDoc(doc(db, "informativos", "nps"));
+        const docFat = await getDoc(doc(db, "informativos", "faturamentodasemana"));
+
+        const nps = docNps.exists() ? docNps.data().valor : "N/A";
+        const faturamento = docFat.exists() ? docFat.data().valor : "N/A";
+
+        popupBody.innerHTML = `
+          <p>📈 NPS da Semana: ${nps}%</p>
+          <p>💰 Faturamento da Semana: R$ ${Number(faturamento).toLocaleString()}</p>
+        `;
+      } catch (e) {
+        popupBody.innerHTML = "<p>Erro ao carregar dados.</p>";
+        console.error("Erro ao carregar:", e);
+      }
+    }
+
+    window.fecharPopup = function () {
+      document.getElementById("popup").style.display = "none";
+    };
+
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('service-worker.js')
+        .then(() => console.log('✅ Service Worker registrado com sucesso!'))
+        .catch((error) => console.error('❌ Erro ao registrar Service Worker:', error));
+    }
+  </script>
+
+
+  <div id="popup" style="display: none;">
+    <div style="text-align: center;">
+      <h3 style="font-size: 20px; margin-bottom: 12px;">🎉 Obrigado por contribuir!</h3>
+      <p style="font-size: 16px;">Você ajudou o nosso NPS a crescer. Estamos juntos! 💙</p>
+      <div style="margin: 20px 0; font-size: 48px; font-weight: bold; color: #00ffae;" id="npsValor">--</div>
+      <button onclick="fecharPopup()" style="padding: 10px 20px; border: none; border-radius: 8px; background-color: #00bbf9; color: white; font-weight: bold; cursor: pointer;">
+        Voltar
+      </button>
+    </div>
+  </div>
+
+
+<script type="module">
+  import { app, db } from './firebase.js';
+  import { collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+  window.abrirPopup = async function () {
+    const popup = document.getElementById("popup");
+    const npsValor = document.getElementById("npsValor");
+
+    try {
+      const querySnapshot = await getDocs(collection(db, "nps"));
+      let resultado = "Nenhum dado encontrado";
+
+      querySnapshot.forEach((doc) => {
+        const dados = doc.data();
+        if (dados && dados.nota) {
+          resultado = `Nota de NPS: ${dados.nota}`;
+        }
+      });
+
+      npsValor.textContent = resultado;
+    } catch (error) {
+      npsValor.textContent = "Erro ao buscar NPS";
+      console.error(error);
+    }
+
+    popup.style.display = "block";
+  };
+
+  window.fecharPopup = function () {
+    const popup = document.getElementById("popup");
+    popup.style.display = "none";
+  };
+</script>
+
+</body>
+</html>
