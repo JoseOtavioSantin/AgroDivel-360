@@ -228,42 +228,48 @@
 
 
   <div id="popup" style="display: none;">
-    <h3>Resultado do NPS</h3>
-    <p id="npsValor">Carregando...</p>
-    <div class="fechar">
-      <button onclick="fecharPopup()">Fechar</button>
+    <div style="text-align: center;">
+      <h3 style="font-size: 20px; margin-bottom: 12px;">🎉 Obrigado por contribuir!</h3>
+      <p style="font-size: 16px;">Você ajudou o nosso NPS a crescer. Estamos juntos! 💙</p>
+      <div style="margin: 20px 0; font-size: 48px; font-weight: bold; color: #00ffae;" id="npsValor">--</div>
+      <button onclick="fecharPopup()" style="padding: 10px 20px; border: none; border-radius: 8px; background-color: #00bbf9; color: white; font-weight: bold; cursor: pointer;">
+        Voltar
+      </button>
     </div>
   </div>
 
 
 <script type="module">
   import { app, db } from './firebase.js';
-  import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+  import { collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
   window.abrirPopup = async function () {
     const popup = document.getElementById("popup");
     const npsValor = document.getElementById("npsValor");
 
     try {
-      const ref = doc(db, "informativos", "nps");
-      const snap = await getDoc(ref);
+      const querySnapshot = await getDocs(collection(db, "nps"));
+      let resultado = "Nenhum dado encontrado";
 
-      if (snap.exists()) {
-        const dados = snap.data();
-        npsValor.textContent = `Nota de NPS: ${dados.valor}`;
-      } else {
-        npsValor.textContent = "NPS não encontrado.";
-      }
+      querySnapshot.forEach((doc) => {
+        const dados = doc.data();
+        if (dados && dados.nota) {
+          resultado = `Nota de NPS: ${dados.nota}`;
+        }
+      });
+
+      npsValor.textContent = resultado;
     } catch (error) {
+      npsValor.textContent = "Erro ao buscar NPS";
       console.error(error);
-      npsValor.textContent = "Erro ao buscar o NPS.";
     }
 
     popup.style.display = "block";
   };
 
   window.fecharPopup = function () {
-    document.getElementById("popup").style.display = "none";
+    const popup = document.getElementById("popup");
+    popup.style.display = "none";
   };
 </script>
 
