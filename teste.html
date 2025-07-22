@@ -152,7 +152,7 @@
   <div class="container">
     <div class="header">
       <img src="assets/logo.png" alt="Logo Agro Divel" />
-      <i class="fas fa-bell notification-icon" onclick="abrirPopup()"></i>
+      <i class="fas fa-circle-info notification-icon" onclick="abrirPopup()"></i>
       <h1 class="frase-italico">Selecione o setor e conecte o cliente à solução ideal.</h1>
     </div>
 
@@ -219,6 +219,19 @@
     window.fecharPopup = function () {
       document.getElementById("popup").style.display = "none";
     };
+
+    // Mostrar popup uma vez por dia automaticamente
+    function verificarPopupAutomatico() {
+      const hoje = new Date().toISOString().slice(0, 10); // Ex: "2025-07-22"
+      const ultimoDia = localStorage.getItem('popup_nps_hoje');
+
+      if (hoje !== ultimoDia) {
+        abrirPopup();
+        localStorage.setItem('popup_nps_hoje', hoje);
+      }
+    }
+
+    verificarPopupAutomatico();
 
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('service-worker.js')
