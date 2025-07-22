@@ -1,4 +1,3 @@
-// firebase.js
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
@@ -16,7 +15,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// Função para exibir popups
+// Função para exibir popup
 function mostrarPopup(mensagem, sucesso = true) {
   const popup = document.createElement("div");
   popup.textContent = mensagem;
@@ -34,11 +33,14 @@ function mostrarPopup(mensagem, sucesso = true) {
   popup.style.color = "white";
 
   document.body.appendChild(popup);
-  setTimeout(() => popup.remove(), 3000);
+
+  setTimeout(() => {
+    popup.remove();
+  }, 3000);
 }
 
-// Função genérica de envio para formulários
-async function enviarChecklist(event, colecao) {
+// Função genérica de envio
+window.enviarChecklist = async function (event, colecao) {
   event.preventDefault();
 
   const form = event.target;
@@ -66,7 +68,5 @@ async function enviarChecklist(event, colecao) {
     console.error("❌ Erro ao salvar:", e);
     mostrarPopup("❌ Erro ao salvar os dados.", false);
   }
-}
-
-// 🔁 Exporta tudo que o index.html pode precisar:
-export { app, db, enviarChecklist, mostrarPopup };
+  
+};
