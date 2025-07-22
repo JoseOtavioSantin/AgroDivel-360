@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -55,30 +54,33 @@
       box-shadow: 0 0 10px rgba(0,0,0,0.5);
       display: none;
       z-index: 999;
+      text-align: center;
     }
 
-    .popup h3 {
-      margin-top: 0;
-      font-size: 18px;
-      margin-bottom: 10px;
+    #popup-body p {
+      font-size: 16px;
+      margin: 10px 0;
     }
 
-    .popup p {
-      font-size: 14px;
-      margin: 5px 0;
+    #popup-body p.nps {
+      font-size: 36px;
+      font-weight: bold;
+      margin-top: 20px;
     }
 
-    .popup .fechar {
-      text-align: right;
-      margin-top: 10px;
-    }
-
-    .popup .fechar button {
-      background: none;
+    .fechar button {
+      background-color: #00bbf9;
       border: none;
-      color: #00bbf9;
+      padding: 10px 20px;
+      color: white;
       font-size: 14px;
+      border-radius: 8px;
       cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+
+    .fechar button:hover {
+      background-color: #0096c7;
     }
 
     .container {
@@ -156,25 +158,11 @@
 
     <div id="popup">
       <div id="popup-body">
-          <p style="text-align: center; font-size: 16px; margin-bottom: 15px;">
-            Com a sua colaboração, nosso NPS segue crescendo!<br>Obrigado por fazer parte disso. 🙌
-          </p>
-          <p style="text-align: center; font-size: 36px; font-weight: bold;">87%</p>
-        </div>
-        <div style="text-align: center; margin-top: 20px;">
-          <button style="
-            background-color: #00bbf9;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            font-size: 14px;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: background-color 0.3s ease;
-          " onclick="fecharPopup()">
-            Fechar
-          </button>
-        </div>
+        <p>Carregando...</p>
+      </div>
+      <div class="fechar" style="margin-top: 20px;">
+        <button onclick="fecharPopup()">Fechar</button>
+      </div>
     </div>
 
     <div class="dashboard">
@@ -211,22 +199,24 @@
       document.getElementById("popup").style.display = "block";
       const popupBody = document.getElementById("popup-body");
       popupBody.innerHTML = "<p>Carregando...</p>";
+
       try {
         const docNps = await getDoc(doc(db, "informativos", "nps"));
         const nps = docNps.exists() ? docNps.data().valor : "N/A";
 
         popupBody.innerHTML = `
-          <p style="text-align: center; font-size: 16px; margin-bottom: 15px;">Com a sua ajuda, nosso NPS está subindo! 🚀</p>
-          <p style="text-align: center; font-size: 32px; font-weight: bold;">${nps}%</p>
+          <p style="font-size: 16px; margin-bottom: 10px;">
+            Com a sua colaboração, nosso NPS segue crescendo!<br>Obrigado por fazer parte disso. 🙌
+          </p>
+          <p class="nps">${nps}%</p>
         `;
-
       } catch (e) {
         popupBody.innerHTML = "<p>Erro ao carregar dados.</p>";
         console.error("Erro ao carregar:", e);
       }
     }
 
-    window.fechar = function () {
+    window.fecharPopup = function () {
       document.getElementById("popup").style.display = "none";
     };
 
