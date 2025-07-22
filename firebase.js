@@ -70,3 +70,5 @@ window.enviarChecklist = async function (event, colecao) {
   }
   
 };
+
+export { app, db };
