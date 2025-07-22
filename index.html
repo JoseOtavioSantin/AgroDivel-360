@@ -155,13 +155,26 @@
     </div>
 
     <div id="popup">
-      <h3>Informações do Dia</h3>
       <div id="popup-body">
-        <p>Carregando...</p>
-      </div>
-      <div class="fechar">
-        <button onclick="fecharPopup()">Fechar</button>
-      </div>
+          <p style="text-align: center; font-size: 16px; margin-bottom: 15px;">
+            Com a sua colaboração, nosso NPS segue crescendo!<br>Obrigado por fazer parte disso. 🙌
+          </p>
+          <p style="text-align: center; font-size: 36px; font-weight: bold;">87%</p>
+        </div>
+        <div style="text-align: center; margin-top: 20px;">
+          <button style="
+            background-color: #00bbf9;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 14px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+          " onclick="fecharPopup()">
+            Fechar
+          </button>
+        </div>
     </div>
 
     <div class="dashboard">
@@ -213,7 +226,7 @@
       }
     }
 
-    window.fecharPopup = function () {
+    window.fechar = function () {
       document.getElementById("popup").style.display = "none";
     };
 
