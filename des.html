@@ -132,7 +132,7 @@
     }
 
     .acoes button {
-      background: #444;
+      background: #ffffff;
       border: none;
       padding: 6px 10px;
       border-radius: 6px;
@@ -176,7 +176,7 @@
 <body>
   <header>
     <div style="display: flex; align-items: center; justify-content: space-between;">
-      <img src="assets/logo.png" alt="Logo" style="height: 80px; margin-right: 15px; margin-left: 40px;">
+      <img src="assets/logo.png" alt="Logo" style="height: 80px; margin-right: 15px; margin-left: 45px;">
       <div style="flex: 1; text-align: center;">
         Sistema de Checklists - Agro Divel
         <div id="dynamic-title">Carregando...</div>
@@ -326,7 +326,7 @@
           <td>${d.horimetro || "-"}</td>
           <td>${d.telefone || "-"}</td>
           <td>${d.observacoes || "-"}</td>
-          <td>${(d.checklist || []).map(item => `<span style="background:#00205b; color:#fff; padding:3px 8px; border-radius:5px; margin:2px; display:inline-block; font-size:12px">${item}</span>`).join("")}</td>
+          <td>${(d.checklist || []).map(item => `<span style="background:#fff; color:#00205b; padding:3px 8px; border-radius:5px; margin:2px; display:inline-block; font-size:12px">${item}</span>`).join("")}</td>
           <td class="acoes"><button class="btn-acao" data-id="${d.id}" title="Abrir ações">➕</button></td>
         </tr>`;
     });
