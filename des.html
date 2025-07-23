@@ -154,7 +154,24 @@
       .main { flex-direction: column; }
       .content { padding: 15px; }
     }
-  </style>
+  
+    .btn-acao {
+      background: linear-gradient(135deg, #00bbf9, #009bd6);
+      border: none;
+      padding: 6px 10px;
+      border-radius: 6px;
+      color: white;
+      font-size: 16px;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .btn-acao:hover {
+      transform: scale(1.05);
+      box-shadow: 0 4px 12px rgba(0, 187, 249, 0.4);
+    }
+
+</style>
 </head>
 <body>
   <header>
@@ -220,86 +237,7 @@
     </div>
   </div>
 
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-    import { getFirestore, collection, getDocs, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-
-    const tipoChecklist = new URLSearchParams(window.location.search).get("tipo") || "checklistComercial";
-    const app = initializeApp({
-      apiKey: "AIzaSyDcjPa9jXsCCu6lNc1fjVg4Bzz1toKWAGY",
-      authDomain: "agro-divel.firebaseapp.com",
-      projectId: "agro-divel"
-    });
-    const db = getFirestore(app);
-    let dadosTotais = [];
-
-    document.getElementById("dynamic-title").textContent =
-      tipoChecklist === "checklistComercial" ? "Checklist Comercial" :
-      tipoChecklist === "checklistRevisao" ? "Checklist de Revisão" :
-      tipoChecklist === "checklistPecas" ? "Checklist de Peças" : "Painel";
-
-    async function carregarDados() {
-      const querySnapshot = await getDocs(collection(db, tipoChecklist));
-      dadosTotais = [];
-      querySnapshot.forEach(docItem => {
-        dadosTotais.push({ id: docItem.id, ...docItem.data() });
-      });
-      aplicarFiltros();
-    }
-
-    function aplicarFiltros() {
-      const clienteFiltro = document.getElementById("filtro-cliente").value.toLowerCase();
-      const statusFiltro = document.getElementById("filtro-status").value;
-      const consultorFiltro = document.getElementById("filtro-consultor").value.toLowerCase();
-      const painel = document.getElementById("painel-detalhes");
-      painel.innerHTML = "";
-
-      const filtrados = dadosTotais.filter(d => {
-        const cliente = (d.nomeCliente || "").toLowerCase();
-        const status = d.statusChecklist || "";
-        const consultor = (d.consultor || "").toLowerCase();
-        return cliente.includes(clienteFiltro) &&
-               (statusFiltro === "" || status === statusFiltro) &&
-               consultor.includes(consultorFiltro);
-      });
-
-      document.getElementById("total-clientes").textContent = filtrados.length;
-      document.getElementById("total-concluidos").textContent = filtrados.filter(d => d.statusChecklist === "Concluído").length;
-      document.getElementById("cancelados").textContent = filtrados.filter(d => d.statusChecklist === "Cancelado").length;
-
-      let totalValor = 0;
-      filtrados.forEach(d => {
-        if (!isNaN(d.valorNegociado)) totalValor += Number(d.valorNegociado);
-        const statusClass = d.statusChecklist === "Concluído" ? "status-concluido" :
-                            d.statusChecklist === "Cancelado" ? "status-cancelado" :
-                            d.statusChecklist === "Em andamento" ? "status-em-andamento" : "";
-        painel.innerHTML += `
-          <tr class="${statusClass}">
-            <td>${d.nomeCliente || "-"}</td>
-            <td>${d.nomeFazenda || "-"}</td>
-            <td>${d.consultor || "-"}</td>
-            <td>${d.dataVisita || "-"}</td>
-            <td>${d.modelo || "-"}</td>
-            <td>${d.municipio || "-"}</td>
-            <td>${d.horimetro || "-"}</td>
-            <td>${d.telefone || "-"}</td>
-            <td>${d.observacoes || "-"}</td>
-            <td>${(d.checklist || []).map(item => `<span style="background:#00bbf9; color:#fff; padding:3px 8px; border-radius:5px; margin:2px; display:inline-block; font-size:12px">${item}</span>`).join("")}</td>
-            <td class="acoes"><button onclick="abrirPopup('${d.id}')">➕ Ações</button></td>
-          </tr>`;
-      });
-
-      document.getElementById("valor-total").textContent = `R$ ${totalValor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
-    }
-
-    document.addEventListener("DOMContentLoaded", () => {
-      carregarDados();
-      lucide.createIcons();
-      document.getElementById("filtro-cliente").addEventListener("input", aplicarFiltros);
-      document.getElementById("filtro-status").addEventListener("change", aplicarFiltros);
-      document.getElementById("filtro-consultor").addEventListener("input", aplicarFiltros);
-    });
-  </script>
+  
 
 <!-- POPUP DE AÇÃO -->
 <div id="popup" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);justify-content:center;align-items:center;z-index:9999;">
@@ -323,7 +261,83 @@
   </div>
 </div>
 
-<script>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import { getFirestore, collection, getDocs, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+  const tipoChecklist = new URLSearchParams(window.location.search).get("tipo") || "checklistComercial";
+  const app = initializeApp({
+    apiKey: "AIzaSyDcjPa9jXsCCu6lNc1fjVg4Bzz1toKWAGY",
+    authDomain: "agro-divel.firebaseapp.com",
+    projectId: "agro-divel"
+  });
+  const db = getFirestore(app);
+  let dadosTotais = [];
+
+  document.getElementById("dynamic-title").textContent =
+    tipoChecklist === "checklistComercial" ? "Checklist Comercial" :
+    tipoChecklist === "checklistRevisao" ? "Checklist de Revisão" :
+    tipoChecklist === "checklistPecas" ? "Checklist de Peças" : "Painel";
+
+  async function carregarDados() {
+    const querySnapshot = await getDocs(collection(db, tipoChecklist));
+    dadosTotais = [];
+    querySnapshot.forEach(docItem => {
+      dadosTotais.push({ id: docItem.id, ...docItem.data() });
+    });
+    aplicarFiltros();
+  }
+
+  function aplicarFiltros() {
+    const clienteFiltro = document.getElementById("filtro-cliente").value.toLowerCase();
+    const statusFiltro = document.getElementById("filtro-status").value;
+    const consultorFiltro = document.getElementById("filtro-consultor").value.toLowerCase();
+    const painel = document.getElementById("painel-detalhes");
+    painel.innerHTML = "";
+
+    const filtrados = dadosTotais.filter(d => {
+      const cliente = (d.nomeCliente || "").toLowerCase();
+      const status = d.statusChecklist || "";
+      const consultor = (d.consultor || "").toLowerCase();
+      return cliente.includes(clienteFiltro) &&
+            (statusFiltro === "" || status === statusFiltro) &&
+            consultor.includes(consultorFiltro);
+    });
+
+    document.getElementById("total-clientes").textContent = filtrados.length;
+    document.getElementById("total-concluidos").textContent = filtrados.filter(d => d.statusChecklist === "Concluído").length;
+    document.getElementById("cancelados").textContent = filtrados.filter(d => d.statusChecklist === "Cancelado").length;
+
+    let totalValor = 0;
+    filtrados.forEach(d => {
+      if (!isNaN(d.valorNegociado)) totalValor += Number(d.valorNegociado);
+      const statusClass = d.statusChecklist === "Concluído" ? "status-concluido" :
+                          d.statusChecklist === "Cancelado" ? "status-cancelado" :
+                          d.statusChecklist === "Em andamento" ? "status-em-andamento" : "";
+      painel.innerHTML += `
+        <tr class="${statusClass}">
+          <td>${d.nomeCliente || "-"}</td>
+          <td>${d.nomeFazenda || "-"}</td>
+          <td>${d.consultor || "-"}</td>
+          <td>${d.dataVisita || "-"}</td>
+          <td>${d.modelo || "-"}</td>
+          <td>${d.municipio || "-"}</td>
+          <td>${d.horimetro || "-"}</td>
+          <td>${d.telefone || "-"}</td>
+          <td>${d.observacoes || "-"}</td>
+          <td>${(d.checklist || []).map(item => `<span style="background:#00bbf9; color:#fff; padding:3px 8px; border-radius:5px; margin:2px; display:inline-block; font-size:12px">${item}</span>`).join("")}</td>
+          <td class="acoes"><button class="btn-acao" data-id="${d.id}" title="Abrir ações">➕</button></td>
+        </tr>`;
+    });
+
+    document.getElementById("valor-total").textContent = `R$ ${totalValor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
+
+    document.querySelectorAll(".acoes button").forEach(btn => {
+      btn.addEventListener("click", () => abrirPopup(btn.getAttribute("data-id")));
+    });
+  }
+
   async function abrirPopup(id) {
     document.getElementById("popup").style.display = "flex";
     document.getElementById("docIdSelecionado").value = id;
@@ -355,6 +369,17 @@
     fecharPopup();
     carregarDados();
   }
+
+  window.fecharPopup = fecharPopup;
+  window.salvarPopup = salvarPopup;
+
+  document.addEventListener("DOMContentLoaded", () => {
+    carregarDados();
+    lucide.createIcons();
+    document.getElementById("filtro-cliente").addEventListener("input", aplicarFiltros);
+    document.getElementById("filtro-status").addEventListener("change", aplicarFiltros);
+    document.getElementById("filtro-consultor").addEventListener("input", aplicarFiltros);
+  });
 </script>
 </body>
 
