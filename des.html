@@ -321,8 +321,8 @@ function aplicarFiltros() {
 
     // Convertendo data do Firebase (ex: "15/07/2025") para "2025-07-15"
     const dataFormatada = dataVisita.includes("/")
-      ? dataVisita.split("/").reverse().join("-")
-      : dataVisita.replaceAll("-", "/");
+  ? dataVisita.split("/").reverse().map(p => p.padStart(2, "0")).join("-")
+  : dataVisita;replaceAll("-", "/");
 
     return cliente.includes(clienteFiltro) &&
            (statusFiltro === "" || status === statusFiltro) &&
