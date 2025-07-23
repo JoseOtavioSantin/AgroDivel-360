@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -99,7 +100,7 @@
     .filters {
       display: flex;
       flex-wrap: wrap;
-      gap: 15px;
+      gap: 10px;
       margin-bottom: 20px;
     }
 
@@ -108,6 +109,7 @@
       padding: 8px;
       border-radius: 6px;
       border: none;
+      min-width: 180px;
     }
 
     table {
@@ -130,6 +132,24 @@
       color: #cca700;
     }
 
+    .acoes button {
+      background: #444;
+      border: none;
+      padding: 6px 10px;
+      border-radius: 6px;
+      color: rgb(46, 60, 250);
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .acoes button:hover {
+      background: #ffffff;
+    }
+
+    .status-em-andamento { background-color: rgba(248, 230, 197, 0.15); }
+    .status-concluido { background-color: rgba(99, 151, 248, 0.1); }
+    .status-cancelado { background-color: rgba(255, 0, 0, 0.1); }
+
     @media (max-width: 768px) {
       .sidebar { display: none; }
       .main { flex-direction: column; }
@@ -143,7 +163,7 @@
       <img src="assets/logo.png" alt="Logo" style="height: 80px; margin-right: 15px; margin-left: 40px;">
       <div style="flex: 1; text-align: center;">
         Sistema de Checklists - Agro Divel
-        <div id="dynamic-title" style="font-size: 14px; font-weight: normal; color: #ccc;">Carregando...</div>
+        <div id="dynamic-title">Carregando...</div>
       </div>
       <div style="width: 65px;"></div>
     </div>
@@ -171,14 +191,14 @@
 
     <div class="content">
       <div class="filters">
-        <input type="text" placeholder="Buscar cliente..." />
-        <select>
+        <input id="filtro-cliente" type="text" placeholder="Buscar cliente..." />
+        <select id="filtro-status">
           <option value="">Todos os status</option>
           <option value="Concluído">Concluído</option>
           <option value="Em andamento">Em andamento</option>
           <option value="Cancelado">Cancelado</option>
         </select>
-        <input type="text" placeholder="Buscar consultor..." />
+        <input id="filtro-consultor" type="text" placeholder="Buscar consultor..." />
       </div>
       <table>
         <thead>
@@ -200,5 +220,86 @@
       </table>
     </div>
   </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getFirestore, collection, getDocs, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+    const tipoChecklist = new URLSearchParams(window.location.search).get("tipo") || "checklistComercial";
+    const app = initializeApp({
+      apiKey: "AIzaSyDcjPa9jXsCCu6lNc1fjVg4Bzz1toKWAGY",
+      authDomain: "agro-divel.firebaseapp.com",
+      projectId: "agro-divel"
+    });
+    const db = getFirestore(app);
+    let dadosTotais = [];
+
+    document.getElementById("dynamic-title").textContent =
+      tipoChecklist === "checklistComercial" ? "Checklist Comercial" :
+      tipoChecklist === "checklistRevisao" ? "Checklist de Revisão" :
+      tipoChecklist === "checklistPecas" ? "Checklist de Peças" : "Painel";
+
+    async function carregarDados() {
+      const querySnapshot = await getDocs(collection(db, tipoChecklist));
+      dadosTotais = [];
+      querySnapshot.forEach(docItem => {
+        dadosTotais.push({ id: docItem.id, ...docItem.data() });
+      });
+      aplicarFiltros();
+    }
+
+    function aplicarFiltros() {
+      const clienteFiltro = document.getElementById("filtro-cliente").value.toLowerCase();
+      const statusFiltro = document.getElementById("filtro-status").value;
+      const consultorFiltro = document.getElementById("filtro-consultor").value.toLowerCase();
+      const painel = document.getElementById("painel-detalhes");
+      painel.innerHTML = "";
+
+      const filtrados = dadosTotais.filter(d => {
+        const cliente = (d.nomeCliente || "").toLowerCase();
+        const status = d.statusChecklist || "";
+        const consultor = (d.consultor || "").toLowerCase();
+        return cliente.includes(clienteFiltro) &&
+               (statusFiltro === "" || status === statusFiltro) &&
+               consultor.includes(consultorFiltro);
+      });
+
+      document.getElementById("total-clientes").textContent = filtrados.length;
+      document.getElementById("total-concluidos").textContent = filtrados.filter(d => d.statusChecklist === "Concluído").length;
+      document.getElementById("cancelados").textContent = filtrados.filter(d => d.statusChecklist === "Cancelado").length;
+
+      let totalValor = 0;
+      filtrados.forEach(d => {
+        if (!isNaN(d.valorNegociado)) totalValor += Number(d.valorNegociado);
+        const statusClass = d.statusChecklist === "Concluído" ? "status-concluido" :
+                            d.statusChecklist === "Cancelado" ? "status-cancelado" :
+                            d.statusChecklist === "Em andamento" ? "status-em-andamento" : "";
+        painel.innerHTML += `
+          <tr class="${statusClass}">
+            <td>${d.nomeCliente || "-"}</td>
+            <td>${d.nomeFazenda || "-"}</td>
+            <td>${d.consultor || "-"}</td>
+            <td>${d.dataVisita || "-"}</td>
+            <td>${d.modelo || "-"}</td>
+            <td>${d.municipio || "-"}</td>
+            <td>${d.horimetro || "-"}</td>
+            <td>${d.telefone || "-"}</td>
+            <td>${d.observacoes || "-"}</td>
+            <td>${(d.checklist || []).map(item => `<span style="background:#00bbf9; color:#fff; padding:3px 8px; border-radius:5px; margin:2px; display:inline-block; font-size:12px">${item}</span>`).join("")}</td>
+            <td class="acoes"><button onclick="abrirPopup('${d.id}')">➕ Ações</button></td>
+          </tr>`;
+      });
+
+      document.getElementById("valor-total").textContent = `R$ ${totalValor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      carregarDados();
+      lucide.createIcons();
+      document.getElementById("filtro-cliente").addEventListener("input", aplicarFiltros);
+      document.getElementById("filtro-status").addEventListener("change", aplicarFiltros);
+      document.getElementById("filtro-consultor").addEventListener("input", aplicarFiltros);
+    });
+  </script>
 </body>
 </html>
