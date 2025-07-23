@@ -310,7 +310,7 @@
         document.getElementById("valorNegociado").value = dados.valorNegociado || "";
       }
 
-      document.getElementById("salvarBtn").onclick = async () => {
+      popup.querySelector("#salvarBtn").onclick = async () => {
         const comentario = document.getElementById("comentario").value;
         const status = document.getElementById("statusChecklist").value;
         const valor = parseFloat(document.getElementById("valorNegociado").value) || 0;
