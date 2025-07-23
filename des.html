@@ -292,6 +292,20 @@
     aplicarFiltros();
   }
 
+
+                      let dataInicio = "";
+                let dataFim = "";
+                
+                flatpickr("#filtro-intervalo", {
+                  mode: "range",
+                  dateFormat: "Y-m-d",
+                  onChange: function(selectedDates) {
+                    dataInicio = selectedDates[0] ? selectedDates[0].toISOString().split("T")[0] : "";
+                    dataFim = selectedDates[1] ? selectedDates[1].toISOString().split("T")[0] : "";
+                    aplicarFiltros();
+                  }
+                });
+
 function aplicarFiltros() {
   const clienteFiltro = document.getElementById("filtro-cliente").value.toLowerCase();
   const statusFiltro = document.getElementById("filtro-status").value;
@@ -313,7 +327,8 @@ function aplicarFiltros() {
     return cliente.includes(clienteFiltro) &&
            (statusFiltro === "" || status === statusFiltro) &&
            consultor.includes(consultorFiltro) &&
-           (!dataSelecionada || dataSelecionada === dataFormatada);
+           (!dataInicio || dataFormatada >= dataInicio) &&
+           (!dataFim || dataFormatada <= dataFim);
   });
 
   document.getElementById("total-clientes").textContent = filtrados.length;
@@ -391,18 +406,6 @@ function aplicarFiltros() {
     document.getElementById("filtro-status").addEventListener("change", aplicarFiltros);
     document.getElementById("filtro-consultor").addEventListener("input", aplicarFiltros);
     document.getElementById("filtro-data").addEventListener("change", aplicarFiltros);
-                    let dataInicio = "";
-                let dataFim = "";
-                
-                flatpickr("#filtro-intervalo", {
-                  mode: "range",
-                  dateFormat: "Y-m-d",
-                  onChange: function(selectedDates) {
-                    dataInicio = selectedDates[0] ? selectedDates[0].toISOString().split("T")[0] : "";
-                    dataFim = selectedDates[1] ? selectedDates[1].toISOString().split("T")[0] : "";
-                    aplicarFiltros();
-                  }
-                });
   });
 </script>
 </body>
