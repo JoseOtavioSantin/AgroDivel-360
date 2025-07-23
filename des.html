@@ -5,6 +5,9 @@
   <title>Dashboard com Filtros</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script src="https://unpkg.com/lucide@latest"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/pt.js"></script>
   <style>
     * { box-sizing: border-box; }
 
@@ -215,7 +218,7 @@
             <option value="Cancelado">Cancelado</option>
           </select>
           <input id="filtro-consultor" type="text" placeholder="Buscar consultor..." />
-          <input id="filtro-data" type="date" />
+          <input id="filtro-periodo" placeholder="Selecione o período" />
         </div>
       <table>
         <thead>
@@ -294,7 +297,19 @@ function aplicarFiltros() {
   const clienteFiltro = document.getElementById("filtro-cliente").value.toLowerCase();
   const statusFiltro = document.getElementById("filtro-status").value;
   const consultorFiltro = document.getElementById("filtro-consultor").value.toLowerCase();
-  const dataSelecionada = document.getElementById("filtro-data").value; // yyyy-mm-dd
+  const periodo = document.getElementById("filtro-periodo").value.trim();
+
+  const instance = document.getElementById("filtro-periodo")._flatpickr;
+  const selectedDates = instance.selectedDates;
+
+  let dataInicio = "", dataFim = "";
+  if (selectedDates.length === 2) {
+    dataInicio = selectedDates[0].toISOString().slice(0, 10); // yyyy-mm-dd
+    dataFim    = selectedDates[1].toISOString().slice(0, 10);
+  } else if (selectedDates.length === 1) {
+    dataInicio = dataFim = selectedDates[0].toISOString().slice(0, 10);
+  }
+
   const painel = document.getElementById("painel-detalhes");
   painel.innerHTML = "";
 
@@ -302,19 +317,22 @@ function aplicarFiltros() {
     const cliente = (d.nomeCliente || "").toLowerCase();
     const status = d.statusChecklist || "";
     const consultor = (d.consultor || "").toLowerCase();
-    const dataVisita = d.dataVisita || "";
+    const dataFormatada = d.dataVisita || "";
 
-    // Convertendo data do Firebase (ex: "15/07/2025") para "2025-07-15"
-    const dataFormatada = dataVisita.includes("/")
-      ? dataVisita.split("/").reverse().join("-")
-      : dataVisita.replaceAll("-", "/");
+    const dentroDoPeriodo =
+      (!dataInicio && !dataFim) ||
+      (
+        (!dataInicio || dataFormatada >= dataInicio) &&
+        (!dataFim || dataFormatada <= dataFim)
+      );
 
     return cliente.includes(clienteFiltro) &&
            (statusFiltro === "" || status === statusFiltro) &&
            consultor.includes(consultorFiltro) &&
-           (!dataSelecionada || dataSelecionada === dataFormatada);
+           dentroDoPeriodo;
   });
 
+  // CONTADORES E RENDERIZAÇÃO
   document.getElementById("total-clientes").textContent = filtrados.length;
   document.getElementById("total-concluidos").textContent = filtrados.filter(d => d.statusChecklist === "Concluído").length;
   document.getElementById("cancelados").textContent = filtrados.filter(d => d.statusChecklist === "Cancelado").length;
@@ -325,6 +343,7 @@ function aplicarFiltros() {
     const statusClass = d.statusChecklist === "Concluído" ? "status-concluido" :
                         d.statusChecklist === "Cancelado" ? "status-cancelado" :
                         d.statusChecklist === "Em andamento" ? "status-em-andamento" : "";
+
     painel.innerHTML += `
       <tr class="${statusClass}">
         <td>${d.nomeCliente || "-"}</td>
@@ -341,12 +360,13 @@ function aplicarFiltros() {
       </tr>`;
   });
 
-    document.getElementById("valor-total").textContent = `R$ ${totalValor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
+  document.getElementById("valor-total").textContent = `R$ ${totalValor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
 
-    document.querySelectorAll(".acoes button").forEach(btn => {
-      btn.addEventListener("click", () => abrirPopup(btn.getAttribute("data-id")));
-    });
-  }
+  document.querySelectorAll(".acoes button").forEach(btn => {
+    btn.addEventListener("click", () => abrirPopup(btn.getAttribute("data-id")));
+  });
+}
+
 
   async function abrirPopup(id) {
     document.getElementById("popup").style.display = "flex";
@@ -386,12 +406,22 @@ function aplicarFiltros() {
   document.addEventListener("DOMContentLoaded", () => {
     carregarDados();
     lucide.createIcons();
+
     document.getElementById("filtro-cliente").addEventListener("input", aplicarFiltros);
     document.getElementById("filtro-status").addEventListener("change", aplicarFiltros);
     document.getElementById("filtro-consultor").addEventListener("input", aplicarFiltros);
-    document.getElementById("filtro-data").addEventListener("change", aplicarFiltros);
+
+    flatpickr("#filtro-periodo", {
+      mode: "range",
+      dateFormat: "Y-m-d",
+      locale: "pt",
+      onChange: function(selectedDates, dateStr) {
+        console.log("Selecionado:", dateStr); // veja se aparece
+        aplicarFiltros();
+      }
+    });
   });
 </script>
 </body>
 
-</html>
+</html> 
