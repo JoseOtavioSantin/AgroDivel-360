@@ -114,6 +114,17 @@
       transform: translateX(-5px);
     }
 
+    select {
+      width: 100%;
+      padding: 12px;
+      border: none;
+      border-radius: 8px;
+      margin-bottom: 15px;
+      background-color: #f1f1f1;
+      font-size: 15px;
+      appearance: none;
+    }
+
     a,
     a:visited {
       color: inherit;
@@ -130,6 +141,7 @@
         width: 100%;
         box-sizing: border-box;
       }
+      
 
       * {
         box-sizing: border-box;
@@ -160,6 +172,14 @@
       <label>Data da Visita *</label>
       <input type="date" name="dataVisita" id="dataVisita" required>
 
+      <label>Filial *</label>
+      <select name="filial" required>
+        <option value="">Selecione a filial</option>
+        <option value="Campos Novos">Campos Novos</option>
+        <option value="Rio do Sul">Rio do Sul</option>
+        <option value="Lages">Lages</option>
+      </select>
+
       <label>Nome do Cliente *</label>
       <input type="text" name="nomeCliente" placeholder="" required>
 
@@ -170,7 +190,66 @@
       <input type="tel" name="telefone" required>
 
       <label>Município *</label>
-      <input type="text" name="municipio" placeholder="" required>
+      <input type="text" id="municipio" name="municipio" list="listaMunicipios" placeholder="Comece a digitar..." required>
+      <datalist id="listaMunicipios">
+        <option value="Abdon Batista">
+        <option value="Abelardo Luz">
+        <option value="Agrolândia">
+        <option value="Agronômica">
+        <option value="Água Doce">
+        <option value="Águas de Chapecó">
+        <option value="Águas Frias">
+        <option value="Águas Mornas">
+        <option value="Alfredo Wagner">
+        <option value="Alto Bela Vista">
+        <option value="Anchieta">
+        <option value="Angelina">
+        <option value="Anita Garibaldi">
+        <option value="Anitápolis">
+        <option value="Antônio Carlos">
+        <option value="Apiúna">
+        <option value="Arabutã">
+        <option value="Araquari">
+        <option value="Araranguá">
+        <option value="Armazém">
+        <option value="Arroio Trinta">
+        <option value="Arvoredo">
+        <option value="Ascurra">
+        <option value="Atalanta">
+        <option value="Aurora">
+        <option value="Balneário Arroio do Silva">
+        <option value="Balneário Barra do Sul">
+        <option value="Balneário Camboriú">
+        <option value="Balneário Gaivota">
+        <option value="Bandeirante">
+        <option value="Barra Bonita">
+        <option value="Barra Velha">
+        <option value="Bela Vista do Toldo">
+        <option value="Belmonte">
+        <option value="Benedito Novo">
+        <option value="Biguaçu">
+        <option value="Blumenau">
+        <option value="Bocaina do Sul">
+        <option value="Bom Jardim da Serra">
+        <option value="Bom Jesus">
+        <option value="Bom Jesus do Oeste">
+        <option value="Bom Retiro">
+        <option value="Bombinhas">
+        <option value="Botuverá">
+        <option value="Braço do Norte">
+        <option value="Braço do Trombudo">
+        <option value="Brunópolis">
+        <option value="Brusque">
+        <option value="Caçador">
+        <option value="Caibi">
+        <option value="Calmon">
+        <option value="Camboriú">
+        <option value="Campo Alegre">
+        <option value="Campo Belo do Sul">
+        <option value="Campo Erê">
+        <option value="Campos Novos">
+        <!-- (adicione mais se quiser) -->
+      </datalist>
 
       <label>Modelo da Máquina *</label>
       <input type="text" name="modeloMaquina" placeholder="" required>
