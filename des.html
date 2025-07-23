@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <title>Dashboard com Firebase</title>
+  <title>Dashboard com Filtros</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script src="https://unpkg.com/lucide@latest"></script>
   <style>
@@ -96,6 +96,20 @@
       overflow-y: auto;
     }
 
+    .filters {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+
+    .filters input,
+    .filters select {
+      padding: 8px;
+      border-radius: 6px;
+      border: none;
+    }
+
     table {
       width: 100%;
       border-collapse: collapse;
@@ -116,77 +130,10 @@
       color: #cca700;
     }
 
-    .acoes button {
-      background: #444;
-      border: none;
-      padding: 6px 10px;
-      border-radius: 6px;
-      color: rgb(46, 60, 250);
-      cursor: pointer;
-      transition: background 0.2s;
-    }
-
-    .acoes button:hover {
-      background: #ffffff;
-    }
-
-    .status-em-andamento { background-color: rgba(248, 230, 197, 0.15); }
-    .status-concluido { background-color: rgba(99, 151, 248, 0.1); }
-    .status-cancelado { background-color: rgba(255, 0, 0, 0.1); }
-
     @media (max-width: 768px) {
       .sidebar { display: none; }
       .main { flex-direction: column; }
       .content { padding: 15px; }
-    }
-
-    /* POPUP */
-    #popup {
-      display: none;
-      position: fixed;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
-      background: rgba(0,0,0,0.6);
-      justify-content: center;
-      align-items: center;
-      z-index: 1000;
-    }
-
-    #popup > div {
-      background: #2c2f3f;
-      padding: 20px;
-      border-radius: 12px;
-      width: 90%;
-      max-width: 400px;
-      color: white;
-    }
-
-    #popup textarea,
-    #popup input,
-    #popup select {
-      width: 100%;
-      padding: 8px;
-      margin-bottom: 10px;
-      border: none;
-      border-radius: 6px;
-    }
-
-    #popup button {
-      padding: 8px 16px;
-      border-radius: 8px;
-      border: none;
-      cursor: pointer;
-    }
-
-    #popup button:first-of-type {
-      background: #00bbf9;
-      color: white;
-    }
-
-    #popup button:last-of-type {
-      background: #444;
-      color: white;
-      margin-left: 10px;
     }
   </style>
 </head>
@@ -223,6 +170,16 @@
     </div>
 
     <div class="content">
+      <div class="filters">
+        <input type="text" placeholder="Buscar cliente..." />
+        <select>
+          <option value="">Todos os status</option>
+          <option value="Concluído">Concluído</option>
+          <option value="Em andamento">Em andamento</option>
+          <option value="Cancelado">Cancelado</option>
+        </select>
+        <input type="text" placeholder="Buscar consultor..." />
+      </div>
       <table>
         <thead>
           <tr>
@@ -243,147 +200,5 @@
       </table>
     </div>
   </div>
-
-  <!-- POPUP -->
-  <div id="popup">
-    <div>
-      <h3>Atualizar Checklist</h3>
-      <input type="hidden" id="docIdSelecionado">
-
-      <label>Comentário do Responsável</label>
-      <textarea id="comentario"></textarea>
-
-      <label>Status</label>
-      <select id="statusChecklist">
-        <option value="Em andamento">Em andamento</option>
-        <option value="Concluído">Concluído</option>
-        <option value="Cancelado">Cancelado</option>
-      </select>
-
-      <label>Valor Negociado (R$)</label>
-      <input type="number" id="valorNegociado">
-
-      <button onclick="salvarPopup()">Salvar</button>
-      <button onclick="fecharPopup()">Cancelar</button>
-    </div>
-  </div>
-
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-    import { getFirestore, collection, getDocs, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-
-    const tipoChecklist = new URLSearchParams(window.location.search).get("tipo") || "checklistComercial";
-
-    const app = initializeApp({
-      apiKey: "AIzaSyDcjPa9jXsCCu6lNc1fjVg4Bzz1toKWAGY",
-      authDomain: "agro-divel.firebaseapp.com",
-      projectId: "agro-divel"
-    });
-
-    const db = getFirestore(app);
-
-    document.getElementById("dynamic-title").textContent =
-      tipoChecklist === "checklistComercial" ? "Checklist Comercial" :
-      tipoChecklist === "checklistRevisao" ? "Checklist de Revisão" :
-      tipoChecklist === "checklistPecas" ? "Checklist de Peças" : "Painel";
-
-    async function carregarDados() {
-      const querySnapshot = await getDocs(collection(db, tipoChecklist));
-      const painel = document.getElementById("painel-detalhes");
-      let total = 0, concluidos = 0, cancelados = 0, valorTotal = 0;
-      const documentos = [];
-
-      querySnapshot.forEach((docItem) => {
-        const d = docItem.data();
-        documentos.push({ id: docItem.id, ...d });
-
-        total++;
-        if (d.statusChecklist === "Concluído") concluidos++;
-        if (d.statusChecklist === "Cancelado") cancelados++;
-        if (!isNaN(d.valorNegociado)) valorTotal += Number(d.valorNegociado);
-      });
-
-      documentos.sort((a, b) => {
-        const prioridade = (status) => {
-          if (!status || status === "Em andamento") return 0;
-          if (status === "Concluído") return 1;
-          if (status === "Cancelado") return 2;
-          return 3;
-        };
-        return prioridade(a.statusChecklist) - prioridade(b.statusChecklist);
-      });
-
-      painel.innerHTML = "";
-
-      documentos.forEach((d) => {
-        const statusClass = d.statusChecklist === "Concluído" ? "status-concluido" :
-                            d.statusChecklist === "Cancelado" ? "status-cancelado" :
-                            d.statusChecklist === "Em andamento" ? "status-em-andamento" : "";
-
-        painel.innerHTML += `
-          <tr class="${statusClass}">
-            <td>${d.nomeCliente || "-"}</td>
-            <td>${d.nomeFazenda || "-"}</td>
-            <td>${d.consultor || "-"}</td>
-            <td>${d.dataVisita || "-"}</td>
-            <td>${d.modelo || "-"}</td>
-            <td>${d.municipio || "-"}</td>
-            <td>${d.horimetro || "-"}</td>
-            <td>${d.telefone || "-"}</td>
-            <td>${d.observacoes || "-"}</td>
-            <td>${(d.checklist || []).map(item => `<span style="background:#00bbf9; color:#fff; padding:3px 8px; border-radius:5px; margin:2px; display:inline-block; font-size:12px">${item}</span>`).join("")}</td>
-            <td class="acoes">
-              <button onclick="abrirPopup('${d.id}')">➕ Ações</button>
-            </td>
-          </tr>`;
-      });
-
-      document.getElementById("total-clientes").textContent = total;
-      document.getElementById("total-concluidos").textContent = concluidos;
-      document.getElementById("cancelados").textContent = cancelados;
-      document.getElementById("valor-total").textContent = `R$ ${valorTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
-    }
-
-    window.addEventListener("DOMContentLoaded", () => {
-      carregarDados();
-      lucide.createIcons(); // carregar ícones
-    });
-
-    window.abrirPopup = async function(id) {
-      document.getElementById("popup").style.display = "flex";
-      document.getElementById("docIdSelecionado").value = id;
-
-      const docRef = doc(db, tipoChecklist, id);
-      const docSnap = await getDoc(docRef);
-
-      if (docSnap.exists()) {
-        const dados = docSnap.data();
-        document.getElementById("comentario").value = dados.comentarioResponsavel || "";
-        document.getElementById("statusChecklist").value = dados.statusChecklist || "Em andamento";
-        document.getElementById("valorNegociado").value = dados.valorNegociado || "";
-      }
-    }
-
-    window.fecharPopup = function() {
-      document.getElementById("popup").style.display = "none";
-    }
-
-    window.salvarPopup = async function() {
-      const id = document.getElementById("docIdSelecionado").value;
-      const comentario = document.getElementById("comentario").value;
-      const status = document.getElementById("statusChecklist").value;
-      const valor = parseFloat(document.getElementById("valorNegociado").value) || 0;
-
-      const docRef = doc(db, tipoChecklist, id);
-      await updateDoc(docRef, {
-        comentarioResponsavel: comentario,
-        statusChecklist: status,
-        valorNegociado: valor
-      });
-
-      fecharPopup();
-      carregarDados();
-    }
-  </script>
 </body>
 </html>
