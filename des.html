@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <title>Dashboard com Firebase</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://unpkg.com/lucide@latest"></script>
   <style>
     * { box-sizing: border-box; }
 
@@ -47,39 +48,46 @@
       padding: 20px;
       display: flex;
       flex-direction: column;
-      gap: 30px;
+      gap: 20px;
       overflow-y: auto;
     }
 
     .card {
-      background-color: #1e1e2f;
       padding: 20px;
-      border-radius: 12px;
-      box-shadow: 0 0 5px rgba(0,0,0,0.3);
-      transition: transform 0.2s;
+      border-radius: 16px;
+      color: white;
+      background: linear-gradient(135deg, #2e2f4f, #1e1e2f);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+      transition: transform 0.2s, box-shadow 0.2s;
+      text-align: left;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
     }
 
     .card:hover {
-      transform: translateY(-4px);
+      transform: scale(1.02);
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
     }
 
-    .bar {
-      height: 8px;
-      background-color: #444;
-      border-radius: 4px;
-      margin-top: 10px;
+    .card h2 {
+      font-size: 28px;
+      margin: 0;
     }
 
-    .bar span {
-      display: block;
-      height: 100%;
-      border-radius: 4px;
+    .card p {
+      font-size: 14px;
+      color: #eee;
+      margin: 0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
     }
 
-    .pink { background-color: #ff5ec3; }
-    .orange { background-color: #faae42; }
-    .blue { background-color: #00bbf9; }
-    .purple { background-color: #c77dff; }
+    .pink-card    { background: linear-gradient(135deg, #ff5ec3, #d24cb0); }
+    .orange-card  { background: linear-gradient(135deg, #faae42, #e38c00); }
+    .blue-card    { background: linear-gradient(135deg, #00bbf9, #009bd6); }
+    .purple-card  { background: linear-gradient(135deg, #c77dff, #9e4fd9); }
 
     .content {
       flex: 1;
@@ -132,7 +140,7 @@
       .content { padding: 15px; }
     }
 
-    /* POPUP STYLES */
+    /* POPUP */
     #popup {
       display: none;
       position: fixed;
@@ -185,36 +193,32 @@
 <body>
   <header>
     <div style="display: flex; align-items: center; justify-content: space-between;">
-        <img src="assets/logo.png" alt="Logo" style="height: 80px; margin-right: 15px; margin-left: 40px;">
-        <div style="flex: 1; text-align: center;">
-          Sistema de Checklists - Agro Divel
-          <div id="dynamic-title" style="font-size: 14px; font-weight: normal; color: #ccc;">Carregando...</div>
-        </div>
-        <div style="width: 65px;"><!-- espaço para equilibrar a margem direita --></div>
+      <img src="assets/logo.png" alt="Logo" style="height: 80px; margin-right: 15px; margin-left: 40px;">
+      <div style="flex: 1; text-align: center;">
+        Sistema de Checklists - Agro Divel
+        <div id="dynamic-title" style="font-size: 14px; font-weight: normal; color: #ccc;">Carregando...</div>
       </div>
+      <div style="width: 65px;"></div>
+    </div>
   </header>
 
   <div class="main">
     <div class="sidebar">
-      <div class="card">
+      <div class="card pink-card">
         <h2 id="total-clientes">0</h2>
-        <p>Total Clientes</p>
-        <div class="bar"><span class="pink" style="width: 100%;"></span></div>
+        <p><i data-lucide="users"></i> Total Clientes</p>
       </div>
-      <div class="card">
+      <div class="card orange-card">
         <h2 id="total-concluidos">0</h2>
-        <p>Concluídos</p>
-        <div class="bar"><span class="orange" id="bar-concluidos"></span></div>
+        <p><i data-lucide="check-circle"></i> Concluídos</p>
       </div>
-      <div class="card">
-        <h2 id="valor-total">0</h2>
-        <p>Valor Total (R$)</p>
-        <div class="bar"><span class="blue" style="width: 100%;"></span></div>
+      <div class="card blue-card">
+        <h2 id="valor-total">R$ 0,00</h2>
+        <p><i data-lucide="dollar-sign"></i> Valor Total (R$)</p>
       </div>
-      <div class="card">
+      <div class="card purple-card">
         <h2 id="cancelados">0</h2>
-        <p>Cancelados</p>
-        <div class="bar"><span class="purple" id="bar-cancelados"></span></div>
+        <p><i data-lucide="x-octagon"></i> Cancelados</p>
       </div>
     </div>
 
@@ -287,7 +291,6 @@
       const querySnapshot = await getDocs(collection(db, tipoChecklist));
       const painel = document.getElementById("painel-detalhes");
       let total = 0, concluidos = 0, cancelados = 0, valorTotal = 0;
-
       const documentos = [];
 
       querySnapshot.forEach((docItem) => {
@@ -300,7 +303,6 @@
         if (!isNaN(d.valorNegociado)) valorTotal += Number(d.valorNegociado);
       });
 
-      // 🧠 Ordenar por status
       documentos.sort((a, b) => {
         const prioridade = (status) => {
           if (!status || status === "Em andamento") return 0;
@@ -340,14 +342,13 @@
       document.getElementById("total-concluidos").textContent = concluidos;
       document.getElementById("cancelados").textContent = cancelados;
       document.getElementById("valor-total").textContent = `R$ ${valorTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
-
-      document.getElementById("bar-concluidos").style.width = total ? (concluidos / total) * 100 + "%" : "0%";
-      document.getElementById("bar-cancelados").style.width = total ? (cancelados / total) * 100 + "%" : "0%";
     }
 
-    window.addEventListener("DOMContentLoaded", carregarDados);
+    window.addEventListener("DOMContentLoaded", () => {
+      carregarDados();
+      lucide.createIcons(); // carregar ícones
+    });
 
-    // Funções do Popup
     window.abrirPopup = async function(id) {
       document.getElementById("popup").style.display = "flex";
       document.getElementById("docIdSelecionado").value = id;
