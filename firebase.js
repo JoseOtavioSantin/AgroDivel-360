@@ -50,6 +50,7 @@ window.enviarChecklist = async function (event, colecao) {
     nomeCliente: formData.get("nomeCliente") || "",
     nomeFazenda: formData.get("nomeFazenda") || "",
     telefone: formData.get("telefone") || "",
+    filial: formData.get("filial") || "",
     municipio: formData.get("municipio") || "",
     modelo: formData.get("modeloMaquina") || "",
     horimetro: formData.get("horimetro") || "",
