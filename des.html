@@ -296,37 +296,15 @@
     const painel = document.getElementById("painel-detalhes");
     painel.innerHTML = "";
 
-    const hoje = new Date();
-    const mesAtual = hoje.getMonth();
-    const mesAnterior = mesAtual === 0 ? 11 : mesAtual - 1;
-    const anoAtual = hoje.getFullYear();
-    const anoAnterior = mesAtual === 0 ? anoAtual - 1 : anoAtual;
-
     const filtrados = dadosTotais.filter(d => {
       const cliente = (d.nomeCliente || "").toLowerCase();
       const status = d.statusChecklist || "";
       const consultor = (d.consultor || "").toLowerCase();
-
-      if (!d.dataVisita) return false;
-
-      const partes = d.dataVisita.split("/");
-      if (partes.length !== 3) return false;
-
-      const dia = parseInt(partes[0], 10);
-      const mes = parseInt(partes[1], 10) - 1;
-      const ano = parseInt(partes[2], 10);
-      const dataVisita = new Date(ano, mes, dia);
-
-      const dentroDoPeriodo =
-        (ano === anoAtual && mes === mesAtual) ||
-        (ano === anoAnterior && mes === mesAnterior);
-
-      return dentroDoPeriodo &&
-             cliente.includes(clienteFiltro) &&
-             (statusFiltro === "" || status === statusFiltro) &&
-             consultor.includes(consultorFiltro);
+      return cliente.includes(clienteFiltro) &&
+            (statusFiltro === "" || status === statusFiltro) &&
+            consultor.includes(consultorFiltro);
     });
-    
+
     document.getElementById("total-clientes").textContent = filtrados.length;
     document.getElementById("total-concluidos").textContent = filtrados.filter(d => d.statusChecklist === "Concluído").length;
     document.getElementById("cancelados").textContent = filtrados.filter(d => d.statusChecklist === "Cancelado").length;
