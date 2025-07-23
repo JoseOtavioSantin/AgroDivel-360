@@ -1,14 +1,12 @@
-
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <title>Dashboard com Filtros</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <title>Dashboard com Filtros e Ações</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <script src="https://unpkg.com/lucide@latest"></script>
   <style>
     * { box-sizing: border-box; }
-
     body {
       margin: 0;
       font-family: Arial, sans-serif;
@@ -18,31 +16,17 @@
       flex-direction: column;
       height: 100vh;
     }
-
     header {
       background-color: #2c2f3f;
       padding: 20px;
       text-align: center;
       font-size: 20px;
       font-weight: bold;
-      color: #ffffff;
-      letter-spacing: 1px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
     }
-
-    #dynamic-title {
-      margin-top: 10px;
-      font-size: 16px;
-      font-weight: normal;
-      color: #ccc;
-    }
-
     .main {
       display: flex;
       flex: 1;
-      overflow: hidden;
     }
-
     .sidebar {
       width: 250px;
       background-color: #2c2f3f;
@@ -50,170 +34,111 @@
       display: flex;
       flex-direction: column;
       gap: 20px;
-      overflow-y: auto;
     }
-
     .card {
-      padding: 20px;
-      border-radius: 16px;
-      color: white;
-      background: linear-gradient(135deg, #2e2f4f, #1e1e2f);
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-      transition: transform 0.2s, box-shadow 0.2s;
-      text-align: left;
-      display: flex;
-      flex-direction: column;
-      gap: 5px;
+      background: linear-gradient(135deg, #444, #1e1e2f);
+      padding: 15px;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
     }
-
-    .card:hover {
-      transform: scale(1.02);
-      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
-    }
-
-    .card h2 {
-      font-size: 28px;
-      margin: 0;
-    }
-
-    .card p {
-      font-size: 14px;
-      color: #eee;
-      margin: 0;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .pink-card    { background: linear-gradient(135deg, #ff5ec3, #d24cb0); }
-    .orange-card  { background: linear-gradient(135deg, #faae42, #e38c00); }
-    .blue-card    { background: linear-gradient(135deg, #00bbf9, #009bd6); }
-    .purple-card  { background: linear-gradient(135deg, #c77dff, #9e4fd9); }
-
     .content {
       flex: 1;
-      padding: 30px;
+      padding: 20px;
       background-color: #262a3d;
       overflow-y: auto;
     }
-
     .filters {
       display: flex;
-      flex-wrap: wrap;
       gap: 10px;
-      margin-bottom: 20px;
+      margin-bottom: 15px;
     }
-
-    .filters input,
-    .filters select {
+    input, select {
       padding: 8px;
       border-radius: 6px;
       border: none;
-      min-width: 180px;
     }
-
     table {
       width: 100%;
       border-collapse: collapse;
       background-color: #2c2f3f;
-      border-radius: 12px;
-      overflow: hidden;
     }
-
     th, td {
-      font-size: 12px;
-      padding: 10px 15px;
-      text-align: left;
+      padding: 10px;
+      font-size: 13px;
       border-bottom: 1px solid #444;
     }
-
     th {
-      background-color: #2c2f3f;
       color: #cca700;
     }
-
     .acoes button {
-      background: #444;
-      border: none;
       padding: 6px 10px;
+      border: none;
       border-radius: 6px;
-      color: rgb(46, 60, 250);
       cursor: pointer;
-      transition: background 0.2s;
     }
-
-    .acoes button:hover {
-      background: #ffffff;
+    .status-em-andamento { background-color: rgba(248,230,197,0.1); }
+    .status-concluido { background-color: rgba(99,151,248,0.1); }
+    .status-cancelado { background-color: rgba(255,0,0,0.1); }
+    #popup {
+      display: none;
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.6);
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
     }
-
-    .status-em-andamento { background-color: rgba(248, 230, 197, 0.15); }
-    .status-concluido { background-color: rgba(99, 151, 248, 0.1); }
-    .status-cancelado { background-color: rgba(255, 0, 0, 0.1); }
-
-    @media (max-width: 768px) {
-      .sidebar { display: none; }
-      .main { flex-direction: column; }
-      .content { padding: 15px; }
+    #popup > div {
+      background: #2c2f3f;
+      padding: 20px;
+      border-radius: 12px;
+      width: 90%;
+      max-width: 400px;
+      color: white;
+    }
+    #popup textarea, #popup input, #popup select {
+      width: 100%;
+      padding: 8px;
+      margin-bottom: 10px;
+      border: none;
+      border-radius: 6px;
+    }
+    #popup button {
+      padding: 8px 16px;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
     }
   </style>
 </head>
 <body>
   <header>
-    <div style="display: flex; align-items: center; justify-content: space-between;">
-      <img src="assets/logo.png" alt="Logo" style="height: 80px; margin-right: 15px; margin-left: 40px;">
-      <div style="flex: 1; text-align: center;">
-        Sistema de Checklists - Agro Divel
-        <div id="dynamic-title">Carregando...</div>
-      </div>
-      <div style="width: 65px;"></div>
-    </div>
+    Sistema de Checklists - Agro Divel
+    <div id="dynamic-title">Carregando...</div>
   </header>
-
   <div class="main">
     <div class="sidebar">
-      <div class="card pink-card">
-        <h2 id="total-clientes">0</h2>
-        <p><i data-lucide="users"></i> Total Clientes</p>
-      </div>
-      <div class="card orange-card">
-        <h2 id="total-concluidos">0</h2>
-        <p><i data-lucide="check-circle"></i> Concluídos</p>
-      </div>
-      <div class="card blue-card">
-        <h2 id="valor-total">R$ 0,00</h2>
-        <p><i data-lucide="dollar-sign"></i> Valor Total (R$)</p>
-      </div>
-      <div class="card purple-card">
-        <h2 id="cancelados">0</h2>
-        <p><i data-lucide="x-octagon"></i> Cancelados</p>
-      </div>
+      <div class="card"><h3 id="total-clientes">0</h3><p>Total Clientes</p></div>
+      <div class="card"><h3 id="total-concluidos">0</h3><p>Concluídos</p></div>
+      <div class="card"><h3 id="valor-total">R$ 0,00</h3><p>Valor Total</p></div>
+      <div class="card"><h3 id="cancelados">0</h3><p>Cancelados</p></div>
     </div>
-
     <div class="content">
       <div class="filters">
-        <input id="filtro-cliente" type="text" placeholder="Buscar cliente..." />
+        <input id="filtro-cliente" placeholder="Cliente..." />
         <select id="filtro-status">
-          <option value="">Todos os status</option>
-          <option value="Concluído">Concluído</option>
+          <option value="">Todos os Status</option>
           <option value="Em andamento">Em andamento</option>
+          <option value="Concluído">Concluído</option>
           <option value="Cancelado">Cancelado</option>
         </select>
-        <input id="filtro-consultor" type="text" placeholder="Buscar consultor..." />
+        <input id="filtro-consultor" placeholder="Consultor..." />
       </div>
       <table>
         <thead>
           <tr>
-            <th>Cliente</th>
-            <th>Fazenda</th>
-            <th>Consultor</th>
-            <th>Data da Visita</th>
-            <th>Modelo</th>
-            <th>Município</th>
-            <th>Horímetro</th>
-            <th>Telefone</th>
-            <th>Observações</th>
-            <th>Checklist</th>
-            <th>Ações</th>
+            <th>Cliente</th><th>Consultor</th><th>Data</th><th>Checklist</th><th>Ações</th>
           </tr>
         </thead>
         <tbody id="painel-detalhes"></tbody>
@@ -221,85 +146,115 @@
     </div>
   </div>
 
+  <div id="popup">
+    <div>
+      <h3>Atualizar Checklist</h3>
+      <input type="hidden" id="docIdSelecionado" />
+      <label>Comentário</label>
+      <textarea id="comentario"></textarea>
+      <label>Status</label>
+      <select id="statusChecklist">
+        <option value="Em andamento">Em andamento</option>
+        <option value="Concluído">Concluído</option>
+        <option value="Cancelado">Cancelado</option>
+      </select>
+      <label>Valor Negociado</label>
+      <input type="number" id="valorNegociado" />
+      <button onclick="salvarPopup()">Salvar</button>
+      <button onclick="fecharPopup()">Cancelar</button>
+    </div>
+  </div>
+
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
     import { getFirestore, collection, getDocs, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-    const tipoChecklist = new URLSearchParams(window.location.search).get("tipo") || "checklistComercial";
     const app = initializeApp({
       apiKey: "AIzaSyDcjPa9jXsCCu6lNc1fjVg4Bzz1toKWAGY",
       authDomain: "agro-divel.firebaseapp.com",
       projectId: "agro-divel"
     });
-    const db = getFirestore(app);
-    let dadosTotais = [];
 
-    document.getElementById("dynamic-title").textContent =
-      tipoChecklist === "checklistComercial" ? "Checklist Comercial" :
-      tipoChecklist === "checklistRevisao" ? "Checklist de Revisão" :
-      tipoChecklist === "checklistPecas" ? "Checklist de Peças" : "Painel";
+    const db = getFirestore(app);
+    const tipoChecklist = "checklistComercial";
+    let dadosTotais = [];
 
     async function carregarDados() {
       const querySnapshot = await getDocs(collection(db, tipoChecklist));
-      dadosTotais = [];
-      querySnapshot.forEach(docItem => {
-        dadosTotais.push({ id: docItem.id, ...docItem.data() });
-      });
+      dadosTotais = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       aplicarFiltros();
     }
 
     function aplicarFiltros() {
-      const clienteFiltro = document.getElementById("filtro-cliente").value.toLowerCase();
-      const statusFiltro = document.getElementById("filtro-status").value;
-      const consultorFiltro = document.getElementById("filtro-consultor").value.toLowerCase();
+      const cliente = document.getElementById("filtro-cliente").value.toLowerCase();
+      const status = document.getElementById("filtro-status").value;
+      const consultor = document.getElementById("filtro-consultor").value.toLowerCase();
       const painel = document.getElementById("painel-detalhes");
       painel.innerHTML = "";
 
+      let total = 0, concluidos = 0, cancelados = 0, valorTotal = 0;
+
       const filtrados = dadosTotais.filter(d => {
-        const cliente = (d.nomeCliente || "").toLowerCase();
-        const status = d.statusChecklist || "";
-        const consultor = (d.consultor || "").toLowerCase();
-        return cliente.includes(clienteFiltro) &&
-               (statusFiltro === "" || status === statusFiltro) &&
-               consultor.includes(consultorFiltro);
+        return (!cliente || (d.nomeCliente || "").toLowerCase().includes(cliente)) &&
+               (!status || d.statusChecklist === status) &&
+               (!consultor || (d.consultor || "").toLowerCase().includes(consultor));
       });
 
-      document.getElementById("total-clientes").textContent = filtrados.length;
-      document.getElementById("total-concluidos").textContent = filtrados.filter(d => d.statusChecklist === "Concluído").length;
-      document.getElementById("cancelados").textContent = filtrados.filter(d => d.statusChecklist === "Cancelado").length;
-
-      let totalValor = 0;
       filtrados.forEach(d => {
-        if (!isNaN(d.valorNegociado)) totalValor += Number(d.valorNegociado);
-        const statusClass = d.statusChecklist === "Concluído" ? "status-concluido" :
-                            d.statusChecklist === "Cancelado" ? "status-cancelado" :
-                            d.statusChecklist === "Em andamento" ? "status-em-andamento" : "";
+        const cls = d.statusChecklist === "Concluído" ? "status-concluido" :
+                    d.statusChecklist === "Cancelado" ? "status-cancelado" : "status-em-andamento";
+        if (d.statusChecklist === "Concluído") concluidos++;
+        if (d.statusChecklist === "Cancelado") cancelados++;
+        if (!isNaN(d.valorNegociado)) valorTotal += Number(d.valorNegociado);
+        total++;
+
         painel.innerHTML += `
-          <tr class="${statusClass}">
+          <tr class="${cls}">
             <td>${d.nomeCliente || "-"}</td>
-            <td>${d.nomeFazenda || "-"}</td>
             <td>${d.consultor || "-"}</td>
             <td>${d.dataVisita || "-"}</td>
-            <td>${d.modelo || "-"}</td>
-            <td>${d.municipio || "-"}</td>
-            <td>${d.horimetro || "-"}</td>
-            <td>${d.telefone || "-"}</td>
-            <td>${d.observacoes || "-"}</td>
-            <td>${(d.checklist || []).map(item => `<span style="background:#00bbf9; color:#fff; padding:3px 8px; border-radius:5px; margin:2px; display:inline-block; font-size:12px">${item}</span>`).join("")}</td>
-            <td class="acoes"><button onclick="abrirPopup('${d.id}')">➕ Ações</button></td>
+            <td>${(d.checklist || []).join(", ")}</td>
+            <td><button onclick="abrirPopup('${d.id}')">➕</button></td>
           </tr>`;
       });
 
-      document.getElementById("valor-total").textContent = `R$ ${totalValor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
+      document.getElementById("total-clientes").textContent = total;
+      document.getElementById("total-concluidos").textContent = concluidos;
+      document.getElementById("cancelados").textContent = cancelados;
+      document.getElementById("valor-total").textContent = `R$ ${valorTotal.toFixed(2)}`;
     }
 
-    document.addEventListener("DOMContentLoaded", () => {
+    window.abrirPopup = async function(id) {
+      document.getElementById("popup").style.display = "flex";
+      document.getElementById("docIdSelecionado").value = id;
+      const docSnap = await getDoc(doc(db, tipoChecklist, id));
+      if (docSnap.exists()) {
+        const d = docSnap.data();
+        document.getElementById("comentario").value = d.comentarioResponsavel || "";
+        document.getElementById("statusChecklist").value = d.statusChecklist || "";
+        document.getElementById("valorNegociado").value = d.valorNegociado || "";
+      }
+    }
+
+    window.fecharPopup = function() {
+      document.getElementById("popup").style.display = "none";
+    }
+
+    window.salvarPopup = async function() {
+      const id = document.getElementById("docIdSelecionado").value;
+      const comentario = document.getElementById("comentario").value;
+      const status = document.getElementById("statusChecklist").value;
+      const valor = parseFloat(document.getElementById("valorNegociado").value) || 0;
+      await updateDoc(doc(db, tipoChecklist, id), {
+        comentarioResponsavel: comentario,
+        statusChecklist: status,
+        valorNegociado: valor
+      });
+      fecharPopup();
       carregarDados();
-      lucide.createIcons();
-      document.getElementById("filtro-cliente").addEventListener("input", aplicarFiltros);
-      document.getElementById("filtro-status").addEventListener("change", aplicarFiltros);
-      document.getElementById("filtro-consultor").addEventListener("input", aplicarFiltros);
-    });
+    }
+
+    window.addEventListener("DOMContentLoaded", carregarDados);
   </script>
 </body>
 </html>
