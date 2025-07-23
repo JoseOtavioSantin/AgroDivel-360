@@ -141,10 +141,27 @@
     }
 
     @media (max-width: 600px) {
-      .container {
-        max-width: 300px;
+      .dashboard {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 15px;
+        justify-items: center; /* Alinha os cards no centro da célula */
       }
-    }
+
+      .card {
+        width: 90%;
+        max-width: 160px;
+        padding: 20px 10px;
+        margin-left: -10px;
+      }
+
+      .container {
+        max-width: 100%;
+        padding: 10px;
+      }
+   }
+
+
   </style>
 </head>
 <body>
