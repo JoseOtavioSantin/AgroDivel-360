@@ -206,16 +206,17 @@
     </div>
 
     <div class="content">
-      <div class="filters">
-        <input id="filtro-cliente" type="text" placeholder="Buscar cliente..." />
-        <select id="filtro-status">
-          <option value="">Todos os status</option>
-          <option value="Concluído">Concluído</option>
-          <option value="Em andamento">Em andamento</option>
-          <option value="Cancelado">Cancelado</option>
-        </select>
-        <input id="filtro-consultor" type="text" placeholder="Buscar consultor..." />
-      </div>
+        <div class="filters">
+          <input id="filtro-cliente" type="text" placeholder="Buscar cliente..." />
+          <select id="filtro-status">
+            <option value="">Todos os status</option>
+            <option value="Concluído">Concluído</option>
+            <option value="Em andamento">Em andamento</option>
+            <option value="Cancelado">Cancelado</option>
+          </select>
+          <input id="filtro-consultor" type="text" placeholder="Buscar consultor..." />
+          <input id="filtro-data" type="date" />
+        </div>
       <table>
         <thead>
           <tr>
@@ -289,47 +290,56 @@
     aplicarFiltros();
   }
 
-  function aplicarFiltros() {
-    const clienteFiltro = document.getElementById("filtro-cliente").value.toLowerCase();
-    const statusFiltro = document.getElementById("filtro-status").value;
-    const consultorFiltro = document.getElementById("filtro-consultor").value.toLowerCase();
-    const painel = document.getElementById("painel-detalhes");
-    painel.innerHTML = "";
+function aplicarFiltros() {
+  const clienteFiltro = document.getElementById("filtro-cliente").value.toLowerCase();
+  const statusFiltro = document.getElementById("filtro-status").value;
+  const consultorFiltro = document.getElementById("filtro-consultor").value.toLowerCase();
+  const dataSelecionada = document.getElementById("filtro-data").value; // yyyy-mm-dd
+  const painel = document.getElementById("painel-detalhes");
+  painel.innerHTML = "";
 
-    const filtrados = dadosTotais.filter(d => {
-      const cliente = (d.nomeCliente || "").toLowerCase();
-      const status = d.statusChecklist || "";
-      const consultor = (d.consultor || "").toLowerCase();
-      return cliente.includes(clienteFiltro) &&
-            (statusFiltro === "" || status === statusFiltro) &&
-            consultor.includes(consultorFiltro);
-    });
+  const filtrados = dadosTotais.filter(d => {
+    const cliente = (d.nomeCliente || "").toLowerCase();
+    const status = d.statusChecklist || "";
+    const consultor = (d.consultor || "").toLowerCase();
+    const dataVisita = d.dataVisita || "";
 
-    document.getElementById("total-clientes").textContent = filtrados.length;
-    document.getElementById("total-concluidos").textContent = filtrados.filter(d => d.statusChecklist === "Concluído").length;
-    document.getElementById("cancelados").textContent = filtrados.filter(d => d.statusChecklist === "Cancelado").length;
+    // Convertendo data do Firebase (ex: "15/07/2025") para "2025-07-15"
+    const dataFormatada = dataVisita.includes("/")
+      ? dataVisita.split("/").reverse().join("-")
+      : dataVisita;
 
-    let totalValor = 0;
-    filtrados.forEach(d => {
-      if (!isNaN(d.valorNegociado)) totalValor += Number(d.valorNegociado);
-      const statusClass = d.statusChecklist === "Concluído" ? "status-concluido" :
-                          d.statusChecklist === "Cancelado" ? "status-cancelado" :
-                          d.statusChecklist === "Em andamento" ? "status-em-andamento" : "";
-      painel.innerHTML += `
-        <tr class="${statusClass}">
-          <td>${d.nomeCliente || "-"}</td>
-          <td>${d.nomeFazenda || "-"}</td>
-          <td>${d.consultor || "-"}</td>
-          <td>${d.dataVisita || "-"}</td>
-          <td>${d.modelo || "-"}</td>
-          <td>${d.municipio || "-"}</td>
-          <td>${d.horimetro || "-"}</td>
-          <td>${d.telefone || "-"}</td>
-          <td>${d.observacoes || "-"}</td>
-          <td>${(d.checklist || []).map(item => `<span style="background:#fff; color:#00205b; padding:3px 8px; border-radius:5px; margin:2px; display:inline-block; font-size:10px">${item}</span>`).join("")}</td>
-          <td class="acoes"><button class="btn-acao" data-id="${d.id}" title="Abrir ações">➕</button></td>
-        </tr>`;
-    });
+    return cliente.includes(clienteFiltro) &&
+           (statusFiltro === "" || status === statusFiltro) &&
+           consultor.includes(consultorFiltro) &&
+           (!dataSelecionada || dataSelecionada === dataFormatada);
+  });
+
+  document.getElementById("total-clientes").textContent = filtrados.length;
+  document.getElementById("total-concluidos").textContent = filtrados.filter(d => d.statusChecklist === "Concluído").length;
+  document.getElementById("cancelados").textContent = filtrados.filter(d => d.statusChecklist === "Cancelado").length;
+
+  let totalValor = 0;
+  filtrados.forEach(d => {
+    if (!isNaN(d.valorNegociado)) totalValor += Number(d.valorNegociado);
+    const statusClass = d.statusChecklist === "Concluído" ? "status-concluido" :
+                        d.statusChecklist === "Cancelado" ? "status-cancelado" :
+                        d.statusChecklist === "Em andamento" ? "status-em-andamento" : "";
+    painel.innerHTML += `
+      <tr class="${statusClass}">
+        <td>${d.nomeCliente || "-"}</td>
+        <td>${d.nomeFazenda || "-"}</td>
+        <td>${d.consultor || "-"}</td>
+        <td>${d.dataVisita || "-"}</td>
+        <td>${d.modelo || "-"}</td>
+        <td>${d.municipio || "-"}</td>
+        <td>${d.horimetro || "-"}</td>
+        <td>${d.telefone || "-"}</td>
+        <td>${d.observacoes || "-"}</td>
+        <td>${(d.checklist || []).map(item => `<span style="background:#fff; color:#00205b; padding:3px 8px; border-radius:5px; margin:2px; display:inline-block; font-size:10px">${item}</span>`).join("")}</td>
+        <td class="acoes"><button class="btn-acao" data-id="${d.id}" title="Abrir ações">➕</button></td>
+      </tr>`;
+  });
 
     document.getElementById("valor-total").textContent = `R$ ${totalValor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
 
@@ -379,6 +389,7 @@
     document.getElementById("filtro-cliente").addEventListener("input", aplicarFiltros);
     document.getElementById("filtro-status").addEventListener("change", aplicarFiltros);
     document.getElementById("filtro-consultor").addEventListener("input", aplicarFiltros);
+    document.getElementById("filtro-data").addEventListener("change", aplicarFiltros);
   });
 </script>
 </body>
