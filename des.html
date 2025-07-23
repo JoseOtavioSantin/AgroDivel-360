@@ -175,11 +175,73 @@
             <th>Ações</th>
           </tr>
         </thead>
-        <tbody id="painel-detalhes">
-          <!-- Dados dinâmicos inseridos por JavaScript -->
-        </tbody>
+        <tbody id="painel-detalhes"></tbody>
       </table>
     </div>
   </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+    const tipoChecklist = new URLSearchParams(window.location.search).get("tipo") || "checklistComercial";
+
+    const app = initializeApp({
+      apiKey: "AIzaSyDcjPa9jXsCCu6lNc1fjVg4Bzz1toKWAGY",
+      authDomain: "agro-divel.firebaseapp.com",
+      projectId: "agro-divel"
+    });
+
+    const db = getFirestore(app);
+
+    document.getElementById("dynamic-title").textContent =
+      tipoChecklist === "checklistComercial" ? "Checklist Comercial" :
+      tipoChecklist === "checklistRevisao" ? "Checklist de Revisão" :
+      tipoChecklist === "checklistPecas" ? "Checklist de Peças" : "Painel";
+
+    async function carregarDados() {
+      const querySnapshot = await getDocs(collection(db, tipoChecklist));
+      const painel = document.getElementById("painel-detalhes");
+      let total = 0, concluidos = 0, cancelados = 0, valorTotal = 0;
+
+      painel.innerHTML = "";
+
+      querySnapshot.forEach((doc) => {
+        const d = doc.data();
+        total++;
+        if (d.statusChecklist === "Concluído") concluidos++;
+        if (d.statusChecklist === "Cancelado") cancelados++;
+        if (!isNaN(d.valorNegociado)) valorTotal += Number(d.valorNegociado);
+
+        const statusClass = d.statusChecklist === "Concluído" ? "status-concluido" :
+                            d.statusChecklist === "Cancelado" ? "status-cancelado" :
+                            "status-em-andamento";
+
+        painel.innerHTML += `
+          <tr class="${statusClass}">
+            <td>${d.nomeCliente || "-"}</td>
+            <td>${d.nomeFazenda || "-"}</td>
+            <td>${d.consultor || "-"}</td>
+            <td>${d.dataVisita || "-"}</td>
+            <td>${d.modelo || "-"}</td>
+            <td>${d.municipio || "-"}</td>
+            <td>${d.horimetro || "-"}</td>
+            <td>${d.telefone || "-"}</td>
+            <td>${d.observacoes || "-"}</td>
+            <td>${(d.checklist || []).map(item => `<span style="background:#00bbf9; color:#fff; padding:3px 8px; border-radius:5px; margin:2px; display:inline-block; font-size:12px">${item}</span>`).join("")}</td>
+            <td class="acoes">
+              <button>➕ Ações</button>
+            </td>
+          </tr>`;
+      });
+
+      document.getElementById("total-clientes").textContent = total;
+      document.getElementById("total-concluidos").textContent = concluidos;
+      document.getElementById("cancelados").textContent = cancelados;
+      document.getElementById("valor-total").textContent = `R$ ${valorTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
+    }
+
+    window.addEventListener("DOMContentLoaded", carregarDados);
+  </script>
 </body>
 </html>
