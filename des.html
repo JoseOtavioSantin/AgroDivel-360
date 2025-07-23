@@ -4,8 +4,6 @@
   <meta charset="UTF-8">
   <title>Dashboard com Filtros</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
-  <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
   <style>
     * { box-sizing: border-box; }
@@ -217,7 +215,7 @@
             <option value="Cancelado">Cancelado</option>
           </select>
           <input id="filtro-consultor" type="text" placeholder="Buscar consultor..." />
-          <input id="filtro-intervalo" type="text" placeholder="Filtrar por período..." />
+          <input id="filtro-data" type="date" />
         </div>
       <table>
         <thead>
@@ -292,24 +290,11 @@
     aplicarFiltros();
   }
 
-
-                      let dataInicio = "";
-                let dataFim = "";
-                
-                flatpickr("#filtro-intervalo", {
-                  mode: "range",
-                  dateFormat: "Y-m-d",
-                  onChange: function(selectedDates) {
-                    dataInicio = selectedDates[0] ? selectedDates[0].toISOString().split("T")[0] : "";
-                    dataFim = selectedDates[1] ? selectedDates[1].toISOString().split("T")[0] : "";
-                    aplicarFiltros();
-                  }
-                });
-
 function aplicarFiltros() {
   const clienteFiltro = document.getElementById("filtro-cliente").value.toLowerCase();
   const statusFiltro = document.getElementById("filtro-status").value;
   const consultorFiltro = document.getElementById("filtro-consultor").value.toLowerCase();
+  const dataSelecionada = document.getElementById("filtro-data").value; // yyyy-mm-dd
   const painel = document.getElementById("painel-detalhes");
   painel.innerHTML = "";
 
@@ -321,14 +306,13 @@ function aplicarFiltros() {
 
     // Convertendo data do Firebase (ex: "15/07/2025") para "2025-07-15"
     const dataFormatada = dataVisita.includes("/")
-  ? dataVisita.split("/").reverse().map(p => p.padStart(2, "0")).join("-")
-  : dataVisita;replaceAll("-", "/");
+      ? dataVisita.split("/").reverse().join("-")
+      : dataVisita.replaceAll("-", "/");
 
     return cliente.includes(clienteFiltro) &&
            (statusFiltro === "" || status === statusFiltro) &&
            consultor.includes(consultorFiltro) &&
-           (!dataInicio || dataFormatada >= dataInicio) &&
-           (!dataFim || dataFormatada <= dataFim);
+           (!dataSelecionada || dataSelecionada === dataFormatada);
   });
 
   document.getElementById("total-clientes").textContent = filtrados.length;
