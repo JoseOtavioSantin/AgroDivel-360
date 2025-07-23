@@ -174,16 +174,32 @@
       box-shadow: 0 4px 12px rgba(0, 187, 249, 0.4);
     }
 
+    .filters {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 20px;
+      align-items: center;
+    }
+
+    #btn-exportar {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 40px;
+      padding: 0 10px;
+    }
+
 </style>
 </head>
 <body>
   <header>
     <div style="display: flex; align-items: center; justify-content: space-between;">
       <img src="assets/logo.png" alt="Logo" style="height: 80px; margin-right: 15px; margin-left: 45px;">
-      <div style="flex: 1; text-align: center;">
-        Sistema de Checklists - Agro Divel
-        <div id="dynamic-title">Carregando...</div>
-      </div>
+    <div style="flex: 1; text-align: center;">
+      <em>Dashboard Agro Divel 360</em>
+      <div id="dynamic-title" style="font-style: italic;">Carregando...</div>
+    </div>
       <div style="width: 65px;"></div>
     </div>
   </header>
@@ -219,7 +235,13 @@
           </select>
           <input id="filtro-consultor" type="text" placeholder="Buscar consultor..." />
           <input id="filtro-periodo" placeholder="Selecione o período" />
+
+      <button id="btn-exportar" class="btn-acao" style="margin-left: auto;" title="Exportar para Excel">
+        <i data-lucide="download" style="width: 20px; height: 20px;"></i>
+      </button>
+
         </div>
+
       <table>
         <thead>
           <tr>
@@ -280,9 +302,9 @@
   let dadosTotais = [];
 
   document.getElementById("dynamic-title").textContent =
-    tipoChecklist === "checklistComercial" ? "Checklist Comercial" :
-    tipoChecklist === "checklistRevisao" ? "Checklist de Revisão" :
-    tipoChecklist === "checklistPecas" ? "Checklist de Peças" : "Painel";
+  tipoChecklist === "checklistComercial" ? "Comercial" :
+  tipoChecklist === "checklistRevisao" ? "Revisão" :
+  tipoChecklist === "checklistPecas" ? "Peças" : "Painel";
 
   async function carregarDados() {
     const querySnapshot = await getDocs(collection(db, tipoChecklist));
@@ -354,7 +376,9 @@ function aplicarFiltros() {
         <td>${d.municipio || "-"}</td>
         <td>${d.horimetro || "-"}</td>
         <td>${d.telefone || "-"}</td>
-        <td>${d.observacoes || "-"}</td>
+        <td data-comentario="${d.comentarioResponsavel || ''}" data-valor="${d.valorNegociado || 0}">
+        ${d.observacoes || "-"}
+      </td>
         <td>${(d.checklist || []).map(item => `<span style="background:#fff; color:#00205b; padding:3px 8px; border-radius:5px; margin:2px; display:inline-block; font-size:10px">${item}</span>`).join("")}</td>
         <td class="acoes"><button class="btn-acao" data-id="${d.id}" title="Abrir ações">➕</button></td>
       </tr>`;
@@ -421,7 +445,48 @@ function aplicarFiltros() {
       }
     });
   });
+
+//Função exportar.
+
+document.getElementById("btn-exportar").addEventListener("click", () => {
+  const headers = [
+  "Cliente", "Fazenda", "Consultor", "Data da Visita", "Modelo",
+  "Município", "Horímetro", "Telefone", "Observações", "Checklist",
+  "Comentário", "Valor (R$)", "Status"
+  ];
+
+  const linhas = Array.from(document.querySelectorAll("#painel-detalhes tr")).map(tr => {
+    const tds = tr.querySelectorAll("td");
+    return [
+      tds[0]?.textContent.trim(), // Cliente
+      tds[1]?.textContent.trim(), // Fazenda
+      tds[2]?.textContent.trim(), // Consultor
+      tds[3]?.textContent.trim(), // Data da Visita
+      tds[4]?.textContent.trim(), // Modelo
+      tds[5]?.textContent.trim(), // Município
+      tds[6]?.textContent.trim(), // Horímetro
+      tds[7]?.textContent.trim(), // Telefone
+      tds[8]?.textContent.trim(), // Observações
+      tds[9]?.innerText.trim(),   // Checklist
+      tds[8]?.getAttribute("data-comentario") || "",   // Comentário do Responsável
+      tds[8]?.getAttribute("data-valor") || "",        // Valor Negociado
+      tr.classList.contains("status-concluido") ? "Concluído" :
+      tr.classList.contains("status-cancelado") ? "Cancelado" :
+      tr.classList.contains("status-em-andamento") ? "Em andamento" : ""
+    ];
+  });
+
+  const planilha = XLSX.utils.aoa_to_sheet([headers, ...linhas]);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, planilha, "Checklist");
+
+  XLSX.writeFile(wb, "checklists_filtrados.xlsx");
+});
+
 </script>
+
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
 </body>
 
 </html> 
