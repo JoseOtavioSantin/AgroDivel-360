@@ -257,6 +257,78 @@
     }
 
     window.addEventListener("DOMContentLoaded", carregarDados);
-  </script>
+      window.abrirPopup = async function(id) {
+      const popup = document.createElement("div");
+      popup.id = "popup";
+      popup.style.position = "fixed";
+      popup.style.top = 0;
+      popup.style.left = 0;
+      popup.style.width = "100%";
+      popup.style.height = "100%";
+      popup.style.background = "rgba(0,0,0,0.6)";
+      popup.style.display = "flex";
+      popup.style.justifyContent = "center";
+      popup.style.alignItems = "center";
+      popup.style.zIndex = "1000";
+
+      const box = document.createElement("div");
+      box.style.background = "#2c2f3f";
+      box.style.padding = "20px";
+      box.style.borderRadius = "12px";
+      box.style.color = "white";
+      box.style.width = "90%";
+      box.style.maxWidth = "400px";
+
+      box.innerHTML = `
+        <h3>Atualizar Checklist</h3>
+        <input type="hidden" id="docIdSelecionado" value="${id}">
+        <label>Comentário do Responsável</label>
+        <textarea id="comentario" style="width:100%;margin-bottom:10px;border:none;border-radius:6px;padding:8px;"></textarea>
+        <label>Status</label>
+        <select id="statusChecklist" style="width:100%;margin-bottom:10px;border:none;border-radius:6px;padding:8px;">
+          <option value="Em andamento">Em andamento</option>
+          <option value="Concluído">Concluído</option>
+          <option value="Cancelado">Cancelado</option>
+        </select>
+        <label>Valor Negociado (R$)</label>
+        <input type="number" id="valorNegociado" style="width:100%;margin-bottom:10px;border:none;border-radius:6px;padding:8px;">
+        <button id="salvarBtn" style="background:#00bbf9;color:white;padding:8px 16px;border-radius:8px;border:none;cursor:pointer;">Salvar</button>
+        <button id="fecharBtn" style="background:#444;color:white;padding:8px 16px;border-radius:8px;border:none;margin-left:10px;cursor:pointer;">Cancelar</button>
+      `;
+
+      popup.appendChild(box);
+      document.body.appendChild(popup);
+
+      const { doc, getDoc, updateDoc } = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js");
+      const docRef = doc(db, tipoChecklist, id);
+      const docSnap = await getDoc(docRef);
+
+      if (docSnap.exists()) {
+        const dados = docSnap.data();
+        document.getElementById("comentario").value = dados.comentarioResponsavel || "";
+        document.getElementById("statusChecklist").value = dados.statusChecklist || "Em andamento";
+        document.getElementById("valorNegociado").value = dados.valorNegociado || "";
+      }
+
+      document.getElementById("salvarBtn").onclick = async () => {
+        const comentario = document.getElementById("comentario").value;
+        const status = document.getElementById("statusChecklist").value;
+        const valor = parseFloat(document.getElementById("valorNegociado").value) || 0;
+
+        await updateDoc(docRef, {
+          comentarioResponsavel: comentario,
+          statusChecklist: status,
+          valorNegociado: valor
+        });
+
+        document.body.removeChild(popup);
+        carregarDados();
+      };
+
+      document.getElementById("fecharBtn").onclick = () => {
+        document.body.removeChild(popup);
+      };
+    };
+</script>
 </body>
 </html>
