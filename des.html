@@ -221,79 +221,110 @@
   </div>
 
   <script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-  import { getFirestore, collection, getDocs, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getFirestore, collection, getDocs, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-  const tipoChecklist = new URLSearchParams(window.location.search).get("tipo") || "checklistComercial";
-  const app = initializeApp({
-    apiKey: "AIzaSyDcjPa9jXsCCu6lNc1fjVg4Bzz1toKWAGY",
-    authDomain: "agro-divel.firebaseapp.com",
-    projectId: "agro-divel"
-  });
-  const db = getFirestore(app);
-  let dadosTotais = [];
-
-  document.getElementById("dynamic-title").textContent =
-    tipoChecklist === "checklistComercial" ? "Checklist Comercial" :
-    tipoChecklist === "checklistRevisao" ? "Checklist de Revisão" :
-    tipoChecklist === "checklistPecas" ? "Checklist de Peças" : "Painel";
-
-  async function carregarDados() {
-    const querySnapshot = await getDocs(collection(db, tipoChecklist));
-    dadosTotais = [];
-    querySnapshot.forEach(docItem => {
-      dadosTotais.push({ id: docItem.id, ...docItem.data() });
+    const tipoChecklist = new URLSearchParams(window.location.search).get("tipo") || "checklistComercial";
+    const app = initializeApp({
+      apiKey: "AIzaSyDcjPa9jXsCCu6lNc1fjVg4Bzz1toKWAGY",
+      authDomain: "agro-divel.firebaseapp.com",
+      projectId: "agro-divel"
     });
-    aplicarFiltros();
-  }
+    const db = getFirestore(app);
+    let dadosTotais = [];
 
-  function aplicarFiltros() {
-    const clienteFiltro = document.getElementById("filtro-cliente").value.toLowerCase();
-    const statusFiltro = document.getElementById("filtro-status").value;
-    const consultorFiltro = document.getElementById("filtro-consultor").value.toLowerCase();
-    const painel = document.getElementById("painel-detalhes");
-    painel.innerHTML = "";
+    document.getElementById("dynamic-title").textContent =
+      tipoChecklist === "checklistComercial" ? "Checklist Comercial" :
+      tipoChecklist === "checklistRevisao" ? "Checklist de Revisão" :
+      tipoChecklist === "checklistPecas" ? "Checklist de Peças" : "Painel";
 
-    const filtrados = dadosTotais.filter(d => {
-      const cliente = (d.nomeCliente || "").toLowerCase();
-      const status = d.statusChecklist || "";
-      const consultor = (d.consultor || "").toLowerCase();
-      return cliente.includes(clienteFiltro) &&
-             (statusFiltro === "" || status === statusFiltro) &&
-             consultor.includes(consultorFiltro);
+    async function carregarDados() {
+      const querySnapshot = await getDocs(collection(db, tipoChecklist));
+      dadosTotais = [];
+      querySnapshot.forEach(docItem => {
+        dadosTotais.push({ id: docItem.id, ...docItem.data() });
+      });
+      aplicarFiltros();
+    }
+
+    function aplicarFiltros() {
+      const clienteFiltro = document.getElementById("filtro-cliente").value.toLowerCase();
+      const statusFiltro = document.getElementById("filtro-status").value;
+      const consultorFiltro = document.getElementById("filtro-consultor").value.toLowerCase();
+      const painel = document.getElementById("painel-detalhes");
+      painel.innerHTML = "";
+
+      const filtrados = dadosTotais.filter(d => {
+        const cliente = (d.nomeCliente || "").toLowerCase();
+        const status = d.statusChecklist || "";
+        const consultor = (d.consultor || "").toLowerCase();
+        return cliente.includes(clienteFiltro) &&
+               (statusFiltro === "" || status === statusFiltro) &&
+               consultor.includes(consultorFiltro);
+      });
+
+      document.getElementById("total-clientes").textContent = filtrados.length;
+      document.getElementById("total-concluidos").textContent = filtrados.filter(d => d.statusChecklist === "Concluído").length;
+      document.getElementById("cancelados").textContent = filtrados.filter(d => d.statusChecklist === "Cancelado").length;
+
+      let totalValor = 0;
+      filtrados.forEach(d => {
+        if (!isNaN(d.valorNegociado)) totalValor += Number(d.valorNegociado);
+        const statusClass = d.statusChecklist === "Concluído" ? "status-concluido" :
+                            d.statusChecklist === "Cancelado" ? "status-cancelado" :
+                            d.statusChecklist === "Em andamento" ? "status-em-andamento" : "";
+        painel.innerHTML += `
+          <tr class="${statusClass}">
+            <td>${d.nomeCliente || "-"}</td>
+            <td>${d.nomeFazenda || "-"}</td>
+            <td>${d.consultor || "-"}</td>
+            <td>${d.dataVisita || "-"}</td>
+            <td>${d.modelo || "-"}</td>
+            <td>${d.municipio || "-"}</td>
+            <td>${d.horimetro || "-"}</td>
+            <td>${d.telefone || "-"}</td>
+            <td>${d.observacoes || "-"}</td>
+            <td>${(d.checklist || []).map(item => `<span style="background:#00bbf9; color:#fff; padding:3px 8px; border-radius:5px; margin:2px; display:inline-block; font-size:12px">${item}</span>`).join("")}</td>
+            <td class="acoes"><button onclick="abrirPopup('${d.id}')">➕ Ações</button></td>
+          </tr>`;
+      });
+
+      document.getElementById("valor-total").textContent = `R$ ${totalValor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      carregarDados();
+      lucide.createIcons();
+      document.getElementById("filtro-cliente").addEventListener("input", aplicarFiltros);
+      document.getElementById("filtro-status").addEventListener("change", aplicarFiltros);
+      document.getElementById("filtro-consultor").addEventListener("input", aplicarFiltros);
     });
+  </script>
 
-    document.getElementById("total-clientes").textContent = filtrados.length;
-    document.getElementById("total-concluidos").textContent = filtrados.filter(d => d.statusChecklist === "Concluído").length;
-    document.getElementById("cancelados").textContent = filtrados.filter(d => d.statusChecklist === "Cancelado").length;
+<!-- POPUP DE AÇÃO -->
+<div id="popup" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);justify-content:center;align-items:center;z-index:9999;">
+  <div style="background:#2c2f3f;padding:20px;border-radius:12px;width:90%;max-width:400px;">
+    <h3>Atualizar Checklist</h3>
+    <input type="hidden" id="docIdSelecionado">
+    <label>Comentário do Responsável</label>
+    <textarea id="comentario" style="width:100%;padding:8px;margin-bottom:10px;border:none;border-radius:6px;"></textarea>
+    <label>Status</label>
+    <select id="statusChecklist" style="width:100%;padding:8px;margin-bottom:10px;border:none;border-radius:6px;">
+      <option value="Em andamento">Em andamento</option>
+      <option value="Concluído">Concluído</option>
+      <option value="Cancelado">Cancelado</option>
+    </select>
+    <label>Valor Negociado (R$)</label>
+    <input type="number" id="valorNegociado" style="width:100%;padding:8px;margin-bottom:10px;border:none;border-radius:6px;">
+    <div style="text-align:right;">
+      <button onclick="salvarPopup()" style="background:#00bbf9;color:white;padding:8px 16px;border-radius:8px;border:none;cursor:pointer;">Salvar</button>
+      <button onclick="fecharPopup()" style="background:#444;color:white;padding:8px 16px;border-radius:8px;border:none;cursor:pointer;margin-left:10px;">Cancelar</button>
+    </div>
+  </div>
+</div>
 
-    let totalValor = 0;
-    filtrados.forEach(d => {
-      if (!isNaN(d.valorNegociado)) totalValor += Number(d.valorNegociado);
-      const statusClass = d.statusChecklist === "Concluído" ? "status-concluido" :
-                          d.statusChecklist === "Cancelado" ? "status-cancelado" :
-                          d.statusChecklist === "Em andamento" ? "status-em-andamento" : "";
-      painel.innerHTML += `
-        <tr class="${statusClass}">
-          <td>${d.nomeCliente || "-"}</td>
-          <td>${d.nomeFazenda || "-"}</td>
-          <td>${d.consultor || "-"}</td>
-          <td>${d.dataVisita || "-"}</td>
-          <td>${d.modelo || "-"}</td>
-          <td>${d.municipio || "-"}</td>
-          <td>${d.horimetro || "-"}</td>
-          <td>${d.telefone || "-"}</td>
-          <td>${d.observacoes || "-"}</td>
-          <td>${(d.checklist || []).map(item => `<span style="background:#00bbf9; color:#fff; padding:3px 8px; border-radius:5px; margin:2px; display:inline-block; font-size:12px">${item}</span>`).join("")}</td>
-          <td class="acoes"><button onclick="abrirPopup('${d.id}')">➕ Ações</button></td>
-        </tr>`;
-    });
-
-    document.getElementById("valor-total").textContent = `R$ ${totalValor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
-  }
-
-  // ---------- FUNÇÕES DO POPUP ----------
-  window.abrirPopup = async function (id) {
+<script>
+  async function abrirPopup(id) {
     document.getElementById("popup").style.display = "flex";
     document.getElementById("docIdSelecionado").value = id;
     const docRef = doc(db, tipoChecklist, id);
@@ -306,40 +337,24 @@
     }
   }
 
-  window.fecharPopup = function () {
+  function fecharPopup() {
     document.getElementById("popup").style.display = "none";
   }
 
-  window.salvarPopup = async function () {
+  async function salvarPopup() {
     const id = document.getElementById("docIdSelecionado").value;
     const comentario = document.getElementById("comentario").value;
     const status = document.getElementById("statusChecklist").value;
     const valor = parseFloat(document.getElementById("valorNegociado").value) || 0;
-
-    if (!status) {
-      alert("Selecione um status.");
-      return;
-    }
-
     const docRef = doc(db, tipoChecklist, id);
     await updateDoc(docRef, {
       comentarioResponsavel: comentario,
       statusChecklist: status,
       valorNegociado: valor
     });
-
     fecharPopup();
     carregarDados();
   }
-
-  // ---------- EVENTOS ----------
-  document.addEventListener("DOMContentLoaded", () => {
-    carregarDados();
-    lucide.createIcons();
-    document.getElementById("filtro-cliente").addEventListener("input", aplicarFiltros);
-    document.getElementById("filtro-status").addEventListener("change", aplicarFiltros);
-    document.getElementById("filtro-consultor").addEventListener("input", aplicarFiltros);
-  });
 </script>
 </body>
 
