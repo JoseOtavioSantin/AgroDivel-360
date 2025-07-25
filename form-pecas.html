@@ -125,6 +125,19 @@
       appearance: none;
     }
 
+    input[type="date"] {
+      appearance: none;
+      -webkit-appearance: none;
+      background-color: #f1f1f1;
+      color: #000;
+      padding: 12px;
+      border-radius: 8px;
+      font-size: 15px;
+      width: 100%;
+      border: none;
+    }
+
+
     a,
     a:visited {
       color: inherit;
@@ -172,13 +185,13 @@
       <label>Data da Visita *</label>
       <input type="date" name="dataVisita" id="dataVisita" required>
 
-      <label>Filial *</label>
-      <select name="filial" id="filial" required>
-        <option value="">Selecione a filial</option>
-        <option value="Campos Novos">Campos Novos</option>
-        <option value="Rio do Sul">Rio do Sul</option>
-        <option value="Lages">Lages</option>
-      </select>
+    <label>Filial *</label>
+    <select name="filial" id="filial" required>
+      <option value="">Selecione a filial</option>
+      <option value="Campos Novos">Campos Novos</option>
+      <option value="Rio do Sul">Rio do Sul</option>
+      <option value="Lages">Lages</option>
+    </select>
 
       <label>Nome do Cliente *</label>
       <input type="text" name="nomeCliente" placeholder="" required>
@@ -201,7 +214,9 @@
       <input type="text" name="horimetro" required>
 
       <label>Nome do Consultor *</label>
-      <input type="text" name="nomeConsultor" placeholder="" required>
+      <select name="nomeConsultor" id="nomeConsultor" required>
+        <option value="">Selecione o consultor</option>
+      </select>
 
       <div class="checkbox-group">
         <label>
@@ -244,64 +259,54 @@
   </script>
 
 <script>
-  const municipiosPorFilial = {
-    "Campos Novos": [
-      "Campos Novos",
-      "Abdon Batista",
-      "Vargem",
-      "Zortéa",
-      "Brunópolis",
-      "Monte Carlo",
-      "Frei Rogério"
-    ],
-    "Rio do Sul": [
-      "Rio do Sul",
-      "Lontras",
-      "Ituporanga",
-      "Aurora",
-      "Agrolândia",
-      "Trombudo Central",
-      "Laurentino",
-      "Presidente Getúlio",
-      "Rio do Oeste"
-    ],
-    "Lages": [
-      "Lages",
-      "Otacílio Costa",
-      "Correia Pinto",
-      "Bocaina do Sul",
-      "São Joaquim",
-      "Urubici",
-      "Painel",
-      "Capão Alto"
-    ]
-  };
+  document.addEventListener("DOMContentLoaded", () => {
+    const municipiosPorFilial = {
+      "Campos Novos": ["Campos Novos", "Abdon Batista", "Vargem", "Zortéa", "Brunópolis", "Monte Carlo", "Frei Rogério"],
+      "Rio do Sul": ["Rio do Sul", "Lontras", "Ituporanga", "Aurora", "Agrolândia", "Trombudo Central", "Laurentino", "Presidente Getúlio", "Rio do Oeste"],
+      "Lages": ["Lages", "Otacílio Costa", "Correia Pinto", "Bocaina do Sul", "São Joaquim", "Urubici", "Painel", "Capão Alto"]
+    };
 
-  const filialSelect = document.getElementById("filial");
-  const municipioSelect = document.getElementById("municipio");
+    const consultoresPorFilial = {
+      "Campos Novos": ["João Silva", "Maria Oliveira"],
+      "Rio do Sul": ["Carlos Souza", "Fernanda Lima"],
+      "Lages": ["Pedro Martins", "Ana Paula"]
+    };
 
-  // Inicialmente desativa o campo município
-  municipioSelect.disabled = true;
+    const filialSelect = document.getElementById("filial");
+    const municipioSelect = document.getElementById("municipio");
+    const consultorSelect = document.getElementById("nomeConsultor");
 
-  filialSelect.addEventListener("change", () => {
-    const filial = filialSelect.value;
-    const municipios = municipiosPorFilial[filial] || [];
+    municipioSelect.disabled = true;
+    consultorSelect.disabled = true;
 
-    // Habilita ou desabilita o select
-    municipioSelect.disabled = !filial;
+    filialSelect.addEventListener("change", () => {
+      const filial = filialSelect.value;
 
-    // Limpa opções anteriores
-    municipioSelect.innerHTML = '<option value="">Selecione um município</option>';
+      // Atualiza municípios
+      const municipios = municipiosPorFilial[filial] || [];
+      municipioSelect.disabled = !filial;
+      municipioSelect.innerHTML = '<option value="">Selecione um município</option>';
+      municipios.forEach((nome) => {
+        const option = document.createElement("option");
+        option.value = nome;
+        option.textContent = nome;
+        municipioSelect.appendChild(option);
+      });
 
-    // Adiciona novas opções se houver
-    municipios.forEach((nome) => {
-      const option = document.createElement("option");
-      option.value = nome;
-      option.textContent = nome;
-      municipioSelect.appendChild(option);
+      // Atualiza consultores
+      const consultores = consultoresPorFilial[filial] || [];
+      consultorSelect.disabled = !filial;
+      consultorSelect.innerHTML = '<option value="">Selecione o consultor</option>';
+      consultores.forEach((nome) => {
+        const option = document.createElement("option");
+        option.value = nome;
+        option.textContent = nome;
+        consultorSelect.appendChild(option);
+      });
     });
   });
 </script>
+
 
   <!-- Firebase -->
   <script type="module" src="firebase.js"></script>
