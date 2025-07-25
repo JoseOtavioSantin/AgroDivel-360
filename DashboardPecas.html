@@ -144,12 +144,6 @@
       transition: background 0.2s;
     }
 
-    .logo {
-      height: 80px;
-      margin-left: 45px;
-      margin-right: 15px;
-    }
-
     .acoes button:hover {
       background: #ffffff;
     }
@@ -196,15 +190,21 @@
       padding: 0 10px;
     }
 
+   .logo {
+    height: 80px;
+    margin-left: 45px;
+    margin-right: 15px;
+  }
+
   @media (max-width: 768px) {
     header {
       padding: 10px;
     }
 
-    header img {
+    .logo {
       height: 40px;
-      margin-right: 15px;
       margin-left: 0px;
+      margin-right: 15px;
     }
 
     #dynamic-title {
@@ -229,7 +229,7 @@
     }
 
     .card {
-      flex: 1 1;
+      flex: 1 1 45%;
       min-width: 140px;
       text-align: center;
       padding: 12px;
@@ -273,7 +273,6 @@
       padding: 20px;
     }
   }
-</style>
 
 </style>
 </head>
