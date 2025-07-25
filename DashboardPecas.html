@@ -190,6 +190,63 @@
       padding: 0 10px;
     }
 
+      @media (max-width: 768px) {
+    header {
+      padding: 10px;
+    }
+
+    header img {
+      height: 50px;
+      margin: 0 auto;
+    }
+
+    .main {
+      flex-direction: column;
+    }
+
+    .sidebar {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
+      padding: 15px;
+      width: 100%;
+    }
+
+    .card {
+      flex: 1 1 45%;
+      min-width: 140px;
+      text-align: center;
+      padding: 10px;
+    }
+
+    .filters {
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    .filters input,
+    .filters select,
+    .filters button {
+      width: 100%;
+      min-width: auto;
+    }
+
+    table {
+      font-size: 11px;
+    }
+
+    th,
+    td {
+      padding: 8px;
+    }
+
+    #popup {
+      padding: 20px;
+    }
+  }
+</style>
+
 </style>
 </head>
 <body>
