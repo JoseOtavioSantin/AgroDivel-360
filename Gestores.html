@@ -5,9 +5,29 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Login Gestores | Agro Divel</title>
 
-  <link rel="manifest" href="manifest.json" />
   <meta name="theme-color" content="#8B0000" />
   <link rel="apple-touch-icon" href="icons/icon-192.png" />
+
+  <!-- Firebase SDKs -->
+  <script type="module">
+    // Carregar Firebase no head (para evitar delay na página)
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getAuth } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+    import { getFirestore } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDcjPa9jXsCCu6lNc1fjVg4Bzz1toKWAGY",
+      authDomain: "agro-divel.firebaseapp.com",
+      projectId: "agro-divel",
+      storageBucket: "agro-divel.firebasestorage.app",
+      messagingSenderId: "583977436505",
+      appId: "1:583977436505:web:3754ec029aebb3d9d67848"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    window.auth = getAuth(app);
+    window.db = getFirestore(app);
+  </script>
 
   <style>
     * {
@@ -79,31 +99,12 @@
       position: relative;
     }
 
-    .password-wrapper input {
-      padding-right: 40px;
-    }
-
-    .toggle-visibility {
-      position: absolute;
-      top: 35%;
-      right: 10px;
-      transform: translateY(-50%);
-      background: none;
-      border: none;
-      cursor: pointer;
-      font-size: 16px;
-    }
-
     .options {
       display: flex;
       justify-content: space-between;
       align-items: center;
       font-size: 12px;
       margin-bottom: 20px;
-    }
-
-    .options input[type="checkbox"] {
-      margin-right: 5px;
     }
 
     .login-btn {
@@ -133,7 +134,6 @@
     .register-link a:hover {
       text-decoration: underline;
     }
-
   </style>
 </head>
 <body>
@@ -169,35 +169,47 @@
     </div>
   </div>
 
-  <script>
-    function login() {
+  <!-- Script de login -->
+  <script type="module">
+    import {
+      signInWithEmailAndPassword
+    } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+    import {
+      collection, query, where, getDocs
+    } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+    window.login = async function () {
       const email = document.getElementById("email").value.trim();
       const senha = document.getElementById("senha").value.trim();
 
-      // Simples autenticação (futura integração com Firebase se quiser)
-      if (email === "gestor@agro.com" && senha === "1234") {
+      try {
+        const userCredential = await signInWithEmailAndPassword(auth, email, senha);
+        const user = userCredential.user;
+
+        const gestoresRef = collection(db, "gestores");
+        const q = query(gestoresRef, where("email", "==", email));
+        const snapshot = await getDocs(q);
+
+        if (snapshot.empty) {
+          alert("Usuário não autorizado como gestor.");
+          return;
+        }
+
+        const gestor = snapshot.docs[0].data();
+        const dashboard = gestor.dashboard || "dashboard.html";
+        const filial = gestor.filial || "";
+
         localStorage.setItem("gestorLogado", "true");
-        window.location.href = "dashboard.html";
-      } else {
-        alert("E-mail ou senha incorretos!");
+        localStorage.setItem("gestorEmail", email);
+        localStorage.setItem("gestorFilial", filial);
+        localStorage.setItem("gestorDashboard", dashboard);
+
+        window.location.href = dashboard;
+      } catch (err) {
+        console.error("Erro no login:", err);
+        alert("E-mail ou senha inválidos.");
       }
-    }
-  </script>
-
-  <!-- Mostrar/Ocultar senha se quiser ativar -->
-  <script>
-    function toggleSenha() {
-      const senha = document.getElementById("senha");
-      senha.type = senha.type === "password" ? "text" : "password";
-    }
-  </script>
-
-  <!-- PWA -->
-  <script>
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/service-worker.js')
-        .then(() => console.log("✅ Service Worker registrado com sucesso"))
-        .catch(err => console.error("Erro ao registrar o Service Worker:", err));
     }
   </script>
 </body>
