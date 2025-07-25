@@ -1,4 +1,4 @@
-const CACHE_NAME = "agrodivel-cache-v2";
+const CACHE_NAME = "agrodivel-cache-v3"; // <- aumentei o número pra forçar atualização
 
 const urlsToCache = [
   "index.html",
@@ -14,7 +14,7 @@ const urlsToCache = [
   "assets/logo.png"
 ];
 
-// Instala o cache
+// Instala os arquivos no cache
 self.addEventListener("install", (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
@@ -23,7 +23,7 @@ self.addEventListener("install", (event) => {
   );
 });
 
-// Ativa e limpa caches antigos
+// Ativa o novo cache e remove caches antigos
 self.addEventListener("activate", (event) => {
   event.waitUntil(
     caches.keys().then((cacheNames) =>
@@ -38,11 +38,18 @@ self.addEventListener("activate", (event) => {
   );
 });
 
-// Intercepta requisições e tenta servir do cache
+// Serve do cache ou faz fetch online
 self.addEventListener("fetch", (event) => {
   event.respondWith(
     caches.match(event.request).then((response) => {
       return response || fetch(event.request);
     })
   );
+});
+
+// Suporte para skipWaiting (ativa nova versão ao clicar no aviso)
+self.addEventListener("message", (event) => {
+  if (event.data?.action === "skipWaiting") {
+    self.skipWaiting();
+  }
 });
