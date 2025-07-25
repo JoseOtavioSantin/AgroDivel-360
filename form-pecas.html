@@ -262,17 +262,6 @@
     </form>
   </div>
 
-  <!-- Script para preencher data atual -->
-  <script>
-    window.addEventListener('DOMContentLoaded', () => {
-      const hoje = new Date();
-      const yyyy = hoje.getFullYear();
-      const mm = String(hoje.getMonth() + 1).padStart(2, '0');
-      const dd = String(hoje.getDate()).padStart(2, '0');
-      document.getElementById('dataVisita').value = `${yyyy}-${mm}-${dd}`;
-    });
-  </script>
-
 <script>
   document.addEventListener("DOMContentLoaded", () => {
     const municipiosPorFilial = {
