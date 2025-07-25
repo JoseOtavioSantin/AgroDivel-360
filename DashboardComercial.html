@@ -485,6 +485,15 @@ document.getElementById("btn-exportar").addEventListener("click", () => {
 
 </script>
 
+
+  <script>
+  if (localStorage.getItem("gestorLogado") !== "true") {
+    alert("Acesso restrito! Faça login como gestor.");
+    window.location.href = "index.html";
+  }
+</script>
+  
+
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
 </body>
