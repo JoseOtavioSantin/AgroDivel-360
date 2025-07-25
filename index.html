@@ -321,12 +321,16 @@
         const novoSW = reg.installing;
         novoSW.onstatechange = () => {
           if (novoSW.state === 'installed' && navigator.serviceWorker.controller) {
-            // Mostrar popup central
+            // Mostrar o popup
             const popup = document.getElementById('update-popup');
             popup.style.display = 'flex';
 
             const botao = document.getElementById('btnAtualizar');
             botao.addEventListener('click', () => {
+              // Oculta popup imediatamente
+              popup.style.display = 'none';
+
+              // Envia comando para ativar o novo SW
               novoSW.postMessage({ action: 'skipWaiting' });
             });
           }
