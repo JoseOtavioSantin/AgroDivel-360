@@ -125,6 +125,7 @@
       appearance: none;
     }
 
+        @media (min-width: 600px) {
       input[type="date"] {
         background-color: #f5f5f5;
         color: #000;
@@ -137,11 +138,12 @@
         width: 100%;
         box-sizing: border-box;
       }
-      
+    
       input[type="date"]::-webkit-calendar-picker-indicator {
-        filter: invert(1); /* deixa o ícone branco se quiser combinar com tema escuro */
+        filter: invert(1);
         cursor: pointer;
       }
+}
 
 
     a,
