@@ -125,17 +125,23 @@
       appearance: none;
     }
 
-    input[type="date"] {
-      appearance: none;
-      -webkit-appearance: none;
-      background-color: #f1f1f1;
-      color: #000;
-      padding: 12px;
-      border-radius: 8px;
-      font-size: 15px;
-      width: 100%;
-      border: none;
-    }
+      input[type="date"] {
+        background-color: #f5f5f5;
+        color: #000;
+        font-size: 16px;
+        padding: 10px 14px;
+        border: none;
+        border-radius: 8px;
+        outline: none;
+        box-shadow: inset 0 0 2px rgba(0,0,0,0.2);
+        width: 100%;
+        box-sizing: border-box;
+      }
+      
+      input[type="date"]::-webkit-calendar-picker-indicator {
+        filter: invert(1); /* deixa o ícone branco se quiser combinar com tema escuro */
+        cursor: pointer;
+      }
 
 
     a,
