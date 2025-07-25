@@ -1,7 +1,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-// Configuração do seu Firebase
+// Configuração do Firebase
 const firebaseConfig = {
   apiKey: "AIzaSyDcjPa9jXsCCu6lNc1fjVg4Bzz1toKWAGY",
   authDomain: "agro-divel.firebaseapp.com",
@@ -15,7 +15,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// Função para exibir popup
+// Popup bonito
 function mostrarPopup(mensagem, sucesso = true) {
   const popup = document.createElement("div");
   popup.textContent = mensagem;
@@ -31,15 +31,23 @@ function mostrarPopup(mensagem, sucesso = true) {
   popup.style.boxShadow = "0 0 12px rgba(0,0,0,0.4)";
   popup.style.backgroundColor = sucesso ? "#00bbf9" : "#ff4d4d";
   popup.style.color = "white";
-
   document.body.appendChild(popup);
-
-  setTimeout(() => {
-    popup.remove();
-  }, 3000);
+  setTimeout(() => popup.remove(), 3000);
 }
 
-// Função genérica de envio
+// Envio pro Firebase
+async function enviarParaFirebase(dados, colecao) {
+  try {
+    await addDoc(collection(db, colecao), dados);
+    console.log("✅ Dados enviados ao Firebase:", dados);
+    return true;
+  } catch (e) {
+    console.error("❌ Erro ao enviar:", e);
+    return false;
+  }
+}
+
+// Enviar formulário
 window.enviarChecklist = async function (event, colecao) {
   event.preventDefault();
 
@@ -61,15 +69,38 @@ window.enviarChecklist = async function (event, colecao) {
     criadoEm: new Date().toISOString()
   };
 
-  try {
-    await addDoc(collection(db, colecao), dados);
-    mostrarPopup("✅ Checklist enviado com sucesso!");
+  if (navigator.onLine) {
+    const sucesso = await enviarParaFirebase(dados, colecao);
+    if (sucesso) {
+      mostrarPopup("✅ Checklist enviado com sucesso!");
+      form.reset();
+    } else {
+      mostrarPopup("❌ Erro ao enviar os dados.", false);
+    }
+  } else {
+    // Salvar localmente
+    const pendentes = JSON.parse(localStorage.getItem("checklistsPendentes")) || [];
+    pendentes.push({ colecao, dados });
+    localStorage.setItem("checklistsPendentes", JSON.stringify(pendentes));
+    mostrarPopup("📴 Sem internet! Checklist salvo localmente.");
     form.reset();
-  } catch (e) {
-    console.error("❌ Erro ao salvar:", e);
-    mostrarPopup("❌ Erro ao salvar os dados.", false);
   }
-  
 };
+
+// Ao reconectar, enviar pendentes
+window.addEventListener("online", async () => {
+  const pendentes = JSON.parse(localStorage.getItem("checklistsPendentes")) || [];
+
+  if (pendentes.length > 0) {
+    mostrarPopup("🌐 Conectado! Enviando checklists salvos...");
+
+    for (const item of pendentes) {
+      await enviarParaFirebase(item.dados, item.colecao);
+    }
+
+    localStorage.removeItem("checklistsPendentes");
+    mostrarPopup("✅ Todos os checklists pendentes foram enviados!");
+  }
+});
 
 export { app, db };
