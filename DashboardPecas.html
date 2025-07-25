@@ -190,7 +190,7 @@
       padding: 0 10px;
     }
 
-      @media (max-width: 768px) {
+  @media (max-width: 768px) {
     header {
       padding: 10px;
     }
@@ -217,7 +217,17 @@
       flex: 1 1 45%;
       min-width: 140px;
       text-align: center;
-      padding: 10px;
+      padding: 12px;
+      border-radius: 12px;
+      font-size: 14px;
+    }
+
+    .card h2 {
+      font-size: 22px;
+    }
+
+    .card p {
+      font-size: 13px;
     }
 
     .filters {
@@ -233,12 +243,15 @@
     }
 
     table {
-      font-size: 11px;
+      font-size: 10px;
+      display: block;
+      overflow-x: auto;
+      white-space: nowrap;
     }
 
     th,
     td {
-      padding: 8px;
+      padding: 6px 10px;
     }
 
     #popup {
