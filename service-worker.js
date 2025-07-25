@@ -1,4 +1,4 @@
-const CACHE_NAME = "agrodivel-cache-v0.3"; // <- aumentei o número pra forçar atualização
+const CACHE_NAME = "agrodivel-cache-v0.2"; // <- aumentei o número pra forçar atualização
 
 const urlsToCache = [
   "index.html",
