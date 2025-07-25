@@ -5,6 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Formulário - Peças</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+  
   <style>
     body {
       margin: 0;
@@ -125,7 +128,8 @@
       appearance: none;
     }
 
-    input[type="date"] {
+    input#dataVisita {
+      width: 95%;
       padding: 12px;
       border: none;
       border-radius: 8px;
@@ -133,10 +137,9 @@
       background-color: #f1f1f1;
       font-size: 15px;
       color: #000;
-      appearance: none;
-      -webkit-appearance: none;
+      box-sizing: border-box;
     }
-    
+        
 
     a,
     a:visited {
@@ -182,8 +185,14 @@
 
     <form onsubmit="enviarChecklist(event, 'checklistPecas')">
 
-      <label>Data da Visita *</label>
-      <input type="date" name="dataVisita" id="dataVisita" required>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/pt.js"></script>
+    <script>
+      flatpickr("#dataVisita", {
+        dateFormat: "d/m/Y",
+        locale: "pt",
+        defaultDate: "today"
+      });
+    </script>
 
     <label>Filial *</label>
     <select name="filial" id="filial" required>
