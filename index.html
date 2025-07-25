@@ -275,5 +275,41 @@
     }
   </script>
 
+  <!-- Aviso de atualização -->
+<div id="update-banner" style="display:none; background:#ffcc00; color:#000; font-weight:bold; padding:12px; text-align:center; cursor:pointer; position:fixed; top:0; left:0; right:0; z-index:9999;">
+  ⚠️ Nova versão disponível. Clique aqui para atualizar.
+</div>
+
+<script>
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register("service-worker.js").then(reg => {
+      // Detecta SW novo em espera
+      reg.onupdatefound = () => {
+        const novoSW = reg.installing;
+        novoSW.onstatechange = () => {
+          if (novoSW.state === 'installed' && navigator.serviceWorker.controller) {
+            // Mostra aviso de nova versão
+            const banner = document.getElementById('update-banner');
+            banner.style.display = 'block';
+            banner.addEventListener('click', () => {
+              // Força reload com nova versão
+              novoSW.postMessage({ action: 'skipWaiting' });
+            });
+          }
+        };
+      };
+    });
+
+    // Quando novo SW ativar, recarrega página
+    let refreshing = false;
+    navigator.serviceWorker.addEventListener("controllerchange", () => {
+      if (!refreshing) {
+        refreshing = true;
+        location.reload();
+      }
+    });
+  }
+</script>
+
 </body>
 </html>
