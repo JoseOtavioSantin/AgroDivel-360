@@ -190,65 +190,8 @@
       <input type="tel" name="telefone" required>
 
       <label>Município *</label>
-      <select name="municipio" required>
-        <option value="">Selecione o município</option>
-        <option value="Abdon Batista">Abdon Batista</option>
-        <option value="Abelardo Luz">Abelardo Luz</option>
-        <option value="Agrolândia">Agrolândia</option>
-        <option value="Agronômica">Agronômica</option>
-        <option value="Água Doce">Água Doce</option>
-        <option value="Águas de Chapecó">Águas de Chapecó</option>
-        <option value="Águas Frias">Águas Frias</option>
-        <option value="Águas Mornas">Águas Mornas</option>
-        <option value="Alfredo Wagner">Alfredo Wagner</option>
-        <option value="Alto Bela Vista">Alto Bela Vista</option>
-        <option value="Anchieta">Anchieta</option>
-        <option value="Angelina">Angelina</option>
-        <option value="Anita Garibaldi">Anita Garibaldi</option>
-        <option value="Anitápolis">Anitápolis</option>
-        <option value="Antônio Carlos">Antônio Carlos</option>
-        <option value="Apiúna">Apiúna</option>
-        <option value="Arabutã">Arabutã</option>
-        <option value="Araquari">Araquari</option>
-        <option value="Araranguá">Araranguá</option>
-        <option value="Armazém">Armazém</option>
-        <option value="Arroio Trinta">Arroio Trinta</option>
-        <option value="Arvoredo">Arvoredo</option>
-        <option value="Ascurra">Ascurra</option>
-        <option value="Atalanta">Atalanta</option>
-        <option value="Aurora">Aurora</option>
-        <option value="Balneário Arroio do Silva">Balneário Arroio do Silva</option>
-        <option value="Balneário Barra do Sul">Balneário Barra do Sul</option>
-        <option value="Balneário Camboriú">Balneário Camboriú</option>
-        <option value="Balneário Gaivota">Balneário Gaivota</option>
-        <option value="Bandeirante">Bandeirante</option>
-        <option value="Barra Bonita">Barra Bonita</option>
-        <option value="Barra Velha">Barra Velha</option>
-        <option value="Bela Vista do Toldo">Bela Vista do Toldo</option>
-        <option value="Belmonte">Belmonte</option>
-        <option value="Benedito Novo">Benedito Novo</option>
-        <option value="Biguaçu">Biguaçu</option>
-        <option value="Blumenau">Blumenau</option>
-        <option value="Bocaina do Sul">Bocaina do Sul</option>
-        <option value="Bom Jardim da Serra">Bom Jardim da Serra</option>
-        <option value="Bom Jesus">Bom Jesus</option>
-        <option value="Bom Jesus do Oeste">Bom Jesus do Oeste</option>
-        <option value="Bom Retiro">Bom Retiro</option>
-        <option value="Bombinhas">Bombinhas</option>
-        <option value="Botuverá">Botuverá</option>
-        <option value="Braço do Norte">Braço do Norte</option>
-        <option value="Braço do Trombudo">Braço do Trombudo</option>
-        <option value="Brunópolis">Brunópolis</option>
-        <option value="Brusque">Brusque</option>
-        <option value="Caçador">Caçador</option>
-        <option value="Caibi">Caibi</option>
-        <option value="Calmon">Calmon</option>
-        <option value="Camboriú">Camboriú</option>
-        <option value="Campo Alegre">Campo Alegre</option>
-        <option value="Campo Belo do Sul">Campo Belo do Sul</option>
-        <option value="Campo Erê">Campo Erê</option>
-        <option value="Campos Novos">Campos Novos</option>
-        <!-- Pode continuar com os outros municípios -->
+      <select name="municipio" id="municipio" required>
+        <option value="">Selecione um município</option>
       </select>
 
       <label>Modelo da Máquina *</label>
@@ -299,6 +242,60 @@
       document.getElementById('dataVisita').value = `${yyyy}-${mm}-${dd}`;
     });
   </script>
+
+  <script>
+  const municipiosPorFilial = {
+    "Campos Novos": [
+      "Campos Novos",
+      "Abdon Batista",
+      "Vargem",
+      "Zortéa",
+      "Brunópolis",
+      "Monte Carlo",
+      "Frei Rogério"
+    ],
+    "Rio do Sul": [
+      "Rio do Sul",
+      "Lontras",
+      "Ituporanga",
+      "Aurora",
+      "Agrolândia",
+      "Trombudo Central",
+      "Laurentino",
+      "Presidente Getúlio",
+      "Rio do Oeste"
+    ],
+    "Lages": [
+      "Lages",
+      "Otacílio Costa",
+      "Correia Pinto",
+      "Bocaina do Sul",
+      "São Joaquim",
+      "Urubici",
+      "Painel",
+      "Capão Alto"
+    ]
+  };
+
+  const filialSelect = document.getElementById("filial");
+  const municipioSelect = document.getElementById("municipio");
+
+  filialSelect.addEventListener("change", () => {
+    const filial = filialSelect.value;
+    const municipios = municipiosPorFilial[filial] || [];
+
+    // Limpa opções anteriores
+    municipioSelect.innerHTML = '<option value="">Selecione um município</option>';
+
+    // Adiciona novas opções
+    municipios.forEach((nome) => {
+      const option = document.createElement("option");
+      option.value = nome;
+      option.textContent = nome;
+      municipioSelect.appendChild(option);
+    });
+  });
+</script>
 
   <!-- Firebase -->
   <script type="module" src="firebase.js"></script>
