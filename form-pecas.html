@@ -243,7 +243,7 @@
     });
   </script>
 
-  <script>
+<script>
   const municipiosPorFilial = {
     "Campos Novos": [
       "Campos Novos",
@@ -280,14 +280,20 @@
   const filialSelect = document.getElementById("filial");
   const municipioSelect = document.getElementById("municipio");
 
+  // Inicialmente desativa o campo município
+  municipioSelect.disabled = true;
+
   filialSelect.addEventListener("change", () => {
     const filial = filialSelect.value;
     const municipios = municipiosPorFilial[filial] || [];
 
+    // Habilita ou desabilita o select
+    municipioSelect.disabled = !filial;
+
     // Limpa opções anteriores
     municipioSelect.innerHTML = '<option value="">Selecione um município</option>';
 
-    // Adiciona novas opções
+    // Adiciona novas opções se houver
     municipios.forEach((nome) => {
       const option = document.createElement("option");
       option.value = nome;
@@ -296,6 +302,7 @@
     });
   });
 </script>
+
 
   <!-- Firebase -->
   <script type="module" src="firebase.js"></script>
