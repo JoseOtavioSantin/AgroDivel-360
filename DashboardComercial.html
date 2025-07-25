@@ -492,6 +492,16 @@ document.getElementById("btn-exportar").addEventListener("click", () => {
     window.location.href = "index.html";
   }
 </script>
+
+  <script>
+  if (localStorage.getItem("gestorLogado") !== "true") {
+    alert("Acesso restrito! Faça login como gestor.");
+    window.location.href = "index.html";
+  } else {
+    const filial = localStorage.getItem("gestorFilial") || "Desconhecida";
+    document.getElementById("dynamic-title").textContent = `Filial: ${filial}`;
+  }
+</script>
   
 
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
