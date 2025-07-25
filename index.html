@@ -275,24 +275,58 @@
     }
   </script>
 
-  <!-- Aviso de atualização -->
-<div id="update-banner" style="display:none; background:#ffcc00; color:#000; font-weight:bold; padding:12px; text-align:center; cursor:pointer; position:fixed; top:0; left:0; right:0; z-index:9999;">
-  ⚠️ Nova versão disponível. Clique aqui para atualizar.
+<!-- Popup de atualização -->
+<div id="update-popup" style="
+  display: none;
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-color: rgba(0,0,0,0.7);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: Arial, sans-serif;
+">
+  <div style="
+    background: white;
+    color: black;
+    padding: 30px;
+    border-radius: 12px;
+    text-align: center;
+    max-width: 300px;
+    box-shadow: 0 0 20px rgba(0,0,0,0.5);
+  ">
+    <p style="font-size: 16px; font-weight: bold; margin-bottom: 20px;">
+      ⚠️ Uma nova versão está disponível.
+    </p>
+    <button id="btnAtualizar" style="
+      background-color: #00bbf9;
+      color: white;
+      border: none;
+      padding: 12px 20px;
+      border-radius: 8px;
+      font-size: 15px;
+      font-weight: bold;
+      cursor: pointer;
+    ">
+      Atualizar agora
+    </button>
+  </div>
 </div>
 
 <script>
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register("service-worker.js").then(reg => {
-      // Detecta SW novo em espera
       reg.onupdatefound = () => {
         const novoSW = reg.installing;
         novoSW.onstatechange = () => {
           if (novoSW.state === 'installed' && navigator.serviceWorker.controller) {
-            // Mostra aviso de nova versão
-            const banner = document.getElementById('update-banner');
-            banner.style.display = 'block';
-            banner.addEventListener('click', () => {
-              // Força reload com nova versão
+            // Mostrar popup central
+            const popup = document.getElementById('update-popup');
+            popup.style.display = 'flex';
+
+            const botao = document.getElementById('btnAtualizar');
+            botao.addEventListener('click', () => {
               novoSW.postMessage({ action: 'skipWaiting' });
             });
           }
@@ -300,7 +334,6 @@
       };
     });
 
-    // Quando novo SW ativar, recarrega página
     let refreshing = false;
     navigator.serviceWorker.addEventListener("controllerchange", () => {
       if (!refreshing) {
