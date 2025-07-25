@@ -252,6 +252,13 @@
     });
   </script>
 
+  <script>
+    window.addEventListener('DOMContentLoaded', () => {
+      const hoje = new Date().toISOString().split('T')[0];
+      document.getElementById('dataVisita').value = hoje;
+    });
+  </script>
+
 <script>
   document.addEventListener("DOMContentLoaded", () => {
     const municipiosPorFilial = {
