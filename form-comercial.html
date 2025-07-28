@@ -1,15 +1,19 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Formulário - Comercial</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <style>
+    * {
+      box-sizing: border-box;
+    }
+
     body {
       margin: 0;
       font-family: Arial, sans-serif;
-      background-color: #1e1e2f;
+      background-color: #001439;
       color: white;
     }
 
@@ -20,7 +24,6 @@
       border-radius: 12px;
       padding: 30px;
       box-shadow: 0 0 10px rgba(0,0,0,0.3);
-      box-sizing: border-box;
     }
 
     h2 {
@@ -36,13 +39,23 @@
     }
 
     input, textarea, select {
-      width: 95%;
+      width: 100%;
       padding: 12px;
+      margin-bottom: 15px;
       border: none;
       border-radius: 8px;
-      margin-bottom: 15px;
-      background-color: #f1f1f1;
       font-size: 15px;
+      background-color: #f1f1f1;
+      color: #000;
+    }
+
+    input[type="date"], select {
+      appearance: none;
+      -webkit-appearance: none;
+    }
+
+    textarea {
+      resize: vertical;
     }
 
     .checkbox-group {
@@ -50,31 +63,25 @@
     }
 
     .checkbox-group label {
-      width: 94%;
-      font-weight: normal;
       display: flex;
+      justify-content: space-between;
       align-items: center;
       gap: 10px;
       background-color: #373b50;
       padding: 12px 16px;
       border-radius: 6px;
-      margin-bottom: 10px;
+      font-weight: normal;
       font-size: 14px;
-      line-height: 1.4;
     }
 
     .checkbox-group input[type="checkbox"] {
       width: 18px;
       height: 18px;
-      margin-left: auto;
-    }
-
-    textarea {
-      resize: vertical;
+      margin: 0;
     }
 
     button {
-      width: 99%;
+      width: 100%;
       padding: 12px;
       background-color: #00bbf9;
       color: white;
@@ -83,6 +90,7 @@
       font-size: 16px;
       font-weight: bold;
       cursor: pointer;
+      transition: background-color 0.3s;
     }
 
     button:hover {
@@ -111,30 +119,11 @@
         max-width: 360px;
         padding: 20px;
       }
-
-      input, textarea, select {
-        width: 100%;
-        box-sizing: border-box;
-      }
-
-      * {
-        box-sizing: border-box;
-      }
-
-      .checkbox-group label {
-        width: 100%;
-      }
-
-      button {
-        width: 100%;
-      }
     }
   </style>
 </head>
 <body>
-
   <div class="container">
-
     <a href="index.html" class="voltar">
       <i class="fas fa-arrow-left"></i> Voltar
     </a>
@@ -142,9 +131,16 @@
     <h2>Formulário de Comercial</h2>
 
     <form onsubmit="enviarChecklist(event, 'checklistComercial')">
-
       <label>Data da Visita *</label>
       <input type="date" name="dataVisita" id="dataVisita" required>
+
+      <label>Filial *</label>
+      <select name="filial" id="filial" required>
+        <option value="">Selecione a filial</option>
+        <option value="Campos Novos">Campos Novos</option>
+        <option value="Rio do Sul">Rio do Sul</option>
+        <option value="Lages">Lages</option>
+      </select>
 
       <label>Nome do Cliente *</label>
       <input type="text" name="nomeCliente" required>
@@ -156,7 +152,9 @@
       <input type="tel" name="telefone" required>
 
       <label>Município *</label>
-      <input type="text" name="municipio" required>
+      <select name="municipio" id="municipio" required>
+        <option value="">Selecione um município</option>
+      </select>
 
       <label>Modelo da Máquina *</label>
       <input type="text" name="modeloMaquina" required>
@@ -165,24 +163,23 @@
       <input type="text" name="horimetro" required>
 
       <label>Nome do Consultor *</label>
-      <input type="text" name="nomeConsultor" required>
+      <select name="nomeConsultor" id="nomeConsultor" required>
+        <option value="">Selecione o consultor</option>
+      </select>
 
       <div class="checkbox-group">
         <label>
           Interesse em financiamento
           <input type="checkbox" name="checklist" value="financiamento">
         </label>
-
         <label>
           Deseja fazer Test Drive
           <input type="checkbox" name="checklist" value="testdrive">
         </label>
-
         <label>
           Solicitação de proposta
           <input type="checkbox" name="checklist" value="proposta">
         </label>
-
         <label>
           Agendamento de visita futura
           <input type="checkbox" name="checklist" value="visitaFutura">
@@ -197,16 +194,58 @@
   </div>
 
   <script>
-    window.addEventListener('DOMContentLoaded', () => {
-      const hoje = new Date();
-      const yyyy = hoje.getFullYear();
-      const mm = String(hoje.getMonth() + 1).padStart(2, '0');
-      const dd = String(hoje.getDate()).padStart(2, '0');
-      const dataAtual = `${yyyy}-${mm}-${dd}`;
-      document.getElementById('dataVisita').value = dataAtual;
+    document.addEventListener("DOMContentLoaded", () => {
+      const hoje = new Date().toISOString().split('T')[0];
+      document.getElementById('dataVisita').value = hoje;
+
+      const municipiosPorFilial = {
+        "Campos Novos": ["Campos Novos", "Abdon Batista", "Vargem", "Zortéa", "Brunópolis", "Monte Carlo", "Frei Rogério"],
+        "Rio do Sul": ["Rio do Sul", "Lontras", "Ituporanga", "Aurora", "Agrolândia", "Trombudo Central", "Laurentino", "Presidente Getúlio", "Rio do Oeste"],
+        "Lages": ["Lages", "Otacílio Costa", "Correia Pinto", "Bocaina do Sul", "São Joaquim", "Urubici", "Painel", "Capão Alto"]
+      };
+
+      const consultoresPorFilial = {
+        "Campos Novos": ["João Silva", "Maria Oliveira"],
+        "Rio do Sul": ["Carlos Souza", "Fernanda Lima"],
+        "Lages": ["Pedro Martins", "Ana Paula"]
+      };
+
+      const filialSelect = document.getElementById("filial");
+      const municipioSelect = document.getElementById("municipio");
+      const consultorSelect = document.getElementById("nomeConsultor");
+
+      municipioSelect.disabled = true;
+      consultorSelect.disabled = true;
+
+      filialSelect.addEventListener("change", () => {
+        const filial = filialSelect.value;
+
+        // Atualiza municípios
+        const municipios = municipiosPorFilial[filial] || [];
+        municipioSelect.disabled = !filial;
+        municipioSelect.innerHTML = '<option value="">Selecione um município</option>';
+        municipios.forEach((nome) => {
+          const option = document.createElement("option");
+          option.value = nome;
+          option.textContent = nome;
+          municipioSelect.appendChild(option);
+        });
+
+        // Atualiza consultores
+        const consultores = consultoresPorFilial[filial] || [];
+        consultorSelect.disabled = !filial;
+        consultorSelect.innerHTML = '<option value="">Selecione o consultor</option>';
+        consultores.forEach((nome) => {
+          const option = document.createElement("option");
+          option.value = nome;
+          option.textContent = nome;
+          consultorSelect.appendChild(option);
+        });
+      });
     });
   </script>
 
+  <!-- Firebase -->
   <script type="module" src="firebase.js"></script>
 </body>
 </html>
