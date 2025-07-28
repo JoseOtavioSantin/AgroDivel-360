@@ -391,6 +391,25 @@
   tipoChecklist === "checklistRevisao" ? "Revisão" :
   tipoChecklist === "checklistPecas" ? "Peças" : "Painel";
 
+
+  async function carregarFiliaisDoGestor() {
+  const emailGestor = localStorage.getItem("gestorEmail") || "";
+  if (!emailGestor) return;
+
+  const docRef = doc(db, "gestores", emailGestor.split("@")[0]);
+  const docSnap = await getDoc(docRef);
+
+  if (docSnap.exists()) {
+    const dados = docSnap.data();
+    const filiais = dados.filial || [];
+    localStorage.setItem("gestorFilial", JSON.stringify(filiais));
+    document.getElementById("dynamic-title").textContent = `Filiais: ${filiais.join(", ")}`;
+    carregarDados(); // Só carrega dados após ter as filiais certas
+  } else {
+    alert("Gestor não encontrado no banco.");
+  }
+}
+
   async function carregarDados() {
     const querySnapshot = await getDocs(collection(db, tipoChecklist));
     dadosTotais = [];
@@ -522,7 +541,7 @@ function aplicarFiltros() {
   window.salvarPopup = salvarPopup;
 
   document.addEventListener("DOMContentLoaded", () => {
-    carregarDados();
+    carregarFiliaisDoGestor();
     lucide.createIcons();
 
     document.getElementById("filtro-cliente").addEventListener("input", aplicarFiltros);
