@@ -392,23 +392,26 @@
   tipoChecklist === "checklistPecas" ? "Peças" : "Painel";
 
 
+  import { collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+  
   async function carregarFiliaisDoGestor() {
-  const emailGestor = localStorage.getItem("gestorEmail") || "";
-  if (!emailGestor) return;
-
-  const docRef = doc(db, "gestores", emailGestor.split("@")[0]);
-  const docSnap = await getDoc(docRef);
-
-  if (docSnap.exists()) {
-    const dados = docSnap.data();
-    const filiais = dados.filial || [];
-    localStorage.setItem("gestorFilial", JSON.stringify(filiais));
-    document.getElementById("dynamic-title").textContent = `Filiais: ${filiais.join(", ")}`;
-    carregarDados(); // Só carrega dados após ter as filiais certas
-  } else {
-    alert("Gestor não encontrado no banco.");
+    const emailGestor = localStorage.getItem("gestorEmail") || "";
+    if (!emailGestor) return;
+  
+    const gestoresRef = collection(db, "gestores");
+    const q = query(gestoresRef, where("email", "==", emailGestor));
+    const snapshot = await getDocs(q);
+  
+    if (!snapshot.empty) {
+      const dados = snapshot.docs[0].data();
+      const filiais = dados.filial || [];
+      localStorage.setItem("gestorFilial", JSON.stringify(filiais));
+      document.getElementById("dynamic-title").textContent = `Filiais: ${filiais.join(", ")}`;
+      carregarDados();
+    } else {
+      alert("Gestor não encontrado no banco.");
+    }
   }
-}
 
   async function carregarDados() {
     const querySnapshot = await getDocs(collection(db, tipoChecklist));
