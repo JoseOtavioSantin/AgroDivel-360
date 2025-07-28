@@ -375,7 +375,7 @@
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-  import { getFirestore, collection, getDocs, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+  import { getFirestore, collection, getDocs, query, where, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
   const tipoChecklist = new URLSearchParams(window.location.search).get("tipo") || "checklistPecas";
   const app = initializeApp({
@@ -390,9 +390,6 @@
   tipoChecklist === "checklistComercial" ? "Comercial" :
   tipoChecklist === "checklistRevisao" ? "Revisão" :
   tipoChecklist === "checklistPecas" ? "Peças" : "Painel";
-
-
-  import { collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
   
   async function carregarFiliaisDoGestor() {
     const emailGestor = localStorage.getItem("gestorEmail") || "";
