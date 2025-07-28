@@ -199,11 +199,11 @@
 
         const gestor = snapshot.docs[0].data();
         const dashboard = gestor.dashboard || "dashboard.html";
-        const filial = gestor.filial || "";
-
+        const filiais = gestor.filial || [];
+        
+        localStorage.setItem("gestorFilial", JSON.stringify(filiais));
         localStorage.setItem("gestorLogado", "true");
         localStorage.setItem("gestorEmail", email);
-        localStorage.setItem("gestorFilial", filial);
         localStorage.setItem("gestorDashboard", dashboard);
 
         window.location.href = dashboard;
