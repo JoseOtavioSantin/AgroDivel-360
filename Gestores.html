@@ -201,9 +201,9 @@
         const dashboard = gestor.dashboard || "dashboard.html";
         const filiais = gestor.filial || [];
         
-        localStorage.setItem("gestorFilial", JSON.stringify(filiais));
         localStorage.setItem("gestorLogado", "true");
         localStorage.setItem("gestorEmail", email);
+        localStorage.setItem("gestorFilial", JSON.stringify(filiais));
         localStorage.setItem("gestorDashboard", dashboard);
 
         window.location.href = dashboard;
