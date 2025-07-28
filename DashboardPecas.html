@@ -395,13 +395,13 @@
     const querySnapshot = await getDocs(collection(db, tipoChecklist));
     dadosTotais = [];
 
-    const filialLogada = localStorage.getItem("gestorFilial") || "";
+    const filiaisLogadas = JSON.parse(localStorage.getItem("gestorFilial") || "[]");
 
     querySnapshot.forEach(docItem => {
       const dados = docItem.data();
 
       // Só adiciona se for da mesma filial
-      if (dados.filial === filialLogada) {
+      if (filiaisLogadas.includes(dados.filial)) {
         dadosTotais.push({ id: docItem.id, ...dados });
       }
     });
@@ -592,8 +592,8 @@ document.getElementById("btn-exportar").addEventListener("click", () => {
     alert("Acesso restrito! Faça login como gestor.");
     window.location.href = "index.html";
   } else {
-    const filial = localStorage.getItem("gestorFilial") || "Desconhecida";
-    document.getElementById("dynamic-title").textContent = `Filial: ${filial}`;
+    const filiais = JSON.parse(localStorage.getItem("gestorFilial") || "[]");
+    document.getElementById("dynamic-title").textContent = `Filiais: ${filiais.join(", ") || "Desconhecida"}`;
   }
 </script>
   
