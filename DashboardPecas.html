@@ -412,8 +412,6 @@
       alert("Gestor não encontrado no banco.");
     }
   }
-
-  console.log
   
   async function carregarDados() {
     const querySnapshot = await getDocs(collection(db, tipoChecklist));
@@ -425,10 +423,12 @@
       const dados = docItem.data();
 
       // Só adiciona se for da mesma filial
-      if (filiaisLogadas.includes(dados.filial)) {
+      if (filiaisLogadas.map(f => f.toLowerCase().trim()).includes((dados.filial || "").toLowerCase().trim())) {
         dadosTotais.push({ id: docItem.id, ...dados });
       }
     });
+    
+          console.log("Total encontrado:", dadosTotais.length, dadosTotais);
 
     aplicarFiltros();
   }
