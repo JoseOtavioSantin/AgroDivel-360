@@ -17,22 +17,36 @@ const db = getFirestore(app);
 
 // Popup bonito
 function mostrarPopup(mensagem, sucesso = true) {
+  const fundo = document.createElement("div");
+  fundo.style.position = "fixed";
+  fundo.style.top = "0";
+  fundo.style.left = "0";
+  fundo.style.width = "100vw";
+  fundo.style.height = "100vh";
+  fundo.style.backgroundColor = "rgba(0, 0, 0, 0.6)";
+  fundo.style.display = "flex";
+  fundo.style.alignItems = "center";
+  fundo.style.justifyContent = "center";
+  fundo.style.zIndex = "9999";
+
   const popup = document.createElement("div");
   popup.textContent = mensagem;
-  popup.style.position = "fixed";
-  popup.style.top = "20px";
-  popup.style.left = "50%";
-  popup.style.transform = "translateX(-50%)";
-  popup.style.padding = "12px 24px";
-  popup.style.borderRadius = "8px";
-  popup.style.zIndex = "9999";
-  popup.style.fontWeight = "bold";
-  popup.style.fontSize = "16px";
-  popup.style.boxShadow = "0 0 12px rgba(0,0,0,0.4)";
+  popup.style.padding = "20px 30px";
+  popup.style.borderRadius = "12px";
   popup.style.backgroundColor = sucesso ? "#00bbf9" : "#ff4d4d";
   popup.style.color = "white";
-  document.body.appendChild(popup);
-  setTimeout(() => popup.remove(), 3000);
+  popup.style.fontSize = "18px";
+  popup.style.fontWeight = "bold";
+  popup.style.boxShadow = "0 8px 20px rgba(0,0,0,0.4)";
+  popup.style.textAlign = "center";
+  popup.style.maxWidth = "90%";
+
+  fundo.appendChild(popup);
+  document.body.appendChild(fundo);
+
+  setTimeout(() => {
+    fundo.remove();
+  }, 3000);
 }
 
 // Envio pro Firebase
