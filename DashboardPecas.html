@@ -7,6 +7,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script src="https://unpkg.com/lucide@latest"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
   <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/pt.js"></script>
   <style>
@@ -509,13 +510,21 @@ function aplicarFiltros() {
         <td>${d.modelo || "-"}</td>
         <td>${d.municipio || "-"}</td>
         <td>${d.horimetro || "-"}</td>
-        <td>${d.telefone || "-"}</td>
+        <td>
+            ${
+              d.telefone
+                ? `<a href="https://wa.me/55${d.telefone.replace(/\D/g, '')}" target="_blank" title="Chamar no WhatsApp" style="color: #25D366; text-decoration: none; font-size: 20px;">
+                      <i class="fa-brands fa-whatsapp"></i>
+                   </a>`
+                : "-"
+            }
+        </td>
         <td data-comentario="${d.comentarioResponsavel || ''}" data-valor="${d.valorNegociado || 0}">
         ${d.observacoes || "-"}
-      </td>
-        <td>${(d.checklist || []).map(item => `<span style="background:#fff; color:#00205b; padding:3px 8px; border-radius:5px; margin:2px; display:inline-block; font-size:10px">${item}</span>`).join("")}</td>
-        <td class="acoes"><button class="btn-acao" data-id="${d.id}" title="Abrir ações">➕</button></td>
-      </tr>`;
+        </td>
+          <td>${(d.checklist || []).map(item => `<span style="background:#fff; color:#00205b; padding:3px 8px; border-radius:5px; margin:2px; display:inline-block; font-size:10px">${item}</span>`).join("")}</td>
+          <td class="acoes"><button class="btn-acao" data-id="${d.id}" title="Abrir ações">➕</button></td>
+        </tr>`;
   });
 
   document.getElementById("valor-total").textContent = `R$ ${totalValor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
