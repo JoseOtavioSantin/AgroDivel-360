@@ -86,7 +86,7 @@ window.enviarChecklist = async function (event, colecao) {
   if (navigator.onLine) {
     const sucesso = await enviarParaFirebase(dados, colecao);
     if (sucesso) {
-      mostrarPopup("✅ Checklist enviado com sucesso!");
+      mostrarPopup("✅ Dados enviados com sucesso!");
       form.reset();
     } else {
       mostrarPopup("❌ Erro ao enviar os dados.", false);
@@ -96,7 +96,7 @@ window.enviarChecklist = async function (event, colecao) {
     const pendentes = JSON.parse(localStorage.getItem("checklistsPendentes")) || [];
     pendentes.push({ colecao, dados });
     localStorage.setItem("checklistsPendentes", JSON.stringify(pendentes));
-    mostrarPopup("📴 Sem internet! Checklist salvo localmente.");
+    mostrarPopup("📴 Sem internet! dados salvos localmente.");
     form.reset();
   }
 };
@@ -106,14 +106,14 @@ window.addEventListener("online", async () => {
   const pendentes = JSON.parse(localStorage.getItem("checklistsPendentes")) || [];
 
   if (pendentes.length > 0) {
-    mostrarPopup("🌐 Conectado! Enviando checklists salvos...");
+    mostrarPopup("🌐 Conectado! Enviando dados salvos...");
 
     for (const item of pendentes) {
       await enviarParaFirebase(item.dados, item.colecao);
     }
 
     localStorage.removeItem("checklistsPendentes");
-    mostrarPopup("✅ Todos os checklists pendentes foram enviados!");
+    mostrarPopup("✅ Todos os dados pendentes foram enviados!");
   }
 });
 
