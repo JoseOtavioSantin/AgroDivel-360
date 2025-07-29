@@ -513,14 +513,12 @@ function aplicarFiltros() {
         <td style="text-align: center;">
           ${
             d.telefone
-              ? `
-                <div style="display: flex; flex-direction: column; align-items: center;">
-                  <div style="font-size: 12px; color: white; margin-bottom: 4px;">${d.nomeCliente || "-"}</div>
-                  <a href="https://wa.me/55${d.telefone.replace(/\D/g, '')}" target="_blank" title="Chamar no WhatsApp"
-                     style="color: #25D366; text-decoration: none; font-size: 22px;">
-                    <i class="fa-brands fa-whatsapp"></i>
-                  </a>
-                </div>`
+              ? `<a href="https://wa.me/55${d.telefone.replace(/\D/g, '')}" 
+                     target="_blank" 
+                     title="Chamar no WhatsApp"
+                     style="color: #25D366; font-size: 22px; display: inline-block;">
+                   <i class="fa-brands fa-whatsapp"></i>
+                 </a>`
               : "-"
           }
         </td>
