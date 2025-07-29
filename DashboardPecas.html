@@ -525,6 +525,30 @@ function aplicarFiltros() {
   });
 }
 
+  document.addEventListener("DOMContentLoaded", () => {
+  carregarFiliaisDoGestor();
+  lucide.createIcons();
+
+  // Filtros
+  document.getElementById("filtro-cliente").addEventListener("input", aplicarFiltros);
+  document.getElementById("filtro-status").addEventListener("change", aplicarFiltros);
+  document.getElementById("filtro-consultor").addEventListener("input", aplicarFiltros);
+
+  // Flatpickr
+  flatpickr("#filtro-periodo", {
+    mode: "range",
+    dateFormat: "Y-m-d",
+    locale: "pt",
+    onChange: aplicarFiltros
+  });
+
+  // ⏱ Atualizar os dados automaticamente a cada 60 segundos
+  setInterval(() => {
+    console.log("Atualizando dados do painel...");
+    carregarDados();
+  }, 60000); // 60000 ms = 60 segundos
+});
+
 
   async function abrirPopup(id) {
     document.getElementById("popup").style.display = "flex";
@@ -635,8 +659,7 @@ document.getElementById("btn-exportar").addEventListener("click", () => {
     const filiais = JSON.parse(localStorage.getItem("gestorFilial") || "[]");
     document.getElementById("dynamic-title").textContent = `Filiais: ${filiais.join(", ") || "Desconhecida"}`;
   }
-</script>
-  
+</script>  
 
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
