@@ -525,31 +525,6 @@ function aplicarFiltros() {
   });
 }
 
-  document.addEventListener("DOMContentLoaded", () => {
-  carregarFiliaisDoGestor();
-  lucide.createIcons();
-
-  // Filtros
-  document.getElementById("filtro-cliente").addEventListener("input", aplicarFiltros);
-  document.getElementById("filtro-status").addEventListener("change", aplicarFiltros);
-  document.getElementById("filtro-consultor").addEventListener("input", aplicarFiltros);
-
-  // Flatpickr
-  flatpickr("#filtro-periodo", {
-    mode: "range",
-    dateFormat: "Y-m-d",
-    locale: "pt",
-    onChange: aplicarFiltros
-  });
-
-  // ⏱ Atualizar os dados automaticamente a cada 60 segundos
-  setInterval(() => {
-    console.log("Atualizando dados do painel...");
-    carregarDados();
-  }, 60000); // 60000 ms = 60 segundos
-});
-
-
   async function abrirPopup(id) {
     document.getElementById("popup").style.display = "flex";
     document.getElementById("docIdSelecionado").value = id;
@@ -584,26 +559,28 @@ function aplicarFiltros() {
 
   window.fecharPopup = fecharPopup;
   window.salvarPopup = salvarPopup;
-
+  
   document.addEventListener("DOMContentLoaded", () => {
-    carregarFiliaisDoGestor();
-    lucide.createIcons();
+  carregarFiliaisDoGestor();
+  lucide.createIcons();
 
-    document.getElementById("filtro-cliente").addEventListener("input", aplicarFiltros);
-    document.getElementById("filtro-status").addEventListener("change", aplicarFiltros);
-    document.getElementById("filtro-consultor").addEventListener("input", aplicarFiltros);
+  document.getElementById("filtro-cliente").addEventListener("input", aplicarFiltros);
+  document.getElementById("filtro-status").addEventListener("change", aplicarFiltros);
+  document.getElementById("filtro-consultor").addEventListener("input", aplicarFiltros);
 
-    flatpickr("#filtro-periodo", {
-      mode: "range",
-      dateFormat: "Y-m-d",
-      locale: "pt",
-      onChange: function(selectedDates, dateStr) {
-        console.log("Selecionado:", dateStr); // veja se aparece
-        aplicarFiltros();
-      }
-    });
+  flatpickr("#filtro-periodo", {
+    mode: "range",
+    dateFormat: "Y-m-d",
+    locale: "pt",
+    onChange: aplicarFiltros
   });
 
+  // ⏱ Atualizar automaticamente a cada 60 segundos
+  setInterval(() => {
+    console.log("Atualizando dados do painel...");
+    carregarDados();
+  }, 60000); // 1 minuto
+});
 //Função exportar.
 
 document.getElementById("btn-exportar").addEventListener("click", () => {
