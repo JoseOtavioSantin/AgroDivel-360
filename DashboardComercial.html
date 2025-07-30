@@ -350,14 +350,14 @@
       <table>
         <thead>
           <tr>
-            <th>Cliente</th>
-            <th>Fazenda</th>
-            <th>Consultor</th>
             <th>Data da Visita</th>
-            <th>Modelo</th>
+            <th>Cliente</th>
             <th>Município</th>
+            <th>Consultor</th>
+            <th>Modelo</th>
             <th>Horímetro</th>
             <th>Telefone</th>
+            <th>Troca</th>
             <th>Observações</th>
             <th>Checklist</th>
             <th>Ações</th>
@@ -503,13 +503,13 @@ function aplicarFiltros() {
 
     painel.innerHTML += `
       <tr class="${statusClass}">
-        <td>${d.nomeCliente || "-"}</td>
-        <td>${d.nomeFazenda || "-"}</td>
-        <td>${d.consultor || "-"}</td>
         <td>${d.dataVisita || "-"}</td>
-        <td>${d.modelo || "-"}</td>
+        <td>${d.nomeCliente || "-"}</td>
         <td>${d.municipio || "-"}</td>
+        <td>${d.consultor || "-"}</td>
+        <td>${d.modelo || "-"}</td>
         <td>${d.horimetro || "-"}</td>
+        <td>${d.modeloTrator || "-"}</td>
         <td style="text-align: center;">
           ${
             d.telefone
