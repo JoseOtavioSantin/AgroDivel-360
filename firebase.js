@@ -69,6 +69,7 @@ window.enviarChecklist = async function (event, colecao) {
   const formData = new FormData(form);
 
   const dados = {
+    dataVisita: formData.get("dataVisita") || "",
     nomeCliente: formData.get("nomeCliente") || "",
     nomeFazenda: formData.get("nomeFazenda") || "",
     telefone: formData.get("telefone") || "",
@@ -76,8 +77,8 @@ window.enviarChecklist = async function (event, colecao) {
     municipio: formData.get("municipio") || "",
     modelo: formData.get("modeloMaquina") || "",
     horimetro: formData.get("horimetro") || "",
+    modeloTrator: formData.get("modeloTrator") || "",
     consultor: formData.get("nomeConsultor") || "",
-    dataVisita: formData.get("dataVisita") || "",
     observacoes: formData.get("observacoes") || "",
     checklist: formData.getAll("checklist"),
     criadoEm: new Date().toISOString()
