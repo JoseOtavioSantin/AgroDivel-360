@@ -2,10 +2,12 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
+  <meta name="theme-color" content="#2c2f3f" />
   <title>Dashboard com Filtros</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script src="https://unpkg.com/lucide@latest"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
   <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/pt.js"></script>
   <style>
@@ -190,12 +192,96 @@
       padding: 0 10px;
     }
 
+   .logo {
+    height: 80px;
+    margin-left: 45px;
+    margin-right: 15px;
+  }
+
+  @media (max-width: 768px) {
+    header {
+      padding: 10px;
+    }
+
+    .logo {
+      height: 40px;
+      margin-left: 20px;
+      margin-right: 15px;
+    }
+
+    #dynamic-title {
+      font-size: 15px !important;
+    }
+
+    header em {
+      font-size: 15px !important;
+    }
+
+    .main {
+      flex-direction: column;
+    }
+
+    .sidebar {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
+      padding: 15px;
+      width: 100%;
+    }
+
+    .card {
+      flex: 1 1;
+      min-width: 140px;
+      text-align: center;
+      padding: 12px;
+      border-radius: 12px;
+      font-size: 14px;
+    }
+
+    .card h2 {
+      font-size: 22px;
+    }
+
+    .card p {
+      font-size: 13px;
+    }
+
+    .filters {
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    .filters input,
+    .filters select,
+    .filters button {
+      width: 100%;
+      min-width: auto;
+    }
+
+    table {
+      font-size: 10px;
+      display: block;
+      overflow-x: auto;
+      white-space: nowrap;
+    }
+
+    th,
+    td {
+      padding: 6px 10px;
+    }
+
+    #popup {
+      padding: 20px;
+    }
+  }
+
 </style>
 </head>
 <body>
   <header>
     <div style="display: flex; align-items: center; justify-content: space-between;">
-      <img src="assets/logo.png" alt="Logo" style="height: 80px; margin-right: 15px; margin-left: 45px;">
+      <img src="assets/logo.png" alt="Logo" class="logo">
     <div style="flex: 1; text-align: center;">
       <em>Dashboard Agro Divel 360</em>
       <div id="dynamic-title" style="font-style: italic;">Carregando...</div>
@@ -203,6 +289,25 @@
       <div style="width: 65px;"></div>
     </div>
   </header>
+
+  <button onclick="window.history.back()" title="Voltar"
+  style="
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: linear-gradient(135deg, #00205b, #009bd6);
+    color: white;
+    border: none;
+    margin-right; 10px;
+    padding: 10px 16px;
+    border-radius: 8px;
+    font-size: 14px;
+    cursor: pointer;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.4);
+    z-index: 9999;
+  ">
+  ← Voltar
+</button>
 
   <div class="main">
     <div class="sidebar">
@@ -290,7 +395,7 @@
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-  import { getFirestore, collection, getDocs, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+  import { getFirestore, collection, getDocs, query, where, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
   const tipoChecklist = new URLSearchParams(window.location.search).get("tipo") || "checklistComercial";
   const app = initializeApp({
@@ -305,13 +410,43 @@
   tipoChecklist === "checklistComercial" ? "Comercial" :
   tipoChecklist === "checklistRevisao" ? "Revisão" :
   tipoChecklist === "checklistPecas" ? "Peças" : "Painel";
-
+  
+  async function carregarFiliaisDoGestor() {
+    const emailGestor = localStorage.getItem("gestorEmail") || "";
+    if (!emailGestor) return;
+  
+    const gestoresRef = collection(db, "gestores");
+    const q = query(gestoresRef, where("email", "==", emailGestor));
+    const snapshot = await getDocs(q);
+  
+    if (!snapshot.empty) {
+      const dados = snapshot.docs[0].data();
+      const filiais = dados.filial || [];
+      localStorage.setItem("gestorFilial", JSON.stringify(filiais));
+      document.getElementById("dynamic-title").textContent = `Filiais: ${filiais.join(", ")}`;
+      carregarDados();
+    } else {
+      alert("Gestor não encontrado no banco.");
+    }
+  }
+  
   async function carregarDados() {
     const querySnapshot = await getDocs(collection(db, tipoChecklist));
     dadosTotais = [];
+
+    const filiaisLogadas = JSON.parse(localStorage.getItem("gestorFilial") || "[]");
+
     querySnapshot.forEach(docItem => {
-      dadosTotais.push({ id: docItem.id, ...docItem.data() });
+      const dados = docItem.data();
+
+      // Só adiciona se for da mesma filial
+      if (filiaisLogadas.map(f => f.toLowerCase().trim()).includes((dados.filial || "").toLowerCase().trim())) {
+        dadosTotais.push({ id: docItem.id, ...dados });
+      }
     });
+    
+          console.log("Total encontrado:", dadosTotais.length, dadosTotais);
+
     aplicarFiltros();
   }
 
@@ -375,13 +510,24 @@ function aplicarFiltros() {
         <td>${d.modelo || "-"}</td>
         <td>${d.municipio || "-"}</td>
         <td>${d.horimetro || "-"}</td>
-        <td>${d.telefone || "-"}</td>
+        <td style="text-align: center;">
+          ${
+            d.telefone
+              ? `<a href="https://wa.me/55${d.telefone.replace(/\D/g, '')}" 
+                     target="_blank" 
+                     title="Chamar no WhatsApp"
+                     style="color: #25D366; font-size: 22px; display: inline-block;">
+                   <i class="fa-brands fa-whatsapp"></i>
+                 </a>`
+              : "-"
+          }
+        </td>
         <td data-comentario="${d.comentarioResponsavel || ''}" data-valor="${d.valorNegociado || 0}">
         ${d.observacoes || "-"}
-      </td>
-        <td>${(d.checklist || []).map(item => `<span style="background:#fff; color:#00205b; padding:3px 8px; border-radius:5px; margin:2px; display:inline-block; font-size:10px">${item}</span>`).join("")}</td>
-        <td class="acoes"><button class="btn-acao" data-id="${d.id}" title="Abrir ações">➕</button></td>
-      </tr>`;
+        </td>
+          <td>${(d.checklist || []).map(item => `<span style="background:#fff; color:#00205b; padding:3px 8px; border-radius:5px; margin:2px; display:inline-block; font-size:10px">${item}</span>`).join("")}</td>
+          <td class="acoes"><button class="btn-acao" data-id="${d.id}" title="Abrir ações">➕</button></td>
+        </tr>`;
   });
 
   document.getElementById("valor-total").textContent = `R$ ${totalValor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
@@ -390,7 +536,6 @@ function aplicarFiltros() {
     btn.addEventListener("click", () => abrirPopup(btn.getAttribute("data-id")));
   });
 }
-
 
   async function abrirPopup(id) {
     document.getElementById("popup").style.display = "flex";
@@ -426,26 +571,28 @@ function aplicarFiltros() {
 
   window.fecharPopup = fecharPopup;
   window.salvarPopup = salvarPopup;
-
+  
   document.addEventListener("DOMContentLoaded", () => {
-    carregarDados();
-    lucide.createIcons();
+  carregarFiliaisDoGestor();
+  lucide.createIcons();
 
-    document.getElementById("filtro-cliente").addEventListener("input", aplicarFiltros);
-    document.getElementById("filtro-status").addEventListener("change", aplicarFiltros);
-    document.getElementById("filtro-consultor").addEventListener("input", aplicarFiltros);
+  document.getElementById("filtro-cliente").addEventListener("input", aplicarFiltros);
+  document.getElementById("filtro-status").addEventListener("change", aplicarFiltros);
+  document.getElementById("filtro-consultor").addEventListener("input", aplicarFiltros);
 
-    flatpickr("#filtro-periodo", {
-      mode: "range",
-      dateFormat: "Y-m-d",
-      locale: "pt",
-      onChange: function(selectedDates, dateStr) {
-        console.log("Selecionado:", dateStr); // veja se aparece
-        aplicarFiltros();
-      }
-    });
+  flatpickr("#filtro-periodo", {
+    mode: "range",
+    dateFormat: "Y-m-d",
+    locale: "pt",
+    onChange: aplicarFiltros
   });
 
+  // ⏱ Atualizar automaticamente a cada 60 segundos
+  setInterval(() => {
+    console.log("Atualizando dados do painel...");
+    carregarDados();
+  }, 60000); // 1 minuto
+});
 //Função exportar.
 
 document.getElementById("btn-exportar").addEventListener("click", () => {
@@ -498,11 +645,10 @@ document.getElementById("btn-exportar").addEventListener("click", () => {
     alert("Acesso restrito! Faça login como gestor.");
     window.location.href = "index.html";
   } else {
-    const filial = localStorage.getItem("gestorFilial") || "Desconhecida";
-    document.getElementById("dynamic-title").textContent = `Filial: ${filial}`;
+    const filiais = JSON.parse(localStorage.getItem("gestorFilial") || "[]");
+    document.getElementById("dynamic-title").textContent = `Filiais: ${filiais.join(", ") || "Desconhecida"}`;
   }
-</script>
-  
+</script>  
 
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
