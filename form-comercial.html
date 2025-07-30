@@ -157,10 +157,30 @@
       </select>
 
       <label>Modelo da Máquina *</label>
-      <input type="text" name="modeloMaquina" required>
+        <select name="modeloMaquina" id="modeloMaquina" required>
+            <option value="">Selecione a Modelo</option>
+            <option value="Colheitadeira">Colheitadeira</option>
+            <option value="Trator">Trator</option>
+            <option value="Pulverizador">Pulverizador</option>
+            <option value="Implemento">Implemento</option>
+        </select>
 
       <label>Horímetro *</label>
       <input type="text" name="horimetro" required>
+
+      <label>Possui trato para Troca</label>
+      <div class="checkbox-group">
+        <label>
+          SIM
+          <input type="checkbox" id="temTratorTroca" name="checklist" value="Trocar Trator">
+        </label>
+      </div> 
+
+      <!-- Campo escondido, só aparece se o checkbox for marcado -->
+      <div id="modeloTratorContainer" style="display: none;">
+        <label>Modelo do Trator para Troca *</label>
+        <input type="text" id="modeloTrator" name="modeloTrator">
+      </div>
 
       <label>Nome do Consultor *</label>
       <select name="nomeConsultor" id="nomeConsultor" required>
@@ -169,20 +189,12 @@
 
       <div class="checkbox-group">
         <label>
-          Interesse em financiamento
-          <input type="checkbox" name="checklist" value="financiamento">
-        </label>
-        <label>
-          Deseja fazer Test Drive
-          <input type="checkbox" name="checklist" value="testdrive">
+          Interesse em Trocar Trator
+          <input type="checkbox" name="checklist" value="Trocar Trator">
         </label>
         <label>
           Solicitação de proposta
-          <input type="checkbox" name="checklist" value="proposta">
-        </label>
-        <label>
-          Agendamento de visita futura
-          <input type="checkbox" name="checklist" value="visitaFutura">
+          <input type="checkbox" name="checklist" value="Proposta">
         </label>
       </div>
 
@@ -243,6 +255,14 @@
         });
       });
     });
+
+        const checkboxTrator = document.getElementById('temTratorTroca');
+        const campoModeloTrator = document.getElementById('modeloTratorContainer');
+
+        checkboxTrator.addEventListener('change', () => {
+          campoModeloTrator.style.display = checkboxTrator.checked ? 'block' : 'none';
+        });
+
   </script>
 
   <!-- Firebase -->
