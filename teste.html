@@ -1,244 +1,661 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Agro Divel 360</title>
-
-  <link rel="manifest" href="manifest.json" />
-  <meta name="theme-color" content="#1e1e2f" />
-  <link rel="icon" href="icons/icon-192.png" />
+  <meta charset="UTF-8">
+  <meta name="theme-color" content="#2c2f3f" />
+  <title>Dashboard com Filtros</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300&display=swap" rel="stylesheet">
-
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/pt.js"></script>
   <style>
+    * { box-sizing: border-box; }
+
     body {
       margin: 0;
       font-family: Arial, sans-serif;
-      background-color: #001439;
+      background-color: #1e1e2f;
       color: white;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
     }
 
-    .header {
-      padding: 20px;
-      text-align: center;
-      position: relative;
-    }
-
-    .header img {
-      width: 200px;
-    }
-
-    .notification-icon {
-      position: absolute;
-      top: 95px;
-      right: -30px;
-      font-size: 24px;
-      cursor: pointer;
-      color: white;
-    }
-
-    .notification-icon:hover {
-      color: #00bbf9;
-    }
-
-    #popup {
-      position: fixed;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      width: 300px;
+    header {
       background-color: #2c2f3f;
       padding: 20px;
-      border-radius: 12px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.5);
-      display: none;
-      z-index: 999;
       text-align: center;
-    }
-
-    #popup-body p {
-      font-size: 16px;
-      margin: 10px 0;
-    }
-
-    #popup-body p.nps {
-      font-size: 36px;
+      font-size: 20px;
       font-weight: bold;
-      margin-top: 20px;
+      color: #ffffff;
+      letter-spacing: 1px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
     }
 
-    .fechar button {
-      background-color: #00bbf9;
-      border: none;
-      padding: 10px 20px;
-      color: white;
-      font-size: 14px;
-      border-radius: 8px;
-      cursor: pointer;
-      transition: background-color 0.3s ease;
+    #dynamic-title {
+      margin-top: 10px;
+      font-size: 16px;
+      font-weight: normal;
+      color: #ccc;
     }
 
-    .fechar button:hover {
-      background-color: #0096c7;
-    }
-
-    .container {
-      max-width: 800px;
-      margin: 0 auto;
-      padding: 10px;
-      box-sizing: border-box;
-    }
-
-    .dashboard {
+    .main {
       display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      padding: 20px;
-      gap: 20px;
+      flex: 1;
+      overflow: hidden;
     }
 
-    .frase-italico {
-      font-family: 'Poppins', sans-serif;
-      font-style: italic;
-      font-weight: 300;
-      font-size: 100%;
+    .sidebar {
+      width: 250px;
+      background-color: #2c2f3f;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      overflow-y: auto;
     }
 
     .card {
-      background-color: #ffffff;
-      border-radius: 12px;
-      padding: 40px;
-      width: 150px;
-      box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
-      text-align: center;
-      transition: all 0.3s ease;
+      padding: 20px;
+      border-radius: 16px;
+      color: white;
+      background: linear-gradient(135deg, #2e2f4f, #1e1e2f);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+      transition: transform 0.2s, box-shadow 0.2s;
+      text-align: left;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
     }
 
     .card:hover {
-      background-color: #3a3d55;
-      box-shadow: 0 0 15px rgba(255, 255, 255, 0.2);
-      cursor: pointer;
-      transform: translateY(-4px);
+      transform: scale(1.02);
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
     }
 
-    .card i {
-      font-size: 32px;
-      margin-bottom: 10px;
-      color: #001439;
+    .card h2 {
+      font-size: 28px;
+      margin: 0;
     }
 
     .card p {
-      margin-top: 10px;
-      font-size: 18px;
-      font-weight: bold;
-      color: #001439;
+      font-size: 14px;
+      color: #eee;
+      margin: 0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
     }
 
-    a, a:visited {
-      color: inherit;
-      text-decoration: none;
+    .pink-card    { background: linear-gradient(238deg, #193b7c, #193b7c00); }
+    .orange-card  { background: linear-gradient(238deg, #193b7c, #193b7c00); }
+    .blue-card    { background: linear-gradient(238deg, #193b7c, #193b7c00); }
+    .purple-card  { background: linear-gradient(358deg, #626262, #62626259); }
+
+    .content {
+      flex: 1;
+      padding: 30px;
+      background-color: #262a3d;
+      overflow-y: auto;
     }
 
-    @media (max-width: 600px) {
-      .container {
-        max-width: 300px;
-      }
+    .filters {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 20px;
     }
-  </style>
+
+    .filters input,
+    .filters select {
+      padding: 8px;
+      border-radius: 6px;
+      border: none;
+      min-width: 180px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background-color: #2c2f3f;
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    th, td {
+      font-size: 12px;
+      padding: 10px 15px;
+      text-align: left;
+      border-bottom: 1px solid #444;
+    }
+
+    th {
+      background-color: #ffffff;
+      color: #00205b;
+    }
+
+    .acoes button {
+      background: #ffffff;
+      border: none;
+      padding: 6px 10px;
+      border-radius: 6px;
+      color: rgb(46, 60, 250);
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .acoes button:hover {
+      background: #ffffff;
+    }
+
+    .status-em-andamento { background-color: #c67903; }
+    .status-concluido { background-color: #193b7c; }
+    .status-cancelado { background-color: #626262; }
+
+    @media (max-width: 768px) {
+      .sidebar { display: none; }
+      .main { flex-direction: column; }
+      .content { padding: 15px; }
+    }
+  
+    .btn-acao {
+      background: linear-gradient(135deg, #00205b, #009bd6);
+      border: none;
+      padding: 6px 10px;
+      border-radius: 6px;
+      color: white;
+      font-size: 16px;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .btn-acao:hover {
+      transform: scale(1.05);
+      box-shadow: 0 4px 12px rgba(0, 187, 249, 0.4);
+    }
+
+    .filters {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 20px;
+      align-items: center;
+    }
+
+    #btn-exportar {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 40px;
+      padding: 0 10px;
+    }
+
+   .logo {
+    height: 80px;
+    margin-left: 45px;
+    margin-right: 15px;
+  }
+
+  @media (max-width: 768px) {
+    header {
+      padding: 10px;
+    }
+
+    .logo {
+      height: 40px;
+      margin-left: 20px;
+      margin-right: 15px;
+    }
+
+    #dynamic-title {
+      font-size: 15px !important;
+    }
+
+    header em {
+      font-size: 15px !important;
+    }
+
+    .main {
+      flex-direction: column;
+    }
+
+    .sidebar {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
+      padding: 15px;
+      width: 100%;
+    }
+
+    .card {
+      flex: 1 1;
+      min-width: 140px;
+      text-align: center;
+      padding: 12px;
+      border-radius: 12px;
+      font-size: 14px;
+    }
+
+    .card h2 {
+      font-size: 22px;
+    }
+
+    .card p {
+      font-size: 13px;
+    }
+
+    .filters {
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    .filters input,
+    .filters select,
+    .filters button {
+      width: 100%;
+      min-width: auto;
+    }
+
+    table {
+      font-size: 10px;
+      display: block;
+      overflow-x: auto;
+      white-space: nowrap;
+    }
+
+    th,
+    td {
+      padding: 6px 10px;
+    }
+
+    #popup {
+      padding: 20px;
+    }
+  }
+
+</style>
 </head>
 <body>
+  <header>
+    <div style="display: flex; align-items: center; justify-content: space-between;">
+      <img src="assets/logo.png" alt="Logo" class="logo">
+    <div style="flex: 1; text-align: center;">
+      <em>Dashboard Agro Divel 360</em>
+      <div id="dynamic-title" style="font-style: italic;">Carregando...</div>
+    </div>
+      <div style="width: 65px;"></div>
+    </div>
+  </header>
 
-  <div class="container">
-    <div class="header">
-      <img src="assets/logo.png" alt="Logo Agro Divel" />
-      <i class="fas fa-circle-info notification-icon" onclick="abrirPopup()"></i>
-      <h1 class="frase-italico">Selecione o setor e conecte o cliente à solução ideal.</h1>
+  <button onclick="window.history.back()" title="Voltar"
+  style="
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: linear-gradient(135deg, #00205b, #009bd6);
+    color: white;
+    border: none;
+    margin-right; 10px;
+    padding: 10px 16px;
+    border-radius: 8px;
+    font-size: 14px;
+    cursor: pointer;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.4);
+    z-index: 9999;
+  ">
+  ← Voltar
+</button>
+
+  <div class="main">
+    <div class="sidebar">
+      <div class="card pink-card">
+        <h2 id="total-clientes">0</h2>
+        <p><i data-lucide="users"></i> Total Clientes</p>
+      </div>
+      <div class="card orange-card">
+        <h2 id="total-concluidos">0</h2>
+        <p><i data-lucide="check-circle"></i> Concluídos</p>
+      </div>
+      <div class="card blue-card">
+        <h2 id="valor-total">R$ 0,00</h2>
+        <p><i data-lucide="dollar-sign"></i> Valor Total (R$)</p>
+      </div>
+      <div class="card purple-card">
+        <h2 id="cancelados">0</h2>
+        <p><i data-lucide="x-octagon"></i> Cancelados</p>
+      </div>
     </div>
 
-    <div id="popup">
-      <div id="popup-body">
-        <p>Carregando...</p>
-      </div>
-      <div class="fechar" style="margin-top: 20px;">
-        <button onclick="fecharPopup()">Fechar</button>
-      </div>
-    </div>
+    <div class="content">
+        <div class="filters">
+          <input id="filtro-cliente" type="text" placeholder="Buscar cliente..." />
+          <input id="filtro-consultor" type="text" placeholder="Buscar consultor..." />
+          <input id="filtro-municipio" type="text" placeholder="Buscar municipio..." />
+          <select id="filtro-status">
+            <option value="">Todos os status</option>
+            <option value="Concluído">Concluído</option>
+            <option value="Em andamento">Em andamento</option>
+            <option value="Cancelado">Cancelado</option>
+          </select>
+          <input id="filtro-periodo" placeholder="Selecione o período" />
+          
 
-    <div class="dashboard">
-      <a href="form-pecas.html" class="card">
-        <i class="fas fa-cogs"></i>
-        <p>Peças</p>
-      </a>
-      <a href="form-servicos.html" class="card">
-        <i class="fas fa-wrench"></i>
-        <p>Serviços</p>
-      </a>
-      <a href="form-PLM.html" class="card">
-        <i class="fa-solid fa-satellite"></i>
-        <p>PLM</p>
-      </a>
-      <a href="form-comercial.html" class="card">
-        <i class="fas fa-handshake"></i>
-        <p>Comercial</p>
-      </a>
-      <a href="form-consorcio.html" class="card">
-        <i class="fas fa-piggy-bank"></i>
-        <p>Consórcio</p>
-      </a>
+      <button id="btn-exportar" class="btn-acao" style="margin-left: auto;" title="Exportar para Excel">
+        <i data-lucide="download" style="width: 20px; height: 20px;"></i>
+      </button>
+
+        </div>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Data da Visita</th>
+            <th>Cliente</th>
+            <th>Município</th>
+            <th>Consultor</th>
+            <th>Modelo</th>
+            <th>Horímetro</th>
+            <th>Troca</th>
+            <th>Telefone</th>
+            <th>Observações</th>
+            <th>Checklist</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+        <tbody id="painel-detalhes"></tbody>
+      </table>
     </div>
   </div>
 
-  <script type="module">
-    import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-    import { app } from './firebase.js';
+  
 
-    const db = getFirestore(app);
+<!-- POPUP DE AÇÃO -->
+<div id="popup" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);justify-content:center;align-items:center;z-index:9999;">
+  <div style="background:#2c2f3f;padding:20px;border-radius:12px;width:90%;max-width:400px;">
+    <h3>Atualizar Checklist</h3>
+    <input type="hidden" id="docIdSelecionado">
+    <label>Comentário do Responsável</label>
+    <textarea id="comentario" style="width:100%;padding:8px;margin-bottom:10px;border:none;border-radius:6px;"></textarea>
+    <label>Status</label>
+    <select id="statusChecklist" style="width:100%;padding:8px;margin-bottom:10px;border:none;border-radius:6px;">
+      <option value="Em andamento">Em andamento</option>
+      <option value="Concluído">Concluído</option>
+      <option value="Cancelado">Cancelado</option>
+    </select>
+    <label>Valor Negociado (R$)</label>
+    <input type="number" id="valorNegociado" style="width:100%;padding:8px;margin-bottom:10px;border:none;border-radius:6px;">
+    <div style="text-align:right;">
+      <button onclick="salvarPopup()" style="background:#00205b;color:white;padding:8px 16px;border-radius:8px;border:none;cursor:pointer;">Salvar</button>
+      <button onclick="fecharPopup()" style="background:#444;color:white;padding:8px 16px;border-radius:8px;border:none;cursor:pointer;margin-left:10px;">Cancelar</button>
+    </div>
+  </div>
+</div>
 
-    window.abrirPopup = async function () {
-      document.getElementById("popup").style.display = "block";
-      const popupBody = document.getElementById("popup-body");
-      popupBody.innerHTML = "<p>Carregando...</p>";
 
-      try {
-        const docNps = await getDoc(doc(db, "informativos", "nps"));
-        const nps = docNps.exists() ? docNps.data().valor : "N/A";
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import { getFirestore, collection, getDocs, query, where, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-        popupBody.innerHTML = `
-          <p style="font-size: 16px; margin-bottom: 10px;">
-            Com a sua colaboração, nosso NPS segue crescendo!<br>Obrigado por fazer parte disso. 🙌
-          </p>
-          <p class="nps">${nps}%</p>
-        `;
-      } catch (e) {
-        popupBody.innerHTML = "<p>Erro ao carregar dados.</p>";
-        console.error("Erro ao carregar:", e);
+  const tipoChecklist = new URLSearchParams(window.location.search).get("tipo") || "checklistComercial";
+  const app = initializeApp({
+    apiKey: "AIzaSyDcjPa9jXsCCu6lNc1fjVg4Bzz1toKWAGY",
+    authDomain: "agro-divel.firebaseapp.com",
+    projectId: "agro-divel"
+  });
+  const db = getFirestore(app);
+  let dadosTotais = [];
+
+  document.getElementById("dynamic-title").textContent =
+  tipoChecklist === "checklistComercial" ? "Comercial" :
+  tipoChecklist === "checklistRevisao" ? "Revisão" :
+  tipoChecklist === "checklistPecas" ? "Peças" : "Painel";
+  
+  async function carregarFiliaisDoGestor() {
+    const emailGestor = localStorage.getItem("gestorEmail") || "";
+    if (!emailGestor) return;
+  
+    const gestoresRef = collection(db, "gestores");
+    const q = query(gestoresRef, where("email", "==", emailGestor));
+    const snapshot = await getDocs(q);
+  
+    if (!snapshot.empty) {
+      const dados = snapshot.docs[0].data();
+      const filiais = dados.filial || [];
+      localStorage.setItem("gestorFilial", JSON.stringify(filiais));
+      document.getElementById("dynamic-title").textContent = `Filiais: ${filiais.join(", ")}`;
+      carregarDados();
+    } else {
+      alert("Gestor não encontrado no banco.");
+    }
+  }
+  
+  async function carregarDados() {
+    const querySnapshot = await getDocs(collection(db, tipoChecklist));
+    dadosTotais = [];
+
+    const filiaisLogadas = JSON.parse(localStorage.getItem("gestorFilial") || "[]");
+
+    querySnapshot.forEach(docItem => {
+      const dados = docItem.data();
+
+      // Só adiciona se for da mesma filial
+      if (filiaisLogadas.map(f => f.toLowerCase().trim()).includes((dados.filial || "").toLowerCase().trim())) {
+        dadosTotais.push({ id: docItem.id, ...dados });
       }
+    });
+    
+          console.log("Total encontrado:", dadosTotais.length, dadosTotais);
+
+    aplicarFiltros();
+  }
+
+function aplicarFiltros() {
+  const clienteFiltro = document.getElementById("filtro-cliente").value.toLowerCase();
+  const statusFiltro = document.getElementById("filtro-status").value;
+  const consultorFiltro = document.getElementById("filtro-consultor").value.toLowerCase();
+  onst consultorFiltro = document.getElementById("filtro-municipio").value.toLowerCase();
+  const periodo = document.getElementById("filtro-periodo").value.trim();
+
+  const instance = document.getElementById("filtro-periodo")._flatpickr;
+  const selectedDates = instance.selectedDates;
+
+  let dataInicio = "", dataFim = "";
+  if (selectedDates.length === 2) {
+    dataInicio = selectedDates[0].toISOString().slice(0, 10); // yyyy-mm-dd
+    dataFim    = selectedDates[1].toISOString().slice(0, 10);
+  } else if (selectedDates.length === 1) {
+    dataInicio = dataFim = selectedDates[0].toISOString().slice(0, 10);
+  }
+
+  const painel = document.getElementById("painel-detalhes");
+  painel.innerHTML = "";
+
+  const filtrados = dadosTotais.filter(d => {
+    const cliente = (d.nomeCliente || "").toLowerCase();
+    const status = d.statusChecklist || "";
+    const consultor = (d.consultor || "").toLowerCase();
+    const dataFormatada = d.dataVisita || "";
+
+    const dentroDoPeriodo =
+      (!dataInicio && !dataFim) ||
+      (
+        (!dataInicio || dataFormatada >= dataInicio) &&
+        (!dataFim || dataFormatada <= dataFim)
+      );
+
+    return cliente.includes(clienteFiltro) &&
+           (statusFiltro === "" || status === statusFiltro) &&
+           consultor.includes(consultorFiltro) &&
+           dentroDoPeriodo;
+  });
+
+  // CONTADORES E RENDERIZAÇÃO
+  document.getElementById("total-clientes").textContent = filtrados.length;
+  document.getElementById("total-concluidos").textContent = filtrados.filter(d => d.statusChecklist === "Concluído").length;
+  document.getElementById("cancelados").textContent = filtrados.filter(d => d.statusChecklist === "Cancelado").length;
+
+  let totalValor = 0;
+  filtrados.forEach(d => {
+    if (!isNaN(d.valorNegociado)) totalValor += Number(d.valorNegociado);
+    const statusClass = d.statusChecklist === "Concluído" ? "status-concluido" :
+                        d.statusChecklist === "Cancelado" ? "status-cancelado" :
+                        d.statusChecklist === "Em andamento" ? "status-em-andamento" : "";
+
+    painel.innerHTML += `
+      <tr class="${statusClass}">
+        <td>${d.dataVisita || "-"}</td>
+        <td>${d.nomeCliente || "-"}</td>
+        <td>${d.municipio || "-"}</td>
+        <td>${d.consultor || "-"}</td>
+        <td>${d.modelo || "-"}</td>
+        <td>${d.horimetro || "-"}</td>
+        <td>${d.modeloTrator || "-"}</td>
+        <td style="text-align: center;">
+          ${
+            d.telefone
+              ? `<a href="https://wa.me/55${d.telefone.replace(/\D/g, '')}" 
+                     target="_blank" 
+                     title="Chamar no WhatsApp"
+                     style="color: #25D366; font-size: 22px; display: inline-block;">
+                   <i class="fa-brands fa-whatsapp"></i>
+                 </a>`
+              : "-"
+          }
+        </td>
+        <td data-comentario="${d.comentarioResponsavel || ''}" data-valor="${d.valorNegociado || 0}">
+        ${d.observacoes || "-"}
+        </td>
+          <td>${(d.checklist || []).map(item => `<span style="background:#fff; color:#00205b; padding:3px 8px; border-radius:5px; margin:2px; display:inline-block; font-size:10px">${item}</span>`).join("")}</td>
+          <td class="acoes"><button class="btn-acao" data-id="${d.id}" title="Abrir ações">➕</button></td>
+        </tr>`;
+  });
+
+  document.getElementById("valor-total").textContent = `R$ ${totalValor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
+
+  document.querySelectorAll(".acoes button").forEach(btn => {
+    btn.addEventListener("click", () => abrirPopup(btn.getAttribute("data-id")));
+  });
+}
+
+  async function abrirPopup(id) {
+    document.getElementById("popup").style.display = "flex";
+    document.getElementById("docIdSelecionado").value = id;
+    const docRef = doc(db, tipoChecklist, id);
+    const docSnap = await getDoc(docRef);
+    if (docSnap.exists()) {
+      const dados = docSnap.data();
+      document.getElementById("comentario").value = dados.comentarioResponsavel || "";
+      document.getElementById("statusChecklist").value = dados.statusChecklist || "Em andamento";
+      document.getElementById("valorNegociado").value = dados.valorNegociado || "";
     }
+  }
 
-    window.fecharPopup = function () {
-      document.getElementById("popup").style.display = "none";
-    };
+  function fecharPopup() {
+    document.getElementById("popup").style.display = "none";
+  }
 
-    // Mostrar popup uma vez por dia automaticamente
-    function verificarPopupAutomatico() {
-      const hoje = new Date().toISOString().slice(0, 10); // Ex: "2025-07-22"
-      const ultimoDia = localStorage.getItem('popup_nps_hoje');
+  async function salvarPopup() {
+    const id = document.getElementById("docIdSelecionado").value;
+    const comentario = document.getElementById("comentario").value;
+    const status = document.getElementById("statusChecklist").value;
+    const valor = parseFloat(document.getElementById("valorNegociado").value) || 0;
+    const docRef = doc(db, tipoChecklist, id);
+    await updateDoc(docRef, {
+      comentarioResponsavel: comentario,
+      statusChecklist: status,
+      valorNegociado: valor
+    });
+    fecharPopup();
+    carregarDados();
+  }
 
-      if (hoje !== ultimoDia) {
-        abrirPopup();
-        localStorage.setItem('popup_nps_hoje', hoje);
-      }
-    }
+  window.fecharPopup = fecharPopup;
+  window.salvarPopup = salvarPopup;
+  
+  document.addEventListener("DOMContentLoaded", () => {
+  carregarFiliaisDoGestor();
+  lucide.createIcons();
 
-    verificarPopupAutomatico();
+  document.getElementById("filtro-cliente").addEventListener("input", aplicarFiltros);
+  document.getElementById("filtro-status").addEventListener("change", aplicarFiltros);
+  document.getElementById("filtro-consultor").addEventListener("input", aplicarFiltros);
+  document.getElementById("filtro-municipio").addEventListener("input", aplicarFiltros);
 
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('service-worker.js')
-        .then(() => console.log('✅ Service Worker registrado com sucesso!'))
-        .catch((error) => console.error('❌ Erro ao registrar Service Worker:', error));
-    }
-  </script>
+  flatpickr("#filtro-periodo", {
+    mode: "range",
+    dateFormat: "Y-m-d",
+    locale: "pt",
+    onChange: aplicarFiltros
+  });
+
+  // ⏱ Atualizar automaticamente a cada 60 segundos
+  setInterval(() => {
+    console.log("Atualizando dados do painel...");
+    carregarDados();
+  }, 60000); // 1 minuto
+});
+//Função exportar.
+
+document.getElementById("btn-exportar").addEventListener("click", () => {
+  const headers = [
+  "Cliente", "Fazenda", "Consultor", "Data da Visita", "Modelo",
+  "Município", "Horímetro", "Telefone", "Observações", "Checklist",
+  "Comentário", "Valor (R$)", "Status"
+  ];
+
+  const linhas = Array.from(document.querySelectorAll("#painel-detalhes tr")).map(tr => {
+    const tds = tr.querySelectorAll("td");
+    return [
+      tds[0]?.textContent.trim(), // Cliente
+      tds[1]?.textContent.trim(), // Fazenda
+      tds[2]?.textContent.trim(), // Consultor
+      tds[3]?.textContent.trim(), // Data da Visita
+      tds[4]?.textContent.trim(), // Modelo
+      tds[5]?.textContent.trim(), // Município
+      tds[6]?.textContent.trim(), // Horímetro
+      tds[7]?.textContent.trim(), // Telefone
+      tds[8]?.textContent.trim(), // Observações
+      tds[9]?.innerText.trim(),   // Checklist
+      tds[8]?.getAttribute("data-comentario") || "",   // Comentário do Responsável
+      tds[8]?.getAttribute("data-valor") || "",        // Valor Negociado
+      tr.classList.contains("status-concluido") ? "Concluído" :
+      tr.classList.contains("status-cancelado") ? "Cancelado" :
+      tr.classList.contains("status-em-andamento") ? "Em andamento" : ""
+    ];
+  });
+
+  const planilha = XLSX.utils.aoa_to_sheet([headers, ...linhas]);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, planilha, "Checklist");
+
+  XLSX.writeFile(wb, "checklists_filtrados.xlsx");
+});
+
+</script>
+
+
+  <script>
+  if (localStorage.getItem("gestorLogado") !== "true") {
+    alert("Acesso restrito! Faça login como gestor.");
+    window.location.href = "index.html";
+  }
+</script>
+
+  <script>
+  if (localStorage.getItem("gestorLogado") !== "true") {
+    alert("Acesso restrito! Faça login como gestor.");
+    window.location.href = "index.html";
+  } else {
+    const filiais = JSON.parse(localStorage.getItem("gestorFilial") || "[]");
+    document.getElementById("dynamic-title").textContent = `Filiais: ${filiais.join(", ") || "Desconhecida"}`;
+  }
+</script>  
+
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
 </body>
-</html>
+
+</html> 
