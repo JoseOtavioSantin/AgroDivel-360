@@ -332,14 +332,16 @@
     <div class="content">
         <div class="filters">
           <input id="filtro-cliente" type="text" placeholder="Buscar cliente..." />
+          <input id="filtro-municipio" type="text" placeholder="Buscar municipio..." />
+          <input id="filtro-consultor" type="text" placeholder="Buscar consultor..." />
           <select id="filtro-status">
             <option value="">Todos os status</option>
             <option value="Concluído">Concluído</option>
             <option value="Em andamento">Em andamento</option>
             <option value="Cancelado">Cancelado</option>
           </select>
-          <input id="filtro-consultor" type="text" placeholder="Buscar consultor..." />
           <input id="filtro-periodo" placeholder="Selecione o período" />
+          
 
       <button id="btn-exportar" class="btn-acao" style="margin-left: auto;" title="Exportar para Excel">
         <i data-lucide="download" style="width: 20px; height: 20px;"></i>
@@ -454,6 +456,7 @@ function aplicarFiltros() {
   const clienteFiltro = document.getElementById("filtro-cliente").value.toLowerCase();
   const statusFiltro = document.getElementById("filtro-status").value;
   const consultorFiltro = document.getElementById("filtro-consultor").value.toLowerCase();
+  const municipioFiltro = document.getElementById("filtro-municipio").value.toLowerCase();
   const periodo = document.getElementById("filtro-periodo").value.trim();
 
   const instance = document.getElementById("filtro-periodo")._flatpickr;
@@ -472,10 +475,15 @@ function aplicarFiltros() {
 
   const filtrados = dadosTotais.filter(d => {
     const cliente = (d.nomeCliente || "").toLowerCase();
+    const municipio = (d.municipio || "").toLowerCase();
     const status = d.statusChecklist || "";
     const consultor = (d.consultor || "").toLowerCase();
     const dataFormatada = d.dataVisita || "";
 
+    const clienteOk = cliente.includes(clienteFiltro);
+    const statusOk = statusFiltro === "" || status === statusFiltro;
+    const consultorOk = consultor.includes(consultorFiltro);
+    const municipioOk = municipio.includes(municipioFiltro);
     const dentroDoPeriodo =
       (!dataInicio && !dataFim) ||
       (
@@ -483,10 +491,7 @@ function aplicarFiltros() {
         (!dataFim || dataFormatada <= dataFim)
       );
 
-    return cliente.includes(clienteFiltro) &&
-           (statusFiltro === "" || status === statusFiltro) &&
-           consultor.includes(consultorFiltro) &&
-           dentroDoPeriodo;
+    return clienteOk && statusOk && consultorOk && municipioOk && dentroDoPeriodo;
   });
 
   // CONTADORES E RENDERIZAÇÃO
@@ -579,6 +584,7 @@ function aplicarFiltros() {
   document.getElementById("filtro-cliente").addEventListener("input", aplicarFiltros);
   document.getElementById("filtro-status").addEventListener("change", aplicarFiltros);
   document.getElementById("filtro-consultor").addEventListener("input", aplicarFiltros);
+  document.getElementById("filtro-municipio").addEventListener("input", aplicarFiltros);
 
   flatpickr("#filtro-periodo", {
     mode: "range",
@@ -597,29 +603,40 @@ function aplicarFiltros() {
 
 document.getElementById("btn-exportar").addEventListener("click", () => {
   const headers = [
-  "Cliente", "Fazenda", "Consultor", "Data da Visita", "Modelo",
-  "Município", "Horímetro", "Telefone", "Observações", "Checklist",
-  "Comentário", "Valor (R$)", "Status"
+    "Data da Visita", "Cliente", "Município", "Consultor", "Modelo",
+    "Horímetro", "Troca", "Telefone", "Observações", "Checklist",
+    "Comentário", "Valor (R$)", "Status"
   ];
 
   const linhas = Array.from(document.querySelectorAll("#painel-detalhes tr")).map(tr => {
     const tds = tr.querySelectorAll("td");
-    return [
-      tds[0]?.textContent.trim(), // Cliente
-      tds[1]?.textContent.trim(), // Fazenda
-      tds[2]?.textContent.trim(), // Consultor
-      tds[3]?.textContent.trim(), // Data da Visita
-      tds[4]?.textContent.trim(), // Modelo
-      tds[5]?.textContent.trim(), // Município
-      tds[6]?.textContent.trim(), // Horímetro
-      tds[7]?.textContent.trim(), // Telefone
-      tds[8]?.textContent.trim(), // Observações
-      tds[9]?.innerText.trim(),   // Checklist
-      tds[8]?.getAttribute("data-comentario") || "",   // Comentário do Responsável
-      tds[8]?.getAttribute("data-valor") || "",        // Valor Negociado
+
+    // Pegando os campos visuais
+    const dataVisita = tds[0]?.textContent.trim();
+    const cliente = tds[1]?.textContent.trim();
+    const municipio = tds[2]?.textContent.trim();
+    const consultor = tds[3]?.textContent.trim();
+    const modelo = tds[4]?.textContent.trim();
+    const horimetro = tds[5]?.textContent.trim();
+    const troca = tds[6]?.textContent.trim();
+    const telefone = tds[7]?.textContent.trim();
+    const observacoes = tds[8]?.textContent.trim();
+    const checklist = tds[9]?.innerText.trim();
+
+    // Pegando campos ocultos (usando dataset)
+    const comentario = tds[8]?.dataset.comentario || "";
+    const valor = tds[8]?.dataset.valor || "";
+
+    // Determinar status pela classe da linha
+    const status =
       tr.classList.contains("status-concluido") ? "Concluído" :
       tr.classList.contains("status-cancelado") ? "Cancelado" :
-      tr.classList.contains("status-em-andamento") ? "Em andamento" : ""
+      tr.classList.contains("status-em-andamento") ? "Em andamento" : "";
+
+    return [
+      dataVisita, cliente, municipio, consultor, modelo,
+      horimetro, troca, telefone, observacoes, checklist,
+      comentario, valor, status
     ];
   });
 
@@ -629,7 +646,6 @@ document.getElementById("btn-exportar").addEventListener("click", () => {
 
   XLSX.writeFile(wb, "checklists_filtrados.xlsx");
 });
-
 </script>
 
 
