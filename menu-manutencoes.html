@@ -212,6 +212,23 @@
     </div>
   </div>
 
+    <div style="margin-top: 30px; display: flex; justify-content: center;">
+  <button onclick="voltarPagina()" title="Voltar"
+    style="
+      background: linear-gradient(135deg, #00205b, #009bd6);
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-size: 14px;
+      cursor: pointer;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.4);
+    ">
+    ← Voltar
+  </button>
+</div>
+
+
   <script type="module">
     import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
     import { app } from './firebase.js';
@@ -310,6 +327,19 @@
         location.reload();
       }
     });
+  }
+</script>
+
+
+<script>
+  function voltarPagina() {
+    if (document.referrer && document.referrer !== window.location.href) {
+      // Se veio de outra página, volta
+      window.history.back();
+    } else {
+      // Se entrou direto, redireciona para a tela inicial
+      window.location.href = "index.html"; // <- troque se o nome for diferente
+    }
   }
 </script>
 
