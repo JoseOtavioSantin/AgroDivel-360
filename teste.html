@@ -599,7 +599,6 @@ function aplicarFiltros() {
 });
 //Função exportar.
 
-<script>
 document.getElementById("btn-exportar").addEventListener("click", () => {
   const headers = [
     "Data da Visita", "Cliente", "Município", "Consultor",
@@ -634,7 +633,6 @@ document.getElementById("btn-exportar").addEventListener("click", () => {
   XLSX.utils.book_append_sheet(wb, planilha, "Checklist");
   XLSX.writeFile(wb, "checklists_filtrados.xlsx");
 });
-</script>
 
   <script>
   if (localStorage.getItem("gestorLogado") !== "true") {
