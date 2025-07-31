@@ -475,6 +475,7 @@ function aplicarFiltros() {
 
   const filtrados = dadosTotais.filter(d => {
     const cliente = (d.nomeCliente || "").toLowerCase();
+    const municipio = (d.nomeCliente || "").toLowerCase();
     const status = d.statusChecklist || "";
     const consultor = (d.consultor || "").toLowerCase();
     const dataFormatada = d.dataVisita || "";
