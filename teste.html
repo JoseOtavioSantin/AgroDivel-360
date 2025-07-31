@@ -603,29 +603,40 @@ function aplicarFiltros() {
 
 document.getElementById("btn-exportar").addEventListener("click", () => {
   const headers = [
-  "Cliente", "Fazenda", "Consultor", "Data da Visita", "Modelo",
-  "Município", "Horímetro", "Telefone", "Observações", "Checklist",
-  "Comentário", "Valor (R$)", "Status"
+    "Data da Visita", "Cliente", "Município", "Consultor", "Modelo",
+    "Horímetro", "Troca", "Telefone", "Observações", "Checklist",
+    "Comentário", "Valor (R$)", "Status"
   ];
 
   const linhas = Array.from(document.querySelectorAll("#painel-detalhes tr")).map(tr => {
     const tds = tr.querySelectorAll("td");
-    return [
-      tds[0]?.textContent.trim(), // Cliente
-      tds[1]?.textContent.trim(), // Fazenda
-      tds[2]?.textContent.trim(), // Consultor
-      tds[3]?.textContent.trim(), // Data da Visita
-      tds[4]?.textContent.trim(), // Modelo
-      tds[5]?.textContent.trim(), // Município
-      tds[6]?.textContent.trim(), // Horímetro
-      tds[7]?.textContent.trim(), // Telefone
-      tds[8]?.textContent.trim(), // Observações
-      tds[9]?.innerText.trim(),   // Checklist
-      tds[8]?.getAttribute("data-comentario") || "",   // Comentário do Responsável
-      tds[8]?.getAttribute("data-valor") || "",        // Valor Negociado
+
+    // Pegando os campos visuais
+    const dataVisita = tds[0]?.textContent.trim();
+    const cliente = tds[1]?.textContent.trim();
+    const municipio = tds[2]?.textContent.trim();
+    const consultor = tds[3]?.textContent.trim();
+    const modelo = tds[4]?.textContent.trim();
+    const horimetro = tds[5]?.textContent.trim();
+    const troca = tds[6]?.textContent.trim();
+    const telefone = tds[7]?.textContent.trim();
+    const observacoes = tds[8]?.textContent.trim();
+    const checklist = tds[9]?.innerText.trim();
+
+    // Pegando campos ocultos (usando dataset)
+    const comentario = tds[8]?.dataset.comentario || "";
+    const valor = tds[8]?.dataset.valor || "";
+
+    // Determinar status pela classe da linha
+    const status =
       tr.classList.contains("status-concluido") ? "Concluído" :
       tr.classList.contains("status-cancelado") ? "Cancelado" :
-      tr.classList.contains("status-em-andamento") ? "Em andamento" : ""
+      tr.classList.contains("status-em-andamento") ? "Em andamento" : "";
+
+    return [
+      dataVisita, cliente, municipio, consultor, modelo,
+      horimetro, troca, telefone, observacoes, checklist,
+      comentario, valor, status
     ];
   });
 
@@ -635,7 +646,6 @@ document.getElementById("btn-exportar").addEventListener("click", () => {
 
   XLSX.writeFile(wb, "checklists_filtrados.xlsx");
 });
-
 </script>
 
 
