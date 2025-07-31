@@ -599,27 +599,30 @@ function aplicarFiltros() {
 });
 //Função exportar.
 
+<script>
 document.getElementById("btn-exportar").addEventListener("click", () => {
   const headers = [
-  "Cliente", "Fazenda", "Consultor", "Data da Visita", "Modelo",
-  "Município", "Horímetro", "Telefone", "Observações", "Checklist",
-  "Comentário", "Valor (R$)", "Status"
+    "Data da Visita", "Cliente", "Município", "Consultor",
+    "Modelo", "Horímetro", "Troca", "Telefone",
+    "Observações", "Checklist", "Comentário", "Valor (R$)", "Status"
   ];
 
-const linhas = Array.from(document.querySelectorAll("#painel-detalhes tr")).map(tr => {
+  const linhas = Array.from(document.querySelectorAll("#painel-detalhes tr")).map(tr => {
     const tds = tr.querySelectorAll("td");
+
     return [
-      tds[1]?.textContent.trim(), // Cliente
-      tds[3]?.textContent.trim(), // Consultor
       tds[0]?.textContent.trim(), // Data da Visita
-      tds[4]?.textContent.trim(), // Modelo
+      tds[1]?.textContent.trim(), // Cliente
       tds[2]?.textContent.trim(), // Município
+      tds[3]?.textContent.trim(), // Consultor
+      tds[4]?.textContent.trim(), // Modelo
       tds[5]?.textContent.trim(), // Horímetro
+      tds[6]?.textContent.trim(), // Troca
       tds[7]?.textContent.trim(), // Telefone
       tds[8]?.textContent.trim(), // Observações
       tds[9]?.innerText.trim(),   // Checklist
-      tds[8]?.getAttribute("data-comentario") || "", // Comentário
-      tds[8]?.getAttribute("data-valor") || "",      // Valor
+      tds[8]?.getAttribute("data-comentario") || "", // Comentário do Responsável
+      tds[8]?.getAttribute("data-valor") || "",      // Valor Negociado
       tr.classList.contains("status-concluido") ? "Concluído" :
       tr.classList.contains("status-cancelado") ? "Cancelado" :
       tr.classList.contains("status-em-andamento") ? "Em andamento" : ""
@@ -629,12 +632,9 @@ const linhas = Array.from(document.querySelectorAll("#painel-detalhes tr")).map(
   const planilha = XLSX.utils.aoa_to_sheet([headers, ...linhas]);
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, planilha, "Checklist");
-
   XLSX.writeFile(wb, "checklists_filtrados.xlsx");
 });
-
 </script>
-
 
   <script>
   if (localStorage.getItem("gestorLogado") !== "true") {
