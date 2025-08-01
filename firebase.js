@@ -15,6 +15,18 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
+// 🔧 Função para limpar dados vazios
+function limparDados(obj) {
+  return Object.fromEntries(
+    Object.entries(obj).filter(([_, v]) =>
+      v !== undefined &&
+      v !== null &&
+      (typeof v === "string" ? v.trim() !== "" : true) &&
+      (!Array.isArray(v) || v.length > 0)
+    )
+  );
+}
+
 // Popup bonito
 function mostrarPopup(mensagem, sucesso = true) {
   const fundo = document.createElement("div");
@@ -79,13 +91,16 @@ window.enviarChecklist = async function (event, colecao) {
     horimetro: formData.get("horimetro") || "",
     modeloTrator: formData.get("modeloTrator") || "",
     consultor: formData.get("nomeConsultor") || "",
+    departamentoInsatisfacao: formData.get("departamentoInsatisfacao") || "",
     observacoes: formData.get("observacoes") || "",
     checklist: formData.getAll("checklist"),
     criadoEm: new Date().toISOString()
   };
 
+  const dadosLimpos = limparDados(dados);
+
   if (navigator.onLine) {
-    const sucesso = await enviarParaFirebase(dados, colecao);
+    const sucesso = await enviarParaFirebase(dadosLimpos, colecao);
     if (sucesso) {
       mostrarPopup("✅ Dados enviados com sucesso!");
       form.reset();
@@ -95,7 +110,7 @@ window.enviarChecklist = async function (event, colecao) {
   } else {
     // Salvar localmente
     const pendentes = JSON.parse(localStorage.getItem("checklistsPendentes")) || [];
-    pendentes.push({ colecao, dados });
+    pendentes.push({ colecao, dados: dadosLimpos });
     localStorage.setItem("checklistsPendentes", JSON.stringify(pendentes));
     mostrarPopup("📴 Sem internet! dados salvos localmente.");
     form.reset();
