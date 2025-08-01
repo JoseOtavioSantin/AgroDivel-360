@@ -1,0 +1,45 @@
+<h2>Formulário de Insatisfação</h2>
+
+<form onsubmit="enviarChecklist(event, 'insatisfacoesClientes')">
+  <label>Data da Visita *</label>
+  <input type="date" name="dataVisita" id="dataVisita" required>
+
+  <label>Filial *</label>
+  <select name="filial" id="filial" required>
+    <option value="">Selecione a filial</option>
+    <option value="Campos Novos">Campos Novos</option>
+    <option value="Rio do Sul">Rio do Sul</option>
+    <option value="Lages">Lages</option>
+  </select>
+
+  <label>Nome do Cliente *</label>
+  <input type="text" name="nomeCliente" required>
+
+  <label>Telefone *</label>
+  <input type="tel" name="telefone" required>
+
+  <label>Município *</label>
+  <select name="municipio" id="municipio" required>
+    <option value="">Selecione um município</option>
+  </select>
+
+  <label>Nome do Consultor *</label>
+  <select name="nomeConsultor" id="nomeConsultor" required>
+    <option value="">Selecione o consultor</option>
+  </select>
+
+  <label>Departamento com Insatisfação *</label>
+  <select name="departamentoInsatisfacao" required>
+    <option value="">Selecione o departamento</option>
+    <option value="Peças">Peças</option>
+    <option value="Serviços">Serviços</option>
+    <option value="Vendas">Vendas</option>
+    <option value="Financeiro">Financeiro</option>
+    <option value="Outros">Outros</option>
+  </select>
+
+  <label>Descreva a Insatisfação</label>
+  <textarea name="observacoes" rows="4" placeholder="Detalhe aqui o que ocorreu..."></textarea>
+
+  <button type="submit">Enviar</button>
+</form>
