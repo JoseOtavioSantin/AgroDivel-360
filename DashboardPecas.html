@@ -350,12 +350,12 @@
       <table>
         <thead>
           <tr>
+            <th>Data da Visita</th>
             <th>Cliente</th>
             <th>Fazenda</th>
-            <th>Consultor</th>
-            <th>Data da Visita</th>
-            <th>Modelo</th>
             <th>Município</th>
+            <th>Consultor</th>
+            <th>Modelo</th>
             <th>Horímetro</th>
             <th>Telefone</th>
             <th>Observações</th>
@@ -501,33 +501,33 @@ function aplicarFiltros() {
                         d.statusChecklist === "Cancelado" ? "status-cancelado" :
                         d.statusChecklist === "Em andamento" ? "status-em-andamento" : "";
 
-    painel.innerHTML += `
-      <tr class="${statusClass}">
-        <td>${d.nomeCliente || "-"}</td>
-        <td>${d.nomeFazenda || "-"}</td>
-        <td>${d.consultor || "-"}</td>
-        <td>${d.dataVisita || "-"}</td>
-        <td>${d.modelo || "-"}</td>
-        <td>${d.municipio || "-"}</td>
-        <td>${d.horimetro || "-"}</td>
-        <td style="text-align: center;">
-          ${
-            d.telefone
-              ? `<a href="https://wa.me/55${d.telefone.replace(/\D/g, '')}" 
-                     target="_blank" 
-                     title="Chamar no WhatsApp"
-                     style="color: #25D366; font-size: 22px; display: inline-block;">
-                   <i class="fa-brands fa-whatsapp"></i>
-                 </a>`
-              : "-"
-          }
-        </td>
-        <td data-comentario="${d.comentarioResponsavel || ''}" data-valor="${d.valorNegociado || 0}">
+  painel.innerHTML += `
+    <tr class="${statusClass}">
+      <td>${d.dataVisita || "-"}</td>
+      <td>${d.nomeCliente || "-"}</td>
+      <td>${d.nomeFazenda || "-"}</td>
+      <td>${d.municipio || "-"}</td>
+      <td>${d.consultor || "-"}</td>
+      <td>${d.modelo || "-"}</td>
+      <td>${d.horimetro || "-"}</td>
+      <td style="text-align: center;">
+        ${
+          d.telefone
+            ? `<a href="https://wa.me/55${d.telefone.replace(/\D/g, '')}" 
+                  target="_blank" 
+                  title="Chamar no WhatsApp"
+                  style="color: #25D366; font-size: 22px; display: inline-block;">
+                <i class="fa-brands fa-whatsapp"></i>
+              </a>`
+            : "-"
+        }
+      </td>
+      <td data-comentario="${d.comentarioResponsavel || ''}" data-valor="${d.valorNegociado || 0}">
         ${d.observacoes || "-"}
-        </td>
-          <td>${(d.checklist || []).map(item => `<span style="background:#fff; color:#00205b; padding:3px 8px; border-radius:5px; margin:2px; display:inline-block; font-size:10px">${item}</span>`).join("")}</td>
-          <td class="acoes"><button class="btn-acao" data-id="${d.id}" title="Abrir ações">➕</button></td>
-        </tr>`;
+      </td>
+      <td>${(d.checklist || []).map(item => `<span style="background:#fff; color:#00205b; padding:3px 8px; border-radius:5px; margin:2px; display:inline-block; font-size:10px">${item}</span>`).join("")}</td>
+      <td class="acoes"><button class="btn-acao" data-id="${d.id}" title="Abrir ações">➕</button></td>
+    </tr>`;
   });
 
   document.getElementById("valor-total").textContent = `R$ ${totalValor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
@@ -597,26 +597,26 @@ function aplicarFiltros() {
 
 document.getElementById("btn-exportar").addEventListener("click", () => {
   const headers = [
-  "Cliente", "Fazenda", "Consultor", "Data da Visita", "Modelo",
-  "Município", "Horímetro", "Telefone", "Observações", "Checklist",
-  "Comentário", "Valor (R$)", "Status"
+    "Data da Visita", "Cliente", "Fazenda", "Município", "Consultor",
+    "Modelo", "Horímetro", "Telefone", "Observações", "Checklist",
+    "Comentário", "Valor (R$)", "Status"
   ];
 
   const linhas = Array.from(document.querySelectorAll("#painel-detalhes tr")).map(tr => {
     const tds = tr.querySelectorAll("td");
     return [
-      tds[0]?.textContent.trim(), // Cliente
-      tds[1]?.textContent.trim(), // Fazenda
-      tds[2]?.textContent.trim(), // Consultor
-      tds[3]?.textContent.trim(), // Data da Visita
-      tds[4]?.textContent.trim(), // Modelo
-      tds[5]?.textContent.trim(), // Município
+      tds[0]?.textContent.trim(), // Data da Visita
+      tds[1]?.textContent.trim(), // Cliente
+      tds[2]?.textContent.trim(), // Fazenda
+      tds[3]?.textContent.trim(), // Município
+      tds[4]?.textContent.trim(), // Consultor
+      tds[5]?.textContent.trim(), // Modelo
       tds[6]?.textContent.trim(), // Horímetro
       tds[7]?.textContent.trim(), // Telefone
       tds[8]?.textContent.trim(), // Observações
       tds[9]?.innerText.trim(),   // Checklist
-      tds[8]?.getAttribute("data-comentario") || "",   // Comentário do Responsável
-      tds[8]?.getAttribute("data-valor") || "",        // Valor Negociado
+      tds[8]?.getAttribute("data-comentario") || "",   // Comentário
+      tds[8]?.getAttribute("data-valor") || "",        // Valor
       tr.classList.contains("status-concluido") ? "Concluído" :
       tr.classList.contains("status-cancelado") ? "Cancelado" :
       tr.classList.contains("status-em-andamento") ? "Em andamento" : ""
