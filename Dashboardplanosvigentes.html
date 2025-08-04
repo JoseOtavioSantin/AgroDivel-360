@@ -516,9 +516,12 @@
 
     const filtrados = dadosTotais.filter(d => {
       const cliente = (d.nomeCliente || "").toLowerCase();
-      const status = d.statusChecklist || "";
+      const totalChecklist = (d.checklistRealizado || []).length;
+      const preenchidos = (d.checklistRealizado || []).filter(item => (d.datasChecklist || {})[item]);
+      const statusChecklistAuto = totalChecklist > 0 && preenchidos.length === totalChecklist ? "Concluído" : "Em andamento";
+      const status = statusChecklistAuto;
       const consultor = (d.consultor || "").toLowerCase();
-      const dataFormatada = d.dataVisita || "";
+      const dataFormatada = d.dataInicioContrato || "";
 
       const dentroDoPeriodo =
         (!dataInicio && !dataFim) ||
@@ -541,23 +544,29 @@
     filtrados.forEach(d => {
       if (!isNaN(d.valorNegociado)) totalValor += Number(d.valorNegociado);
 
-      const statusClass = d.statusChecklist === "Concluído" ? "status-concluido" :
-        d.statusChecklist === "Cancelado" ? "status-cancelado" :
-        d.statusChecklist === "Em andamento" ? "status-em-andamento" : "";
+    // Verifica se todos os checklists têm data
+    const totalChecklist = (d.checklistRealizado || []).length;
+    const preenchidos = (d.checklistRealizado || []).filter(item => (d.datasChecklist || {})[item]);
+    const statusChecklistAuto = totalChecklist > 0 && preenchidos.length === totalChecklist ? "Concluído" : "Em andamento";
+
+    // Cor automática com base no status calculado
+    const statusClass = statusChecklistAuto === "Concluído" ? "status-concluido" : "status-em-andamento";
 
       const checklistHtml = (d.checklistRealizado || []).map(item => {
         const dataRealizada = (d.datasChecklist || {})[item];
+        const dataFormatada = formatarDataBR(dataRealizada);
         return `<button 
           onclick="abrirDataChecklist('${d.id}','${item}','${dataRealizada || ''}')"
           style="background:${dataRealizada ? '#4caf50' : '#fff'}; color:${dataRealizada ? '#fff' : '#00205b'}; padding:3px 8px; border:none; border-radius:5px; margin:2px; font-size:10px; cursor:pointer;"
           ${dataRealizada ? 'disabled' : ''}
-        >${item}${dataRealizada ? ` - ${dataRealizada}` : ''}</button>`;
-      }).join("");
+        >${item}${dataRealizada ? ` - ${dataFormatada}` : ''}</button>`;
+      }).join("");;
 
       painel.innerHTML += `
         <tr>
-          <td>${d.dataInicioContrato || "-"}</td>
-          <td>${d.dataFimContrato || "-"}</td>
+          <tr class="${statusClass}">
+          <td>${formatarDataBR(d.dataInicioContrato)}</td>
+          <td>${formatarDataBR(d.dataFimContrato)}</td>
           <td>${d.nomeCliente || "-"}</td>
           <td>${d.consultor || "-"}</td>
           <td>${d.fazenda || "-"}</td>
@@ -783,7 +792,31 @@ document.getElementById("btn-exportar").addEventListener("click", () => {
   window.abrirDataChecklist = abrirDataChecklist;
   window.fecharPopupDataChecklist = fecharPopupDataChecklist;
   window.salvarDataChecklist = salvarDataChecklist;
+
+function formatarDataBR(data) {
+  if (!data) return "";
+
+  // Se for objeto Date (ex: Firestore Timestamp convertido)
+  if (data instanceof Date) {
+    const dia = String(data.getDate()).padStart(2, '0');
+    const mes = String(data.getMonth() + 1).padStart(2, '0');
+    const ano = data.getFullYear();
+    return `${dia}/${mes}/${ano}`;
+  }
+
+  // Se for string (ex: "2025-08-04" ou "2025/08/04")
+  const partes = data.split(/[-/]/); // divide por "-" ou "/"
+  if (partes.length !== 3) return data;
+
+  // Garante formato dd/mm/aaaa
+  return `${partes[2]}/${partes[1]}/${partes[0]}`;
+}
+
+
+
 </script>
+
+
 
 
 <div id="popupChecklistData" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);justify-content:center;align-items:center;z-index:9999;">
