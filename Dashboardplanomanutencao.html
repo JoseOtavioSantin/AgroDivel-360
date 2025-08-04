@@ -392,10 +392,46 @@
   </div>
 </div>
 
+<!-- SEGUNDO POPUP: Dados de Conclusão -->
+<div id="popupConclusao" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);justify-content:center;align-items:center;z-index:9999;">
+  <div style="background:#2c2f3f;padding:20px;border-radius:12px;width:90%;max-width:450px;">
+    <h3>Dados do Contrato Concluído</h3>
+
+    <label>Chassi</label>
+    <input type="text" id="chassiFinal" style="width:100%;padding:8px;margin-bottom:10px;border:none;border-radius:6px;">
+
+    <label>Horas Iniciais</label>
+    <input type="number" id="horasIniciais" style="width:100%;padding:8px;margin-bottom:10px;border:none;border-radius:6px;">
+
+    <label>Horas Finais</label>
+    <input type="number" id="horasFinais" style="width:100%;padding:8px;margin-bottom:10px;border:none;border-radius:6px;">
+
+    <label>Data Inicial do Contrato</label>
+    <input type="date" id="dataInicioContrato" style="width:100%;padding:8px;margin-bottom:10px;border:none;border-radius:6px;">
+
+    <label>Data Final do Contrato</label>
+    <input type="date" id="dataFimContrato" style="width:100%;padding:8px;margin-bottom:10px;border:none;border-radius:6px;">
+
+    <label>Checklist Realizado:</label>
+    <div style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:10px;">
+      <label><input type="checkbox" value="300" /> 300</label>
+      <label><input type="checkbox" value="600" /> 600</label>
+      <label><input type="checkbox" value="900" /> 900</label>
+      <label><input type="checkbox" value="1200" /> 1200</label>
+    </div>
+
+    <div style="text-align:right;">
+      <button onclick="salvarConclusao()" style="background:#00205b;color:white;padding:8px 16px;border-radius:8px;border:none;cursor:pointer;">Salvar</button>
+      <button onclick="fecharPopupConclusao()" style="background:#444;color:white;padding:8px 16px;border-radius:8px;border:none;cursor:pointer;margin-left:10px;">Cancelar</button>
+    </div>
+  </div>
+</div>
+
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
   import { getFirestore, collection, getDocs, query, where, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+  import { addDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
   const tipoChecklist = new URLSearchParams(window.location.search).get("tipo") || "checklistPlanoManutencao";
   const app = initializeApp({
@@ -549,6 +585,7 @@ function aplicarFiltros() {
       document.getElementById("valorNegociado").value = dados.valorNegociado || "";
     }
   }
+  
 
   function fecharPopup() {
     document.getElementById("popup").style.display = "none";
@@ -565,12 +602,78 @@ function aplicarFiltros() {
       statusChecklist: status,
       valorNegociado: valor
     });
+
     fecharPopup();
-    carregarDados();
+
+    if (status === "Concluído") {
+      // Abre o segundo popup
+      document.getElementById("popupConclusao").style.display = "flex";
+    } else {
+      carregarDados(); // só recarrega se não for concluído
+    }
+
   }
 
   window.fecharPopup = fecharPopup;
   window.salvarPopup = salvarPopup;
+
+  async function salvarConclusao() {
+  const id = document.getElementById("docIdSelecionado").value;
+
+  // Busca os dados originais do checklist (nome do cliente e outros)
+  const docRefOriginal = doc(db, tipoChecklist, id);
+  const docSnap = await getDoc(docRefOriginal);
+  if (!docSnap.exists()) {
+    alert("Erro: não foi possível encontrar os dados originais.");
+    return;
+  }
+
+  const dadosOriginais = docSnap.data();
+  const nomeCliente = dadosOriginais.nomeCliente || "";
+  const consultor = dadosOriginais.consultor || "";
+  const municipio = dadosOriginais.municipio || "";
+  const modelo = dadosOriginais.modelo || "";
+  const fazenda = dadosOriginais.nomeFazenda || "";
+
+  // Dados do segundo popup
+  const chassi = document.getElementById("chassiFinal").value;
+  const horasIni = parseFloat(document.getElementById("horasIniciais").value) || 0;
+  const horasFim = parseFloat(document.getElementById("horasFinais").value) || 0;
+  const dataInicio = document.getElementById("dataInicioContrato").value;
+  const dataFim = document.getElementById("dataFimContrato").value;
+
+  const checkboxes = document.querySelectorAll('#popupConclusao input[type="checkbox"]:checked');
+  const checklistRealizado = Array.from(checkboxes).map(cb => cb.value);
+
+  // Salva na coleção `planosVigentes`
+  const novaEntrada = {
+    nomeCliente,
+    consultor,
+    municipio,
+    modelo,
+    fazenda,
+    chassi,
+    horasIniciais: horasIni,
+    horasFinais: horasFim,
+    dataInicioContrato: dataInicio,
+    dataFimContrato: dataFim,
+    checklistRealizado,
+    dataCriacao: new Date().toISOString()
+  };
+
+  await addDoc(collection(db, "planosVigentes"), novaEntrada);
+
+  fecharPopupConclusao();
+  carregarDados(); // Atualiza a tela
+}
+
+function fecharPopupConclusao() {
+  document.getElementById("popupConclusao").style.display = "none";
+}
+
+window.salvarConclusao = salvarConclusao;
+window.fecharPopupConclusao = fecharPopupConclusao;
+
   
   document.addEventListener("DOMContentLoaded", () => {
   carregarFiliaisDoGestor();
