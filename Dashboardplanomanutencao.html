@@ -397,7 +397,7 @@
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
   import { getFirestore, collection, getDocs, query, where, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-  const tipoChecklist = new URLSearchParams(window.location.search).get("tipo") || "checklistServicos";
+  const tipoChecklist = new URLSearchParams(window.location.search).get("tipo") || "checklistPlanoManutencao";
   const app = initializeApp({
     apiKey: "AIzaSyDcjPa9jXsCCu6lNc1fjVg4Bzz1toKWAGY",
     authDomain: "agro-divel.firebaseapp.com",
