@@ -112,7 +112,7 @@ window.enviarChecklist = async function (event, colecao) {
     const pendentes = JSON.parse(localStorage.getItem("checklistsPendentes")) || [];
     pendentes.push({ colecao, dados: dadosLimpos });
     localStorage.setItem("checklistsPendentes", JSON.stringify(pendentes));
-    mostrarPopup("📴 Sem internet! dados salvos localmente.");
+    mostrarPopup("📴 Sem internet! dados salvos localmente. Reabra o aplicativo quando tiver internet");
     form.reset();
   }
 };
@@ -134,3 +134,4 @@ window.addEventListener("online", async () => {
 });
 
 export { app, db };
+
