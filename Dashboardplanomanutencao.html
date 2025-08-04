@@ -634,6 +634,7 @@ function aplicarFiltros() {
   const municipio = dadosOriginais.municipio || "";
   const modelo = dadosOriginais.modelo || "";
   const fazenda = dadosOriginais.nomeFazenda || "";
+  const filial = dadosOriginais.filial || "";
 
   // Dados do segundo popup
   const chassi = document.getElementById("chassiFinal").value;
@@ -644,6 +645,7 @@ function aplicarFiltros() {
 
   const checkboxes = document.querySelectorAll('#popupConclusao input[type="checkbox"]:checked');
   const checklistRealizado = Array.from(checkboxes).map(cb => cb.value);
+  const valorNegociado = parseFloat(document.getElementById("valorNegociado").value) || 0;
 
   // Salva na coleção `planosVigentes`
   const novaEntrada = {
@@ -658,7 +660,9 @@ function aplicarFiltros() {
     dataInicioContrato: dataInicio,
     dataFimContrato: dataFim,
     checklistRealizado,
-    dataCriacao: new Date().toISOString()
+    valorNegociado, // ✅ aqui
+    dataCriacao: new Date().toISOString(),
+    filial
   };
 
   await addDoc(collection(db, "planosVigentes"), novaEntrada);
