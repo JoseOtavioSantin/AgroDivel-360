@@ -5,11 +5,11 @@
   <meta name="theme-color" content="#2c2f3f" />
   <title>Dashboard com Filtros</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <script src="https://unpkg.com/lucide@latest""></script></script>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css"">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"">
-  <script src="https://cdn.jsdelivr.net/npm/flatpickr""></script></script>
-  <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/pt.js""></script></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/pt.js"></script>
   <style>
     * { box-sizing: border-box; }
 
@@ -298,7 +298,7 @@
     background: linear-gradient(135deg, #00205b, #009bd6);
     color: white;
     border: none;
-    margin-right; 10px;
+    margin-right: 10px;
     padding: 10px 16px;
     border-radius: 8px;
     font-size: 14px;
@@ -428,31 +428,44 @@
 
 
 <script type="module">
-  import {initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-  import {getFirestore, collection, getDocs, query, where, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import {
+    getFirestore,
+    collection,
+    getDocs,
+    query,
+    where,
+    doc,
+    getDoc,
+    updateDoc,
+    addDoc
+  } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
   const tipoChecklist = "planosVigentes";
+  window.tipoChecklist = tipoChecklist;
+
   const app = initializeApp({
     apiKey: "AIzaSyDcjPa9jXsCCu6lNc1fjVg4Bzz1toKWAGY",
     authDomain: "agro-divel.firebaseapp.com",
     projectId: "agro-divel"
   });
+
   const db = getFirestore(app);
   let dadosTotais = [];
 
   document.getElementById("dynamic-title").textContent =
-  tipoChecklist === "checklistComercial" ? "Comercial" :
-  tipoChecklist === "checklistRevisao" ? "Revisão" :
-  tipoChecklist === "checklistPecas" ? "Peças" : "Painel";
-  
+    tipoChecklist === "checklistComercial" ? "Comercial" :
+    tipoChecklist === "checklistRevisao" ? "Revisão" :
+    tipoChecklist === "checklistPecas" ? "Peças" : "Painel";
+
   async function carregarFiliaisDoGestor() {
     const emailGestor = localStorage.getItem("gestorEmail") || "";
     if (!emailGestor) return;
-  
+
     const gestoresRef = collection(db, "gestores");
     const q = query(gestoresRef, where("email", "==", emailGestor));
     const snapshot = await getDocs(q);
-  
+
     if (!snapshot.empty) {
       const dados = snapshot.docs[0].data();
       const filiais = dados.filial || [];
@@ -463,9 +476,7 @@
       alert("Gestor não encontrado no banco.");
     }
   }
-  
-  window.db = db;
-  
+
   async function carregarDados() {
     const querySnapshot = await getDocs(collection(db, tipoChecklist));
     dadosTotais = [];
@@ -474,97 +485,102 @@
 
     querySnapshot.forEach(docItem => {
       const dados = docItem.data();
-
-      // Só adiciona se for da mesma filial
       if (filiaisLogadas.map(f => f.toLowerCase().trim()).includes((dados.filial || "").toLowerCase().trim())) {
         dadosTotais.push({ id: docItem.id, ...dados });
       }
     });
-    
-          console.log("Total encontrado:", dadosTotais.length, dadosTotais);
 
+    console.log("Total encontrado:", dadosTotais.length, dadosTotais);
     aplicarFiltros();
   }
 
-function aplicarFiltros() {
-  const clienteFiltro = document.getElementById("filtro-cliente").value.toLowerCase();
-  const statusFiltro = document.getElementById("filtro-status").value;
-  const consultorFiltro = document.getElementById("filtro-consultor").value.toLowerCase();
-  const periodo = document.getElementById("filtro-periodo").value.trim();
+  function aplicarFiltros() {
+    const clienteFiltro = document.getElementById("filtro-cliente").value.toLowerCase();
+    const statusFiltro = document.getElementById("filtro-status").value;
+    const consultorFiltro = document.getElementById("filtro-consultor").value.toLowerCase();
+    const periodo = document.getElementById("filtro-periodo").value.trim();
 
-  const instance = document.getElementById("filtro-periodo")._flatpickr;
-  const selectedDates = instance.selectedDates;
+    const instance = document.getElementById("filtro-periodo")._flatpickr;
+    const selectedDates = instance.selectedDates;
 
-  let dataInicio = "", dataFim = "";
-  if (selectedDates.length === 2) {
-    dataInicio = selectedDates[0].toISOString().slice(0, 10); // yyyy-mm-dd
-    dataFim    = selectedDates[1].toISOString().slice(0, 10);
-  } else if (selectedDates.length === 1) {
-    dataInicio = dataFim = selectedDates[0].toISOString().slice(0, 10);
+    let dataInicio = "", dataFim = "";
+    if (selectedDates.length === 2) {
+      dataInicio = selectedDates[0].toISOString().slice(0, 10);
+      dataFim = selectedDates[1].toISOString().slice(0, 10);
+    } else if (selectedDates.length === 1) {
+      dataInicio = dataFim = selectedDates[0].toISOString().slice(0, 10);
+    }
+
+    const painel = document.getElementById("painel-detalhes");
+    painel.innerHTML = "";
+
+    const filtrados = dadosTotais.filter(d => {
+      const cliente = (d.nomeCliente || "").toLowerCase();
+      const status = d.statusChecklist || "";
+      const consultor = (d.consultor || "").toLowerCase();
+      const dataFormatada = d.dataVisita || "";
+
+      const dentroDoPeriodo =
+        (!dataInicio && !dataFim) ||
+        (
+          (!dataInicio || dataFormatada >= dataInicio) &&
+          (!dataFim || dataFormatada <= dataFim)
+        );
+
+      return cliente.includes(clienteFiltro) &&
+        (statusFiltro === "" || status === statusFiltro) &&
+        consultor.includes(consultorFiltro) &&
+        dentroDoPeriodo;
+    });
+
+    document.getElementById("total-clientes").textContent = filtrados.length;
+    document.getElementById("total-concluidos").textContent = filtrados.filter(d => d.statusChecklist === "Concluído").length;
+    document.getElementById("cancelados").textContent = filtrados.filter(d => d.statusChecklist === "Cancelado").length;
+
+    let totalValor = 0;
+    filtrados.forEach(d => {
+      if (!isNaN(d.valorNegociado)) totalValor += Number(d.valorNegociado);
+
+      const statusClass = d.statusChecklist === "Concluído" ? "status-concluido" :
+        d.statusChecklist === "Cancelado" ? "status-cancelado" :
+        d.statusChecklist === "Em andamento" ? "status-em-andamento" : "";
+
+      const checklistHtml = (d.checklistRealizado || []).map(item => {
+        const dataRealizada = (d.datasChecklist || {})[item];
+        return `<button 
+          onclick="abrirDataChecklist('${d.id}','${item}','${dataRealizada || ''}')"
+          style="background:${dataRealizada ? '#4caf50' : '#fff'}; color:${dataRealizada ? '#fff' : '#00205b'}; padding:3px 8px; border:none; border-radius:5px; margin:2px; font-size:10px; cursor:pointer;"
+          ${dataRealizada ? 'disabled' : ''}
+        >${item}${dataRealizada ? ` - ${dataRealizada}` : ''}</button>`;
+      }).join("");
+
+      painel.innerHTML += `
+        <tr>
+          <td>${d.dataInicioContrato || "-"}</td>
+          <td>${d.dataFimContrato || "-"}</td>
+          <td>${d.nomeCliente || "-"}</td>
+          <td>${d.consultor || "-"}</td>
+          <td>${d.fazenda || "-"}</td>
+          <td>${d.municipio || "-"}</td>
+          <td>${d.modelo || "-"}</td>
+          <td>${d.horasIniciais || "-"}</td>
+          <td>${d.horasFinais || "-"}</td>
+          <td>${checklistHtml}</td>
+        </tr>`;
+    });
+
+    document.getElementById("valor-total").textContent = `R$ ${totalValor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
   }
 
-  const painel = document.getElementById("painel-detalhes");
-  painel.innerHTML = "";
-
-  const filtrados = dadosTotais.filter(d => {
-    const cliente = (d.nomeCliente || "").toLowerCase();
-    const status = d.statusChecklist || "";
-    const consultor = (d.consultor || "").toLowerCase();
-    const dataFormatada = d.dataVisita || "";
-
-    const dentroDoPeriodo =
-      (!dataInicio && !dataFim) ||
-      (
-        (!dataInicio || dataFormatada >= dataInicio) &&
-        (!dataFim || dataFormatada <= dataFim)
-      );
-
-    return cliente.includes(clienteFiltro) &&
-           (statusFiltro === "" || status === statusFiltro) &&
-           consultor.includes(consultorFiltro) &&
-           dentroDoPeriodo;
-  });
-
-  // CONTADORES E RENDERIZAÇÃO
-  document.getElementById("total-clientes").textContent = filtrados.length;
-  document.getElementById("total-concluidos").textContent = filtrados.filter(d => d.statusChecklist === "Concluído").length;
-  document.getElementById("cancelados").textContent = filtrados.filter(d => d.statusChecklist === "Cancelado").length;
-
-  let totalValor = 0;
-  filtrados.forEach(d => {
-    if (!isNaN(d.valorNegociado)) totalValor += Number(d.valorNegociado);
-    const statusClass = d.statusChecklist === "Concluído" ? "status-concluido" :
-                        d.statusChecklist === "Cancelado" ? "status-cancelado" :
-                        d.statusChecklist === "Em andamento" ? "status-em-andamento" : "";
-
-painel.innerHTML += `
-  <tr>
-    <td>${d.dataInicioContrato || "-"}</td>
-    <td>${d.dataFimContrato || "-"}</td>
-    <td>${d.nomeCliente || "-"}</td>
-    <td>${d.consultor || "-"}</td>
-    <td>${d.fazenda || "-"}</td>
-    <td>${d.municipio || "-"}</td>
-    <td>${d.modelo || "-"}</td>
-    <td>${d.horasIniciais || "-"}</td>
-    <td>${d.horasFinais || "-"}</td>
-    <td>${(d.checklistRealizado || []).map(item => {
-    const dataRealizada = (d.datasChecklist || {})[item];
-    return `<button 
-      onclick="abrirDataChecklist('${d.id}','${item}','${dataRealizada || ''}')" 
-      style="background:${dataRealizada ? '#4caf50' : '#fff'}; color:${dataRealizada ? '#fff' : '#00205b'}; padding:3px 8px; border:none; border-radius:5px; margin:2px; font-size:10px; cursor:pointer;"
-      ${dataRealizada ? 'disabled' : ''}
-    >${item}${dataRealizada ? ` - ${dataRealizada}` : ''}</button>`;
-  }).join("")}</td>
-  </tr>`;
-  });
-
-  document.getElementById("valor-total").textContent = `R$ ${totalValor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
-
-  document.querySelectorAll(".acoes button").forEach(btn => {
-    btn.addEventListener("click", () => abrirPopup(btn.getAttribute("data-id")));
-  });
-}
+  // Expor Firebase e funções necessárias para os outros scripts
+  window.db = db;
+  window.doc = doc;
+  window.getDoc = getDoc;
+  window.updateDoc = updateDoc;
+  window.addDoc = addDoc;
+  window.collection = collection;
+  window.carregarFiliaisDoGestor = carregarFiliaisDoGestor;
+  window.carregarDados = carregarDados;
 
   async function abrirPopup(id) {
     document.getElementById("popup").style.display = "flex";
@@ -666,8 +682,9 @@ function fecharPopupConclusao() {
 
 window.salvarConclusao = salvarConclusao;
 window.fecharPopupConclusao = fecharPopupConclusao;
+window.abrirPopup = abrirPopup;
 
-  
+    
   document.addEventListener("DOMContentLoaded", () => {
   carregarFiliaisDoGestor();
   lucide.createIcons();
@@ -693,29 +710,23 @@ window.fecharPopupConclusao = fecharPopupConclusao;
 
 document.getElementById("btn-exportar").addEventListener("click", () => {
   const headers = [
-    "Data da Visita", "Cliente", "Fazenda", "Município", "Consultor",
-    "Modelo", "Horímetro", "Telefone", "Observações", "Checklist",
-    "Comentário", "Valor (R$)", "Status"
+  "Data Início", "Data Fim", "Cliente", "Consultor", "Fazenda",
+  "Município", "Modelo", "Horas Iniciais", "Horas Finais", "Checklist"
   ];
 
   const linhas = Array.from(document.querySelectorAll("#painel-detalhes tr")).map(tr => {
     const tds = tr.querySelectorAll("td");
     return [
-      tds[0]?.textContent.trim(), // Data da Visita
-      tds[1]?.textContent.trim(), // Cliente
-      tds[2]?.textContent.trim(), // Fazenda
-      tds[3]?.textContent.trim(), // Município
-      tds[4]?.textContent.trim(), // Consultor
-      tds[5]?.textContent.trim(), // Modelo
-      tds[6]?.textContent.trim(), // Horímetro
-      tds[7]?.textContent.trim(), // Telefone
-      tds[8]?.textContent.trim(), // Observações
-      tds[9]?.innerText.trim(),   // Checklist
-      tds[8]?.getAttribute("data-comentario") || "",   // Comentário
-      tds[8]?.getAttribute("data-valor") || "",        // Valor
-      tr.classList.contains("status-concluido") ? "Concluído" :
-      tr.classList.contains("status-cancelado") ? "Cancelado" :
-      tr.classList.contains("status-em-andamento") ? "Em andamento" : ""
+    tds[0]?.textContent.trim(), // Data Início
+    tds[1]?.textContent.trim(), // Data Fim
+    tds[2]?.textContent.trim(), // Cliente
+    tds[3]?.textContent.trim(), // Consultor
+    tds[4]?.textContent.trim(), // Fazenda
+    tds[5]?.textContent.trim(), // Município
+    tds[6]?.textContent.trim(), // Modelo
+    tds[7]?.textContent.trim(), // Horas Iniciais
+    tds[8]?.textContent.trim(), // Horas Finais
+    tds[9]?.innerText.trim()    // Checklist
     ];
   });
 
@@ -728,14 +739,6 @@ document.getElementById("btn-exportar").addEventListener("click", () => {
 
 </script>
 
-
-  <script>
-  if (localStorage.getItem("gestorLogado") !== "true") {
-    alert("Acesso restrito! Faça login como gestor.");
-    window.location.href = "index.html";
-  }
-</script>
-
   <script>
   if (localStorage.getItem("gestorLogado") !== "true") {
     alert("Acesso restrito! Faça login como gestor.");
@@ -746,84 +749,39 @@ document.getElementById("btn-exportar").addEventListener("click", () => {
   }
 </script>  
 
-<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js""></script></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
 <script>
-function abrirDataChecklist(id, valor, dataPreenchida) {
-  if (dataPreenchida) return;
-  document.getElementById('docIdChecklistData').value = id;
-  document.getElementById('valorChecklistData').value = valor;
-  document.getElementById('popupChecklistData').style.display = 'flex';
-}
-
-function fecharPopupDataChecklist() {
-  document.getElementById('popupChecklistData').style.display = 'none';
-}
-
-
-async function salvarDataChecklist() {
-  const id = document.getElementById('docIdChecklistData').value;
-  const valor = document.getElementById('valorChecklistData').value;
-  const data = document.getElementById('inputDataChecklist').value;
-  if (!data) {
-    alert("Preencha a data antes de salvar.");
-    return;
+  function abrirDataChecklist(id, valor, dataPreenchida) {
+    document.getElementById('docIdChecklistData').value = id;
+    document.getElementById('valorChecklistData').value = valor;
+    document.getElementById('inputDataChecklist').value = dataPreenchida || "";
+    document.getElementById('popupChecklistData').style.display = 'flex';
   }
-  const docRef = doc(db, tipoChecklist, id);
-  const docSnap = await getDoc(docRef);
-  if (!docSnap.exists()) return alert("Erro ao salvar.");
-  const dados = docSnap.data();
-  const datasChecklist = dados.datasChecklist || {};
-  datasChecklist[valor] = data;
-  await updateDoc(docRef, { datasChecklist });
-  fecharPopupDataChecklist();
-  carregarDados();
-}
 
-
-  const docRef = doc(db, tipoChecklist, id);
-  const docSnap = await getDoc(docRef);
-
-  if (!docSnap.exists()) return alert("Erro ao salvar.");
-
-  const dados = docSnap.data();
-  const datasChecklist = dados.datasChecklist || {};
-  datasChecklist[valor] = data;
-
-  await updateDoc(docRef, { datasChecklist });
-
-  fecharPopupDataChecklist();
-  carregarDados();
-}
-
-window.abrirDataChecklist = abrirDataChecklist;
-window.fecharPopupDataChecklist = fecharPopupDataChecklist;
-window.salvarDataChecklist = salvarDataChecklist;
-</script>
-
-<script>
-  
-async function salvarDataChecklist() {
-  const id = document.getElementById('docIdChecklistData').value;
-  const valor = document.getElementById('valorChecklistData').value;
-  const data = document.getElementById('inputDataChecklist').value;
-  if (!data) {
-    alert("Preencha a data antes de salvar.");
-    return;
+  function fecharPopupDataChecklist() {
+    document.getElementById('popupChecklistData').style.display = 'none';
   }
-  const docRef = doc(db, tipoChecklist, id);
-  const docSnap = await getDoc(docRef);
-  if (!docSnap.exists()) return alert("Erro ao salvar.");
-  const dados = docSnap.data();
-  const datasChecklist = dados.datasChecklist || {};
-  datasChecklist[valor] = data;
-  await updateDoc(docRef, { datasChecklist });
-  fecharPopupDataChecklist();
-  carregarDados();
-}
 
+  async function salvarDataChecklist() {
+    const id = document.getElementById('docIdChecklistData').value;
+    const valor = document.getElementById('valorChecklistData').value;
+    const data = document.getElementById('inputDataChecklist').value;
+    if (!data) return alert("Preencha a data antes de salvar.");
+    const docRef = doc(db, tipoChecklist, id);
+    const docSnap = await getDoc(docRef);
+    if (!docSnap.exists()) return alert("Erro ao salvar.");
+    const dados = docSnap.data();
+    const datasChecklist = dados.datasChecklist || {};
+    datasChecklist[valor] = data;
+    await updateDoc(docRef, { datasChecklist });
+    fecharPopupDataChecklist();
+    carregarDados();
+  }
 
-  // expose global if quiser
+  // Torna as funções acessíveis globalmente
+  window.abrirDataChecklist = abrirDataChecklist;
+  window.fecharPopupDataChecklist = fecharPopupDataChecklist;
   window.salvarDataChecklist = salvarDataChecklist;
 </script>
 
