@@ -345,6 +345,10 @@
         <i data-lucide="download" style="width: 20px; height: 20px;"></i>
       </button>
 
+      <button class="btn-acao" onclick="abrirFormularioNovoPlano()" style="height: 40px;">
+        <i data-lucide="plus-circle" style="margin-right: 6px;"></i> Novo Plano
+      </button>
+
         </div>
 
       <table>
@@ -683,7 +687,9 @@
 
   fecharPopupConclusao();
   carregarDados(); // Atualiza a tela
+  
 }
+
 
 function fecharPopupConclusao() {
   document.getElementById("popupConclusao").style.display = "none";
@@ -756,7 +762,62 @@ document.getElementById("btn-exportar").addEventListener("click", () => {
     const filiais = JSON.parse(localStorage.getItem("gestorFilial") || "[]");
     document.getElementById("dynamic-title").textContent = `Filiais: ${filiais.join(", ") || "Desconhecida"}`;
   }
-</script>  
+</script> 
+
+<script>
+function abrirFormularioNovoPlano() {
+  document.getElementById("popupNovoPlano").style.display = "flex";
+}
+
+function fecharNovoPlano() {
+  document.getElementById("popupNovoPlano").style.display = "none";
+}
+
+async function salvarNovoPlano() {
+const nomeCliente = document.getElementById("novoCliente").value.trim();
+  const consultor = document.getElementById("novoConsultor").value.trim();
+  const municipio = document.getElementById("novoMunicipio").value.trim();
+  const modelo = document.getElementById("novoModelo").value.trim();
+  const fazenda = document.getElementById("novoFazenda").value.trim();
+  const chassi = document.getElementById("novoChassi").value.trim();
+  const horasIniciais = parseFloat(document.getElementById("novoHorasIni").value) || 0;
+  const horasFinais = parseFloat(document.getElementById("novoHorasFim").value) || 0;
+  const dataInicioContrato = document.getElementById("novoDataIni").value;
+  const dataFimContrato = document.getElementById("novoDataFim").value;
+
+  // Coleta os checklists marcados
+  const checkboxes = document.querySelectorAll(".checklistNovoPlano:checked");
+  const checklistRealizado = Array.from(checkboxes).map(cb => cb.value);
+
+  const filiais = JSON.parse(localStorage.getItem("gestorFilial") || "[]");
+  const filial = filiais[0] || "Não informado";
+
+  const novoPlano = {
+    nomeCliente,
+    consultor,
+    municipio,
+    modelo,
+    fazenda,
+    chassi,
+    horasIniciais,
+    horasFinais,
+    dataInicioContrato,
+    dataFimContrato,
+    checklistRealizado,
+    datasChecklist: {},
+    statusChecklist: "Em andamento",
+    valorNegociado: 0,
+    comentarioResponsavel: "",
+    dataCriacao: new Date().toISOString(),
+    filial
+  };
+
+  await addDoc(collection(db, "planosVigentes"), novoPlano);
+
+  fecharNovoPlano();
+  carregarDados();
+}
+</script>
 
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
@@ -828,6 +889,56 @@ function formatarDataBR(data) {
     <div style="text-align:right;">
       <button onclick="salvarDataChecklist()" style="background:#00205b;color:white;padding:8px 16px;border-radius:8px;border:none;cursor:pointer;">Salvar</button>
       <button onclick="fecharPopupDataChecklist()" style="background:#444;color:white;padding:8px 16px;border-radius:8px;border:none;margin-left:10px;cursor:pointer;">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+
+<div id="popupNovoPlano" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);justify-content:center;align-items:center;z-index:9999;">
+  <div style="background:#2c2f3f;padding:20px;border-radius:12px;width:90%;max-width:450px;">
+    <h3>Novo Plano Vigente</h3>
+
+    <label>Cliente</label>
+    <input type="text" id="novoCliente" style="width:100%;padding:8px;margin-bottom:10px;border:none;border-radius:6px;">
+
+    <label>Consultor</label>
+    <input type="text" id="novoConsultor" style="width:100%;padding:8px;margin-bottom:10px;border:none;border-radius:6px;">
+
+    <label>Município</label>
+    <input type="text" id="novoMunicipio" style="width:100%;padding:8px;margin-bottom:10px;border:none;border-radius:6px;">
+
+    <label>Modelo</label>
+    <input type="text" id="novoModelo" style="width:100%;padding:8px;margin-bottom:10px;border:none;border-radius:6px;">
+
+    <label>Fazenda</label>
+    <input type="text" id="novoFazenda" style="width:100%;padding:8px;margin-bottom:10px;border:none;border-radius:6px;">
+
+    <label>Chassi</label>
+    <input type="text" id="novoChassi" style="width:100%;padding:8px;margin-bottom:10px;border:none;border-radius:6px;">
+
+    <label>Horas Iniciais</label>
+    <input type="number" id="novoHorasIni" style="width:100%;padding:8px;margin-bottom:10px;border:none;border-radius:6px;">
+
+    <label>Horas Finais</label>
+    <input type="number" id="novoHorasFim" style="width:100%;padding:8px;margin-bottom:10px;border:none;border-radius:6px;">
+
+    <label>Data Início</label>
+    <input type="date" id="novoDataIni" style="width:100%;padding:8px;margin-bottom:10px;border:none;border-radius:6px;">
+
+    <label>Data Fim</label>
+    <input type="date" id="novoDataFim" style="width:100%;padding:8px;margin-bottom:10px;border:none;border-radius:6px;">
+
+    <label>Checklist Realizado:</label>
+    <div style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:10px;">
+      <label><input type="checkbox" class="checklistNovoPlano" value="300" /> 300</label>
+      <label><input type="checkbox" class="checklistNovoPlano" value="600" /> 600</label>
+      <label><input type="checkbox" class="checklistNovoPlano" value="900" /> 900</label>
+      <label><input type="checkbox" class="checklistNovoPlano" value="1200" /> 1200</label>
+    </div>
+
+    <div style="text-align:right;">
+      <button onclick="salvarNovoPlano()" style="background:#00205b;color:white;padding:8px 16px;border-radius:8px;border:none;cursor:pointer;">Salvar</button>
+      <button onclick="fecharNovoPlano()" style="background:#444;color:white;padding:8px 16px;border-radius:8px;border:none;margin-left:10px;cursor:pointer;">Cancelar</button>
     </div>
   </div>
 </div>
