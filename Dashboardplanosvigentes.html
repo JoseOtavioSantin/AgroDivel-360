@@ -283,7 +283,7 @@
     <div style="display: flex; align-items: center; justify-content: space-between;">
       <img src="assets/logo.png" alt="Logo" class="logo">
     <div style="flex: 1; text-align: center;">
-      <em>Dashboard Agro Divel 360</em>
+      <em>Dashboard Agro Divel 360 - Planos Vigentes</em>
       <div id="dynamic-title" style="font-style: italic;">Carregando...</div>
     </div>
       <div style="width: 65px;"></div>
@@ -346,7 +346,7 @@
       </button>
 
       <button class="btn-acao" onclick="abrirFormularioNovoPlano()" style="height: 40px;">
-        <i data-lucide="plus-circle" style="margin-right: 6px;"></i> Novo Plano
+        <i data-lucide="plus-circle" style="margin-top: 2px;"></i>
       </button>
 
         </div>
@@ -557,14 +557,27 @@
     const statusClass = statusChecklistAuto === "Concluído" ? "status-concluido" : "status-em-andamento";
 
       const checklistHtml = (d.checklistRealizado || []).map(item => {
-        const dataRealizada = (d.datasChecklist || {})[item];
-        const dataFormatada = formatarDataBR(dataRealizada);
+        const infoChecklist = (d.datasChecklist || {})[item];
+
+        let dataFormatada = "";
+        let osInfo = "";
+
+        if (typeof infoChecklist === "object" && infoChecklist !== null) {
+          dataFormatada = formatarDataBR(infoChecklist.data);
+          osInfo = infoChecklist.os ? ` - OS.${infoChecklist.os}` : "";
+        } else {
+          dataFormatada = formatarDataBR(infoChecklist); // suporte para dados antigos
+        }
+
+        const corFundo = infoChecklist ? '#4caf50' : '#fff';
+        const corTexto = infoChecklist ? '#fff' : '#00205b';
+
         return `<button 
-          onclick="abrirDataChecklist('${d.id}','${item}','${dataRealizada || ''}')"
-          style="background:${dataRealizada ? '#4caf50' : '#fff'}; color:${dataRealizada ? '#fff' : '#00205b'}; padding:3px 8px; border:none; border-radius:5px; margin:2px; font-size:10px; cursor:pointer;"
-          ${dataRealizada ? 'disabled' : ''}
-        >${item}${dataRealizada ? ` - ${dataFormatada}` : ''}</button>`;
-      }).join("");;
+          onclick="abrirDataChecklist('${d.id}','${item}','${infoChecklist?.data || infoChecklist || ''}', '${infoChecklist?.os || ''}')"
+          style="background:${corFundo}; color:${corTexto}; padding:3px 8px; border:none; border-radius:5px; margin:2px; font-size:10px; cursor:pointer;"
+          ${infoChecklist ? 'disabled' : ''}
+        >${item}${osInfo}${dataFormatada ? ` - ${dataFormatada}` : ''}</button>`;
+      }).join("");
 
       painel.innerHTML += `
         <tr>
@@ -775,10 +788,8 @@ function fecharNovoPlano() {
 
 async function salvarNovoPlano() {
 const nomeCliente = document.getElementById("novoCliente").value.trim();
-  const consultor = document.getElementById("novoConsultor").value.trim();
   const municipio = document.getElementById("novoMunicipio").value.trim();
   const modelo = document.getElementById("novoModelo").value.trim();
-  const fazenda = document.getElementById("novoFazenda").value.trim();
   const chassi = document.getElementById("novoChassi").value.trim();
   const horasIniciais = parseFloat(document.getElementById("novoHorasIni").value) || 0;
   const horasFinais = parseFloat(document.getElementById("novoHorasFim").value) || 0;
@@ -794,10 +805,8 @@ const nomeCliente = document.getElementById("novoCliente").value.trim();
 
   const novoPlano = {
     nomeCliente,
-    consultor,
     municipio,
     modelo,
-    fazenda,
     chassi,
     horasIniciais,
     horasFinais,
@@ -822,12 +831,13 @@ const nomeCliente = document.getElementById("novoCliente").value.trim();
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
 <script>
-  function abrirDataChecklist(id, valor, dataPreenchida) {
-    document.getElementById('docIdChecklistData').value = id;
-    document.getElementById('valorChecklistData').value = valor;
-    document.getElementById('inputDataChecklist').value = dataPreenchida || "";
-    document.getElementById('popupChecklistData').style.display = 'flex';
-  }
+    function abrirDataChecklist(id, valor, dataPreenchida, osPreenchida = "") {
+      document.getElementById('docIdChecklistData').value = id;
+      document.getElementById('valorChecklistData').value = valor;
+      document.getElementById('inputDataChecklist').value = dataPreenchida || "";
+      document.getElementById('osChecklistData').value = osPreenchida || "";
+      document.getElementById('popupChecklistData').style.display = 'flex';
+    }
 
   function fecharPopupDataChecklist() {
     document.getElementById('popupChecklistData').style.display = 'none';
@@ -837,13 +847,14 @@ const nomeCliente = document.getElementById("novoCliente").value.trim();
     const id = document.getElementById('docIdChecklistData').value;
     const valor = document.getElementById('valorChecklistData').value;
     const data = document.getElementById('inputDataChecklist').value;
+    const os = document.getElementById('osChecklistData').value.trim();
     if (!data) return alert("Preencha a data antes de salvar.");
     const docRef = doc(db, tipoChecklist, id);
     const docSnap = await getDoc(docRef);
     if (!docSnap.exists()) return alert("Erro ao salvar.");
     const dados = docSnap.data();
     const datasChecklist = dados.datasChecklist || {};
-    datasChecklist[valor] = data;
+    datasChecklist[valor] = { data, os };
     await updateDoc(docRef, { datasChecklist });
     fecharPopupDataChecklist();
     carregarDados();
@@ -883,9 +894,15 @@ function formatarDataBR(data) {
 <div id="popupChecklistData" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);justify-content:center;align-items:center;z-index:9999;">
   <div style="background:#2c2f3f;padding:20px;border-radius:12px;width:90%;max-width:350px;">
     <h3>Informe a data da revisão</h3>
+
+    <label>OS</label>
+    <input type="text" id="osChecklistData" style="width:100%;padding:10px;margin-bottom:15px;border:none;border-radius:6px;margin-top: 10px;">
+
     <input type="hidden" id="docIdChecklistData">
     <input type="hidden" id="valorChecklistData">
+    
     <input type="date" id="inputDataChecklist" style="width:100%;padding:10px;margin-bottom:15px;border:none;border-radius:6px;">
+    
     <div style="text-align:right;">
       <button onclick="salvarDataChecklist()" style="background:#00205b;color:white;padding:8px 16px;border-radius:8px;border:none;cursor:pointer;">Salvar</button>
       <button onclick="fecharPopupDataChecklist()" style="background:#444;color:white;padding:8px 16px;border-radius:8px;border:none;margin-left:10px;cursor:pointer;">Cancelar</button>
@@ -896,22 +913,16 @@ function formatarDataBR(data) {
 
 <div id="popupNovoPlano" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);justify-content:center;align-items:center;z-index:9999;">
   <div style="background:#2c2f3f;padding:20px;border-radius:12px;width:90%;max-width:450px;">
-    <h3>Novo Plano Vigente</h3>
+    <h3>Novo Plano</h3>
 
     <label>Cliente</label>
     <input type="text" id="novoCliente" style="width:100%;padding:8px;margin-bottom:10px;border:none;border-radius:6px;">
-
-    <label>Consultor</label>
-    <input type="text" id="novoConsultor" style="width:100%;padding:8px;margin-bottom:10px;border:none;border-radius:6px;">
 
     <label>Município</label>
     <input type="text" id="novoMunicipio" style="width:100%;padding:8px;margin-bottom:10px;border:none;border-radius:6px;">
 
     <label>Modelo</label>
     <input type="text" id="novoModelo" style="width:100%;padding:8px;margin-bottom:10px;border:none;border-radius:6px;">
-
-    <label>Fazenda</label>
-    <input type="text" id="novoFazenda" style="width:100%;padding:8px;margin-bottom:10px;border:none;border-radius:6px;">
 
     <label>Chassi</label>
     <input type="text" id="novoChassi" style="width:100%;padding:8px;margin-bottom:10px;border:none;border-radius:6px;">
