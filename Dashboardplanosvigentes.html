@@ -345,6 +345,15 @@
         <i data-lucide="download" style="width: 20px; height: 20px;"></i>
       </button>
 
+      <button id="btn-importar" class="btn-acao" style="margin-left: auto;" title="Importar">
+        <input type="file" id="arquivo-importar" accept=".xlsx" style="display:none;">
+        <i data-lucide="download" style="width: 20px; height: 20px;"></i>
+      </button>
+
+      <div id="loadingImport" style="display: none; color: white; background: rgba(0,0,0,0.8); padding: 20px; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 9999; border-radius: 8px;">
+        ⏳ Importando dados... Aguarde
+      </div>
+
       <button class="btn-acao" onclick="abrirFormularioNovoPlano()" style="height: 40px;">
         <i data-lucide="plus-circle" style="margin-top: 2px;"></i>
       </button>
@@ -357,12 +366,11 @@
             <th>Data Início</th>
             <th>Data Fim</th>
             <th>Cliente</th>
-            <th>Consultor</th>
-            <th>Fazenda</th>
-            <th>Município</th>
+            <th>Chassi</th>
             <th>Modelo</th>
             <th>Horas Iniciais</th>
             <th>Horas Finais</th>
+            <th>Horas Atuais</th>
             <th>Checklist</th>
           </tr>
         </thead>
@@ -574,16 +582,15 @@
       painel.innerHTML += `
         <tr>
           <tr class="${statusClass}">
-          <td>${formatarDataBR(d.dataInicioContrato)}</td>
-          <td>${formatarDataBR(d.dataFimContrato)}</td>
-          <td>${d.nomeCliente || "-"}</td>
-          <td>${d.consultor || "-"}</td>
-          <td>${d.fazenda || "-"}</td>
-          <td>${d.municipio || "-"}</td>
-          <td>${d.modelo || "-"}</td>
-          <td>${d.horasIniciais || "-"}</td>
-          <td>${d.horasFinais || "-"}</td>
-          <td>${checklistHtml}</td>
+            <td>${formatarDataBR(d.dataInicioContrato)}</td>
+            <td>${formatarDataBR(d.dataFimContrato)}</td>
+            <td>${d.nomeCliente || "-"}</td>
+            <td>${d.chassi || "-"}</td>
+            <td>${d.modelo || "-"}</td>
+            <td>${d.horasIniciais || "-"}</td>
+            <td>${d.horasFinais || "-"}</td>
+            <td>${d.horasAtuais || "-"}</td>
+            <td>${checklistHtml}</td>
         </tr>`;
     });
 
@@ -730,8 +737,8 @@ window.abrirPopup = abrirPopup;
 
 document.getElementById("btn-exportar").addEventListener("click", () => {
   const headers = [
-  "Data Início", "Data Fim", "Cliente", "Consultor", "Fazenda",
-  "Município", "Modelo", "Horas Iniciais", "Horas Finais", "Checklist"
+    "Data Início", "Data Fim", "Cliente", "Chassi", "Modelo",
+    "Horas Iniciais", "Horas Finais", "Horas Atuais", "Checklist"
   ];
 
   const linhas = Array.from(document.querySelectorAll("#painel-detalhes tr")).map(tr => {
@@ -920,6 +927,70 @@ function formatarDataBR(data) {
   // Garante formato dd/mm/aaaa
   return `${partes[2]}/${partes[1]}/${partes[0]}`;
 }
+
+
+//script importar
+
+document.getElementById("btn-importar").addEventListener("click", () => {
+  document.getElementById("arquivo-importar").click();
+});
+
+document.getElementById("arquivo-importar").addEventListener("change", async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  const loading = document.getElementById("loadingImport");
+  loading.style.display = "block"; // Mostra o loading
+
+  const reader = new FileReader();
+  reader.onload = async function (e) {
+    try {
+      const data = new Uint8Array(e.target.result);
+      const workbook = XLSX.read(data, { type: "array" });
+      const sheet = workbook.Sheets[workbook.SheetNames[0]];
+      const registros = XLSX.utils.sheet_to_json(sheet);
+
+      let atualizados = 0;
+      let naoEncontrados = [];
+
+      for (const linha of registros) {
+        const chassi = String(linha["Chassi"] || "").trim();
+        const horas = parseFloat(String(linha["Horas"]).replace(",", "."));
+
+        if (!chassi || isNaN(horas)) continue;
+
+        const q = query(collection(db, "planosVigentes"), where("chassi", "==", chassi));
+        const snapshot = await getDocs(q);
+
+        if (snapshot.empty) {
+          naoEncontrados.push(chassi);
+          continue;
+        }
+
+        for (const docSnap of snapshot.docs) {
+          const ref = doc(db, "planosVigentes", docSnap.id);
+          await updateDoc(ref, { horasAtuais: horas });
+          atualizados++;
+        }
+      }
+
+      let msg = `✅ Importação concluída.\n\nAtualizados: ${atualizados}`;
+      if (naoEncontrados.length > 0) {
+        msg += `\n❌ Não encontrados (${naoEncontrados.length}):\n- ${naoEncontrados.join("\n- ")}`;
+      }
+
+      alert(msg);
+      carregarDados(); // Atualiza tabela
+    } catch (err) {
+      alert("❌ Erro durante a importação: " + err.message);
+    } finally {
+      loading.style.display = "none"; // Oculta o loading
+    }
+  };
+
+  reader.readAsArrayBuffer(file);
+});
+
 
 
 
