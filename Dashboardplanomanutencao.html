@@ -562,7 +562,13 @@ function aplicarFiltros() {
         ${d.observacoes || "-"}
       </td>
       <td>${(d.checklist || []).map(item => `<span style="background:#fff; color:#00205b; padding:3px 8px; border-radius:5px; margin:2px; display:inline-block; font-size:10px">${item}</span>`).join("")}</td>
-      <td class="acoes"><button class="btn-acao" data-id="${d.id}" title="Abrir ações">➕</button></td>
+      <td class="acoes">
+        ${
+          d.statusChecklist === "Concluído"
+            ? ""
+            : `<button class="btn-acao" data-id="${d.id}" title="Abrir ações">➕</button>`
+        }
+      </td>
     </tr>`;
   });
 
