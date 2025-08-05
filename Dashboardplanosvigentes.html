@@ -415,15 +415,6 @@
     <label>Data Final do Contrato</label>
     <input type="date" id="dataFimContrato" style="width:100%;padding:8px;margin-bottom:10px;border:none;border-radius:6px;">
 
-    <label>Checklist Realizado:</label>
-    <div style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:10px;">
-      <label><input type="checkbox" value="100" /> 100</label>
-      <label><input type="checkbox" value="300" /> 300</label>
-      <label><input type="checkbox" value="600" /> 600</label>
-      <label><input type="checkbox" value="900" /> 900</label>
-      <label><input type="checkbox" value="1200" /> 1200</label>
-    </div>
-
     <div style="text-align:right;">
       <button onclick="salvarConclusao()" style="background:#00205b;color:white;padding:8px 16px;border-radius:8px;border:none;cursor:pointer;">Salvar</button>
       <button onclick="fecharPopupConclusao()" style="background:#444;color:white;padding:8px 16px;border-radius:8px;border:none;cursor:pointer;margin-left:10px;">Cancelar</button>
@@ -796,6 +787,8 @@ const nomeCliente = document.getElementById("novoCliente").value.trim();
   const horasFinais = parseFloat(document.getElementById("novoHorasFim").value) || 0;
   const dataInicioContrato = document.getElementById("novoDataIni").value;
   const dataFimContrato = document.getElementById("novoDataFim").value;
+  const valorNegociado = parseFloat(document.getElementById("novoValorNegociado").value) || 0;
+
 
   // Coleta os checklists marcados
   const checkboxes = document.querySelectorAll(".checklistNovoPlano:checked");
@@ -816,7 +809,7 @@ const nomeCliente = document.getElementById("novoCliente").value.trim();
     checklistRealizado,
     datasChecklist: {},
     statusChecklist: "Em andamento",
-    valorNegociado: 0,
+    valorNegociado,
     comentarioResponsavel: "",
     dataCriacao: new Date().toISOString(),
     filial
@@ -826,6 +819,49 @@ const nomeCliente = document.getElementById("novoCliente").value.trim();
 
   fecharNovoPlano();
   carregarDados();
+  limparFormularioNovoPlano();
+}
+
+function limparFormularioNovoPlano() {
+  document.getElementById("novoCliente").value = "";
+  document.getElementById("novoMunicipio").value = "";
+  document.getElementById("novoModelo").value = "";
+  document.getElementById("novoChassi").value = "";
+  document.getElementById("novoHorasIni").value = "";
+  document.getElementById("novoHorasFim").value = "";
+  document.getElementById("novoDataIni").value = "";
+  document.getElementById("novoDataFim").value = "";
+  document.getElementById("novoValorNegociado").value = "";
+
+  // Desmarca todos os checkboxes
+  const checkboxes = document.querySelectorAll("#checklist-container-novo input[type='checkbox']");
+  checkboxes.forEach(cb => cb.checked = false);
+
+  // Remove os checkboxes adicionados manualmente
+  const container = document.getElementById("checklist-container-novo");
+  const fixos = ["100", "300", "600", "900", "1200"];
+  container.querySelectorAll("input[type='checkbox']").forEach(cb => {
+    if (!fixos.includes(cb.value)) {
+      cb.parentElement.remove(); // remove o <label> inteiro
+    }
+  });
+
+  // Limpa campo de adicionar manual
+  document.getElementById("inputChecklistManualNovo").value = "";
+}
+
+function adicionarChecklistManual() {
+  const valor = document.getElementById("inputChecklistManual").value.trim();
+  if (!valor || isNaN(valor)) return alert("Digite um número válido.");
+
+  const container = document.getElementById("checklist-container");
+
+  // Cria novo checkbox dinamicamente
+  const label = document.createElement("label");
+  label.innerHTML = `<input type="checkbox" class="checklistNovoPlano" value="${valor}" checked /> ${valor}`;
+  container.appendChild(label);
+
+  document.getElementById("inputChecklistManual").value = ""; // limpa o campo
 }
 </script>
 
@@ -940,13 +976,20 @@ function formatarDataBR(data) {
     <label>Data Fim</label>
     <input type="date" id="novoDataFim" style="width:100%;padding:8px;margin-bottom:10px;border:none;border-radius:6px;">
 
-    <label>Checklist Realizado:</label>
-    <div style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:10px;">
+    <label>Valor Negociado (R$)</label>
+    <input type="number" id="novoValorNegociado" style="width:100%;padding:8px;margin-bottom:10px;border:none;border-radius:6px;">
+
+    <div id="checklist-container" style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:10px;">
       <label><input type="checkbox" class="checklistNovoPlano" value="100" /> 100</label>
       <label><input type="checkbox" class="checklistNovoPlano" value="300" /> 300</label>
       <label><input type="checkbox" class="checklistNovoPlano" value="600" /> 600</label>
       <label><input type="checkbox" class="checklistNovoPlano" value="900" /> 900</label>
       <label><input type="checkbox" class="checklistNovoPlano" value="1200" /> 1200</label>
+    </div>
+
+    <div style="display:flex;gap:10px;align-items:center;margin-bottom:10px;">
+      <input type="number" id="inputChecklistManual" placeholder="Ex: 1500" style="flex:1;padding:8px;border:none;border-radius:6px;">
+      <button onclick="adicionarChecklistManual()" style="background:#00205b;color:white;padding:8px 16px;border-radius:8px;border:none;cursor:pointer;">Adicionar</button>
     </div>
 
     <div style="text-align:right;">
