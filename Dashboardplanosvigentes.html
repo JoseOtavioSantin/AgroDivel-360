@@ -276,6 +276,19 @@
     }
   }
 
+  .linha-alerta {
+  animation: pulsarAlerta 1.2s ease-in-out infinite alternate;
+}
+
+@keyframes pulsarAlerta {
+  from {
+    background-color: #ff9800; /* Laranja padrão */
+  }
+  to {
+    background-color: #ff9900e0; /* Laranja mais claro */
+  }
+}
+
 </style>
 </head>
 <body>
@@ -499,11 +512,10 @@
     aplicarFiltros();
   }
 
-  function aplicarFiltros() {
+function aplicarFiltros() {
   const clienteFiltro = document.getElementById("filtro-cliente").value.toLowerCase();
   const statusFiltro = document.getElementById("filtro-status").value;
   const consultorFiltro = document.getElementById("filtro-consultor").value.toLowerCase();
-  const periodo = document.getElementById("filtro-periodo").value.trim();
 
   const instance = document.getElementById("filtro-periodo")._flatpickr;
   const selectedDates = instance.selectedDates;
@@ -527,6 +539,8 @@
       return dados && dados.os && dados.data;
     });
     const statusChecklistAuto = totalChecklist > 0 && preenchidos.length === totalChecklist ? "Concluído" : "Em andamento";
+    d.statusChecklist = statusChecklistAuto;
+
     const status = statusChecklistAuto;
     const consultor = (d.consultor || "").toLowerCase();
     const dataFormatada = d.dataInicioContrato || "";
@@ -544,10 +558,11 @@
       dentroDoPeriodo;
   });
 
+  // 🔢 Contagens
   const total = filtrados.length;
   const concluidos = filtrados.filter(d => {
-  const totalChecklist = (d.checklistRealizado || []).length;
-  const preenchidos = (d.checklistRealizado || []).filter(item => {
+    const totalChecklist = (d.checklistRealizado || []).length;
+    const preenchidos = (d.checklistRealizado || []).filter(item => {
       const dados = (d.datasChecklist || {})[item];
       return dados && dados.os && dados.data;
     });
@@ -560,26 +575,51 @@
   document.getElementById("total-concluidos").textContent = concluidos;
   document.getElementById("em-andamento").textContent = andamento;
 
-  // Valor total
-  let valorTotal = 0;
-
+  // 💲 Valor total
+  let totalValor = 0;
   filtrados.forEach(d => {
-    if (!isNaN(d.valorNegociado)) valorTotal += Number(d.valorNegociado);
+    const preco = parseFloat(d.preco?.replace("R$", "").replace(".", "").replace(",", "."));
+    if (!isNaN(preco)) totalValor += preco;
+  });
+  document.getElementById("valor-total").textContent = totalValor.toLocaleString("pt-BR", {
+    style: "currency",
+    currency: "BRL"
+  });
 
-    // Verifica se todos os checklists têm data
+  // 🔁 Ordenar para ALERTAS no topo
+  filtrados.sort((a, b) => {
+    const alertaA = alertaDoItem(a);
+    const alertaB = alertaDoItem(b);
+    return alertaB - alertaA;
+  });
+
+  // 🧠 Função para checar se item tem alerta
+  function alertaDoItem(d) {
+    const horasAtuais = parseFloat(d.horasAtuais || 0);
+    const checklistsPendentes = (d.checklistRealizado || []).filter(item => !(d.datasChecklist || {})[item]);
+    return checklistsPendentes.some(item => {
+      const horasChecklist = parseFloat(item);
+      return !isNaN(horasChecklist) && horasAtuais >= (horasChecklist - 60) && horasAtuais < horasChecklist;
+    }) ? 1 : 0;
+  }
+
+  // 🖼️ Renderizar linhas
+  filtrados.forEach(d => {
     const totalChecklist = (d.checklistRealizado || []).length;
     const preenchidos = (d.checklistRealizado || []).filter(item => (d.datasChecklist || {})[item]);
     const statusChecklistAuto = totalChecklist > 0 && preenchidos.length === totalChecklist ? "Concluído" : "Em andamento";
-
-    // 🔥 Corrigido: salvar o status calculado no objeto
-    d.statusChecklist = statusChecklistAuto;
-
-    // Cor automática com base no status calculado
     const statusClass = statusChecklistAuto === "Concluído" ? "status-concluido" : "status-em-andamento";
+
+    const horasAtuais = parseFloat(d.horasAtuais || 0);
+    const checklistsPendentes = (d.checklistRealizado || []).filter(item => !(d.datasChecklist || {})[item]);
+    const alerta = checklistsPendentes.some(item => {
+      const horasChecklist = parseFloat(item);
+      return !isNaN(horasChecklist) && horasAtuais >= (horasChecklist - 60) && horasAtuais < horasChecklist;
+    });
+    const alertaClass = alerta ? "linha-alerta" : "";
 
     const checklistHtml = (d.checklistRealizado || []).map(item => {
       const infoChecklist = (d.datasChecklist || {})[item];
-
       let dataFormatada = "";
       let osInfo = "";
 
@@ -587,7 +627,7 @@
         dataFormatada = formatarDataBR(infoChecklist.data);
         osInfo = infoChecklist.os ? ` - OS.${infoChecklist.os}` : "";
       } else {
-        dataFormatada = formatarDataBR(infoChecklist); // suporte para dados antigos
+        dataFormatada = formatarDataBR(infoChecklist);
       }
 
       const corFundo = infoChecklist ? '#4caf50' : '#fff';
@@ -601,34 +641,21 @@
     }).join("");
 
     painel.innerHTML += `
-      <tr>
-        <tr class="${statusClass}">
-          <td>${formatarDataBR(d.dataInicioContrato)}</td>
-          <td>${formatarDataBR(d.dataFimContrato)}</td>
-          <td>${d.nomeCliente || "-"}</td>
-          <td>${d.chassi || "-"}</td>
-          <td>${d.modelo || "-"}</td>
-          <td>${d.horasIniciais || "-"}</td>
-          <td>${d.horasFinais || "-"}</td>
-          <td>
-            ${d.horasAtuais || "-"}
-            ${
-              (() => {
-                const horasAtuais = parseFloat(d.horasAtuais || 0);
-                const checklistsPendentes = (d.checklistRealizado || []).filter(item => !(d.datasChecklist || {})[item]);
-                const alerta = checklistsPendentes.some(item => {
-                  const horasChecklist = parseFloat(item);
-                  return !isNaN(horasChecklist) && horasAtuais >= (horasChecklist - 60) && horasAtuais < horasChecklist;
-                });
-                return alerta ? `<span title="Checklist se aproxima" style="color: orange; margin-left: 6px;">⚠️</span>` : "";
-              })()
-            }
-          </td>
-          <td>${checklistHtml}</td>
+      <tr class="${statusClass} ${alertaClass}">
+        <td>${formatarDataBR(d.dataInicioContrato)}</td>
+        <td>${formatarDataBR(d.dataFimContrato)}</td>
+        <td>${d.nomeCliente || "-"}</td>
+        <td>${d.chassi || "-"}</td>
+        <td>${d.modelo || "-"}</td>
+        <td>${d.horasIniciais || "-"}</td>
+        <td>${d.horasFinais || "-"}</td>
+        <td>
+          ${d.horasAtuais || "-"}
+          ${alerta ? `<span title="Checklist se aproxima" style="color: orange; margin-left: 6px;">⚠️</span>` : ""}
+        </td>
+        <td>${checklistHtml}</td>
       </tr>`;
   });
-
-  document.getElementById("valor-total").textContent = `R$ ${valorTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
 }
 
 
