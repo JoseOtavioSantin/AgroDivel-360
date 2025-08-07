@@ -311,22 +311,25 @@
 
   <div class="main">
     <div class="sidebar">
-      <div class="card pink-card">
-        <h2 id="total-clientes">0</h2>
-        <p><i data-lucide="users"></i> Total Clientes</p>
-      </div>
-      <div class="card orange-card">
-        <h2 id="total-concluidos">0</h2>
-        <p><i data-lucide="check-circle"></i> Concluídos</p>
-      </div>
-      <div class="card blue-card">
-        <h2 id="valor-total">R$ 0,00</h2>
-        <p><i data-lucide="dollar-sign"></i> Valor Total (R$)</p>
-      </div>
-      <div class="card purple-card">
-        <h2 id="cancelados">0</h2>
-        <p><i data-lucide="x-octagon"></i> Cancelados</p>
-      </div>
+        <div class="card blue-card">
+          <h2 id="total-clientes">0</h2>
+          <p><i data-lucide="users"></i> Total de Clientes</p>
+        </div>
+
+        <div class="card orange-card">
+          <h2 id="em-andamento">0</h2>
+          <p><i data-lucide="loader-circle"></i> Em Andamento</p>
+        </div>
+
+        <div class="card green-card">
+          <h2 id="total-concluidos">0</h2>
+          <p><i data-lucide="check-circle"></i> Concluídos</p>
+        </div>
+
+        <div class="card purple-card">
+          <h2 id="valor-total">R$ 0,00</h2>
+          <p><i data-lucide="dollar-sign"></i> Valor Total (R$)</p>
+        </div>
     </div>
 
     <div class="content">
@@ -341,22 +344,20 @@
           <input id="filtro-consultor" type="text" placeholder="Buscar consultor..." />
           <input id="filtro-periodo" placeholder="Selecione o período" />
 
-      <button id="btn-exportar" class="btn-acao" style="margin-left: auto;" title="Exportar para Excel">
-        <i data-lucide="download" style="width: 20px; height: 20px;"></i>
-      </button>
+        <div style="margin-left: auto; display: flex; gap: 10px;" class="acoes-topo">
+          <button id="btn-exportar" class="btn-acao" title="Exportar para Excel">
+            <i data-lucide="download" style="width: 20px; height: 20px;"></i>
+          </button>
 
-      <button id="btn-importar" class="btn-acao" style="margin-left: auto;" title="Importar">
-        <input type="file" id="arquivo-importar" accept=".xlsx" style="display:none;">
-        <i data-lucide="download" style="width: 20px; height: 20px;"></i>
-      </button>
+          <button id="btn-importar" class="btn-acao" title="Importar">
+            <input type="file" id="arquivo-importar" accept=".xlsx" style="display:none;">
+            <i data-lucide="upload" style="width: 20px; height: 20px;"></i>
+          </button>
 
-      <div id="loadingImport" style="display: none; color: white; background: rgba(0,0,0,0.8); padding: 20px; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 9999; border-radius: 8px;">
-        ⏳ Importando dados... Aguarde
-      </div>
-
-      <button class="btn-acao" onclick="abrirFormularioNovoPlano()" style="height: 40px;">
-        <i data-lucide="plus-circle" style="margin-top: 2px;"></i>
-      </button>
+          <button class="btn-acao" onclick="abrirFormularioNovoPlano()" style="height: 40px;" title="Novo Plano">
+            <i data-lucide="plus-circle"></i>
+          </button>
+        </div>
 
         </div>
 
@@ -499,103 +500,137 @@
   }
 
   function aplicarFiltros() {
-    const clienteFiltro = document.getElementById("filtro-cliente").value.toLowerCase();
-    const statusFiltro = document.getElementById("filtro-status").value;
-    const consultorFiltro = document.getElementById("filtro-consultor").value.toLowerCase();
-    const periodo = document.getElementById("filtro-periodo").value.trim();
+  const clienteFiltro = document.getElementById("filtro-cliente").value.toLowerCase();
+  const statusFiltro = document.getElementById("filtro-status").value;
+  const consultorFiltro = document.getElementById("filtro-consultor").value.toLowerCase();
+  const periodo = document.getElementById("filtro-periodo").value.trim();
 
-    const instance = document.getElementById("filtro-periodo")._flatpickr;
-    const selectedDates = instance.selectedDates;
+  const instance = document.getElementById("filtro-periodo")._flatpickr;
+  const selectedDates = instance.selectedDates;
 
-    let dataInicio = "", dataFim = "";
-    if (selectedDates.length === 2) {
-      dataInicio = selectedDates[0].toISOString().slice(0, 10);
-      dataFim = selectedDates[1].toISOString().slice(0, 10);
-    } else if (selectedDates.length === 1) {
-      dataInicio = dataFim = selectedDates[0].toISOString().slice(0, 10);
-    }
+  let dataInicio = "", dataFim = "";
+  if (selectedDates.length === 2) {
+    dataInicio = selectedDates[0].toISOString().slice(0, 10);
+    dataFim = selectedDates[1].toISOString().slice(0, 10);
+  } else if (selectedDates.length === 1) {
+    dataInicio = dataFim = selectedDates[0].toISOString().slice(0, 10);
+  }
 
-    const painel = document.getElementById("painel-detalhes");
-    painel.innerHTML = "";
+  const painel = document.getElementById("painel-detalhes");
+  painel.innerHTML = "";
 
-    const filtrados = dadosTotais.filter(d => {
-      const cliente = (d.nomeCliente || "").toLowerCase();
-      const totalChecklist = (d.checklistRealizado || []).length;
-      const preenchidos = (d.checklistRealizado || []).filter(item => (d.datasChecklist || {})[item]);
-      const statusChecklistAuto = totalChecklist > 0 && preenchidos.length === totalChecklist ? "Concluído" : "Em andamento";
-      const status = statusChecklistAuto;
-      const consultor = (d.consultor || "").toLowerCase();
-      const dataFormatada = d.dataInicioContrato || "";
-
-      const dentroDoPeriodo =
-        (!dataInicio && !dataFim) ||
-        (
-          (!dataInicio || dataFormatada >= dataInicio) &&
-          (!dataFim || dataFormatada <= dataFim)
-        );
-
-      return cliente.includes(clienteFiltro) &&
-        (statusFiltro === "" || status === statusFiltro) &&
-        consultor.includes(consultorFiltro) &&
-        dentroDoPeriodo;
+  const filtrados = dadosTotais.filter(d => {
+    const cliente = (d.nomeCliente || "").toLowerCase();
+    const totalChecklist = (d.checklistRealizado || []).length;
+    const preenchidos = (d.checklistRealizado || []).filter(item => {
+      const dados = (d.datasChecklist || {})[item];
+      return dados && dados.os && dados.data;
     });
+    const statusChecklistAuto = totalChecklist > 0 && preenchidos.length === totalChecklist ? "Concluído" : "Em andamento";
+    const status = statusChecklistAuto;
+    const consultor = (d.consultor || "").toLowerCase();
+    const dataFormatada = d.dataInicioContrato || "";
 
-    document.getElementById("total-clientes").textContent = filtrados.length;
-    document.getElementById("total-concluidos").textContent = filtrados.filter(d => d.statusChecklist === "Concluído").length;
-    document.getElementById("cancelados").textContent = filtrados.filter(d => d.statusChecklist === "Cancelado").length;
+    const dentroDoPeriodo =
+      (!dataInicio && !dataFim) ||
+      (
+        (!dataInicio || dataFormatada >= dataInicio) &&
+        (!dataFim || dataFormatada <= dataFim)
+      );
 
-    let totalValor = 0;
-    filtrados.forEach(d => {
-      if (!isNaN(d.valorNegociado)) totalValor += Number(d.valorNegociado);
+    return cliente.includes(clienteFiltro) &&
+      (statusFiltro === "" || status === statusFiltro) &&
+      consultor.includes(consultorFiltro) &&
+      dentroDoPeriodo;
+  });
+
+  const total = filtrados.length;
+  const concluidos = filtrados.filter(d => {
+  const totalChecklist = (d.checklistRealizado || []).length;
+  const preenchidos = (d.checklistRealizado || []).filter(item => {
+      const dados = (d.datasChecklist || {})[item];
+      return dados && dados.os && dados.data;
+    });
+    return totalChecklist > 0 && preenchidos.length === totalChecklist;
+  }).length;
+  const cancelados = filtrados.filter(d => d.statusChecklist === "Cancelado").length;
+  const andamento = total - concluidos - cancelados;
+
+  document.getElementById("total-clientes").textContent = total;
+  document.getElementById("total-concluidos").textContent = concluidos;
+  document.getElementById("em-andamento").textContent = andamento;
+
+  // Valor total
+  let valorTotal = 0;
+
+  filtrados.forEach(d => {
+    if (!isNaN(d.valorNegociado)) valorTotal += Number(d.valorNegociado);
 
     // Verifica se todos os checklists têm data
     const totalChecklist = (d.checklistRealizado || []).length;
     const preenchidos = (d.checklistRealizado || []).filter(item => (d.datasChecklist || {})[item]);
     const statusChecklistAuto = totalChecklist > 0 && preenchidos.length === totalChecklist ? "Concluído" : "Em andamento";
 
+    // 🔥 Corrigido: salvar o status calculado no objeto
+    d.statusChecklist = statusChecklistAuto;
+
     // Cor automática com base no status calculado
     const statusClass = statusChecklistAuto === "Concluído" ? "status-concluido" : "status-em-andamento";
 
-      const checklistHtml = (d.checklistRealizado || []).map(item => {
-        const infoChecklist = (d.datasChecklist || {})[item];
+    const checklistHtml = (d.checklistRealizado || []).map(item => {
+      const infoChecklist = (d.datasChecklist || {})[item];
 
-        let dataFormatada = "";
-        let osInfo = "";
+      let dataFormatada = "";
+      let osInfo = "";
 
-        if (typeof infoChecklist === "object" && infoChecklist !== null) {
-          dataFormatada = formatarDataBR(infoChecklist.data);
-          osInfo = infoChecklist.os ? ` - OS.${infoChecklist.os}` : "";
-        } else {
-          dataFormatada = formatarDataBR(infoChecklist); // suporte para dados antigos
-        }
+      if (typeof infoChecklist === "object" && infoChecklist !== null) {
+        dataFormatada = formatarDataBR(infoChecklist.data);
+        osInfo = infoChecklist.os ? ` - OS.${infoChecklist.os}` : "";
+      } else {
+        dataFormatada = formatarDataBR(infoChecklist); // suporte para dados antigos
+      }
 
-        const corFundo = infoChecklist ? '#4caf50' : '#fff';
-        const corTexto = infoChecklist ? '#fff' : '#00205b';
+      const corFundo = infoChecklist ? '#4caf50' : '#fff';
+      const corTexto = infoChecklist ? '#fff' : '#00205b';
 
-        return `<button 
-          onclick="abrirDataChecklist('${d.id}','${item}','${infoChecklist?.data || infoChecklist || ''}', '${infoChecklist?.os || ''}')"
-          style="background:${corFundo}; color:${corTexto}; padding:3px 8px; border:none; border-radius:5px; margin:2px; font-size:10px; cursor:pointer;"
-          ${infoChecklist ? 'disabled' : ''}
-        >${item}${osInfo}${dataFormatada ? ` - ${dataFormatada}` : ''}</button>`;
-      }).join("");
+      return `<button 
+        onclick="abrirDataChecklist('${d.id}','${item}','${infoChecklist?.data || infoChecklist || ''}', '${infoChecklist?.os || ''}')"
+        style="background:${corFundo}; color:${corTexto}; padding:3px 8px; border:none; border-radius:5px; margin:2px; font-size:10px; cursor:pointer;"
+        ${infoChecklist ? 'disabled' : ''}
+      >${item}${osInfo}${dataFormatada ? ` - ${dataFormatada}` : ''}</button>`;
+    }).join("");
 
-      painel.innerHTML += `
-        <tr>
-          <tr class="${statusClass}">
-            <td>${formatarDataBR(d.dataInicioContrato)}</td>
-            <td>${formatarDataBR(d.dataFimContrato)}</td>
-            <td>${d.nomeCliente || "-"}</td>
-            <td>${d.chassi || "-"}</td>
-            <td>${d.modelo || "-"}</td>
-            <td>${d.horasIniciais || "-"}</td>
-            <td>${d.horasFinais || "-"}</td>
-            <td>${d.horasAtuais || "-"}</td>
-            <td>${checklistHtml}</td>
-        </tr>`;
-    });
+    painel.innerHTML += `
+      <tr>
+        <tr class="${statusClass}">
+          <td>${formatarDataBR(d.dataInicioContrato)}</td>
+          <td>${formatarDataBR(d.dataFimContrato)}</td>
+          <td>${d.nomeCliente || "-"}</td>
+          <td>${d.chassi || "-"}</td>
+          <td>${d.modelo || "-"}</td>
+          <td>${d.horasIniciais || "-"}</td>
+          <td>${d.horasFinais || "-"}</td>
+          <td>
+            ${d.horasAtuais || "-"}
+            ${
+              (() => {
+                const horasAtuais = parseFloat(d.horasAtuais || 0);
+                const checklistsPendentes = (d.checklistRealizado || []).filter(item => !(d.datasChecklist || {})[item]);
+                const alerta = checklistsPendentes.some(item => {
+                  const horasChecklist = parseFloat(item);
+                  return !isNaN(horasChecklist) && horasAtuais >= (horasChecklist - 60) && horasAtuais < horasChecklist;
+                });
+                return alerta ? `<span title="Checklist se aproxima" style="color: orange; margin-left: 6px;">⚠️</span>` : "";
+              })()
+            }
+          </td>
+          <td>${checklistHtml}</td>
+      </tr>`;
+  });
 
-    document.getElementById("valor-total").textContent = `R$ ${totalValor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
-  }
+  document.getElementById("valor-total").textContent = `R$ ${valorTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
+}
+
 
   // Expor Firebase e funções necessárias para os outros scripts
   window.db = db;
@@ -764,6 +799,65 @@ document.getElementById("btn-exportar").addEventListener("click", () => {
   XLSX.writeFile(wb, "checklists_filtrados.xlsx");
 });
 
+
+//script importar
+
+document.getElementById("btn-importar").addEventListener("click", () => {
+  document.getElementById("arquivo-importar").click();
+});
+
+document.getElementById("arquivo-importar").addEventListener("change", async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  const loading = document.getElementById("loadingImport");
+  loading.style.display = "flex"; // Mostrar overlay escuro
+
+  const reader = new FileReader();
+  reader.onload = async function (e) {
+    try {
+      const data = new Uint8Array(e.target.result);
+      const workbook = XLSX.read(data, { type: "array" });
+      const sheet = workbook.Sheets[workbook.SheetNames[0]];
+      const registros = XLSX.utils.sheet_to_json(sheet);
+
+      let atualizados = 0;
+
+      for (const linha of registros) {
+        const chassi = String(linha["Chassi"] || "").trim();
+        const horas = parseFloat(String(linha["Horas"]).replace(",", "."));
+
+        if (!chassi || isNaN(horas)) continue;
+
+        const q = query(collection(db, "planosVigentes"), where("chassi", "==", chassi));
+        const snapshot = await getDocs(q);
+
+        if (snapshot.empty) continue;
+
+        for (const docSnap of snapshot.docs) {
+          const ref = doc(db, "planosVigentes", docSnap.id);
+          await updateDoc(ref, { horasAtuais: horas });
+          atualizados++;
+        }
+      }
+
+      alert(`✅ Importação concluída.\n\n🔄 Atualizados: ${atualizados}`);
+      carregarDados(); // Atualiza a tabela
+
+    } catch (err) {
+      alert("❌ Erro durante a importação: " + err.message);
+    } finally {
+      loading.style.display = "none"; // Esconde o overlay
+    }
+  };
+
+  reader.readAsArrayBuffer(file);
+});
+
+//fim import
+
+
+//fim type="module">
 </script>
 
   <script>
@@ -928,72 +1022,6 @@ function formatarDataBR(data) {
   return `${partes[2]}/${partes[1]}/${partes[0]}`;
 }
 
-
-//script importar
-
-document.getElementById("btn-importar").addEventListener("click", () => {
-  document.getElementById("arquivo-importar").click();
-});
-
-document.getElementById("arquivo-importar").addEventListener("change", async (e) => {
-  const file = e.target.files[0];
-  if (!file) return;
-
-  const loading = document.getElementById("loadingImport");
-  loading.style.display = "block"; // Mostra o loading
-
-  const reader = new FileReader();
-  reader.onload = async function (e) {
-    try {
-      const data = new Uint8Array(e.target.result);
-      const workbook = XLSX.read(data, { type: "array" });
-      const sheet = workbook.Sheets[workbook.SheetNames[0]];
-      const registros = XLSX.utils.sheet_to_json(sheet);
-
-      let atualizados = 0;
-      let naoEncontrados = [];
-
-      for (const linha of registros) {
-        const chassi = String(linha["Chassi"] || "").trim();
-        const horas = parseFloat(String(linha["Horas"]).replace(",", "."));
-
-        if (!chassi || isNaN(horas)) continue;
-
-        const q = query(collection(db, "planosVigentes"), where("chassi", "==", chassi));
-        const snapshot = await getDocs(q);
-
-        if (snapshot.empty) {
-          naoEncontrados.push(chassi);
-          continue;
-        }
-
-        for (const docSnap of snapshot.docs) {
-          const ref = doc(db, "planosVigentes", docSnap.id);
-          await updateDoc(ref, { horasAtuais: horas });
-          atualizados++;
-        }
-      }
-
-      let msg = `✅ Importação concluída.\n\nAtualizados: ${atualizados}`;
-      if (naoEncontrados.length > 0) {
-        msg += `\n❌ Não encontrados (${naoEncontrados.length}):\n- ${naoEncontrados.join("\n- ")}`;
-      }
-
-      alert(msg);
-      carregarDados(); // Atualiza tabela
-    } catch (err) {
-      alert("❌ Erro durante a importação: " + err.message);
-    } finally {
-      loading.style.display = "none"; // Oculta o loading
-    }
-  };
-
-  reader.readAsArrayBuffer(file);
-});
-
-
-
-
 </script>
 
 
@@ -1068,6 +1096,19 @@ document.getElementById("arquivo-importar").addEventListener("change", async (e)
       <button onclick="fecharNovoPlano()" style="background:#444;color:white;padding:8px 16px;border-radius:8px;border:none;margin-left:10px;cursor:pointer;">Cancelar</button>
     </div>
   </div>
+</div>
+
+<div id="loadingImport" style="
+  display: none;
+  position: fixed; z-index: 9999;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  color: white; font-size: 20px;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+">
+  <div style="margin: auto;">Importando dados, por favor aguarde...</div>
 </div>
 
 </body>
