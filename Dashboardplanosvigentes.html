@@ -289,6 +289,31 @@
   }
 }
 
+/* 🔧 Estiliza a scrollbar para navegadores baseados em Webkit (Chrome, Edge, Opera, Brave...) */
+::-webkit-scrollbar {
+  width: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: #1e1e2f;
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #009bd6;
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #00bfff;
+}
+
+/* 🔧 Para Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #009bd6 #1e1e2f;
+}
+
 </style>
 </head>
 <body>
@@ -579,7 +604,7 @@ function aplicarFiltros() {
   // 💲 Valor total
   let totalValor = 0;
   filtrados.forEach(d => {
-    const preco = parseFloat(d.preco?.replace("R$", "").replace(".", "").replace(",", "."));
+    const preco = typeof d.valorNegociado === "number" ? d.valorNegociado : parseFloat(d.valorNegociado);
     if (!isNaN(preco)) totalValor += preco;
   });
   document.getElementById("valor-total").textContent = totalValor.toLocaleString("pt-BR", {
@@ -587,12 +612,19 @@ function aplicarFiltros() {
     currency: "BRL"
   });
 
-  // 🔁 Ordenar para ALERTAS no topo
-  filtrados.sort((a, b) => {
-    const alertaA = alertaDoItem(a);
-    const alertaB = alertaDoItem(b);
-    return alertaB - alertaA;
-  });
+// 🔁 Ordenar: Concluídos por último, alertas no topo
+filtrados.sort((a, b) => {
+  const statusOrder = (status) => status === "Concluído" ? 1 : 0;
+  const alertaA = alertaDoItem(a);
+  const alertaB = alertaDoItem(b);
+
+  // Primeiro ordena por status (concluído vai para o final), depois por alerta (alerta vai para o topo)
+  if (statusOrder(a.statusChecklist) !== statusOrder(b.statusChecklist)) {
+    return statusOrder(a.statusChecklist) - statusOrder(b.statusChecklist);
+  }
+
+  return alertaB - alertaA;
+});
 
   // 🧠 Função para checar se item tem alerta
   function alertaDoItem(d) {
@@ -974,7 +1006,7 @@ const nomeCliente = document.getElementById("novoCliente").value.trim();
 
 function limparFormularioNovoPlano() {
   document.getElementById("novoCliente").value = "";
-  document.getElementById("novoMunicipio").value = "";
+  document.getElementById("novoPlanoVendido").value = "";
   document.getElementById("novoModelo").value = "";
   document.getElementById("novoChassi").value = "";
   document.getElementById("novoHorasIni").value = "";
@@ -984,20 +1016,21 @@ function limparFormularioNovoPlano() {
   document.getElementById("novoValorNegociado").value = "";
 
   // Desmarca todos os checkboxes
-  const checkboxes = document.querySelectorAll("#checklist-container-novo input[type='checkbox']");
+  const checkboxes = document.querySelectorAll(".checklistNovoPlano");
   checkboxes.forEach(cb => cb.checked = false);
 
-  // Remove os checkboxes adicionados manualmente
-  const container = document.getElementById("checklist-container-novo");
-  const fixos = ["100", "300", "600", "900", "1200"];
+  // Remove checklists adicionados manualmente
+  const container = document.getElementById("checklist-container");
+  const fixos = ["Óleo", "100", "300", "600", "900", "1200"];
   container.querySelectorAll("input[type='checkbox']").forEach(cb => {
     if (!fixos.includes(cb.value)) {
       cb.parentElement.remove(); // remove o <label> inteiro
     }
   });
 
-  // Limpa campo de adicionar manual
-  document.getElementById("inputChecklistManualNovo").value = "";
+  // Limpa campo de input manual (caso tenha esse ID no popup)
+  const campoManual = document.getElementById("inputChecklistManual");
+  if (campoManual) campoManual.value = "";
 }
 
 function adicionarChecklistManual() {
