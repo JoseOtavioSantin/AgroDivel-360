@@ -380,6 +380,7 @@
             <th>Data Início</th>
             <th>Data Fim</th>
             <th>Cliente</th>
+            <th>Plano Vendido</th>
             <th>Chassi</th>
             <th>Modelo</th>
             <th>Horas Iniciais</th>
@@ -618,33 +619,54 @@ function aplicarFiltros() {
     });
     const alertaClass = alerta ? "linha-alerta" : "";
 
-    const checklistHtml = (d.checklistRealizado || []).map(item => {
-      const infoChecklist = (d.datasChecklist || {})[item];
-      let dataFormatada = "";
-      let osInfo = "";
+    const checklistOrdenado = [...(d.checklistRealizado || [])];
 
-      if (typeof infoChecklist === "object" && infoChecklist !== null) {
-        dataFormatada = formatarDataBR(infoChecklist.data);
-        osInfo = infoChecklist.os ? ` - OS.${infoChecklist.os}` : "";
-      } else {
-        dataFormatada = formatarDataBR(infoChecklist);
-      }
+// Coloca "ÓLEO" primeiro se existir
+checklistOrdenado.sort((a, b) => {
+  if (a === "ÓLEO") return -1;
+  if (b === "ÓLEO") return 1;
+  return parseFloat(a) - parseFloat(b);
+});
 
-      const corFundo = infoChecklist ? '#4caf50' : '#fff';
-      const corTexto = infoChecklist ? '#fff' : '#00205b';
+const checklistHtml = checklistOrdenado.map(item => {
+  const infoChecklist = (d.datasChecklist || {})[item];
+  let dataFormatada = "";
+  let osInfo = "";
 
-      return `<button 
-        onclick="abrirDataChecklist('${d.id}','${item}','${infoChecklist?.data || infoChecklist || ''}', '${infoChecklist?.os || ''}')"
-        style="background:${corFundo}; color:${corTexto}; padding:3px 8px; border:none; border-radius:5px; margin:2px; font-size:10px; cursor:pointer;"
-        ${infoChecklist ? 'disabled' : ''}
-      >${item}${osInfo}${dataFormatada ? ` - ${dataFormatada}` : ''}</button>`;
-    }).join("");
+  if (typeof infoChecklist === "object" && infoChecklist !== null) {
+    dataFormatada = formatarDataBR(infoChecklist.data);
+    osInfo = infoChecklist.os ? ` - OS.${infoChecklist.os}` : "";
+  } else {
+    dataFormatada = formatarDataBR(infoChecklist);
+  }
+
+  const isOleo = item === "ÓLEO";
+  const corFundo = infoChecklist
+    ? (isOleo ? '#006666' : '#4caf50') // Verde normal ou azul petróleo se for óleo
+    : '#fff';
+
+  const corTexto = infoChecklist ? '#fff' : (isOleo ? '#006666' : '#00205b');
+
+  const iconeOleo = `<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" style="margin-right:4px;" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+    <path d="M12 3c.8 2.5 4 5.3 4 8.1a4 4 0 0 1-8 0c0-2.8 3.2-5.6 4-8.1Z"/>
+    <path d="M9 21h6"/>
+  </svg>`;
+
+  const label = isOleo ? `${iconeOleo}`: item;
+
+  return `<button 
+    onclick="abrirDataChecklist('${d.id}','${item}','${infoChecklist?.data || infoChecklist || ''}', '${infoChecklist?.os || ''}')"
+    style="background:${corFundo}; color:${corTexto}; padding:3px 8px; border:none; border-radius:5px; margin:2px; font-size:10px; cursor:pointer; display:flex; align-items:center; gap:4px;"
+    ${infoChecklist ? 'disabled' : ''}
+  >${label}${osInfo}${dataFormatada ? ` - ${dataFormatada}` : ''}</button>`;
+}).join("");
 
     painel.innerHTML += `
       <tr class="${statusClass} ${alertaClass}">
         <td>${formatarDataBR(d.dataInicioContrato)}</td>
         <td>${formatarDataBR(d.dataFimContrato)}</td>
         <td>${d.nomeCliente || "-"}</td>
+        <td>${d.planoVendido || "-"}</td>
         <td>${d.chassi || "-"}</td>
         <td>${d.modelo || "-"}</td>
         <td>${d.horasIniciais || "-"}</td>
@@ -727,7 +749,7 @@ function aplicarFiltros() {
   const dadosOriginais = docSnap.data();
   const nomeCliente = dadosOriginais.nomeCliente || "";
   const consultor = dadosOriginais.consultor || "";
-  const municipio = dadosOriginais.municipio || "";
+  const planoVendido = dadosOriginais.planoVendido || "";
   const modelo = dadosOriginais.modelo || "";
   const fazenda = dadosOriginais.nomeFazenda || "";
 
@@ -745,7 +767,7 @@ function aplicarFiltros() {
   const novaEntrada = {
     nomeCliente,
     consultor,
-    municipio,
+    PlanoVendido,
     modelo,
     fazenda,
     chassi,
@@ -908,7 +930,7 @@ function fecharNovoPlano() {
 
 async function salvarNovoPlano() {
 const nomeCliente = document.getElementById("novoCliente").value.trim();
-  const municipio = document.getElementById("novoMunicipio").value.trim();
+  const planoVendido = document.getElementById("novoPlanoVendido").value.trim();
   const modelo = document.getElementById("novoModelo").value.trim();
   const chassi = document.getElementById("novoChassi").value.trim();
   const horasIniciais = parseFloat(document.getElementById("novoHorasIni").value) || 0;
@@ -927,7 +949,7 @@ const nomeCliente = document.getElementById("novoCliente").value.trim();
 
   const novoPlano = {
     nomeCliente,
-    municipio,
+    planoVendido,
     modelo,
     chassi,
     horasIniciais,
@@ -1056,7 +1078,7 @@ function formatarDataBR(data) {
 
 <div id="popupChecklistData" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);justify-content:center;align-items:center;z-index:9999;">
   <div style="background:#2c2f3f;padding:20px;border-radius:12px;width:90%;max-width:350px;">
-    <h3>Informe a data da revisão</h3>
+    <h3>Preencha as informações</h3>
 
     <label>OS</label>
     <input type="text" id="osChecklistData" style="width:100%;padding:10px;margin-bottom:15px;border:none;border-radius:6px;margin-top: 10px;">
@@ -1081,8 +1103,12 @@ function formatarDataBR(data) {
     <label>Cliente</label>
     <input type="text" id="novoCliente" style="width:100%;padding:8px;margin-bottom:10px;border:none;border-radius:6px;">
 
-    <label>Município</label>
-    <input type="text" id="novoMunicipio" style="width:100%;padding:8px;margin-bottom:10px;border:none;border-radius:6px;">
+    <label>Plano Vendido</label>
+    <select id="novoPlanoVendido" style="width:100%;padding:8px;margin-bottom:10px;border:none;border-radius:6px;">
+      <option value="">Selecione...</option>
+      <option value="Serve + Pro">Serve + Pro</option>
+      <option value="Serve Digital">Serve Digital</option>
+    </select>
 
     <label>Modelo</label>
     <input type="text" id="novoModelo" style="width:100%;padding:8px;margin-bottom:10px;border:none;border-radius:6px;">
@@ -1106,6 +1132,7 @@ function formatarDataBR(data) {
     <input type="number" id="novoValorNegociado" style="width:100%;padding:8px;margin-bottom:10px;border:none;border-radius:6px;">
 
     <div id="checklist-container" style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:10px;">
+      <label><input type="checkbox" class="checklistNovoPlano" value="Óleo" /> Óleo</label>
       <label><input type="checkbox" class="checklistNovoPlano" value="100" /> 100</label>
       <label><input type="checkbox" class="checklistNovoPlano" value="300" /> 300</label>
       <label><input type="checkbox" class="checklistNovoPlano" value="600" /> 600</label>
