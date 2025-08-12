@@ -283,11 +283,6 @@
 
     verificarPopupAutomatico();
 
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('service-worker.js')
-        .then(() => console.log('✅ Service Worker registrado com sucesso!'))
-        .catch((error) => console.error('❌ Erro ao registrar Service Worker:', error));
-    }
   </script>
 
 <!-- Aviso de atualização -->
@@ -306,6 +301,24 @@
   z-index: 9999;
 ">
   ⚠️ Nova versão disponível. Clique aqui para atualizar.
+</div>
+
+<!-- Aviso de instalação -->
+<div id="install-banner" style="
+  display: none;
+  background: #ffcc00;
+  color: #000;
+  font-weight: bold;
+  padding: 12px;
+  text-align: center;
+  cursor: pointer;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 9999;
+">
+  📲 Instale o Agro Divel 360. Toque aqui para instalar.
 </div>
 
 <script>
@@ -339,27 +352,68 @@
     });
   }
   
+  // Mantém o botão como fallback, mas usaremos o banner
   let deferredPrompt;
   const installBtn = document.getElementById('instalarApp');
+  const installBanner = document.getElementById('install-banner');
+  const updateBanner = document.getElementById('update-banner');
 
-  window.addEventListener('beforeinstallprompt', (e) => {
-    e.preventDefault(); // Bloqueia o comportamento automático
-    deferredPrompt = e;
-    installBtn.style.display = 'block';
-
-    installBtn.addEventListener('click', () => {
-      installBtn.style.display = 'none';
-      deferredPrompt.prompt();
-      deferredPrompt.userChoice.then((choiceResult) => {
-        if (choiceResult.outcome === 'accepted') {
-          console.log('App instalado com sucesso!');
-        } else {
-          console.log('Usuário recusou a instalação.');
-        }
-        deferredPrompt = null;
-      });
+  function openInstallPrompt() {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    deferredPrompt.userChoice.then((choice) => {
+      if (choice.outcome === 'accepted') {
+        console.log('✅ PWA instalada');
+      } else {
+        console.log('ℹ️ Instalação cancelada');
+      }
+      deferredPrompt = null;
+      if (installBanner) installBanner.style.display = 'none';
     });
+  }
+
+  // Mostra o banner de instalação quando o navegador sinalizar que pode instalar
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+
+    if (installBanner) {
+      // Se o banner de update já estiver visível, empurra o de instalação um pouco pra baixo
+      if (updateBanner && updateBanner.style.display === 'block') {
+        installBanner.style.top = '48px';
+      } else {
+        installBanner.style.top = '0';
+      }
+      installBanner.style.display = 'block';
+      installBanner.onclick = openInstallPrompt;
+    }
+
+    // Fallback: mantém o botão pronto, mas oculto
+    if (installBtn) {
+      installBtn.style.display = 'none';
+      installBtn.onclick = openInstallPrompt;
+    }
   });
+
+  // Se o usuário instalar por outro caminho (ex.: omnibox)
+  window.addEventListener('appinstalled', () => {
+    if (installBanner) installBanner.style.display = 'none';
+    if (installBtn) installBtn.style.display = 'none';
+    deferredPrompt = null;
+  });
+
+  // iOS não dispara beforeinstallprompt -> mostra instrução amigável
+  const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+  if (isIOS && !isStandalone) {
+    if (installBanner) {
+      installBanner.innerHTML = '📲 Para instalar: toque em <strong>Compartilhar</strong> e depois <strong>Adicionar à Tela de Início</strong>.';
+      installBanner.style.top = '0';
+      installBanner.style.display = 'block';
+      installBanner.style.cursor = 'default';
+      installBanner.onclick = null;
+    }
+  }
   
 </script>
 
