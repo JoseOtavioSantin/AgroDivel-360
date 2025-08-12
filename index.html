@@ -303,6 +303,17 @@
   ⚠️ Nova versão disponível. Clique aqui para atualizar.
 </div>
 
+<!-- Bloqueio de interação durante atualização -->
+<div id="update-overlay" style="
+  display:none;
+  position:fixed;
+  inset:0;
+  background: rgba(0,0,0,.55);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+  z-index: 9998; /* abaixo do banner (9999), acima do app */
+"></div>
+
 <!-- Aviso de instalação -->
 <div id="install-banner" style="
   display: none;
@@ -322,34 +333,73 @@
 </div>
 
 <script>
+
+  function lockUIForUpdate(lock) {
+    const overlay = document.getElementById('update-overlay');
+    if (!overlay) return;
+    if (lock) {
+      overlay.style.display = 'block';
+      document.documentElement.style.overflow = 'hidden';
+      document.body.style.overscrollBehavior = 'none';
+    } else {
+      overlay.style.display = 'none';
+      document.documentElement.style.overflow = '';
+      document.body.style.overscrollBehavior = 'auto';
+    }
+  }
+
   if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register("service-worker.js").then(reg => {
-      // Detecta novo SW em espera
-      reg.onupdatefound = () => {
-        const novoSW = reg.installing;
-        novoSW.onstatechange = () => {
-          if (novoSW.state === 'installed' && navigator.serviceWorker.controller) {
-            // Exibe banner de atualização
-            const banner = document.getElementById('update-banner');
-            banner.style.display = 'block';
+    const isLocalhost = ['localhost', '127.0.0.1'].includes(location.hostname);
+    if (window.isSecureContext || isLocalhost) {
+      navigator.serviceWorker.register('service-worker.js').then((reg) => {
+        const showUpdate = (swRef) => {
+          const banner = document.getElementById('update-banner');
+          const installBanner = document.getElementById('install-banner');
+          banner.style.display = 'block';
 
-            banner.addEventListener('click', () => {
-              // Pede para ativar novo SW e recarrega a página
-              novoSW.postMessage({ action: 'skipWaiting' });
-            });
-          }
+          // Bloqueia interação e some com o banner de instalar para não confundir
+          lockUIForUpdate(true);
+          if (installBanner) installBanner.style.display = 'none';
+
+          const triggerUpdate = () => {
+            const target = reg.waiting || swRef;
+            if (target) target.postMessage({ action: 'skipWaiting' });
+          };
+
+          banner.addEventListener('click', triggerUpdate, { once: true });
+          document.getElementById('update-overlay')?.addEventListener('click', triggerUpdate, { once: true });
+          setTimeout(triggerUpdate, 10000); // fallback
         };
-      };
-    });
 
-    // Recarrega a página quando o novo SW for ativado
-    let refreshing = false;
-    navigator.serviceWorker.addEventListener("controllerchange", () => {
-      if (!refreshing) {
-        refreshing = true;
-        location.reload();
-      }
-    });
+        // 1) Se já tem um SW em espera ao carregar
+        if (reg.waiting) {
+          showUpdate(reg.waiting);
+        }
+
+        // 2) Detecta novas instalações durante a sessão
+        reg.addEventListener('updatefound', () => {
+          const novoSW = reg.installing;
+          if (!novoSW) return;
+          novoSW.addEventListener('statechange', () => {
+            if (novoSW.state === 'installed' && navigator.serviceWorker.controller) {
+              showUpdate(novoSW);
+            }
+          });
+        });
+      });
+
+      // Recarrega quando o novo SW assumir
+      let refreshing = false;
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        if (!refreshing) {
+          refreshing = true;
+          try { lockUIForUpdate(false); } catch {}
+          location.reload();
+        }
+      });
+    } else {
+      console.warn('SW desativado: origem não segura (use HTTPS ou http://localhost).');
+    }
   }
   
   // Mantém o botão como fallback, mas usaremos o banner
