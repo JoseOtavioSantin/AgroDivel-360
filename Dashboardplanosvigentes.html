@@ -544,7 +544,7 @@ function aplicarFiltros() {
   const consultorFiltro = document.getElementById("filtro-consultor").value.toLowerCase();
 
   const instance = document.getElementById("filtro-periodo")._flatpickr;
-  const selectedDates = instance.selectedDates;
+  const selectedDates = instance ? instance.selectedDates : [];
 
   let dataInicio = "", dataFim = "";
   if (selectedDates.length === 2) {
@@ -632,8 +632,7 @@ filtrados.sort((a, b) => {
     const checklistsPendentes = (d.checklistRealizado || []).filter(item => !(d.datasChecklist || {})[item]);
     return checklistsPendentes.some(item => {
       const horasChecklist = parseFloat(item);
-    - return !isNaN(horasChecklist) && horasAtuais >= (horasChecklist - 60) && horasAtuais < horasChecklist;
-    + return !isNaN(horasChecklist) && horasAtuais >= (horasChecklist - 60);
+      return !isNaN(horasChecklist) && horasAtuais >= (horasChecklist - 60);
     }) ? 1 : 0;
   }
 
@@ -648,8 +647,7 @@ filtrados.sort((a, b) => {
     const checklistsPendentes = (d.checklistRealizado || []).filter(item => !(d.datasChecklist || {})[item]);
     const alerta = checklistsPendentes.some(item => {
       const horasChecklist = parseFloat(item);
-    - return !isNaN(horasChecklist) && horasAtuais >= (horasChecklist - 60) && horasAtuais < horasChecklist;
-    + return !isNaN(horasChecklist) && horasAtuais >= (horasChecklist - 60);
+      return !isNaN(horasChecklist) && horasAtuais >= (horasChecklist - 60);
     });
     const alertaClass = alerta ? "linha-alerta" : "";
 
@@ -1061,7 +1059,7 @@ function limparFormularioNovoPlano() {
 
   // Remove checklists adicionados manualmente
   const container = document.getElementById("checklist-container");
-  const fixos = ["Óleo", "100", "300", "600", "900", "1200"];
+  const fixos = ["ÓLEO", "50", "100", "300", "600", "900", "1200"];
   container.querySelectorAll("input[type='checkbox']").forEach(cb => {
     if (!fixos.includes(cb.value)) {
       cb.parentElement.remove(); // remove o <label> inteiro
