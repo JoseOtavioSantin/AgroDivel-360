@@ -960,8 +960,43 @@ function fecharNovoPlano() {
   document.getElementById("popupNovoPlano").style.display = "none";
 }
 
+async function buscarPrimeiraFilialDoGestor() {
+  try {
+    // Pega o email salvo no login do gestor
+    const emailGestor = localStorage.getItem("gestorEmail") || "";
+
+    // Se não tiver email no localStorage, tenta o primeiro doc do Firestore via título/fluxo atual
+    if (!emailGestor) {
+      // fallback rápido para não travar: usa localStorage gestorFilial (se existir)
+      const filiaisLS = JSON.parse(localStorage.getItem("gestorFilial") || "[]");
+      return filiaisLS[0] || "Não informado";
+    }
+
+    // Busca no Firestore a coleção "gestores" pelo e-mail
+    const gestoresRef = collection(db, "gestores");
+    const q = query(gestoresRef, where("email", "==", emailGestor));
+    const snapshot = await getDocs(q);
+
+    if (!snapshot.empty) {
+      const dados = snapshot.docs[0].data();
+      const filiais = Array.isArray(dados.filial) ? dados.filial : [];
+      // guarda em localStorage para reuso
+      localStorage.setItem("gestorFilial", JSON.stringify(filiais));
+      return filiais[0] || "Não informado";
+    }
+
+    // se não encontrou no banco, tenta localStorage
+    const filiaisLS = JSON.parse(localStorage.getItem("gestorFilial") || "[]");
+    return filiaisLS[0] || "Não informado";
+  } catch (e) {
+    // fallback final
+    const filiaisLS = JSON.parse(localStorage.getItem("gestorFilial") || "[]");
+    return filiaisLS[0] || "Não informado";
+  }
+}
+
 async function salvarNovoPlano() {
-const nomeCliente = document.getElementById("novoCliente").value.trim();
+  const nomeCliente = document.getElementById("novoCliente").value.trim();
   const planoVendido = document.getElementById("novoPlanoVendido").value.trim();
   const modelo = document.getElementById("novoModelo").value.trim();
   const chassi = document.getElementById("novoChassi").value.trim();
@@ -971,13 +1006,16 @@ const nomeCliente = document.getElementById("novoCliente").value.trim();
   const dataFimContrato = document.getElementById("novoDataFim").value;
   const valorNegociado = parseFloat(document.getElementById("novoValorNegociado").value) || 0;
 
-
-  // Coleta os checklists marcados
+  // coleta checklists marcados
   const checkboxes = document.querySelectorAll(".checklistNovoPlano:checked");
-  const checklistRealizado = Array.from(checkboxes).map(cb => cb.value);
+  // normaliza valores para manter padrão (ex.: "ÓLEO" em maiúsculas)
+  const checklistRealizado = Array.from(checkboxes).map(cb => {
+    const v = String(cb.value || "").trim();
+    return (v.toUpperCase() === "ÓLEO" || v.toUpperCase() === "OLEO") ? "ÓLEO" : v;
+  });
 
-  const filiais = JSON.parse(localStorage.getItem("gestorFilial") || "[]");
-  const filial = filiais[0] || "Não informado";
+  // 🔑 filial: pega do Firestore (gestores) e usa sempre a PRIMEIRA
+  const filial = await buscarPrimeiraFilialDoGestor();
 
   const novoPlano = {
     nomeCliente,
@@ -1165,7 +1203,8 @@ function formatarDataBR(data) {
     <input type="number" id="novoValorNegociado" style="width:100%;padding:8px;margin-bottom:10px;border:none;border-radius:6px;">
 
     <div id="checklist-container" style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:10px;">
-      <label><input type="checkbox" class="checklistNovoPlano" value="Óleo" /> Óleo</label>
+      <label><input type="checkbox" class="checklistNovoPlano" value="ÓLEO" /> ÓLEO</label>
+      <label><input type="checkbox" class="checklistNovoPlano" value="50" /> 50</label>
       <label><input type="checkbox" class="checklistNovoPlano" value="100" /> 100</label>
       <label><input type="checkbox" class="checklistNovoPlano" value="300" /> 300</label>
       <label><input type="checkbox" class="checklistNovoPlano" value="600" /> 600</label>
