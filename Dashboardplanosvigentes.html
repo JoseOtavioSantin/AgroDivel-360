@@ -632,7 +632,8 @@ filtrados.sort((a, b) => {
     const checklistsPendentes = (d.checklistRealizado || []).filter(item => !(d.datasChecklist || {})[item]);
     return checklistsPendentes.some(item => {
       const horasChecklist = parseFloat(item);
-      return !isNaN(horasChecklist) && horasAtuais >= (horasChecklist - 60) && horasAtuais < horasChecklist;
+    - return !isNaN(horasChecklist) && horasAtuais >= (horasChecklist - 60) && horasAtuais < horasChecklist;
+    + return !isNaN(horasChecklist) && horasAtuais >= (horasChecklist - 60);
     }) ? 1 : 0;
   }
 
@@ -647,7 +648,8 @@ filtrados.sort((a, b) => {
     const checklistsPendentes = (d.checklistRealizado || []).filter(item => !(d.datasChecklist || {})[item]);
     const alerta = checklistsPendentes.some(item => {
       const horasChecklist = parseFloat(item);
-      return !isNaN(horasChecklist) && horasAtuais >= (horasChecklist - 60) && horasAtuais < horasChecklist;
+    - return !isNaN(horasChecklist) && horasAtuais >= (horasChecklist - 60) && horasAtuais < horasChecklist;
+    + return !isNaN(horasChecklist) && horasAtuais >= (horasChecklist - 60);
     });
     const alertaClass = alerta ? "linha-alerta" : "";
 
