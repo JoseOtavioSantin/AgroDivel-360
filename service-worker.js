@@ -4,9 +4,13 @@ const urlsToCache = [
   "index.html",
   "form-pecas.html",
   "form-servicos.html",
+  "form-PLM.html",
   "form-comercial.html",
   "form-consorcio.html",
-  "form-PLM.html",
+  "form-seguro.html",
+  "form-planodemanutencao.html",
+  "cards-promo.html",
+  "form-insatisfacao.html",
   "firebase.js",
   "manifest.json",
   "assets/192.png",
@@ -53,6 +57,7 @@ self.addEventListener("message", (event) => {
     self.skipWaiting();
   }
 });
+
 
 
 
