@@ -64,52 +64,10 @@ function detectColumns(headers) {
       find("km/l") ||
       find("consumo"),
     desliz: find("desliz") || find("patin"),
-    vel: find("veloc") || find("km/h"),
-    lat: find("lat"),
-    lon: find("lon")
+    vel: find("veloc") || find("km/h")
   };
 }
 
-// histograma simples
-function histogram(data, bins = 12) {
-  const a = data.filter((v) => Number.isFinite(v));
-  if (!a.length) return { labels: [], values: [] };
-  const min = Math.min(...a), max = Math.max(...a);
-  if (min === max) return { labels: [String(min)], values: [a.length] };
-  const width = (max - min) / bins;
-  const edges = Array.from({ length: bins + 1 }, (_, i) => min + i * width);
-  const counts = Array(bins).fill(0);
-  for (const v of a) {
-    let idx = Math.min(Math.floor((v - min) / width), bins - 1);
-    counts[idx]++;
-  }
-  const labels = counts.map((_, i) => {
-    const a = edges[i], b = edges[i + 1];
-    return `${a.toFixed(1)}–${b.toFixed(1)}`;
-  });
-  return { labels, values: counts };
-}
-
-// Gera PNG via QuickChart (sem lib externa)
-async function chartPNG(config, w = 900, h = 500) {
-  const resp = await fetch("https://quickchart.io/chart", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      chart: config,
-      width: w,
-      height: h,
-      format: "png",
-      backgroundColor: "white",
-      devicePixelRatio: 2
-    }),
-  });
-  if (!resp.ok) throw new Error(`QuickChart HTTP ${resp.status}`);
-  const ab = await resp.arrayBuffer();
-  return Buffer.from(ab); // Buffer
-}
-
-// ---------- Handler ----------
 export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).json({ ok: false, error: "Método não permitido" });
 
@@ -147,7 +105,7 @@ export default async function handler(req, res) {
         vel: col.vel ? rows.map((r) => toNum(r[col.vel])).filter((v) => v !== null) : [],
       };
 
-      // janela de tempo
+      // período
       let inicio = null, fim = null;
       if (col.ts) {
         const ts = rows
@@ -164,7 +122,7 @@ export default async function handler(req, res) {
         carga: describe(serie.carga),
         consumo: describe(serie.consumo),
         desliz: describe(serie.desliz),
-        vel: describe(serie.vel)
+        vel: describe(serie.vel),
       };
 
       // métricas operacionais
@@ -173,6 +131,7 @@ export default async function handler(req, res) {
       const baixaCarga = col.carga ? rows.filter((r)=> {
         const v = toNum(r[col.carga]); return v !== null && v < 20;
       }).length : 0;
+      const mediaCarga = stats.carga?.mean ?? null;
       const altaCarga = col.carga ? rows.filter((r)=> {
         const v = toNum(r[col.carga]); return v !== null && v > 80;
       }).length : 0;
@@ -180,64 +139,99 @@ export default async function handler(req, res) {
         const v = toNum(r[col.desliz]); return v !== null && v > 15;
       }).length : 0;
 
-      // correlações (se do mesmo tamanho)
-      const corr = {};
-      const sameLen = (a,b) => a.length && b.length && a.length === b.length;
-      if (sameLen(serie.carga, serie.vel)) corr.carga_vel = ss.sampleCorrelation(serie.carga, serie.vel);
-      if (sameLen(serie.carga, serie.consumo)) corr.carga_consumo = ss.sampleCorrelation(serie.carga, serie.consumo);
-      if (sameLen(serie.desliz, serie.vel)) corr.desliz_vel = ss.sampleCorrelation(serie.desliz, serie.vel);
+      // distribuição por faixas de carga
+      const faixasCarga = { "<20%":0, "20–60%":0, "60–80%":0, ">80%":0 };
+      if (serie.carga.length) {
+        for (const v of serie.carga) {
+          if (v < 20) faixasCarga["<20%"]++;
+          else if (v < 60) faixasCarga["20–60%"]++;
+          else if (v < 80) faixasCarga["60–80%"]++;
+          else faixasCarga[">80%"]++;
+        }
+      }
 
-      // amostra de dados para o modelo
-      const preferredCols = [col.ts, col.carga, col.consumo, col.desliz, col.vel].filter(Boolean);
-      const sample = rows.slice(0, 200).map((r) => {
-        const o = {};
-        for (const k of preferredCols) if (k in r) o[k] = r[k];
-        return Object.keys(o).length ? o : r;
-      });
+      // texto “sections” gerado localmente (sempre presente)
+      const fmt = (x, u="") => (x!=null ? Number(x).toFixed(2) + u : "N/D");
+      const pct = (n) => fmt(percent(n,total), "%");
 
-      const headerMap = Object.entries(col)
-        .filter(([,v]) => v)
-        .map(([k,v]) => `- ${k}: "${v}"`).join("\n");
+      const sections = {
+        carga: {
+          title: "🔧 Carga do Motor",
+          bullets: [
+            `Média: ${fmt(stats.carga?.mean, "%")}.`,
+            `Distribuição por faixas: <20% = ${pct(faixasCarga["<20%"])}, 20–60% = ${pct(faixasCarga["20–60%"])}, 60–80% = ${pct(faixasCarga["60–80%"])}, >80% = ${pct(faixasCarga[">80%"])}.`,
+            `Picos observados: ${fmt(stats.carga?.max, "%")} (mínimo ${fmt(stats.carga?.min, "%")}).`,
+            (mediaCarga!=null && mediaCarga < 40)
+              ? "O que isso mostra: longos períodos em baixa utilização — possivelmente implemento leve ou ociosidade/manobras."
+              : "O que isso mostra: distribuição de carga razoável; avaliar picos e tempo em baixa carga para otimização.",
+            "📌 Sugestão: revisar o dimensionamento do implemento e manter operação na faixa de torque (60–80% de carga) sempre que possível."
+          ]
+        },
+        consumo: {
+          title: "⛽ Consumo de Combustível",
+          bullets: [
+            `Média: ${fmt(stats.consumo?.mean, " km/L")} | Q1–Q3: ${fmt(stats.consumo?.q1)} – ${fmt(stats.consumo?.q3)} km/L.`,
+            `Variação: mín ${fmt(stats.consumo?.min, " km/L")} | máx ${fmt(stats.consumo?.max, " km/L")} (valores muito altos tendem a ocorrer sem carga/descidas).`,
+            "📌 Sugestões:",
+            "• Reduzir marcha lenta prolongada.",
+            "• Operar próximo à faixa de torque ideal (60–80% de carga).",
+            "• Conferir pressão/lastro e regulagens do implemento (impacta consumo)."
+          ]
+        },
+        deslizamento: {
+          title: "🛞 Deslizamento (Patinagem)",
+          bullets: [
+            `Média: ${fmt(stats.desliz?.mean, "%")} | recomendado (tração em solo normal): 10–12%.`,
+            `Máximo registrado: ${fmt(stats.desliz?.max, "%")} | Quadros acima de 15%: ${pct(altoDesliz)}.`,
+            "📌 Sugestões:",
+            "• Ajustar lastro e pressão dos pneus ao tipo de solo.",
+            "• Evitar trabalhar com velocidade excessiva para a tração disponível."
+          ]
+        },
+        velocidade: {
+          title: "🚜 Velocidade no Solo",
+          bullets: [
+            `Média: ${fmt(stats.vel?.mean, " km/h")} | Mediana: ${fmt(stats.vel?.med, " km/h")} | Mín–Máx: ${fmt(stats.vel?.min, " km/h")} – ${fmt(stats.vel?.max, " km/h")}.`,
+            `Ociosidade (vel=0): ${pct(idle)}.`,
+            "📌 Observação: para muitas operações agrícolas, 5–7 km/h costuma ser adequado — alinhar a velocidade ao implemento/tarefa."
+          ]
+        },
+        resumo: {
+          title: "📌 Resumo de Melhorias Potenciais",
+          bullets: [
+            (mediaCarga!=null && mediaCarga < 40)
+              ? "Uso recorrente em baixa carga → possível superdimensionamento do trator para a tarefa."
+              : "Ajustar distribuição de carga para permanecer mais tempo em 60–80%.",
+            "Rever consumo → reduzir marcha lenta e trabalhar em faixa de torque ideal.",
+            "Picos de deslizamento → conferir lastro/pressão e técnica de operação.",
+            "Mitigar ociosidade → padronizar paradas e tempo em neutro/marcha lenta."
+          ]
+        }
+      };
 
-      const resumoOp = `
-Período: ${inicio ? inicio.toISOString() : "N/D"} → ${fim ? fim.toISOString() : "N/D"}
-Frames: ${total}
-Ociosidade (vel=0): ${percent(idle,total).toFixed(1)}%
-Baixa carga (<20%): ${percent(baixaCarga,total).toFixed(1)}%
-Alta carga (>80%): ${percent(altaCarga,total).toFixed(1)}%
-Deslizamento alto (>15%): ${percent(altoDesliz,total).toFixed(1)}%
-Correlação carga vs vel: ${Number.isFinite(corr.carga_vel) ? corr.carga_vel.toFixed(2) : "N/D"}
-Correlação carga vs consumo: ${Number.isFinite(corr.carga_consumo) ? corr.carga_consumo.toFixed(2) : "N/D"}
-Correlação desliz vs vel: ${Number.isFinite(corr.desliz_vel) ? corr.desliz_vel.toFixed(2) : "N/D"}
-`.trim();
-
-      // chamada ao modelo
+      // Texto longo via OpenAI (opcional); se falhar, front mostra as seções acima
       let analise = "";
       try {
         if (!process.env.OPENAI_API_KEY) throw new Error("OPENAI_API_KEY ausente");
         const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+        const preferredCols = [col.ts, col.carga, col.consumo, col.desliz, col.vel].filter(Boolean);
+        const sample = rows.slice(0, 150).map((r) => {
+          const o = {};
+          for (const k of preferredCols) if (k in r) o[k] = r[k];
+          return Object.keys(o).length ? o : r;
+        });
+
         const prompt = `
-Você é especialista em telemetria agrícola. Analise o trator ${modelo} (cliente: ${cliente}).
+Você é especialista em telemetria agrícola. Gere um relatório textual detalhado e didático para o trator ${modelo} (cliente: ${cliente}),
+organizado nas seções: Carga do Motor, Consumo, Deslizamento e Velocidade, finalizando com um Resumo de Melhorias Potenciais.
+Use números (médias, Q1–Q3, máximos, percentuais de faixas e ociosidade) quando disponíveis. Evite gráficos.
 
-Colunas detectadas:
-${headerMap || "(não detectadas; use heurísticas por conteúdo)"}
+Resumo calculado:
+- Ociosidade (vel=0): ${percent(idle,total).toFixed(1)}%
+- Faixas de carga: <20%=${percent(faixasCarga["<20%"],total).toFixed(1)}%, 20–60%=${percent(faixasCarga["20–60%"],total).toFixed(1)}%, 60–80%=${percent(faixasCarga["60–80%"],total).toFixed(1)}%, >80%=${percent(faixasCarga[">80%"],total).toFixed(1)}%
+- Deslizamento alto (>15%): ${percent(altoDesliz,total).toFixed(1)}%
 
-Resumo operacional calculado:
-${resumoOp}
-
-Para cada indicador disponível nos dados (mesmo que os nomes mudem), produza:
-1) RESUMO EXECUTIVO (5–8 bullets com números).
-2) DIAGNÓSTICO DETALHADO:
-   - Carga do motor (média, Q1–Q3, faixas <20/20–60/60–80/>80, riscos).
-   - Eficiência de combustível (km/L), relação com carga/velocidade.
-   - Deslizamento (%): distribuição, picos, impacto.
-   - Velocidade (km/h): coerência com a operação agrícola, variação e picos.
-3) GARGALOS & OPORTUNIDADES (ociosidade, patinagem, baixa carga, faixa de torque).
-4) RECOMENDAÇÕES PRÁTICAS PRIORITÁRIAS (lastro/pneus, marcha lenta, velocidade-alvo, implemento, treinamento).
-5) PRÓXIMAS AÇÕES (checklist curto).
-
-Seja didático e específico.
-Amostra de dados (máx 200 linhas):
+Amostra de dados (máx 150 linhas):
 ${JSON.stringify(sample)}
 `.trim();
 
@@ -251,91 +245,7 @@ ${JSON.stringify(sample)}
         console.error("Falha OpenAI:", e);
       }
 
-      // ---------- Gráficos (PNG base64) ----------
-      const charts = [];
-
-      // Histograma CARGA
-      if (serie.carga.length) {
-        const hist = histogram(serie.carga, 12);
-        const cfg = {
-          type: "bar",
-          data: { labels: hist.labels, datasets: [{ label: "Distribuição da Carga (%)", data: hist.values }] },
-          options: {
-            plugins: { legend: { display: true }, title: { display: true, text: "Histograma de Carga do Motor" } },
-            scales: { y: { beginAtZero: true } }
-          }
-        };
-        const buf = await chartPNG(cfg);
-        charts.push({ title: "Histograma de Carga", src: `data:image/png;base64,${buf.toString("base64")}` });
-      }
-
-      // Histograma DESLIZAMENTO
-      if (serie.desliz.length) {
-        const hist = histogram(serie.desliz, 12);
-        const cfg = {
-          type: "bar",
-          data: { labels: hist.labels, datasets: [{ label: "Distribuição do Deslizamento (%)", data: hist.values }] },
-          options: {
-            plugins: { legend: { display: true }, title: { display: true, text: "Histograma de Deslizamento" } },
-            scales: { y: { beginAtZero: true } }
-          }
-        };
-        const buf = await chartPNG(cfg);
-        charts.push({ title: "Histograma de Deslizamento", src: `data:image/png;base64,${buf.toString("base64")}` });
-      }
-
-      // Barras: faixas de carga
-      if (serie.carga.length) {
-        const faixas = { "<20%": 0, "20–60%": 0, "60–80%": 0, ">80%": 0 };
-        for (const v of serie.carga) {
-          if (v < 20) faixas["<20%"]++;
-          else if (v < 60) faixas["20–60%"]++;
-          else if (v < 80) faixas["60–80%"]++;
-          else faixas[">80%"]++;
-        }
-        const cfg = {
-          type: "bar",
-          data: { labels: Object.keys(faixas), datasets: [{ label: "Frames", data: Object.values(faixas) }] },
-          options: {
-            plugins: { legend: { display: false }, title: { display: true, text: "Tempo por Faixa de Carga" } },
-            scales: { y: { beginAtZero: true } }
-          }
-        };
-        const buf = await chartPNG(cfg);
-        charts.push({ title: "Tempo por Faixa de Carga", src: `data:image/png;base64,${buf.toString("base64")}` });
-      }
-
-      // Dispersão: Carga vs Velocidade
-      if (serie.carga.length && serie.vel.length && serie.carga.length === serie.vel.length) {
-        const points = serie.carga.map((v, i) => ({ x: v, y: serie.vel[i] }));
-        const cfg = {
-          type: "scatter",
-          data: { datasets: [{ label: "Pontos", data: points }] },
-          options: {
-            plugins: { legend: { display: false }, title: { display: true, text: "Dispersão: Carga x Velocidade" } },
-            scales: { x: { title: { display: true, text: "Carga (%)" } }, y: { title: { display: true, text: "Velocidade (km/h)" } } }
-          }
-        };
-        const buf = await chartPNG(cfg);
-        charts.push({ title: "Dispersão Carga x Velocidade", src: `data:image/png;base64,${buf.toString("base64")}` });
-      }
-
-      // Dispersão: Carga vs Consumo
-      if (serie.carga.length && serie.consumo.length && serie.carga.length === serie.consumo.length) {
-        const points = serie.carga.map((v, i) => ({ x: v, y: serie.consumo[i] }));
-        const cfg = {
-          type: "scatter",
-          data: { datasets: [{ label: "Pontos", data: points }] },
-          options: {
-            plugins: { legend: { display: false }, title: { display: true, text: "Dispersão: Carga x Consumo (km/L)" } },
-            scales: { x: { title: { display: true, text: "Carga (%)" } }, y: { title: { display: true, text: "Consumo (km/L)" } } }
-          }
-        };
-        const buf = await chartPNG(cfg);
-        charts.push({ title: "Dispersão Carga x Consumo", src: `data:image/png;base64,${buf.toString("base64")}` });
-      }
-
-      // Resposta JSON para o frontend renderizar
+      // Resposta JSON (sem gráficos)
       return res.status(200).json({
         ok: true,
         meta: {
@@ -352,11 +262,10 @@ ${JSON.stringify(sample)}
             baixa_carga_pct: percent(baixaCarga,total),
             alta_carga_pct: percent(altaCarga,total),
             desliz_alto_pct: percent(altoDesliz,total)
-          },
-          correlacoes: corr
+          }
         },
-        analysis: analise,
-        charts
+        sections,     // sempre vem estruturado
+        analysis: analise // texto longo opcional (se a OpenAI respondeu)
       });
     } catch (e) {
       console.error("Erro interno:", e);
