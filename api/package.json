@@ -4,7 +4,6 @@
     "dayjs": "^1.11.10",
     "formidable": "^3.5.0",
     "openai": "^4.58.0",
-    "pdfkit": "^0.15.0",
     "simple-statistics": "^7.8.3",
     "xlsx": "^0.18.5"
   }
