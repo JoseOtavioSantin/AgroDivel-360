@@ -1,39 +1,138 @@
-<!-- campos -->
-<label for="cliente">Nome do Cliente</label>
-<input type="text" id="cliente" name="cliente">
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Análise de Telemetria | Agro Divel</title>
+<style>
+  body{margin:0;background:#f5f7fb;font-family:Arial,sans-serif;}
+  .container{max-width:980px;margin:32px auto;padding:16px;}
+  .card{background:#001439;color:#fff;border-radius:12px;padding:20px;box-shadow:0 6px 18px rgba(0,0,0,.15);}
+  .row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  input,button{padding:12px;border-radius:8px;border:none;font-size:14px}
+  input[type="text"],input[type="file"]{background:#e6e6e6;color:#000}
+  button{background:#fff;color:#001439;font-weight:bold;cursor:pointer}
+  .report{margin-top:20px;background:#fff;color:#111;border-radius:12px;padding:20px}
+  .grid{display:grid;gap:12px}
+  .kpi{background:#f1f4fa;border-radius:8px;padding:12px}
+  .kpi strong{display:block;font-size:12px;color:#445}
+  .kpi span{font-size:18px;font-weight:700}
+  figure{margin:0 0 24px}
+  figcaption{font-size:12px;color:#555;margin-top:6px}
+  .muted{color:#666;font-size:12px}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="card">
+    <h2 style="margin-top:0">Relatório de Desempenho (HTML)</h2>
+    <div class="row">
+      <div>
+        <label>Nome do Cliente</label>
+        <input type="text" id="cliente" placeholder="Ex.: João da Silva" />
+      </div>
+      <div>
+        <label>Modelo do Equipamento</label>
+        <input type="text" id="modelo" placeholder="Ex.: New Holland T7.175" />
+      </div>
+    </div>
+    <div style="margin-top:12px">
+      <label>Anexar Relatório Excel</label>
+      <input type="file" id="fileInput" name="relatorio" accept=".xlsx" />
+    </div>
+    <div style="margin-top:12px;display:flex;gap:12px">
+      <button onclick="gerar()">Gerar Análise</button>
+      <button onclick="window.print()">Imprimir / Salvar em PDF</button>
+    </div>
+  </div>
 
-<label for="modelo">Modelo do Equipamento</label>
-<input type="text" id="modelo" name="modelo">
+  <div id="relatorio" class="report" style="display:none">
+    <h2 id="titulo"></h2>
+    <p class="muted" id="subtitulo"></p>
 
-<label for="fileInput">Anexar Relatório Excel</label>
-<input type="file" id="fileInput" name="relatorio" accept=".xlsx">
-<button onclick="enviar()">Gerar Relatório PDF</button>
+    <h3>Indicadores chave</h3>
+    <div class="grid" id="kpis" style="grid-template-columns:repeat(2,minmax(0,1fr))"></div>
+
+    <h3>Análise detalhada</h3>
+    <div id="analise" style="white-space:pre-wrap; line-height:1.4"></div>
+
+    <h3 style="margin-top:20px">Gráficos</h3>
+    <div id="graficos"></div>
+  </div>
+</div>
 
 <script>
-async function enviar() {
-  const cliente = document.getElementById("cliente").value;
-  const modelo  = document.getElementById("modelo").value;
+async function gerar() {
+  const cliente = document.getElementById("cliente").value.trim();
+  const modelo  = document.getElementById("modelo").value.trim();
   const file    = document.getElementById("fileInput").files[0];
-  if (!file) { alert("Selecione um .xlsx"); return; }
 
-  const formData = new FormData();
-  formData.append("cliente", cliente);
-  formData.append("modelo", modelo);
-  formData.append("relatorio", file);
+  if (!file) { alert("Selecione um arquivo .xlsx"); return; }
 
-  const resp = await fetch("/api/analisar", { method: "POST", body: formData });
-  if (!resp.ok) { alert("Falha ao gerar relatório"); return; }
+  const fd = new FormData();
+  fd.append("cliente", cliente);
+  fd.append("modelo", modelo);
+  fd.append("relatorio", file);
 
-  const blob = await resp.blob();
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = `${cliente || "cliente"}_${modelo || "modelo"}_relatorio.pdf`;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  URL.revokeObjectURL(url);
+  const resp = await fetch("/api/analisar", { method:"POST", body: fd });
+  if (!resp.ok) {
+    const t = await resp.text().catch(()=> "");
+    alert("Falha na análise: " + t);
+    return;
+  }
+  const data = await resp.json();
+
+  // exibição
+  document.getElementById("relatorio").style.display = "block";
+  document.getElementById("titulo").textContent = `Análise - ${data.meta.cliente || "Cliente"} (${data.meta.modelo || "Modelo"})`;
+  const per = data.meta.periodo;
+  document.getElementById("subtitulo").textContent =
+    `Período: ${per?.inicio || "N/D"} → ${per?.fim || "N/D"} | Frames: ${data.meta.totalFrames}`;
+
+  // KPIs
+  const kpis = [];
+  const s = data.kpis?.stats || {};
+  const t = data.kpis?.taxas || {};
+  const fmt = (x, u="") => (x!=null ? Number(x).toFixed(2) + u : "—");
+  if (s.carga)   kpis.push({ label:"Carga média (%)", value: fmt(s.carga.mean, "%") });
+  if (s.consumo) kpis.push({ label:"Consumo médio (km/L)", value: fmt(s.consumo.mean) });
+  if (s.desliz)  kpis.push({ label:"Deslizamento médio (%)", value: fmt(s.desliz.mean, "%") });
+  if (s.vel)     kpis.push({ label:"Velocidade média (km/h)", value: fmt(s.vel.mean) });
+  if (t.ociosidade_pct!=null) kpis.push({ label:"Ociosidade (vel=0)", value: fmt(t.ociosidade_pct, "%") });
+  if (t.baixa_carga_pct!=null) kpis.push({ label:"Baixa carga <20%", value: fmt(t.baixa_carga_pct, "%") });
+  if (t.alta_carga_pct!=null)  kpis.push({ label:"Alta carga >80%", value: fmt(t.alta_carga_pct, "%") });
+  if (t.desliz_alto_pct!=null) kpis.push({ label:"Deslizamento >15%", value: fmt(t.desliz_alto_pct, "%") });
+
+  const kpiEl = document.getElementById("kpis");
+  kpiEl.innerHTML = "";
+  kpis.forEach(k => {
+    const div = document.createElement("div");
+    div.className = "kpi";
+    div.innerHTML = `<strong>${k.label}</strong><span>${k.value}</span>`;
+    kpiEl.appendChild(div);
+  });
+
+  // análise (texto grande)
+  document.getElementById("analise").textContent =
+    data.analysis || "Análise automática baseada nas estatísticas calculadas.";
+
+  // gráficos
+  const g = document.getElementById("graficos");
+  g.innerHTML = "";
+  (data.charts || []).forEach(ch => {
+    const fig = document.createElement("figure");
+    const img = document.createElement("img");
+    img.src = ch.src;
+    img.style.maxWidth = "100%";
+    img.style.borderRadius = "8px";
+    img.alt = ch.title || "Gráfico";
+    const cap = document.createElement("figcaption");
+    cap.textContent = ch.title || "Gráfico";
+    fig.appendChild(img);
+    fig.appendChild(cap);
+    g.appendChild(fig);
+  });
 }
 </script>
-
-
+</body>
+</html>
