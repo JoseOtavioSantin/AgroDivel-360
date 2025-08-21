@@ -1,37 +1,35 @@
+<!-- campos -->
 <label>Nome do Cliente</label>
 <input type="text" id="cliente">
-
 <label>Modelo do Equipamento</label>
 <input type="text" id="modelo">
-
 <label>Anexar Relatório Excel</label>
-<input type="file" id="fileInput">
-
+<input type="file" id="fileInput" accept=".xlsx">
 <button onclick="enviar()">Gerar Relatório PDF</button>
 
 <script>
 async function enviar() {
   const cliente = document.getElementById("cliente").value;
-  const modelo = document.getElementById("modelo").value;
-  const file = document.getElementById("fileInput").files[0];
+  const modelo  = document.getElementById("modelo").value;
+  const file    = document.getElementById("fileInput").files[0];
+  if (!file) { alert("Selecione um .xlsx"); return; }
 
   const formData = new FormData();
   formData.append("cliente", cliente);
   formData.append("modelo", modelo);
   formData.append("relatorio", file);
 
-  const resp = await fetch("/api/analisar", { // rota interna do Vercel
-    method: "POST",
-    body: formData
-  });
+  const resp = await fetch("/api/analisar", { method: "POST", body: formData });
+  if (!resp.ok) { alert("Falha ao gerar relatório"); return; }
 
   const blob = await resp.blob();
-  const url = window.URL.createObjectURL(blob);
+  const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = "relatorio.pdf";
+  a.download = `${cliente || "cliente"}_${modelo || "modelo"}_relatorio.pdf`;
   document.body.appendChild(a);
   a.click();
   a.remove();
+  URL.revokeObjectURL(url);
 }
 </script>
