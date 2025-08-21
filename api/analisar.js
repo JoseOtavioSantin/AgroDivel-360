@@ -2,7 +2,6 @@
 import formidable from "formidable";
 import * as XLSX from "xlsx";
 import OpenAI from "openai";
-import PDFDocument from "pdfkit";
 import fs from "node:fs";
 import * as ss from "simple-statistics";
 import dayjs from "dayjs";
@@ -19,7 +18,7 @@ const toNum = (v) => {
 const norm = (s) =>
   String(s ?? "")
     .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "") // remove acentos
+    .replace(/[\u0300-\u036f]/g, "")
     .toLowerCase();
 
 const firstFileFrom = (files) => {
@@ -47,13 +46,13 @@ function describe(arr) {
   return { count: a.length, mean, min, q1, med, q3, max, std };
 }
 
-// tenta mapear nomes de colunas comuns com tolerância
+// mapeia nomes de colunas com tolerância
 function detectColumns(headers) {
   const h = headers.map((x) => ({ raw: x, n: norm(x) }));
   const find = (...needles) =>
     h.find(({ n }) => needles.every((k) => n.includes(k)))?.raw;
 
-  const col = {
+  return {
     ts:
       find("carimbo", "data") ||
       find("timestamp") ||
@@ -69,10 +68,9 @@ function detectColumns(headers) {
     lat: find("lat"),
     lon: find("lon")
   };
-  return col;
 }
 
-// cria bins simples para histogramas
+// histograma simples
 function histogram(data, bins = 12) {
   const a = data.filter((v) => Number.isFinite(v));
   if (!a.length) return { labels: [], values: [] };
@@ -92,10 +90,9 @@ function histogram(data, bins = 12) {
   return { labels, values: counts };
 }
 
-// Gera PNG de gráfico usando a API do QuickChart (sem dependência externa)
+// Gera PNG via QuickChart (sem lib externa)
 async function chartPNG(config, w = 900, h = 500) {
-  const fetchFn = globalThis.fetch ?? (await import("node-fetch")).default;
-  const resp = await fetchFn("https://quickchart.io/chart", {
+  const resp = await fetch("https://quickchart.io/chart", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -109,12 +106,12 @@ async function chartPNG(config, w = 900, h = 500) {
   });
   if (!resp.ok) throw new Error(`QuickChart HTTP ${resp.status}`);
   const ab = await resp.arrayBuffer();
-  return Buffer.from(ab);
+  return Buffer.from(ab); // Buffer
 }
 
 // ---------- Handler ----------
 export default async function handler(req, res) {
-  if (req.method !== "POST") return res.status(405).send("Método não permitido");
+  if (req.method !== "POST") return res.status(405).json({ ok: false, error: "Método não permitido" });
 
   const form = formidable({ multiples: false, keepExtensions: true });
 
@@ -122,7 +119,7 @@ export default async function handler(req, res) {
     try {
       if (err) {
         console.error("Upload parse error:", err);
-        return res.status(400).send("Erro no upload");
+        return res.status(400).json({ ok: false, error: "Erro no upload" });
       }
 
       const cliente = String(fields.cliente || "N/D");
@@ -130,27 +127,27 @@ export default async function handler(req, res) {
 
       const fileObj = firstFileFrom(files);
       const filePath = fileObj?.filepath;
-      if (!filePath) return res.status(400).send("Arquivo .xlsx não recebido");
+      if (!filePath) return res.status(400).json({ ok: false, error: "Arquivo .xlsx não recebido" });
 
-      // Lê excel (buffer) e transforma em JSON
+      // Lê Excel
       const buffer = fs.readFileSync(filePath);
       const wb = XLSX.read(buffer, { type: "buffer" });
       const ws = wb.Sheets[wb.SheetNames[0]];
       const rows = XLSX.utils.sheet_to_json(ws, { defval: null });
-      if (!rows.length) return res.status(400).send("Planilha vazia");
+      if (!rows.length) return res.status(400).json({ ok: false, error: "Planilha vazia" });
 
       const headers = Object.keys(rows[0] ?? {});
       const col = detectColumns(headers);
 
-      // Normaliza dados principais (dinâmico)
+      // Normaliza séries
       const serie = {
-        carga: rows.map((r) => toNum(col.carga ? r[col.carga] : null)).filter((v) => v !== null),
-        consumo: rows.map((r) => toNum(col.consumo ? r[col.consumo] : null)).filter((v) => v !== null),
-        desliz: rows.map((r) => toNum(col.desliz ? r[col.desliz] : null)).filter((v) => v !== null),
-        vel: rows.map((r) => toNum(col.vel ? r[col.vel] : null)).filter((v) => v !== null)
+        carga: col.carga ? rows.map((r) => toNum(r[col.carga])).filter((v) => v !== null) : [],
+        consumo: col.consumo ? rows.map((r) => toNum(r[col.consumo])).filter((v) => v !== null) : [],
+        desliz: col.desliz ? rows.map((r) => toNum(r[col.desliz])).filter((v) => v !== null) : [],
+        vel: col.vel ? rows.map((r) => toNum(r[col.vel])).filter((v) => v !== null) : [],
       };
 
-      // timestamp (opcional)
+      // janela de tempo
       let inicio = null, fim = null;
       if (col.ts) {
         const ts = rows
@@ -162,7 +159,7 @@ export default async function handler(req, res) {
         if (ts.length) { inicio = new Date(ts[0]); fim = new Date(ts[ts.length-1]); }
       }
 
-      // Estatísticas + métricas operacionais
+      // stats
       const stats = {
         carga: describe(serie.carga),
         consumo: describe(serie.consumo),
@@ -170,7 +167,7 @@ export default async function handler(req, res) {
         vel: describe(serie.vel)
       };
 
-      // Heurísticas de eficiência
+      // métricas operacionais
       const total = rows.length;
       const idle = col.vel ? rows.filter((r)=> toNum(r[col.vel]) === 0).length : 0;
       const baixaCarga = col.carga ? rows.filter((r)=> {
@@ -183,19 +180,14 @@ export default async function handler(req, res) {
         const v = toNum(r[col.desliz]); return v !== null && v > 15;
       }).length : 0;
 
-      // Correlações (se ambas séries existirem)
+      // correlações (se do mesmo tamanho)
       const corr = {};
-      if (serie.carga.length && serie.vel.length && serie.carga.length === serie.vel.length) {
-        corr.carga_vel = ss.sampleCorrelation(serie.carga, serie.vel);
-      }
-      if (serie.carga.length && serie.consumo.length && serie.carga.length === serie.consumo.length) {
-        corr.carga_consumo = ss.sampleCorrelation(serie.carga, serie.consumo);
-      }
-      if (serie.desliz.length && serie.vel.length && serie.desliz.length === serie.vel.length) {
-        corr.desliz_vel = ss.sampleCorrelation(serie.desliz, serie.vel);
-      }
+      const sameLen = (a,b) => a.length && b.length && a.length === b.length;
+      if (sameLen(serie.carga, serie.vel)) corr.carga_vel = ss.sampleCorrelation(serie.carga, serie.vel);
+      if (sameLen(serie.carga, serie.consumo)) corr.carga_consumo = ss.sampleCorrelation(serie.carga, serie.consumo);
+      if (sameLen(serie.desliz, serie.vel)) corr.desliz_vel = ss.sampleCorrelation(serie.desliz, serie.vel);
 
-      // Amostra curta e nomes detectados para mandar ao modelo
+      // amostra de dados para o modelo
       const preferredCols = [col.ts, col.carga, col.consumo, col.desliz, col.vel].filter(Boolean);
       const sample = rows.slice(0, 200).map((r) => {
         const o = {};
@@ -203,11 +195,9 @@ export default async function handler(req, res) {
         return Object.keys(o).length ? o : r;
       });
 
-      // Prompt avançado (dinâmico, explica colunas encontradas)
       const headerMap = Object.entries(col)
         .filter(([,v]) => v)
-        .map(([k,v]) => `- ${k}: "${v}"`)
-        .join("\n");
+        .map(([k,v]) => `- ${k}: "${v}"`).join("\n");
 
       const resumoOp = `
 Período: ${inicio ? inicio.toISOString() : "N/D"} → ${fim ? fim.toISOString() : "N/D"}
@@ -221,36 +211,32 @@ Correlação carga vs consumo: ${Number.isFinite(corr.carga_consumo) ? corr.carg
 Correlação desliz vs vel: ${Number.isFinite(corr.desliz_vel) ? corr.desliz_vel.toFixed(2) : "N/D"}
 `.trim();
 
-      const openai = process.env.OPENAI_API_KEY
-        ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
-        : null;
-
+      // chamada ao modelo
       let analise = "";
       try {
-        if (!openai) throw new Error("OPENAI_API_KEY ausente");
+        if (!process.env.OPENAI_API_KEY) throw new Error("OPENAI_API_KEY ausente");
+        const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
         const prompt = `
 Você é especialista em telemetria agrícola. Analise o trator ${modelo} (cliente: ${cliente}).
 
 Colunas detectadas:
-${headerMap || "(não detectadas, usar heurísticas por conteúdo)"}
+${headerMap || "(não detectadas; use heurísticas por conteúdo)"}
 
 Resumo operacional calculado:
 ${resumoOp}
 
 Para cada indicador disponível nos dados (mesmo que os nomes mudem), produza:
-1) RESUMO EXECUTIVO (5–8 bullets diretos, com números).
+1) RESUMO EXECUTIVO (5–8 bullets com números).
 2) DIAGNÓSTICO DETALHADO:
-   - Carga do motor: média, dispersão (Q1–Q3), tempo em faixas (<20%, 20–60%, 60–80%, >80%), risco de super/subdimensionamento.
-   - Eficiência de combustível (km/L ou equivalente): níveis típicos por faixa de carga/velocidade.
-   - Deslizamento/Patinagem: distribuição, momentos críticos, impacto esperado.
-   - Velocidade operacional: coerência com a operação agrícola, variação e picos.
-3) GARGALOS & OPORTUNIDADES:
-   - Ociosidade, picos de patinagem, baixa carga recorrente, uso fora da faixa de torque.
-4) RECOMENDAÇÕES PRÁTICAS E PRIORIZADAS:
-   - Ajustes de lastro/pressão pneus, redução de marcha lenta, velocidade alvo por operação, adequação de implemento, treinamento de operador.
-5) PRÓXIMAS AÇÕES (checklist curto e objetivo).
+   - Carga do motor (média, Q1–Q3, faixas <20/20–60/60–80/>80, riscos).
+   - Eficiência de combustível (km/L), relação com carga/velocidade.
+   - Deslizamento (%): distribuição, picos, impacto.
+   - Velocidade (km/h): coerência com a operação agrícola, variação e picos.
+3) GARGALOS & OPORTUNIDADES (ociosidade, patinagem, baixa carga, faixa de torque).
+4) RECOMENDAÇÕES PRÁTICAS PRIORITÁRIAS (lastro/pneus, marcha lenta, velocidade-alvo, implemento, treinamento).
+5) PRÓXIMAS AÇÕES (checklist curto).
 
-Seja didático e específico. Evite generalidades.
+Seja didático e específico.
 Amostra de dados (máx 200 linhas):
 ${JSON.stringify(sample)}
 `.trim();
@@ -265,44 +251,40 @@ ${JSON.stringify(sample)}
         console.error("Falha OpenAI:", e);
       }
 
-      // ---------- Gráficos (sem linhas) ----------
-      const images = [];
+      // ---------- Gráficos (PNG base64) ----------
+      const charts = [];
 
-      // HISTOGRAMA de CARGA (%)
+      // Histograma CARGA
       if (serie.carga.length) {
         const hist = histogram(serie.carga, 12);
         const cfg = {
           type: "bar",
-          data: {
-            labels: hist.labels,
-            datasets: [{ label: "Distribuição da Carga (%)", data: hist.values }]
-          },
+          data: { labels: hist.labels, datasets: [{ label: "Distribuição da Carga (%)", data: hist.values }] },
           options: {
             plugins: { legend: { display: true }, title: { display: true, text: "Histograma de Carga do Motor" } },
-            scales: { x: { ticks: { maxRotation: 0 } }, y: { beginAtZero: true } }
+            scales: { y: { beginAtZero: true } }
           }
         };
-        images.push(await chartPNG(cfg));
+        const buf = await chartPNG(cfg);
+        charts.push({ title: "Histograma de Carga", src: `data:image/png;base64,${buf.toString("base64")}` });
       }
 
-      // HISTOGRAMA de DESLIZAMENTO (%)
+      // Histograma DESLIZAMENTO
       if (serie.desliz.length) {
         const hist = histogram(serie.desliz, 12);
         const cfg = {
           type: "bar",
-          data: {
-            labels: hist.labels,
-            datasets: [{ label: "Distribuição do Deslizamento (%)", data: hist.values }]
-          },
+          data: { labels: hist.labels, datasets: [{ label: "Distribuição do Deslizamento (%)", data: hist.values }] },
           options: {
             plugins: { legend: { display: true }, title: { display: true, text: "Histograma de Deslizamento" } },
-            scales: { x: { ticks: { maxRotation: 0 } }, y: { beginAtZero: true } }
+            scales: { y: { beginAtZero: true } }
           }
         };
-        images.push(await chartPNG(cfg));
+        const buf = await chartPNG(cfg);
+        charts.push({ title: "Histograma de Deslizamento", src: `data:image/png;base64,${buf.toString("base64")}` });
       }
 
-      // BARRAS: Tempo em faixas de carga
+      // Barras: faixas de carga
       if (serie.carga.length) {
         const faixas = { "<20%": 0, "20–60%": 0, "60–80%": 0, ">80%": 0 };
         for (const v of serie.carga) {
@@ -313,19 +295,17 @@ ${JSON.stringify(sample)}
         }
         const cfg = {
           type: "bar",
-          data: {
-            labels: Object.keys(faixas),
-            datasets: [{ label: "Frames", data: Object.values(faixas) }]
-          },
+          data: { labels: Object.keys(faixas), datasets: [{ label: "Frames", data: Object.values(faixas) }] },
           options: {
             plugins: { legend: { display: false }, title: { display: true, text: "Tempo por Faixa de Carga" } },
             scales: { y: { beginAtZero: true } }
           }
         };
-        images.push(await chartPNG(cfg));
+        const buf = await chartPNG(cfg);
+        charts.push({ title: "Tempo por Faixa de Carga", src: `data:image/png;base64,${buf.toString("base64")}` });
       }
 
-      // DISPERSÃO: Carga (%) vs Velocidade (km/h)
+      // Dispersão: Carga vs Velocidade
       if (serie.carga.length && serie.vel.length && serie.carga.length === serie.vel.length) {
         const points = serie.carga.map((v, i) => ({ x: v, y: serie.vel[i] }));
         const cfg = {
@@ -336,10 +316,11 @@ ${JSON.stringify(sample)}
             scales: { x: { title: { display: true, text: "Carga (%)" } }, y: { title: { display: true, text: "Velocidade (km/h)" } } }
           }
         };
-        images.push(await chartPNG(cfg));
+        const buf = await chartPNG(cfg);
+        charts.push({ title: "Dispersão Carga x Velocidade", src: `data:image/png;base64,${buf.toString("base64")}` });
       }
 
-      // DISPERSÃO: Carga (%) vs Consumo (km/L) (se existir)
+      // Dispersão: Carga vs Consumo
       if (serie.carga.length && serie.consumo.length && serie.carga.length === serie.consumo.length) {
         const points = serie.carga.map((v, i) => ({ x: v, y: serie.consumo[i] }));
         const cfg = {
@@ -350,71 +331,36 @@ ${JSON.stringify(sample)}
             scales: { x: { title: { display: true, text: "Carga (%)" } }, y: { title: { display: true, text: "Consumo (km/L)" } } }
           }
         };
-        images.push(await chartPNG(cfg));
+        const buf = await chartPNG(cfg);
+        charts.push({ title: "Dispersão Carga x Consumo", src: `data:image/png;base64,${buf.toString("base64")}` });
       }
 
-      // ---------- Montagem do PDF ----------
-      const pdf = new PDFDocument({ margin: 36 });
-      const chunks = [];
-      pdf.on("data", (c) => chunks.push(c));
-      pdf.on("end", () => {
-        const buf = Buffer.concat(chunks);
-        res.setHeader("Content-Type", "application/pdf");
-        res.setHeader("Content-Disposition", `attachment; filename="${cliente}_${modelo}_relatorio.pdf"`);
-        res.send(buf);
+      // Resposta JSON para o frontend renderizar
+      return res.status(200).json({
+        ok: true,
+        meta: {
+          cliente,
+          modelo,
+          periodo: { inicio: inicio ? inicio.toISOString() : null, fim: fim ? fim.toISOString() : null },
+          totalFrames: total
+        },
+        columns: col,
+        kpis: {
+          stats,
+          taxas: {
+            ociosidade_pct: percent(idle,total),
+            baixa_carga_pct: percent(baixaCarga,total),
+            alta_carga_pct: percent(altaCarga,total),
+            desliz_alto_pct: percent(altoDesliz,total)
+          },
+          correlacoes: corr
+        },
+        analysis: analise,
+        charts
       });
-
-      // Capa
-      pdf.fontSize(18).text("Relatório de Desempenho", { align: "center" });
-      pdf.moveDown();
-      pdf.fontSize(12).text(`Cliente: ${cliente}`);
-      pdf.text(`Equipamento: ${modelo}`);
-      pdf.text(`Período analisado: ${inicio ? inicio.toLocaleString() : "N/D"} → ${fim ? fim.toLocaleString() : "N/D"}`);
-      pdf.moveDown();
-
-      // Estatísticas chave
-      const line = (t, o, u = "") =>
-        o
-          ? `${t}: média ${o.mean.toFixed(2)}${u}  |  Q1 ${o.q1.toFixed(2)}  |  Med ${o.med.toFixed(2)}  |  Q3 ${o.q3.toFixed(2)}  |  min ${o.min.toFixed(2)}  |  máx ${o.max.toFixed(2)}`
-          : `${t}: sem dados`;
-
-      if (stats.carga || stats.consumo || stats.desliz || stats.vel) {
-        pdf.fontSize(11);
-        if (stats.carga)   pdf.text(line("Carga do motor (%)", stats.carga, "%"));
-        if (stats.consumo) pdf.text(line("Consumo (km/L)", stats.consumo, ""));
-        if (stats.desliz)  pdf.text(line("Deslizamento (%)", stats.desliz, "%"));
-        if (stats.vel)     pdf.text(line("Velocidade (km/h)", stats.vel, ""));
-        pdf.moveDown();
-        pdf.text(`Ociosidade (vel=0): ${percent(idle,total).toFixed(1)}%  |  Baixa carga (<20%): ${percent(baixaCarga,total).toFixed(1)}%  |  Alta carga (>80%): ${percent(altaCarga,total).toFixed(1)}%  |  Desliz >15%: ${percent(altoDesliz,total).toFixed(1)}%`);
-      }
-
-      pdf.moveDown();
-
-      // Texto da análise (sempre vem algo; se OpenAI falhar, ainda temos o cabeçalho + métricas + gráficos)
-      if (analise) {
-        pdf.fontSize(12).text(analise, { align: "left" });
-      } else {
-        pdf.fontSize(12).text("Análise automática baseada em estatísticas locais. (A API de análise não respondeu desta vez.)");
-      }
-
-      // Gráficos (cada um em sua página para ficar legível)
-      for (const img of images) {
-        pdf.addPage();
-        pdf.fontSize(14).text("Gráfico", { align: "center" });
-        pdf.moveDown();
-        try {
-          pdf.image(img, { fit: [520, 360], align: "center", valign: "center" });
-        } catch {
-          pdf.fontSize(12).text("Falha ao inserir imagem do gráfico.");
-        }
-      }
-
-      pdf.end();
     } catch (e) {
       console.error("Erro interno:", e);
-      res.status(500).send("Erro interno na análise.");
+      return res.status(500).json({ ok: false, error: "Erro interno na análise." });
     }
   });
 }
-
-
