@@ -4,7 +4,7 @@ import * as XLSX from "xlsx";
 import OpenAI from "openai";
 import PDFDocument from "pdfkit";
 import fs from "node:fs";
-import ss from "simple-statistics";
+import * as ss from "simple-statistics";
 import dayjs from "dayjs";
 
 export const config = { api: { bodyParser: false } };
@@ -17,9 +17,9 @@ const toNum = (v) => {
 };
 
 const norm = (s) =>
-  String(s || "")
+  String(s ?? "")
     .normalize("NFD")
-    .replace(/\p{Diacritic}/gu, "")
+    .replace(/[\u0300-\u036f]/g, "") // remove acentos
     .toLowerCase();
 
 const firstFileFrom = (files) => {
@@ -94,11 +94,12 @@ function histogram(data, bins = 12) {
 
 // Gera PNG de gráfico usando a API do QuickChart (sem dependência externa)
 async function chartPNG(config, w = 900, h = 500) {
-  const resp = await fetch("https://quickchart.io/chart", {
+  const fetchFn = globalThis.fetch ?? (await import("node-fetch")).default;
+  const resp = await fetchFn("https://quickchart.io/chart", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      chart: config,           // Config do Chart.js
+      chart: config,
       width: w,
       height: h,
       format: "png",
@@ -106,9 +107,7 @@ async function chartPNG(config, w = 900, h = 500) {
       devicePixelRatio: 2
     }),
   });
-  if (!resp.ok) {
-    throw new Error(`QuickChart HTTP ${resp.status}`);
-  }
+  if (!resp.ok) throw new Error(`QuickChart HTTP ${resp.status}`);
   const ab = await resp.arrayBuffer();
   return Buffer.from(ab);
 }
@@ -417,4 +416,5 @@ ${JSON.stringify(sample)}
     }
   });
 }
+
 
