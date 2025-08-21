@@ -8,7 +8,7 @@ import dayjs from "dayjs";
 
 export const config = { api: { bodyParser: false } };
 
-// ---------- Utils ----------
+// ---------- Helpers ----------
 const toNum = (v) => {
   const n = typeof v === "string" ? v.replace(",", ".") : v;
   const x = Number(n);
@@ -46,25 +46,55 @@ function describe(arr) {
   return { count: a.length, mean, min, q1, med, q3, max, std };
 }
 
-// mapeia nomes de colunas com tolerância
-function detectColumns(headers) {
-  const h = headers.map((x) => ({ raw: x, n: norm(x) }));
-  const find = (...needles) =>
-    h.find(({ n }) => needles.every((k) => n.includes(k)))?.raw;
+const isPercentLike = (arr) => {
+  const a = arr.filter((v) => Number.isFinite(v));
+  if (!a.length) return false;
+  const inRange = a.filter((v) => v >= 0 && v <= 120).length / a.length;
+  return inRange >= 0.8; // maioria entre 0 e ~120
+};
 
+// classifica coluna por semântica aproximada
+function semanticType(h) {
+  const n = norm(h);
+  if (n.includes("carga") && n.includes("motor")) return "carga";
+  if (n.includes("carga")) return "carga";
+  if (n.includes("combust") || n.includes("consumo") || n.includes("km/l")) return "consumo";
+  if (n.includes("desliz") || n.includes("patin")) return "desliz";
+  if (n.includes("vel") || n.includes("km/h")) return "velocidade";
+  if (n.includes("rpm")) return "rpm";
+  if (n.includes("temp")) return "temperatura";
+  if (n.includes("press")) return "pressao";
+  return "generico";
+}
+
+function emojiForType(t) {
+  switch (t) {
+    case "carga": return "🔧";
+    case "consumo": return "⛽";
+    case "desliz": return "🛞";
+    case "velocidade": return "🚜";
+    case "rpm": return "⚙️";
+    case "temperatura": return "🌡️";
+    case "pressao": return "🧯";
+    default: return "📈";
+  }
+}
+
+// monta faixas para “%/carga”
+function cargaBands(arr) {
+  const bands = { "<20%": 0, "20–60%": 0, "60–80%": 0, ">80%": 0 };
+  for (const v of arr) {
+    if (!Number.isFinite(v)) continue;
+    if (v < 20) bands["<20%"]++;
+    else if (v < 60) bands["20–60%"]++;
+    else if (v < 80) bands["60–80%"]++;
+    else bands[">80%"]++;
+  }
+  const total = arr.filter((v) => Number.isFinite(v)).length || 1;
+  const pct = (n) => percent(n, total).toFixed(1) + "%";
   return {
-    ts:
-      find("carimbo", "data") ||
-      find("timestamp") ||
-      find("hora") ||
-      find("data"),
-    carga: find("carga", "motor") || find("carga"),
-    consumo:
-      find("combustivel", "distancia") ||
-      find("km/l") ||
-      find("consumo"),
-    desliz: find("desliz") || find("patin"),
-    vel: find("veloc") || find("km/h")
+    raw: bands,
+    pretty: `<20%=${pct(bands["<20%"])}, 20–60%=${pct(bands["20–60%"])}, 60–80%=${pct(bands["60–80%"])}, >80%=${pct(bands[">80%"])}`
   };
 }
 
@@ -83,8 +113,8 @@ export default async function handler(req, res) {
       const cliente = String(fields.cliente || "N/D");
       const modelo  = String(fields.modelo  || "N/D");
 
-      const fileObj = firstFileFrom(files);
-      const filePath = fileObj?.filepath;
+      const f = firstFileFrom(files);
+      const filePath = f?.filepath;
       if (!filePath) return res.status(400).json({ ok: false, error: "Arquivo .xlsx não recebido" });
 
       // Lê Excel
@@ -95,143 +125,139 @@ export default async function handler(req, res) {
       if (!rows.length) return res.status(400).json({ ok: false, error: "Planilha vazia" });
 
       const headers = Object.keys(rows[0] ?? {});
-      const col = detectColumns(headers);
+      // converte todas as colunas numéricas
+      const numericCols = headers
+        .map((h) => {
+          const vals = rows.map((r) => toNum(r[h])).filter((v) => v !== null);
+          const isNumeric = vals.length >= Math.min(10, Math.ceil(rows.length * 0.1)); // tem números suficientes?
+          return isNumeric ? { header: h, values: vals } : null;
+        })
+        .filter(Boolean);
 
-      // Normaliza séries
-      const serie = {
-        carga: col.carga ? rows.map((r) => toNum(r[col.carga])).filter((v) => v !== null) : [],
-        consumo: col.consumo ? rows.map((r) => toNum(r[col.consumo])).filter((v) => v !== null) : [],
-        desliz: col.desliz ? rows.map((r) => toNum(r[col.desliz])).filter((v) => v !== null) : [],
-        vel: col.vel ? rows.map((r) => toNum(r[col.vel])).filter((v) => v !== null) : [],
-      };
-
-      // período
+      // período (se houver colunas de tempo)
+      const timeHeader = headers.find((h) => {
+        const n = norm(h);
+        return n.includes("carimbo") || n.includes("data") || n.includes("hora") || n.includes("timestamp");
+      });
       let inicio = null, fim = null;
-      if (col.ts) {
+      if (timeHeader) {
         const ts = rows
-          .map((r) => r[col.ts])
+          .map((r) => r[timeHeader])
           .map((t) => (t ? dayjs(String(t)) : null))
           .filter((d) => d && d.isValid())
           .map((d) => d.toDate().getTime())
-          .sort((a,b)=>a-b);
-        if (ts.length) { inicio = new Date(ts[0]); fim = new Date(ts[ts.length-1]); }
+          .sort((a, b) => a - b);
+        if (ts.length) { inicio = new Date(ts[0]); fim = new Date(ts[ts.length - 1]); }
       }
 
-      // stats
-      const stats = {
-        carga: describe(serie.carga),
-        consumo: describe(serie.consumo),
-        desliz: describe(serie.desliz),
-        vel: describe(serie.vel),
+      // monta seções dinâmicas
+      const totalFrames = rows.length;
+      const sections = [];
+      let ociosidadePct = null; // se detectarmos "velocidade", calculamos % de zero
+
+      // ordenar: primeiro colunas reconhecidas (carga, consumo, desliz, velocidade), depois demais
+      const score = (h) => {
+        const t = semanticType(h);
+        return ({
+          carga: 0, consumo: 1, desliz: 2, velocidade: 3,
+          rpm: 4, temperatura: 5, pressao: 6, generico: 7
+        }[t] ?? 99);
       };
+      numericCols.sort((a, b) => score(a.header) - score(b.header));
 
-      // métricas operacionais
-      const total = rows.length;
-      const idle = col.vel ? rows.filter((r)=> toNum(r[col.vel]) === 0).length : 0;
-      const baixaCarga = col.carga ? rows.filter((r)=> {
-        const v = toNum(r[col.carga]); return v !== null && v < 20;
-      }).length : 0;
-      const mediaCarga = stats.carga?.mean ?? null;
-      const altaCarga = col.carga ? rows.filter((r)=> {
-        const v = toNum(r[col.carga]); return v !== null && v > 80;
-      }).length : 0;
-      const altoDesliz = col.desliz ? rows.filter((r)=> {
-        const v = toNum(r[col.desliz]); return v !== null && v > 15;
-      }).length : 0;
+      for (const { header, values } of numericCols) {
+        const t = semanticType(header);
+        const stats = describe(values);
+        if (!stats) continue;
 
-      // distribuição por faixas de carga
-      const faixasCarga = { "<20%":0, "20–60%":0, "60–80%":0, ">80%":0 };
-      if (serie.carga.length) {
-        for (const v of serie.carga) {
-          if (v < 20) faixasCarga["<20%"]++;
-          else if (v < 60) faixasCarga["20–60%"]++;
-          else if (v < 80) faixasCarga["60–80%"]++;
-          else faixasCarga[">80%"]++;
+        const fmt = (x, u = "") => (x != null ? Number(x).toFixed(2) + u : "N/D");
+        const bullets = [
+          `Média: ${fmt(stats.mean)}${t === "velocidade" ? " km/h" : t === "consumo" ? " km/L" : t === "desliz" || isPercentLike(values) || t==="carga" ? "%" : ""}.`,
+          `Quartis (Q1–Q3): ${fmt(stats.q1)} – ${fmt(stats.q3)}.`,
+          `Mín–Máx: ${fmt(stats.min)} – ${fmt(stats.max)}.`
+        ];
+
+        // % de zeros (útil para velocidade → ociosidade)
+        const zeros = values.filter((v) => v === 0).length;
+        if (zeros > 0) {
+          const zPct = percent(zeros, values.length);
+          bullets.push(`Valores zero: ${zPct.toFixed(1)}% dos registros.`);
+          if (t === "velocidade") ociosidadePct = zPct;
         }
+
+        // se “%/carga” → faixas
+        if (t === "carga" || t === "desliz" || isPercentLike(values)) {
+          const bands = cargaBands(values);
+          bullets.push(`Distribuição por faixas: ${bands.pretty}.`);
+        }
+
+        // recomendações rápidas por tipo
+        if (t === "carga") {
+          bullets.push(
+            "📌 Sugestões: manter operação na faixa de torque (60–80% de carga); revisar dimensionamento de implementos se <20% recorrente."
+          );
+        } else if (t === "consumo") {
+          bullets.push(
+            "📌 Sugestões: reduzir marcha lenta; trabalhar próximo da faixa de torque; conferir pressão/lastro e regulagens de implemento."
+          );
+        } else if (t === "desliz") {
+          bullets.push(
+            "📌 Sugestões: ajustar lastro e pressão dos pneus; evitar velocidade acima da tração disponível; alvo típico 10–12% em tração."
+          );
+        } else if (t === "velocidade") {
+          bullets.push(
+            "📌 Sugestões: alinhar velocidade à operação/implemento; padronizar deslocamento vs trabalho; reduzir paradas desnecessárias."
+          );
+        }
+
+        sections.push({
+          title: `${emojiForType(t)} ${header}`,
+          bullets
+        });
       }
 
-      // texto “sections” gerado localmente (sempre presente)
-      const fmt = (x, u="") => (x!=null ? Number(x).toFixed(2) + u : "N/D");
-      const pct = (n) => fmt(percent(n,total), "%");
+      // “Resumo e próximas ações” com agregados simples (dinâmico)
+      if (sections.length) {
+        const items = [];
+        if (ociosidadePct != null) items.push(`Ociosidade (vel=0): ${ociosidadePct.toFixed(1)}% — foco em reduzir marcha lenta/paradas.`);
+        // heurísticas adicionais:
+        const cargaSec = sections.find((s) => s.title.startsWith("🔧"));
+        if (cargaSec) items.push("Aumentar tempo na faixa de carga 60–80% para ganhar eficiência.");
+        const deslizSec = sections.find((s) => s.title.startsWith("🛞"));
+        if (deslizSec) items.push("Conter picos de patinagem com ajustes de lastro/pressão e técnica de operação.");
+        const consumoSec = sections.find((s) => s.title.startsWith("⛽"));
+        if (consumoSec) items.push("Investigar consumo em cenários de baixa carga e marcha lenta.");
 
-      const sections = {
-        carga: {
-          title: "🔧 Carga do Motor",
-          bullets: [
-            `Média: ${fmt(stats.carga?.mean, "%")}.`,
-            `Distribuição por faixas: <20% = ${pct(faixasCarga["<20%"])}, 20–60% = ${pct(faixasCarga["20–60%"])}, 60–80% = ${pct(faixasCarga["60–80%"])}, >80% = ${pct(faixasCarga[">80%"])}.`,
-            `Picos observados: ${fmt(stats.carga?.max, "%")} (mínimo ${fmt(stats.carga?.min, "%")}).`,
-            (mediaCarga!=null && mediaCarga < 40)
-              ? "O que isso mostra: longos períodos em baixa utilização — possivelmente implemento leve ou ociosidade/manobras."
-              : "O que isso mostra: distribuição de carga razoável; avaliar picos e tempo em baixa carga para otimização.",
-            "📌 Sugestão: revisar o dimensionamento do implemento e manter operação na faixa de torque (60–80% de carga) sempre que possível."
+        sections.push({
+          title: "📌 Resumo de Melhorias e Próximas Ações",
+          bullets: items.length ? items : [
+            "Padronizar faixas de operação por tarefa e treinar operadores.",
+            "Revisar calibragem/lastro e dimensionamento de implementos.",
+            "Reduzir ociosidade e marcha lenta sem demanda."
           ]
-        },
-        consumo: {
-          title: "⛽ Consumo de Combustível",
-          bullets: [
-            `Média: ${fmt(stats.consumo?.mean, " km/L")} | Q1–Q3: ${fmt(stats.consumo?.q1)} – ${fmt(stats.consumo?.q3)} km/L.`,
-            `Variação: mín ${fmt(stats.consumo?.min, " km/L")} | máx ${fmt(stats.consumo?.max, " km/L")} (valores muito altos tendem a ocorrer sem carga/descidas).`,
-            "📌 Sugestões:",
-            "• Reduzir marcha lenta prolongada.",
-            "• Operar próximo à faixa de torque ideal (60–80% de carga).",
-            "• Conferir pressão/lastro e regulagens do implemento (impacta consumo)."
-          ]
-        },
-        deslizamento: {
-          title: "🛞 Deslizamento (Patinagem)",
-          bullets: [
-            `Média: ${fmt(stats.desliz?.mean, "%")} | recomendado (tração em solo normal): 10–12%.`,
-            `Máximo registrado: ${fmt(stats.desliz?.max, "%")} | Quadros acima de 15%: ${pct(altoDesliz)}.`,
-            "📌 Sugestões:",
-            "• Ajustar lastro e pressão dos pneus ao tipo de solo.",
-            "• Evitar trabalhar com velocidade excessiva para a tração disponível."
-          ]
-        },
-        velocidade: {
-          title: "🚜 Velocidade no Solo",
-          bullets: [
-            `Média: ${fmt(stats.vel?.mean, " km/h")} | Mediana: ${fmt(stats.vel?.med, " km/h")} | Mín–Máx: ${fmt(stats.vel?.min, " km/h")} – ${fmt(stats.vel?.max, " km/h")}.`,
-            `Ociosidade (vel=0): ${pct(idle)}.`,
-            "📌 Observação: para muitas operações agrícolas, 5–7 km/h costuma ser adequado — alinhar a velocidade ao implemento/tarefa."
-          ]
-        },
-        resumo: {
-          title: "📌 Resumo de Melhorias Potenciais",
-          bullets: [
-            (mediaCarga!=null && mediaCarga < 40)
-              ? "Uso recorrente em baixa carga → possível superdimensionamento do trator para a tarefa."
-              : "Ajustar distribuição de carga para permanecer mais tempo em 60–80%.",
-            "Rever consumo → reduzir marcha lenta e trabalhar em faixa de torque ideal.",
-            "Picos de deslizamento → conferir lastro/pressão e técnica de operação.",
-            "Mitigar ociosidade → padronizar paradas e tempo em neutro/marcha lenta."
-          ]
-        }
-      };
+        });
+      }
 
-      // Texto longo via OpenAI (opcional); se falhar, front mostra as seções acima
+      // análise longa com os NOMES EXATOS das colunas
       let analise = "";
       try {
         if (!process.env.OPENAI_API_KEY) throw new Error("OPENAI_API_KEY ausente");
         const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-        const preferredCols = [col.ts, col.carga, col.consumo, col.desliz, col.vel].filter(Boolean);
+
+        const preferredCols = headers; // manda todas as colunas, o modelo usa as relevantes
         const sample = rows.slice(0, 150).map((r) => {
           const o = {};
-          for (const k of preferredCols) if (k in r) o[k] = r[k];
-          return Object.keys(o).length ? o : r;
+          for (const k of preferredCols) o[k] = r[k];
+          return o;
         });
 
         const prompt = `
-Você é especialista em telemetria agrícola. Gere um relatório textual detalhado e didático para o trator ${modelo} (cliente: ${cliente}),
-organizado nas seções: Carga do Motor, Consumo, Deslizamento e Velocidade, finalizando com um Resumo de Melhorias Potenciais.
-Use números (médias, Q1–Q3, máximos, percentuais de faixas e ociosidade) quando disponíveis. Evite gráficos.
+Você é especialista em telemetria agrícola. Gere um relatório textual detalhado e didático para o equipamento "${modelo}" (cliente: "${cliente}").
+Use os **nomes exatos das colunas** do dataset como títulos das seções (apenas para as colunas realmente relevantes e numéricas).
+Para cada coluna escolhida: descreva média, Q1–Q3, min–máx, eventos críticos (ex.: zeros, picos). Evite gráficos. 
+Finalize com um bloco "Resumo de Melhorias e Próximas Ações" sintetizando os principais ajustes operacionais.
 
-Resumo calculado:
-- Ociosidade (vel=0): ${percent(idle,total).toFixed(1)}%
-- Faixas de carga: <20%=${percent(faixasCarga["<20%"],total).toFixed(1)}%, 20–60%=${percent(faixasCarga["20–60%"],total).toFixed(1)}%, 60–80%=${percent(faixasCarga["60–80%"],total).toFixed(1)}%, >80%=${percent(faixasCarga[">80%"],total).toFixed(1)}%
-- Deslizamento alto (>15%): ${percent(altoDesliz,total).toFixed(1)}%
-
-Amostra de dados (máx 150 linhas):
+Dataset (amostra até 150 linhas, com nomes originais das colunas):
 ${JSON.stringify(sample)}
 `.trim();
 
@@ -245,27 +271,16 @@ ${JSON.stringify(sample)}
         console.error("Falha OpenAI:", e);
       }
 
-      // Resposta JSON (sem gráficos)
       return res.status(200).json({
         ok: true,
         meta: {
           cliente,
           modelo,
           periodo: { inicio: inicio ? inicio.toISOString() : null, fim: fim ? fim.toISOString() : null },
-          totalFrames: total
+          totalFrames
         },
-        columns: col,
-        kpis: {
-          stats,
-          taxas: {
-            ociosidade_pct: percent(idle,total),
-            baixa_carga_pct: percent(baixaCarga,total),
-            alta_carga_pct: percent(altaCarga,total),
-            desliz_alto_pct: percent(altoDesliz,total)
-          }
-        },
-        sections,     // sempre vem estruturado
-        analysis: analise // texto longo opcional (se a OpenAI respondeu)
+        sections,     // lista dinâmica (títulos = NOME ORIGINAL DA COLUNA)
+        analysis: analise
       });
     } catch (e) {
       console.error("Erro interno:", e);
