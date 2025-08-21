@@ -1,9 +1,11 @@
 <!-- campos -->
-<label>Nome do Cliente</label>
-<input type="text" id="cliente">
-<label>Modelo do Equipamento</label>
-<input type="text" id="modelo">
-<label>Anexar Relatório Excel</label>
+<label for="cliente">Nome do Cliente</label>
+<input type="text" id="cliente" name="cliente">
+
+<label for="modelo">Modelo do Equipamento</label>
+<input type="text" id="modelo" name="modelo">
+
+<label for="fileInput">Anexar Relatório Excel</label>
 <input type="file" id="fileInput" name="relatorio" accept=".xlsx">
 <button onclick="enviar()">Gerar Relatório PDF</button>
 
@@ -33,4 +35,5 @@ async function enviar() {
   URL.revokeObjectURL(url);
 }
 </script>
+
 
