@@ -31,20 +31,62 @@
   <div id="analise" style="white-space:pre-wrap; line-height:1.5"></div>
 </div>
 
-<script>
+<<script>
+const API_BASE = ""; // se o HTML estiver hospedado no mesmo projeto Vercel, deixe vazio. Se for abrir local (file://), coloque a URL do seu projeto.
+
 async function gerar() {
-  // ... (envio do FormData igual ao que já está)
+  const msgEl = document.getElementById("msg"); // opcional
+  if (msgEl) msgEl.textContent = "";
 
-  const data = await (await fetch("/api/analisar", { method:"POST", body: fd })).json();
+  const cliente = document.getElementById("cliente")?.value?.trim() || "";
+  const modelo  = document.getElementById("modelo")?.value?.trim() || "";
+  const fileEl  = document.getElementById("fileInput");
+  const file    = fileEl?.files?.[0];
 
+  if (!file) {
+    if (msgEl) msgEl.textContent = "Selecione um arquivo .xlsx";
+    else alert("Selecione um arquivo .xlsx");
+    return;
+  }
+
+  // >>> AQUI estava faltando
+  const fd = new FormData();
+  fd.append("cliente", cliente);
+  fd.append("modelo",  modelo);
+  fd.append("relatorio", file); // o input deve ter name="relatorio"
+
+  let resp;
+  try {
+    resp = await fetch(API_BASE + "/api/analisar", { method: "POST", body: fd });
+  } catch (e) {
+    if (msgEl) msgEl.textContent = "Erro de rede: " + e.message;
+    else alert("Erro de rede: " + e.message);
+    return;
+  }
+
+  const text = await resp.text();
+  if (!resp.ok) {
+    if (msgEl) msgEl.textContent = `Falha (${resp.status}): ${text}`;
+    else alert(`Falha (${resp.status}): ${text}`);
+    return;
+  }
+
+  let data;
+  try { data = JSON.parse(text); }
+  catch (e) {
+    if (msgEl) msgEl.textContent = "Resposta não é JSON: " + text;
+    else alert("Resposta não é JSON: " + text);
+    return;
+  }
+
+  // ---- Renderização do relatório (ajuste aos seus IDs) ----
   document.getElementById("relatorio").style.display = "block";
   document.getElementById("titulo").textContent =
-    `📊 Análise do Relatório de Telemetria – ${data.meta.modelo || "Equipamento"}`;
-  const per = data.meta.periodo;
+    `📊 Análise do Relatório de Telemetria – ${data?.meta?.modelo || "Equipamento"}`;
+  const per = data?.meta?.periodo || {};
   document.getElementById("subtitulo").textContent =
-    `Cliente: ${data.meta.cliente || "N/D"}  |  Período: ${per?.inicio || "N/D"} → ${per?.fim || "N/D"}  |  Registros: ${data.meta.totalFrames}`;
+    `Cliente: ${data?.meta?.cliente || "N/D"}  |  Período: ${per.inicio || "N/D"} → ${per.fim || "N/D"}  |  Registros: ${data?.meta?.totalFrames ?? "-"}`;
 
-  // >>> render dinâmico: percorre data.sections (array)
   const host = document.getElementById("texto-secoes");
   host.innerHTML = "";
   (data.sections || []).forEach(sec => {
@@ -53,11 +95,7 @@ async function gerar() {
     host.appendChild(h3);
     if (sec.bullets?.length) {
       const ul = document.createElement("ul");
-      sec.bullets.forEach(b => {
-        const li = document.createElement("li");
-        li.textContent = b;
-        ul.appendChild(li);
-      });
+      sec.bullets.forEach(b => { const li = document.createElement("li"); li.textContent = b; ul.appendChild(li); });
       host.appendChild(ul);
     }
   });
@@ -65,4 +103,5 @@ async function gerar() {
   document.getElementById("analise").textContent = data.analysis || "—";
 }
 </script>
+
 
