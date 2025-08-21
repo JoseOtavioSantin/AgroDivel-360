@@ -4,7 +4,7 @@
 <label>Modelo do Equipamento</label>
 <input type="text" id="modelo">
 <label>Anexar Relatório Excel</label>
-<input type="file" id="fileInput" accept=".xlsx">
+<input type="file" id="fileInput" name="relatorio" accept=".xlsx">
 <button onclick="enviar()">Gerar Relatório PDF</button>
 
 <script>
@@ -33,3 +33,4 @@ async function enviar() {
   URL.revokeObjectURL(url);
 }
 </script>
+
