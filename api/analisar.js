@@ -4,7 +4,6 @@ import * as XLSX from "xlsx";
 import OpenAI from "openai";
 import PDFDocument from "pdfkit";
 import fs from "node:fs";
-import QuickChart from "quickchart-js";
 import ss from "simple-statistics";
 import dayjs from "dayjs";
 
@@ -93,13 +92,25 @@ function histogram(data, bins = 12) {
   return { labels, values: counts };
 }
 
+// Gera PNG de gráfico usando a API do QuickChart (sem dependência externa)
 async function chartPNG(config, w = 900, h = 500) {
-  const qc = new QuickChart();
-  qc.setConfig(config);
-  qc.setWidth(w);
-  qc.setHeight(h);
-  qc.setBackgroundColor("white");
-  return await qc.toBinary();
+  const resp = await fetch("https://quickchart.io/chart", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      chart: config,           // Config do Chart.js
+      width: w,
+      height: h,
+      format: "png",
+      backgroundColor: "white",
+      devicePixelRatio: 2
+    }),
+  });
+  if (!resp.ok) {
+    throw new Error(`QuickChart HTTP ${resp.status}`);
+  }
+  const ab = await resp.arrayBuffer();
+  return Buffer.from(ab);
 }
 
 // ---------- Handler ----------
@@ -406,3 +417,4 @@ ${JSON.stringify(sample)}
     }
   });
 }
+
