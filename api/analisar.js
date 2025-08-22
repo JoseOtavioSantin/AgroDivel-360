@@ -262,17 +262,43 @@ export default async function handler(req, res) {
 
       // Filtrar ruído e ordenar por relevância
       const filtered = numericCols.filter(({ header, values }) => !shouldIgnore(header, values));
+      
       const orderScore = (h) => ({
-        carga: 0, consumo: 1, desliz: 2, velocidade: 3,
-        rpm: 4, horas: 5, temperatura: 6, pressao_oleo: 7, pressao: 8, generico: 9
+        // alta prioridade
+        carga: 0,
+        consumo: 1,            // km/L
+        consumo_lh: 2,         // L/h (novo)
+        desliz: 3,
+        velocidade: 4,
+        rpm: 5,
+      
+        // saúde do motor / ar
+        temp_motor: 6,         // (novo)
+        temp_ar_admissao: 7,   // (novo)
+      
+        // pressões
+        pressao_oleo: 8,
+        pressao_turbo: 9,      // (novo)
+        pressao_hidraulica: 10,// (novo)
+        pressao: 11,
+      
+        // outros úteis
+        nivel_combustivel: 12, // (novo)
+        horas: 13,
+        temperatura: 14,
+      
+        generico: 98
       }[semanticType(h)] ?? 99);
+      
       filtered.sort((a, b) => orderScore(a.header) - orderScore(b.header));
 
       // Montagem das seções
       const sections = [];
-      let ociosidadePct = null;   // de velocidade = 0
-      let cargaBandsPct = null;   // para resumo
-      const MAX_SPARKS = 8;
+      let ociosidadePct = null;
+      let cargaBandsPct = null;
+      
+      // gere até 16 sparklines (ajuste se quiser)
+      const MAX_SPARKS = filtered.length;
       let sparkCount = 0;
 
       for (const { header, values } of filtered) {
@@ -493,5 +519,6 @@ ${JSON.stringify(sample)}
     }
   });
 }
+
 
 
