@@ -6,18 +6,6 @@
 <title>Agro Divel • Análise de Telemetria</title>
 <meta name="theme-color" content="#001439" />
 <style>
-
-  .section{
-  background:#fff;border-radius:16px;border:1px solid #eef2f7;padding:16px;box-shadow:var(--shadow);
-  display:grid;grid-template-columns:1fr 260px;gap:14px;align-items:center;
-}
-@media (max-width:720px){ .section{grid-template-columns:1fr} }
-.section h3{margin:0 0 8px;font-size:16px;color:#0f172a}
-.section ul{margin:0;padding-left:18px}
-.section li{margin:6px 0;line-height:1.5}
-.section .spark img{width:100%;height:auto;border-radius:12px;display:block}
-
-  
   :root{
     --bg:#f5f7fb;
     --card:#ffffff;
@@ -242,42 +230,29 @@
     $("chipPeriodo").textContent = `Período: ${per?.inicio || "N/D"} → ${per?.fim || "N/D"}`;
 
     const host = $("sections");
-host.innerHTML = "";
-(data.sections || []).forEach(sec => {
-  const card = document.createElement("section");
-  card.className = "section";
+    host.innerHTML = "";
+    (data.sections || []).forEach(sec => {
+      const card = document.createElement("section");
+      card.className = "section";
+      const h3 = document.createElement("h3");
+      h3.textContent = sec.title || "Seção";
+      card.appendChild(h3);
 
-  const body = document.createElement("div");
-  const h3 = document.createElement("h3");
-  h3.textContent = sec.title || "Seção";
-  body.appendChild(h3);
-  if (sec.bullets?.length){
-    const ul = document.createElement("ul");
-    sec.bullets.forEach(b => { const li = document.createElement("li"); li.textContent = b; ul.appendChild(li); });
-    body.appendChild(ul);
+      if (sec.bullets?.length){
+        const ul = document.createElement("ul");
+        sec.bullets.forEach(b => {
+          const li = document.createElement("li");
+          li.textContent = b;
+          ul.appendChild(li);
+        });
+        card.appendChild(ul);
+      }
+      host.appendChild(card);
+    });
+
+    $("analysisText").textContent = data.analysis || "—";
+    window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
   }
-  card.appendChild(body);
-
-  if (sec.spark){
-    const spark = document.createElement("div");
-    spark.className = "spark";
-    const img = document.createElement("img");
-    img.src = sec.spark;
-    img.alt = "mini gráfico";
-    spark.appendChild(img);
-    card.appendChild(spark);
-  } else {
-    // mantém grid alinhado quando não houver gráfico
-    const spacer = document.createElement("div");
-    spacer.style.display = "none";
-    card.appendChild(spacer);
-  }
-
-  host.appendChild(card);
-});
-    
 </script>
 </body>
 </html>
-
-
