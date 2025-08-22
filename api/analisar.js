@@ -120,11 +120,12 @@ function downsample(values, maxPoints = 120) {
   for (let i = 0; i < a.length; i += step) out.push(a[i]);
   return out;
 }
-async function chartPNG(config, w = 280, h = 80) {
+async function chartPNG(config, w = 360, h = 110) {
   const r = await fetch("https://quickchart.io/chart", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
+      version: "2",              // força Chart.js v2 (compatível com opções abaixo)
       chart: config,
       width: w,
       height: h,
@@ -137,17 +138,34 @@ async function chartPNG(config, w = 280, h = 80) {
   const ab = await r.arrayBuffer();
   return `data:image/png;base64,${Buffer.from(ab).toString("base64")}`;
 }
+
 async function sparkline(values) {
   const data = downsample(values, 120);
   const cfg = {
     type: "line",
-    data: { labels: data.map(()=>""), datasets: [{ data, borderWidth: 2, pointRadius: 0, fill: false, tension: 0.35 }] },
+    data: {
+      labels: data.map(() => ""),
+      datasets: [{
+        label: "",            // evita aparecer "undefined" na legenda
+        data,
+        borderWidth: 2,
+        pointRadius: 0,
+        fill: false,
+        lineTension: 0.35     // Chart.js v2
+      }]
+    },
     options: {
-      plugins: { legend: { display: false }, tooltip: { enabled: false } },
-      scales: { x: { display: false }, y: { display: false } }
+      legend:   { display: false },    // v2
+      tooltips: { enabled: false },    // v2
+      scales: {
+        xAxes: [{ display: false, gridLines: { display: false } }],
+        yAxes: [{ display: false, gridLines: { display: false } }]
+      },
+      layout: { padding: { left: 4, right: 4, top: 6, bottom: 4 } },
+      elements: { line: { borderCapStyle: "round" } }
     }
   };
-  return chartPNG(cfg);
+  return chartPNG(cfg);   // agora sai maior (360x110) e sem legenda
 }
 
 // ---------- Handler ----------
@@ -402,3 +420,4 @@ ${JSON.stringify(sample)}
     }
   });
 }
+
