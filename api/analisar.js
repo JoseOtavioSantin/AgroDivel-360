@@ -14,13 +14,11 @@ const toNum = (v) => {
   const x = Number(n);
   return Number.isFinite(x) ? x : null;
 };
-
 const norm = (s) =>
   String(s ?? "")
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
     .toLowerCase();
-
 const firstFileFrom = (files) => {
   if (!files) return null;
   if (files.relatorio) return Array.isArray(files.relatorio) ? files.relatorio[0] : files.relatorio;
@@ -29,7 +27,6 @@ const firstFileFrom = (files) => {
   const any = files[keys[0]];
   return Array.isArray(any) ? any[0] : any;
 };
-
 const percent = (num, den) => (den > 0 ? (num / den) * 100 : 0);
 
 function describe(arr) {
@@ -46,7 +43,6 @@ function describe(arr) {
   return { count: a.length, mean, min, q1, med, q3, max, std };
 }
 
-// —— novas regras de semântica/unidades/ignorados
 function semanticType(h) {
   const n = norm(h);
   if (n.includes("carga") && n.includes("motor")) return "carga";
@@ -63,24 +59,19 @@ function semanticType(h) {
   if (n.includes("empty") || n.startsWith("unnamed")) return "ignorar";
   return "generico";
 }
-
 function unitFor(type, header) {
   if (type === "carga" || type === "desliz") return "%";
   if (type === "consumo") return " km/L";
   if (type === "velocidade") return " km/h";
   if (type === "rpm") return " rpm";
   if (type === "horas") return " h";
-  if (type === "pressao" || type === "pressao_oleo") return ""; // unidade varia (kPa/bar) → deixar sem sufixo
-  // se o header tiver símbolo de %, respeitar
+  if (type === "pressao" || type === "pressao_oleo") return ""; // pode ser kPa/bar → não arriscar
   if (/%/.test(header)) return "%";
   return "";
 }
-
-// descarta colunas que “poluem” o relatório
 function shouldIgnore(header, values) {
   const t = semanticType(header);
   if (t === "geo" || t === "ignorar") return true;
-  // quase constante e não for um tipo clássico → ignora
   const s = describe(values);
   if (!s) return true;
   const range = (s.max - s.min);
@@ -90,26 +81,27 @@ function shouldIgnore(header, values) {
   }
   return false;
 }
-
-// só aplicar faixas quando faz sentido (carga/desliz/% explícito)
 function shouldShowBands(type, header) {
   return type === "carga" || type === "desliz" || /%/.test(header);
 }
-
-function cargaBands(arr) {
+function bandsText(arr) {
   const bands = { "<20%": 0, "20–60%": 0, "60–80%": 0, ">80%": 0 };
   for (const v of arr) {
     if (!Number.isFinite(v)) continue;
-    if (v < 20) bands["<20%"]++;
-    else if (v < 60) bands["20–60%"]++;
-    else if (v < 80) bands["60–80%"]++;
-    else bands[">80%"]++;
+    if (v < 20) bands["<20%"]++; else if (v < 60) bands["20–60%"]++; else if (v < 80) bands["60–80%"]++; else bands[">80%"]++;
   }
   const total = arr.filter((v) => Number.isFinite(v)).length || 1;
   const pct = (n) => percent(n, total).toFixed(1) + "%";
-  return `<20%=${pct(bands["<20%"])}, 20–60%=${pct(bands["20–60%"])}, 60–80%=${pct(bands["60–80%"])}, >80%=${pct(bands[">80%"])}`;
+  return { bands, pretty: `<20%=${pct(bands["<20%"])}, 20–60%=${pct(bands["20–60%"])}, 60–80%=${pct(bands["60–80%"])}, >80%=${pct(bands[">80%"])}` };
 }
-
+// plausibilidade para consumo (km/L) — se muitos valores absurdos, alerta de unidade/medição
+function consumptionPlausibility(values) {
+  const a = values.filter((v) => Number.isFinite(v));
+  if (!a.length) return null;
+  const high = a.filter(v => v > 5).length; // tratores pesados raramente > 5 km/L de forma consistente
+  const share = percent(high, a.length);
+  return share >= 5 ? share : null; // alerta se >=5% dos registros > 5 km/L
+}
 function emojiFor(type) {
   return ({
     carga: "🔧", consumo: "⛽", desliz: "🛞", velocidade: "🚜",
@@ -142,8 +134,7 @@ export default async function handler(req, res) {
       if (!rows.length) return res.status(400).json({ ok: false, error: "Planilha vazia" });
 
       const headers = Object.keys(rows[0] ?? {});
-
-      // período (se houver data/hora)
+      // período
       const timeHeader = headers.find((h) => {
         const n = norm(h);
         return n.includes("carimbo") || n.includes("data") || n.includes("hora") || n.includes("timestamp");
@@ -159,14 +150,13 @@ export default async function handler(req, res) {
         if (ts.length) { inicio = new Date(ts[0]); fim = new Date(ts[ts.length - 1]); }
       }
 
-      // monta colunas numéricas válidas
+      // colunas numéricas
       const numericCols = headers.map((h) => {
         const vals = rows.map((r) => toNum(r[h])).filter((v) => v !== null);
         const enough = vals.length >= Math.min(10, Math.ceil(rows.length * 0.1));
         return enough ? { header: h, values: vals } : null;
       }).filter(Boolean);
 
-      // filtra e ordena por relevância/semântica
       const filtered = numericCols.filter(({ header, values }) => !shouldIgnore(header, values));
       const orderScore = (h) => ({
         carga: 0, consumo: 1, desliz: 2, velocidade: 3,
@@ -175,7 +165,19 @@ export default async function handler(req, res) {
       filtered.sort((a, b) => orderScore(a.header) - orderScore(b.header));
 
       const sections = [];
-      let ociosidadePct = null;
+      // legenda Q1–Q3 (uma vez)
+      sections.push({
+        title: "ℹ️ Como ler Q1–Q3",
+        bullets: [
+          "Q1 (1º quartil) é o ponto abaixo do qual estão 25% dos valores.",
+          "Q3 (3º quartil) é o ponto abaixo do qual estão 75% dos valores.",
+          "A faixa Q1–Q3 representa os 50% centrais dos dados (IQR), útil para enxergar o 'normal' sem os picos."
+        ]
+      });
+
+      // para sugestões “numéricas”
+      let ociosidadePct = null; // via velocidade = 0
+      let cargaBandsPct = null; // para usar no resumo
 
       for (const { header, values } of filtered) {
         const type = semanticType(header);
@@ -186,52 +188,91 @@ export default async function handler(req, res) {
         const fmt = (x) => (x != null ? Number(x).toFixed(2) + u : "N/D");
         const bullets = [
           `Média: ${fmt(st.mean)}.`,
-          `Quartis (Q1–Q3): ${fmt(st.q1)} – ${fmt(st.q3)}.`,
+          `Quartis (Q1–Q3 – faixa central de 50%): ${fmt(st.q1)} – ${fmt(st.q3)}.`,
           `Mín–Máx: ${fmt(st.min)} – ${fmt(st.max)}.`
         ];
 
-        // % de zeros (principalmente útil para velocidade → ociosidade)
+        // zeros
         const zeros = values.filter((v) => v === 0).length;
         if (zeros > 0) {
           const zPct = percent(zeros, values.length);
-          bullets.push(`Valores zero: ${zPct.toFixed(1)}% dos registros.`);
+          bullets.push(`Zeros: ${zPct.toFixed(1)}% dos registros (eventos sem leitura efetiva).`);
           if (type === "velocidade") ociosidadePct = zPct;
         }
 
-        // bandas somente para carga/desliz ou coluna com símbolo de %
+        // bandas p/ carga/desliz
         if (shouldShowBands(type, header)) {
-          bullets.push(`Distribuição por faixas: ${cargaBands(values)}`);
+          const { bands, pretty } = bandsText(values);
+          bullets.push(`Distribuição por faixas: ${pretty}.`);
+          if (type === "carga") {
+            const total = values.filter(v => Number.isFinite(v)).length || 1;
+            cargaBandsPct = {
+              low: percent(bands["<20%"], total),
+              mid: percent(bands["20–60%"], total),
+              sweet: percent(bands["60–80%"], total),
+              high: percent(bands[">80%"], total)
+            };
+          }
         }
 
-        // recomendações por tipo
+        // validação de unidade para consumo (km/L)
+        if (type === "consumo") {
+          const shareHigh = consumptionPlausibility(values);
+          if (shareHigh != null) {
+            bullets.push(`⚠︎ Observação: ${shareHigh.toFixed(1)}% das leituras > 5 km/L — possível unidade/medição inconsistente ou trechos sem carga.`);
+          }
+        }
+
+        // 📌 Sugestões — condicionais e objetivas
         if (type === "carga") {
-          bullets.push("📌 Sugestões: priorize trabalhar 60–80% de carga; se <20% for recorrente, revise dimensionamento do implemento.");
-        } else if (type === "consumo") {
-          bullets.push("📌 Sugestões: reduza marcha lenta; opere na faixa de torque; ajuste pressão/lastro e regulagens do implemento.");
+          const bands = bandsText(values); // já calculado acima, mas barato repetir
+          const total = values.filter(v => Number.isFinite(v)).length || 1;
+          const low = percent(bands.bands["<20%"], total);
+          const sweet = percent(bands.bands["60–80%"], total);
+          const high = percent(bands.bands[">80%"], total);
+          if (low >= 25) bullets.push(`📌 Ação: baixa carga elevada (${low.toFixed(1)}%) — revisar dimensionamento do implemento e reduzir marcha lenta/manobras longas.`);
+          if (sweet < 40) bullets.push(`📌 Ação: elevar tempo na faixa 60–80% (atual ${sweet.toFixed(1)}%) para ~50–60% via seleção de marcha/engate e ajuste de velocidade.`);
+          if (high >= 15) bullets.push(`📌 Ação: picos de carga (>80%) em ${high.toFixed(1)}% — risco de esforço excessivo; ajuste marchas/velocidade/implemento.`);
         } else if (type === "desliz") {
-          bullets.push("📌 Sugestões: ajuste lastro/pressão de pneus; evite velocidade acima da tração; alvo típico 10–12%.");
+          const over15 = percent(values.filter(v => Number.isFinite(v) && v > 15).length, values.length);
+          const over30 = percent(values.filter(v => Number.isFinite(v) && v > 30).length, values.length);
+          if (over15 >= 10) bullets.push(`📌 Ação: patinagem >15% ocorre em ${over15.toFixed(1)}% — ajustar lastro e pressão dos pneus buscando 10–12%.`);
+          if (over30 >= 2) bullets.push(`📌 Ação: picos >30% em ${over30.toFixed(1)}% — reduzir velocidade em entrada de sulco/carga e otimizar técnica do operador.`);
+        } else if (type === "consumo") {
+          const z = percent(values.filter(v => v === 0).length, values.length);
+          if (z >= 10) bullets.push(`📌 Ação: ${z.toFixed(1)}% de zeros — protocolar desligamento ou modo ECO em ociosidade e revisar leitura/telemetria.`);
+          bullets.push("📌 Ação: operar mais próximo da faixa de torque (carga ~60–80%) e manter rotação estável para melhor km/L.");
         } else if (type === "velocidade") {
-          bullets.push("📌 Sugestões: alinhe velocidade à tarefa; separe deslocamento de trabalho; reduza paradas improdutivas.");
+          if (ociosidadePct != null && ociosidadePct >= 10) {
+            bullets.push(`📌 Ação: ociosidade (vel=0) em ${ociosidadePct.toFixed(1)}% — reduzir paradas improdutivas e marcha lenta prolongada.`);
+          }
+          bullets.push("📌 Ação: segmentar deslocamento vs trabalho; ajustar velocidade-alvo conforme o implemento (campo típico ~5–7 km/h).");
+        } else if (type === "horas") {
+          bullets.push("📌 Ação: se for horímetro acumulado, considerar Δ(horas) para medir uso por janela e cruzar com carga/velocidade.");
+        } else if (type === "pressao_oleo") {
+          if (st.min === 0) bullets.push("📌 Ação: quedas a 0 podem indicar falha de leitura ou evento crítico — verificar alertas do sistema e histórico de manutenção.");
         }
 
-        sections.push({
-          title: `${emojiFor(type)} ${header}`,
-          bullets
-        });
+        sections.push({ title: `${emojiFor(type)} ${header}`, bullets });
       }
 
-      // resumo final
+      // resumo final, mais objetivo
       if (sections.length) {
-        const items = [];
-        if (ociosidadePct != null) items.push(`Ociosidade (vel=0): ${ociosidadePct.toFixed(1)}% — atuar em marcha lenta/paradas.`);
-        if (sections.find(s => s.title.startsWith("🔧"))) items.push("Aumentar tempo na faixa de carga 60–80% para melhor eficiência.");
-        if (sections.find(s => s.title.startsWith("🛞"))) items.push("Reduzir picos de patinagem com lastro/pressão e técnica de operação.");
-        if (sections.find(s => s.title.startsWith("⛽"))) items.push("Investigar consumo alto em baixa carga e marcha lenta.");
-        sections.push({ title: "📌 Resumo de Melhorias e Próximas Ações", bullets: items.length ? items : [
-          "Padronizar faixas de operação por tarefa e treinar operadores.",
-          "Revisar calibragem/lastro e dimensionamento de implementos.",
-          "Reduzir ociosidade e marcha lenta sem demanda."
-        ]});
+        const bullets = [];
+        if (ociosidadePct != null) bullets.push(`Reduzir ociosidade (vel=0): hoje em ${ociosidadePct.toFixed(1)}% dos registros — aplicar protocolo de paradas e ECO.`);
+        if (cargaBandsPct) {
+          if (cargaBandsPct.sweet < 40) bullets.push(`Aumentar tempo em carga 60–80% (atual ${cargaBandsPct.sweet.toFixed(1)}%) para ~50–60%.`);
+          if (cargaBandsPct.low >= 25) bullets.push(`Baixa carga alta (${cargaBandsPct.low.toFixed(1)}%) — revisar implementos/tarefas e reduzir marcha lenta.`);
+          if (cargaBandsPct.high >= 15) bullets.push(`Cargas >80% frequentes (${cargaBandsPct.high.toFixed(1)}%) — risco de sobrecarga; ajustar marcha/velocidade/implemento.`);
+        }
+        sections.push({
+          title: "📌 Resumo de Melhorias e Próximas Ações",
+          bullets: bullets.length ? bullets : [
+            "Padronizar faixas de operação por tarefa e treinar operadores.",
+            "Revisar calibragem/lastro e dimensionamento de implementos.",
+            "Mitigar marcha lenta e paradas prolongadas sem demanda."
+          ]
+        });
       }
 
       // análise longa (opcional)
@@ -243,8 +284,8 @@ export default async function handler(req, res) {
           const o = {}; for (const k of headers) o[k] = r[k]; return o;
         });
         const prompt = `
-Você é especialista em telemetria agrícola. Gere um relatório textual detalhado e didático para o equipamento "${modelo}" (cliente: "${cliente}").
-Use os nomes **exatos** das colunas (apenas numéricas e relevantes) como títulos das seções. Para cada coluna: média, Q1–Q3, min–máx, eventos críticos (zeros/picos) e recomendações práticas.
+Você é especialista em telemetria agrícola. Gere um relatório textual detalhado para "${modelo}" (cliente: "${cliente}").
+Use os nomes **exatos** das colunas numéricas e relevantes como títulos. Para cada coluna: média, Q1–Q3 (explique: faixa central de 50%), min–máx, zeros/picos e recomendações práticas e objetivas (com thresholds quando possível).
 Finalize com "Resumo de Melhorias e Próximas Ações". Evite gráficos.
 
 Amostra (até 150 linhas):
