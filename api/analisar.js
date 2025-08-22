@@ -150,11 +150,17 @@ function downsample(values, maxPoints = 120) {
   return out;
 }
 async function chartPNG(config, w = 360, h = 110) {
-  const r = await fetch("https://quickchart.io/chart", {
+  // usa fetch nativo (Node 18/20) ou carrega node-fetch se faltar
+  const f = globalThis.fetch || (await import('node-fetch')).default;
+
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 6000); // 6s de timeout
+
+  const r = await f("https://quickchart.io/chart", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      version: "2",              // força Chart.js v2 (compatível com opções abaixo)
+      version: "2",
       chart: config,
       width: w,
       height: h,
@@ -162,7 +168,10 @@ async function chartPNG(config, w = 360, h = 110) {
       backgroundColor: "white",
       devicePixelRatio: 2
     }),
-  });
+    signal: controller.signal
+  }).catch(err => { throw new Error("QuickChart fetch fail: " + err.message); });
+
+  clearTimeout(timer);
   if (!r.ok) throw new Error(`QuickChart ${r.status}`);
   const ab = await r.arrayBuffer();
   return `data:image/png;base64,${Buffer.from(ab).toString("base64")}`;
@@ -475,5 +484,6 @@ ${JSON.stringify(sample)}
     }
   });
 }
+
 
 
