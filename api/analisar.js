@@ -36,11 +36,8 @@ function describe(arr) {
   const mean = ss.mean(a);
   const min = a[0];
   const max = a[a.length - 1];
-  const q1 = ss.quantileSorted(a, 0.25);
-  const q3 = ss.quantileSorted(a, 0.75);
-  const med = ss.medianSorted(a);
   const std = a.length > 1 ? ss.standardDeviation(a) : 0;
-  return { count: a.length, mean, min, q1, med, q3, max, std };
+  return { count: a.length, mean, min, max, std };
 }
 
 function semanticType(h) {
@@ -65,7 +62,7 @@ function unitFor(type, header) {
   if (type === "velocidade") return " km/h";
   if (type === "rpm") return " rpm";
   if (type === "horas") return " h";
-  if (type === "pressao" || type === "pressao_oleo") return ""; // pode ser kPa/bar → não arriscar
+  if (type === "pressao" || type === "pressao_oleo") return "";
   if (/%/.test(header)) return "%";
   return "";
 }
@@ -84,23 +81,25 @@ function shouldIgnore(header, values) {
 function shouldShowBands(type, header) {
   return type === "carga" || type === "desliz" || /%/.test(header);
 }
-function bandsText(arr) {
+function bandsVals(arr) {
   const bands = { "<20%": 0, "20–60%": 0, "60–80%": 0, ">80%": 0 };
   for (const v of arr) {
     if (!Number.isFinite(v)) continue;
-    if (v < 20) bands["<20%"]++; else if (v < 60) bands["20–60%"]++; else if (v < 80) bands["60–80%"]++; else bands[">80%"]++;
+    if (v < 20) bands["<20%"]++;
+    else if (v < 60) bands["20–60%"]++;
+    else if (v < 80) bands["60–80%"]++;
+    else bands[">80%"]++;
   }
   const total = arr.filter((v) => Number.isFinite(v)).length || 1;
   const pct = (n) => percent(n, total).toFixed(1) + "%";
-  return { bands, pretty: `<20%=${pct(bands["<20%"])}, 20–60%=${pct(bands["20–60%"])}, 60–80%=${pct(bands["60–80%"])}, >80%=${pct(bands[">80%"])}` };
+  return { raw: bands, pretty: `<20%=${pct(bands["<20%"])}, 20–60%=${pct(bands["20–60%"])}, 60–80%=${pct(bands["60–80%"])}, >80%=${pct(bands[">80%"])}` };
 }
-// plausibilidade para consumo (km/L) — se muitos valores absurdos, alerta de unidade/medição
 function consumptionPlausibility(values) {
   const a = values.filter((v) => Number.isFinite(v));
   if (!a.length) return null;
-  const high = a.filter(v => v > 5).length; // tratores pesados raramente > 5 km/L de forma consistente
+  const high = a.filter(v => v > 5).length;
   const share = percent(high, a.length);
-  return share >= 5 ? share : null; // alerta se >=5% dos registros > 5 km/L
+  return share >= 5 ? share : null;
 }
 function emojiFor(type) {
   return ({
@@ -108,6 +107,45 @@ function emojiFor(type) {
     rpm: "⚙️", horas: "⏱️", temperatura: "🌡️",
     pressao: "🧯", pressao_oleo: "🧯", generico: "📈"
   }[type] || "📈");
+}
+
+// --------- Mini gráfico (sparkline) ----------
+function downsample(values, maxPoints = 120) {
+  const a = values.filter((v) => Number.isFinite(v));
+  if (a.length <= maxPoints) return a;
+  const step = Math.ceil(a.length / maxPoints);
+  const out = [];
+  for (let i = 0; i < a.length; i += step) out.push(a[i]);
+  return out;
+}
+async function chartPNG(config, w = 280, h = 80) {
+  const r = await fetch("https://quickchart.io/chart", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      chart: config,
+      width: w,
+      height: h,
+      format: "png",
+      backgroundColor: "white",
+      devicePixelRatio: 2
+    }),
+  });
+  if (!r.ok) throw new Error(`QuickChart ${r.status}`);
+  const ab = await r.arrayBuffer();
+  return `data:image/png;base64,${Buffer.from(ab).toString("base64")}`;
+}
+async function sparkline(values) {
+  const data = downsample(values, 120);
+  const cfg = {
+    type: "line",
+    data: { labels: data.map(()=>""), datasets: [{ data, borderWidth: 2, pointRadius: 0, fill: false, tension: 0.35 }] },
+    options: {
+      plugins: { legend: { display: false }, tooltip: { enabled: false } },
+      scales: { x: { display: false }, y: { display: false } }
+    }
+  };
+  return chartPNG(cfg);
 }
 
 // ---------- Handler ----------
@@ -165,19 +203,12 @@ export default async function handler(req, res) {
       filtered.sort((a, b) => orderScore(a.header) - orderScore(b.header));
 
       const sections = [];
-      // legenda Q1–Q3 (uma vez)
-      sections.push({
-        title: "ℹ️ Como ler Q1–Q3",
-        bullets: [
-          "Q1 (1º quartil) é o ponto abaixo do qual estão 25% dos valores.",
-          "Q3 (3º quartil) é o ponto abaixo do qual estão 75% dos valores.",
-          "A faixa Q1–Q3 representa os 50% centrais dos dados (IQR), útil para enxergar o 'normal' sem os picos."
-        ]
-      });
+      let ociosidadePct = null;
+      let cargaBandsPct = null;
 
-      // para sugestões “numéricas”
-      let ociosidadePct = null; // via velocidade = 0
-      let cargaBandsPct = null; // para usar no resumo
+      // limite de gráficos para evitar latência (ajuste se quiser)
+      const MAX_SPARKS = 8;
+      let sparkCount = 0;
 
       for (const { header, values } of filtered) {
         const type = semanticType(header);
@@ -188,7 +219,6 @@ export default async function handler(req, res) {
         const fmt = (x) => (x != null ? Number(x).toFixed(2) + u : "N/D");
         const bullets = [
           `Média: ${fmt(st.mean)}.`,
-          `Quartis (Q1–Q3 – faixa central de 50%): ${fmt(st.q1)} – ${fmt(st.q3)}.`,
           `Mín–Máx: ${fmt(st.min)} – ${fmt(st.max)}.`
         ];
 
@@ -196,73 +226,77 @@ export default async function handler(req, res) {
         const zeros = values.filter((v) => v === 0).length;
         if (zeros > 0) {
           const zPct = percent(zeros, values.length);
-          bullets.push(`Zeros: ${zPct.toFixed(1)}% dos registros (eventos sem leitura efetiva).`);
+          bullets.push(`Zeros: ${zPct.toFixed(1)}% dos registros.`);
           if (type === "velocidade") ociosidadePct = zPct;
         }
 
         // bandas p/ carga/desliz
         if (shouldShowBands(type, header)) {
-          const { bands, pretty } = bandsText(values);
-          bullets.push(`Distribuição por faixas: ${pretty}.`);
+          const { raw, pretty } = bandsVals(values);
+          bullets.push(`Faixas: ${pretty}.`);
           if (type === "carga") {
             const total = values.filter(v => Number.isFinite(v)).length || 1;
             cargaBandsPct = {
-              low: percent(bands["<20%"], total),
-              mid: percent(bands["20–60%"], total),
-              sweet: percent(bands["60–80%"], total),
-              high: percent(bands[">80%"], total)
+              low: percent(raw["<20%"], total),
+              mid: percent(raw["20–60%"], total),
+              sweet: percent(raw["60–80%"], total),
+              high: percent(raw[">80%"], total)
             };
           }
         }
 
-        // validação de unidade para consumo (km/L)
+        // plausibilidade para consumo
         if (type === "consumo") {
           const shareHigh = consumptionPlausibility(values);
           if (shareHigh != null) {
-            bullets.push(`⚠︎ Observação: ${shareHigh.toFixed(1)}% das leituras > 5 km/L — possível unidade/medição inconsistente ou trechos sem carga.`);
+            bullets.push(`⚠︎ ${shareHigh.toFixed(1)}% das leituras > 5 km/L — possível unidade/medição inconsistente ou trechos sem carga.`);
           }
         }
 
-        // 📌 Sugestões — condicionais e objetivas
+        // ações objetivas
         if (type === "carga") {
-          const bands = bandsText(values); // já calculado acima, mas barato repetir
+          const { raw } = bandsVals(values);
           const total = values.filter(v => Number.isFinite(v)).length || 1;
-          const low = percent(bands.bands["<20%"], total);
-          const sweet = percent(bands.bands["60–80%"], total);
-          const high = percent(bands.bands[">80%"], total);
-          if (low >= 25) bullets.push(`📌 Ação: baixa carga elevada (${low.toFixed(1)}%) — revisar dimensionamento do implemento e reduzir marcha lenta/manobras longas.`);
-          if (sweet < 40) bullets.push(`📌 Ação: elevar tempo na faixa 60–80% (atual ${sweet.toFixed(1)}%) para ~50–60% via seleção de marcha/engate e ajuste de velocidade.`);
-          if (high >= 15) bullets.push(`📌 Ação: picos de carga (>80%) em ${high.toFixed(1)}% — risco de esforço excessivo; ajuste marchas/velocidade/implemento.`);
+          const low = percent(raw["<20%"], total);
+          const sweet = percent(raw["60–80%"], total);
+          const high = percent(raw[">80%"], total);
+          if (low >= 25) bullets.push(`📌 Baixa carga alta (${low.toFixed(1)}%) — redimensionar implemento e reduzir marcha lenta/manobras longas.`);
+          if (sweet < 40) bullets.push(`📌 Elevar tempo em 60–80% (atual ${sweet.toFixed(1)}%) para ~50–60% com seleção de marcha/engate e ajuste de velocidade.`);
+          if (high >= 15) bullets.push(`📌 Cargas >80% em ${high.toFixed(1)}% — risco de sobrecarga; ajustar marcha/velocidade/implemento.`);
         } else if (type === "desliz") {
           const over15 = percent(values.filter(v => Number.isFinite(v) && v > 15).length, values.length);
           const over30 = percent(values.filter(v => Number.isFinite(v) && v > 30).length, values.length);
-          if (over15 >= 10) bullets.push(`📌 Ação: patinagem >15% ocorre em ${over15.toFixed(1)}% — ajustar lastro e pressão dos pneus buscando 10–12%.`);
-          if (over30 >= 2) bullets.push(`📌 Ação: picos >30% em ${over30.toFixed(1)}% — reduzir velocidade em entrada de sulco/carga e otimizar técnica do operador.`);
+          if (over15 >= 10) bullets.push(`📌 Patinagem >15% em ${over15.toFixed(1)}% — ajustar lastro/pressão (alvo 10–12%).`);
+          if (over30 >= 2) bullets.push(`📌 Picos >30% em ${over30.toFixed(1)}% — reduzir velocidade em entrada de sulco/carga e otimizar técnica do operador.`);
         } else if (type === "consumo") {
           const z = percent(values.filter(v => v === 0).length, values.length);
-          if (z >= 10) bullets.push(`📌 Ação: ${z.toFixed(1)}% de zeros — protocolar desligamento ou modo ECO em ociosidade e revisar leitura/telemetria.`);
-          bullets.push("📌 Ação: operar mais próximo da faixa de torque (carga ~60–80%) e manter rotação estável para melhor km/L.");
+          if (z >= 10) bullets.push(`📌 ${z.toFixed(1)}% de zeros — desligar/eco em ociosidade e revisar leitura/telemetria.`);
+          bullets.push("📌 Operar próximo à faixa de torque (carga ~60–80%) e manter rotação estável para melhor km/L.");
         } else if (type === "velocidade") {
-          if (ociosidadePct != null && ociosidadePct >= 10) {
-            bullets.push(`📌 Ação: ociosidade (vel=0) em ${ociosidadePct.toFixed(1)}% — reduzir paradas improdutivas e marcha lenta prolongada.`);
-          }
-          bullets.push("📌 Ação: segmentar deslocamento vs trabalho; ajustar velocidade-alvo conforme o implemento (campo típico ~5–7 km/h).");
+          if (ociosidadePct != null && ociosidadePct >= 10) bullets.push(`📌 Ociosidade (vel=0) em ${ociosidadePct.toFixed(1)}% — reduzir paradas improdutivas e marcha lenta prolongada.`);
+          bullets.push("📌 Segmentar deslocamento vs trabalho; ajustar velocidade-alvo conforme implemento (campo típico ~5–7 km/h).");
         } else if (type === "horas") {
-          bullets.push("📌 Ação: se for horímetro acumulado, considerar Δ(horas) para medir uso por janela e cruzar com carga/velocidade.");
+          bullets.push("📌 Se for horímetro acumulado, usar Δ(h) por janela para medir uso efetivo e cruzar com carga/velocidade.");
         } else if (type === "pressao_oleo") {
-          if (st.min === 0) bullets.push("📌 Ação: quedas a 0 podem indicar falha de leitura ou evento crítico — verificar alertas do sistema e histórico de manutenção.");
+          if (st.min === 0) bullets.push("📌 Quedas a 0 podem ser falha de leitura ou evento crítico — verificar alertas e manutenção.");
         }
 
-        sections.push({ title: `${emojiFor(type)} ${header}`, bullets });
+        // mini-gráfico
+        let spark = null;
+        if (sparkCount < MAX_SPARKS) {
+          try { spark = await sparkline(values); sparkCount++; } catch {}
+        }
+
+        sections.push({ title: `${emojiFor(type)} ${header}`, bullets, spark });
       }
 
-      // resumo final, mais objetivo
+      // resumo final
       if (sections.length) {
         const bullets = [];
-        if (ociosidadePct != null) bullets.push(`Reduzir ociosidade (vel=0): hoje em ${ociosidadePct.toFixed(1)}% dos registros — aplicar protocolo de paradas e ECO.`);
+        if (ociosidadePct != null) bullets.push(`Reduzir ociosidade (vel=0): ${ociosidadePct.toFixed(1)}% — implantar protocolo de paradas/ECO.`);
         if (cargaBandsPct) {
           if (cargaBandsPct.sweet < 40) bullets.push(`Aumentar tempo em carga 60–80% (atual ${cargaBandsPct.sweet.toFixed(1)}%) para ~50–60%.`);
-          if (cargaBandsPct.low >= 25) bullets.push(`Baixa carga alta (${cargaBandsPct.low.toFixed(1)}%) — revisar implementos/tarefas e reduzir marcha lenta.`);
+          if (cargaBandsPct.low >= 25) bullets.push(`Baixa carga elevada (${cargaBandsPct.low.toFixed(1)}%) — revisar implementos/tarefas e marcha lenta.`);
           if (cargaBandsPct.high >= 15) bullets.push(`Cargas >80% frequentes (${cargaBandsPct.high.toFixed(1)}%) — risco de sobrecarga; ajustar marcha/velocidade/implemento.`);
         }
         sections.push({
@@ -280,14 +314,11 @@ export default async function handler(req, res) {
       try {
         if (!process.env.OPENAI_API_KEY) throw new Error("OPENAI_API_KEY ausente");
         const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-        const sample = rows.slice(0, 150).map((r) => {
-          const o = {}; for (const k of headers) o[k] = r[k]; return o;
-        });
+        const sample = rows.slice(0, 150).map((r) => { const o = {}; for (const k of headers) o[k] = r[k]; return o; });
         const prompt = `
-Você é especialista em telemetria agrícola. Gere um relatório textual detalhado para "${modelo}" (cliente: "${cliente}").
-Use os nomes **exatos** das colunas numéricas e relevantes como títulos. Para cada coluna: média, Q1–Q3 (explique: faixa central de 50%), min–máx, zeros/picos e recomendações práticas e objetivas (com thresholds quando possível).
+Você é especialista em telemetria agrícola. Gere um relatório textual detalhado e objetivo para "${modelo}" (cliente: "${cliente}").
+Use nomes exatos das colunas numéricas como títulos. Para cada coluna: média, mín–máx, zeros/picos e recomendações com thresholds.
 Finalize com "Resumo de Melhorias e Próximas Ações". Evite gráficos.
-
 Amostra (até 150 linhas):
 ${JSON.stringify(sample)}
 `.trim();
@@ -297,9 +328,7 @@ ${JSON.stringify(sample)}
           messages: [{ role: "user", content: prompt }],
         });
         analise = resp?.choices?.[0]?.message?.content?.trim() || "";
-      } catch (e) {
-        console.error("Falha OpenAI:", e);
-      }
+      } catch (e) { console.error("Falha OpenAI:", e); }
 
       return res.status(200).json({
         ok: true,
@@ -309,7 +338,7 @@ ${JSON.stringify(sample)}
           periodo: { inicio: inicio ? inicio.toISOString() : null, fim: fim ? fim.toISOString() : null },
           totalFrames: rows.length
         },
-        sections,
+        sections, // cada item pode trazer spark (data:image/png;base64,...)
         analysis: analise
       });
     } catch (e) {
