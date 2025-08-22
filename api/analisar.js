@@ -43,6 +43,8 @@ function describe(arr) {
 // Semântica + unidades
 function semanticType(h) {
   const n = norm(h);
+
+  // EXISTENTES...
   if (n.includes("carga") && n.includes("motor")) return "carga";
   if (n.includes("carga") || n.includes("% carga")) return "carga";
   if (n.includes("combust") || n.includes("consumo") || n.includes("km/l")) return "consumo";
@@ -53,20 +55,47 @@ function semanticType(h) {
   if (n.includes("press") && n.includes("oleo")) return "pressao_oleo";
   if (n.includes("press")) return "pressao";
   if (n.includes("temp") || n.includes("temper")) return "temperatura";
+
+  // NOVOS…
+  if ((n.includes("nivel") || n.includes("nível")) && (n.includes("combust") || n.includes("fuel")))
+    return "nivel_combustivel";                  // % nível do tanque
+  if (n.includes("l/h") || n.includes("lph") || n.includes("fuel rate") || (n.includes("consumo") && n.includes("l/")))
+    return "consumo_lh";                          // L/h
+  if (n.includes("coolant") || (n.includes("temp") && (n.includes("motor") || n.includes("arref") || n.includes("refrigerante"))))
+    return "temp_motor";                          // °C
+  if ((n.includes("turbo") || n.includes("boost")) && (n.includes("press") || n.includes("boost")))
+    return "pressao_turbo";                       // bar/kPa/psi
+  if (n.includes("hidra") && n.includes("press"))
+    return "pressao_hidraulica";                 // bar/kPa/psi
+  if (n.includes("intake") || n.includes("adm") || n.includes("ar adm") || (n.includes("temp") && n.includes("ar")))
+    return "temp_ar_admissao";                   // °C
+
   if (n.includes("local") || n === "lat" || n === "lon" || n.includes("latitude") || n.includes("longitude")) return "geo";
   if (n.includes("empty") || n.startsWith("unnamed")) return "ignorar";
   return "generico";
 }
+
 function unitFor(type, header) {
-  if (type === "carga" || type === "desliz") return "%";
+  if (type === "carga" || type === "desliz" || type === "nivel_combustivel") return "%";
   if (type === "consumo") return " km/L";
+  if (type === "consumo_lh") return " L/h";
   if (type === "velocidade") return " km/h";
   if (type === "rpm") return " rpm";
   if (type === "horas") return " h";
-  if (type === "pressao" || type === "pressao_oleo") return ""; // pode ser kPa/bar → não arriscar
+  if (type === "temp_motor" || type === "temp_ar_admissao") return " °C";
+
+  if (type === "pressao_turbo" || type === "pressao_hidraulica" || type === "pressao" || type === "pressao_oleo") {
+    const n = header.toLowerCase();
+    if (n.includes("kpa")) return " kPa";
+    if (n.includes("psi")) return " psi";
+    if (n.includes("bar")) return " bar";
+    return ""; // deixa neutro se não souber
+  }
+
   if (/%/.test(header)) return "%";
   return "";
 }
+
 function shouldIgnore(header, values) {
   const t = semanticType(header);
   if (t === "geo" || t === "ignorar") return true;
@@ -303,6 +332,32 @@ export default async function handler(req, res) {
         } else if (type === "pressao_oleo") {
           if (st.min === 0) bullets.push("📌 Quedas a 0 podem ser falha de leitura ou evento crítico — verificar alertas e manutenção.");
         }
+        } else if (type === "nivel_combustivel") {
+          const abaixo15 = percent(values.filter(v => Number.isFinite(v) && v < 15).length, values.length);
+          if (abaixo15 >= 5) bullets.push(`📌 Nível <15% em ${abaixo15.toFixed(1)}% — abastecer antes de 15% para evitar cavitação/borra no tanque.`);
+          bullets.push("📌 Planejar reabastecimento por turno/área; investigar oscilações bruscas (terreno inclinado vs sensor).");
+        
+        } else if (type === "consumo_lh") {
+          const altos = percent(values.filter(v => Number.isFinite(v) && v > 20).length, values.length); // limiar ajustável
+          if (altos >= 10) bullets.push(`📌 Consumo >20 L/h em ${altos.toFixed(1)}% — reduzir marcha lenta e alinhar carga/rotação à faixa de torque.`);
+          bullets.push("📌 Verificar regulagens do implemento e calibração de pneus/lastro; aplicar modo ECO quando disponível.");
+        
+        } else if (type === "temp_motor") {
+          const over105 = percent(values.filter(v => Number.isFinite(v) && v > 105).length, values.length);
+          if (over105 > 0) bullets.push(`📌 Pico de temperatura >105°C detectado — inspecionar sistema de arrefecimento (radiador, nível e fluxo).`);
+          bullets.push("📌 Manter colmeia limpa e verificar viscosidade/nível do refrigerante conforme manual.");
+        
+        } else if (type === "pressao_turbo") {
+          bullets.push("📌 Checar filtro de ar, vazamentos na admissão/intercooler e integridade de mangueiras; avaliar resposta sob carga (60–80%).");
+        
+        } else if (type === "pressao_hidraulica") {
+          bullets.push("📌 Se picos/quedas recorrentes: revisar válvulas/linhas e demanda do implemento; evitar alívio prolongado do sistema.");
+        
+        } else if (type === "temp_ar_admissao") {
+          const over60 = percent(values.filter(v => Number.isFinite(v) && v > 60).length, values.length);
+          if (over60 >= 10) bullets.push(`📌 Ar de admissão >60°C em ${over60.toFixed(1)}% — verificar intercooler/fluxo de ar; possível perda de densidade e torque.`);
+
+        
 
         // spark
         let spark = null;
@@ -420,4 +475,5 @@ ${JSON.stringify(sample)}
     }
   });
 }
+
 
