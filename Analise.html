@@ -233,7 +233,10 @@
 
   function renderReport(data){
     $("report").style.display = "block";
-    $("repTitle").textContent = `📊 Análise do Relatório de Telemetria – ${data?.meta?.modelo || "Equipamento"}`;
+
+    $("repTitle").textContent =
+      `📊 Análise do Relatório de Telemetria – ${data?.meta?.modelo || "Equipamento"}`;
+
     const per = data?.meta?.periodo || {};
     $("repSub").textContent = `Cliente: ${data?.meta?.cliente || "N/D"}`;
     $("chipReg").textContent = `Registros: ${data?.meta?.totalFrames ?? "-"}`;
@@ -241,12 +244,16 @@
 
     const host = $("sections");
     host.innerHTML = "";
+
     (data.sections || []).forEach(sec => {
       const card = document.createElement("section");
       card.className = "section";
+
+      // coluna da esquerda (título + bullets)
+      const body = document.createElement("div");
       const h3 = document.createElement("h3");
       h3.textContent = sec.title || "Seção";
-      card.appendChild(h3);
+      body.appendChild(h3);
 
       if (sec.bullets?.length){
         const ul = document.createElement("ul");
@@ -255,8 +262,21 @@
           li.textContent = b;
           ul.appendChild(li);
         });
-        card.appendChild(ul);
+        body.appendChild(ul);
       }
+      card.appendChild(body);
+
+      // coluna da direita (mini gráfico)
+      const side = document.createElement("div");
+      side.className = "spark";
+      if (sec.spark){
+        const img = document.createElement("img");
+        img.src = sec.spark;        // data:image/png;base64,...
+        img.alt = "mini gráfico";
+        side.appendChild(img);
+      }
+      card.appendChild(side);
+
       host.appendChild(card);
     });
 
@@ -266,4 +286,5 @@
 </script>
 </body>
 </html>
+
 
