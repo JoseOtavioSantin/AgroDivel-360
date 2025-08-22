@@ -8,7 +8,7 @@ import dayjs from "dayjs";
 
 export const config = { api: { bodyParser: false, sizeLimit: "25mb" } };
 
-// ---------- Helpers ----------
+// ---------- Utils ----------
 const toNum = (v) => {
   const n = typeof v === "string" ? v.replace(",", ".") : v;
   const x = Number(n);
@@ -40,6 +40,7 @@ function describe(arr) {
   return { count: a.length, mean, min, max, std };
 }
 
+// Semântica + unidades
 function semanticType(h) {
   const n = norm(h);
   if (n.includes("carga") && n.includes("motor")) return "carga";
@@ -62,7 +63,7 @@ function unitFor(type, header) {
   if (type === "velocidade") return " km/h";
   if (type === "rpm") return " rpm";
   if (type === "horas") return " h";
-  if (type === "pressao" || type === "pressao_oleo") return "";
+  if (type === "pressao" || type === "pressao_oleo") return ""; // pode ser kPa/bar → não arriscar
   if (/%/.test(header)) return "%";
   return "";
 }
@@ -94,6 +95,7 @@ function bandsVals(arr) {
   const pct = (n) => percent(n, total).toFixed(1) + "%";
   return { raw: bands, pretty: `<20%=${pct(bands["<20%"])}, 20–60%=${pct(bands["20–60%"])}, 60–80%=${pct(bands["60–80%"])}, >80%=${pct(bands[">80%"])}` };
 }
+// Consistência de consumo (km/L): alerta se muitos valores > 5 km/L
 function consumptionPlausibility(values) {
   const a = values.filter((v) => Number.isFinite(v));
   if (!a.length) return null;
@@ -109,7 +111,7 @@ function emojiFor(type) {
   }[type] || "📈");
 }
 
-// --------- Mini gráfico (sparkline) ----------
+// ---------- Sparklines (mini-gráficos PNG via QuickChart) ----------
 function downsample(values, maxPoints = 120) {
   const a = values.filter((v) => Number.isFinite(v));
   if (a.length <= maxPoints) return a;
@@ -154,6 +156,7 @@ export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).json({ ok: false, error: "Método não permitido" });
 
   const form = formidable({ multiples: false, keepExtensions: true });
+
   form.parse(req, async (err, fields, files) => {
     try {
       if (err) return res.status(400).json({ ok: false, error: "Erro no upload" });
@@ -165,6 +168,7 @@ export default async function handler(req, res) {
       const filePath = f?.filepath;
       if (!filePath) return res.status(400).json({ ok: false, error: "Arquivo .xlsx não recebido" });
 
+      // Lê Excel
       const buffer = fs.readFileSync(filePath);
       const wb = XLSX.read(buffer, { type: "buffer" });
       const ws = wb.Sheets[wb.SheetNames[0]];
@@ -172,7 +176,8 @@ export default async function handler(req, res) {
       if (!rows.length) return res.status(400).json({ ok: false, error: "Planilha vazia" });
 
       const headers = Object.keys(rows[0] ?? {});
-      // período
+
+      // Período (se houver coluna de tempo)
       const timeHeader = headers.find((h) => {
         const n = norm(h);
         return n.includes("carimbo") || n.includes("data") || n.includes("hora") || n.includes("timestamp");
@@ -188,13 +193,14 @@ export default async function handler(req, res) {
         if (ts.length) { inicio = new Date(ts[0]); fim = new Date(ts[ts.length - 1]); }
       }
 
-      // colunas numéricas
+      // Colunas numéricas
       const numericCols = headers.map((h) => {
         const vals = rows.map((r) => toNum(r[h])).filter((v) => v !== null);
         const enough = vals.length >= Math.min(10, Math.ceil(rows.length * 0.1));
         return enough ? { header: h, values: vals } : null;
       }).filter(Boolean);
 
+      // Filtrar ruído e ordenar por relevância
       const filtered = numericCols.filter(({ header, values }) => !shouldIgnore(header, values));
       const orderScore = (h) => ({
         carga: 0, consumo: 1, desliz: 2, velocidade: 3,
@@ -202,11 +208,10 @@ export default async function handler(req, res) {
       }[semanticType(h)] ?? 99);
       filtered.sort((a, b) => orderScore(a.header) - orderScore(b.header));
 
+      // Montagem das seções
       const sections = [];
-      let ociosidadePct = null;
-      let cargaBandsPct = null;
-
-      // limite de gráficos para evitar latência (ajuste se quiser)
+      let ociosidadePct = null;   // de velocidade = 0
+      let cargaBandsPct = null;   // para resumo
       const MAX_SPARKS = 8;
       let sparkCount = 0;
 
@@ -222,7 +227,7 @@ export default async function handler(req, res) {
           `Mín–Máx: ${fmt(st.min)} – ${fmt(st.max)}.`
         ];
 
-        // zeros
+        // zeros e ociosidade
         const zeros = values.filter((v) => v === 0).length;
         if (zeros > 0) {
           const zPct = percent(zeros, values.length);
@@ -230,7 +235,7 @@ export default async function handler(req, res) {
           if (type === "velocidade") ociosidadePct = zPct;
         }
 
-        // bandas p/ carga/desliz
+        // faixas (carga/desliz)
         if (shouldShowBands(type, header)) {
           const { raw, pretty } = bandsVals(values);
           bullets.push(`Faixas: ${pretty}.`);
@@ -245,7 +250,7 @@ export default async function handler(req, res) {
           }
         }
 
-        // plausibilidade para consumo
+        // plausibilidade consumo km/L
         if (type === "consumo") {
           const shareHigh = consumptionPlausibility(values);
           if (shareHigh != null) {
@@ -253,21 +258,21 @@ export default async function handler(req, res) {
           }
         }
 
-        // ações objetivas
+        // 📌 Ações com thresholds
         if (type === "carga") {
           const { raw } = bandsVals(values);
           const total = values.filter(v => Number.isFinite(v)).length || 1;
           const low = percent(raw["<20%"], total);
           const sweet = percent(raw["60–80%"], total);
           const high = percent(raw[">80%"], total);
-          if (low >= 25) bullets.push(`📌 Baixa carga alta (${low.toFixed(1)}%) — redimensionar implemento e reduzir marcha lenta/manobras longas.`);
+          if (low >= 25)  bullets.push(`📌 Baixa carga elevada (${low.toFixed(1)}%) — redimensionar implemento e reduzir marcha lenta/manobras longas.`);
           if (sweet < 40) bullets.push(`📌 Elevar tempo em 60–80% (atual ${sweet.toFixed(1)}%) para ~50–60% com seleção de marcha/engate e ajuste de velocidade.`);
           if (high >= 15) bullets.push(`📌 Cargas >80% em ${high.toFixed(1)}% — risco de sobrecarga; ajustar marcha/velocidade/implemento.`);
         } else if (type === "desliz") {
           const over15 = percent(values.filter(v => Number.isFinite(v) && v > 15).length, values.length);
           const over30 = percent(values.filter(v => Number.isFinite(v) && v > 30).length, values.length);
           if (over15 >= 10) bullets.push(`📌 Patinagem >15% em ${over15.toFixed(1)}% — ajustar lastro/pressão (alvo 10–12%).`);
-          if (over30 >= 2) bullets.push(`📌 Picos >30% em ${over30.toFixed(1)}% — reduzir velocidade em entrada de sulco/carga e otimizar técnica do operador.`);
+          if (over30 >= 2)  bullets.push(`📌 Picos >30% em ${over30.toFixed(1)}% — reduzir velocidade em entrada de sulco/carga e otimizar técnica do operador.`);
         } else if (type === "consumo") {
           const z = percent(values.filter(v => v === 0).length, values.length);
           if (z >= 10) bullets.push(`📌 ${z.toFixed(1)}% de zeros — desligar/eco em ociosidade e revisar leitura/telemetria.`);
@@ -281,7 +286,7 @@ export default async function handler(req, res) {
           if (st.min === 0) bullets.push("📌 Quedas a 0 podem ser falha de leitura ou evento crítico — verificar alertas e manutenção.");
         }
 
-        // mini-gráfico
+        // spark
         let spark = null;
         if (sparkCount < MAX_SPARKS) {
           try { spark = await sparkline(values); sparkCount++; } catch {}
@@ -290,7 +295,7 @@ export default async function handler(req, res) {
         sections.push({ title: `${emojiFor(type)} ${header}`, bullets, spark });
       }
 
-      // resumo final
+      // Resumo de ações
       if (sections.length) {
         const bullets = [];
         if (ociosidadePct != null) bullets.push(`Reduzir ociosidade (vel=0): ${ociosidadePct.toFixed(1)}% — implantar protocolo de paradas/ECO.`);
@@ -309,27 +314,77 @@ export default async function handler(req, res) {
         });
       }
 
-      // análise longa (opcional)
+      // ---------- OpenAI: persona Analista Sênior + Especialista New Holland ----------
       let analise = "";
       try {
         if (!process.env.OPENAI_API_KEY) throw new Error("OPENAI_API_KEY ausente");
+
         const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-        const sample = rows.slice(0, 150).map((r) => { const o = {}; for (const k of headers) o[k] = r[k]; return o; });
-        const prompt = `
-Você é especialista em telemetria agrícola. Gere um relatório textual detalhado e objetivo para "${modelo}" (cliente: "${cliente}").
-Use nomes exatos das colunas numéricas como títulos. Para cada coluna: média, mín–máx, zeros/picos e recomendações com thresholds.
-Finalize com "Resumo de Melhorias e Próximas Ações". Evite gráficos.
-Amostra (até 150 linhas):
+
+        const systemPrompt = `
+Você é um Analista Sênior de Dados e Especialista em Telemetria Agrícola,
+com profundo conhecimento em tratores New Holland (família T7/T8, motores FPT, transmissões PowerCommand/AutoCommand, gestão eletrônica de motor).
+Seu objetivo é transformar dados de telemetria em diagnóstico e ações práticas, em português claro,
+sem gráficos, focando eficiência, consumo, patinagem e operação.
+`.trim();
+
+        const resumoNumerico = {
+          ociosidade_pct: ociosidadePct ?? null,
+          carga_bands_pct: cargaBandsPct ?? null
+        };
+
+        const sample = rows.slice(0, 150).map((r) => {
+          const o = {}; for (const k of headers) o[k] = r[k]; return o;
+        });
+
+        const userPrompt = `
+Contexto:
+- Cliente: "${cliente}"
+- Equipamento: "${modelo}"
+- Registros: ${rows.length}
+- Resumo numérico (quando disponível): ${JSON.stringify(resumoNumerico)}
+
+Tarefa:
+Gere um relatório textual PROFISSIONAL, como um analista de dados sênior e especialista New Holland.
+Use SOMENTE os nomes EXATOS das colunas numéricas e relevantes como títulos de seção.
+
+Para cada coluna escolhida FAÇA:
+1) Resumo: média e mín–máx (sem Q1–Q3), zeros/picos e observações de plausibilidade/unidade (ex.: km/L muito alto).
+2) Diagnóstico: leitura do que os números indicam (ex.: baixa carga recorrente, patinagem acima do ideal).
+3) 📌 Ações recomendadas: 1–3 bullets objetivas, com thresholds quando possível.
+   Exemplos NH:
+   - Carga: trabalhar mais tempo em 60–80%; rever implemento se <20% for alto; ajustar marcha/velocidade.
+   - Patinagem: alvo ~10–12%; ajustar lastro e pressão de pneus; reduzir velocidade em entradas de sulco.
+   - Consumo: reduzir marcha lenta; operar na faixa de torque; usar modos ECO/gestão automática de rotação se disponível.
+   - Velocidade: separar deslocamento de trabalho; ajustar velocidade-alvo (campo ~5–7 km/h).
+
+Inclua ao final:
+**📌 Resumo de Melhorias e Próximas Ações** — liste o que atacar primeiro (ociosidade, carga 60–80%, patinagem alta, consumo anômalo etc.).
+
+Observações:
+- Escreva em pt-BR, tom técnico e didático, sem gráficos.
+- Sinalize quando suspeitar de unidade/medição inconsistente.
+- Se algo depender do modelo/transmissão (AutoCommand/PowerCommand), trate como condicional (“se equipado com …”).
+- Seja conciso, mas específico nas ações.
+
+Amostra de dados (máx 150 linhas, colunas originais):
 ${JSON.stringify(sample)}
 `.trim();
+
         const resp = await openai.chat.completions.create({
           model: "gpt-4o-mini",
-          temperature: 0.25,
-          messages: [{ role: "user", content: prompt }],
+          temperature: 0.2,
+          messages: [
+            { role: "system", content: systemPrompt },
+            { role: "user", content: userPrompt }
+          ],
         });
         analise = resp?.choices?.[0]?.message?.content?.trim() || "";
-      } catch (e) { console.error("Falha OpenAI:", e); }
+      } catch (e) {
+        console.error("Falha OpenAI:", e);
+      }
 
+      // Resposta
       return res.status(200).json({
         ok: true,
         meta: {
@@ -338,7 +393,7 @@ ${JSON.stringify(sample)}
           periodo: { inicio: inicio ? inicio.toISOString() : null, fim: fim ? fim.toISOString() : null },
           totalFrames: rows.length
         },
-        sections, // cada item pode trazer spark (data:image/png;base64,...)
+        sections,   // cada seção pode ter "spark": data:image/png;base64,...
         analysis: analise
       });
     } catch (e) {
