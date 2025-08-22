@@ -92,6 +92,16 @@
     display:inline-block;padding:6px 10px;border-radius:999px;font-size:12px;background:#eef2ff;color:#1e3a8a;margin-right:6px
   }
 
+  .section{
+  background:#fff;border-radius:16px;border:1px solid #eef2f7;padding:16px;box-shadow:var(--shadow);
+  display:grid;grid-template-columns:1fr 260px;gap:14px;align-items:center;
+  }
+  @media (max-width:720px){ .section{grid-template-columns:1fr} }
+  .section h3{margin:0 0 8px;font-size:16px;color:#0f172a}
+  .section ul{margin:0;padding-left:18px}
+  .section li{margin:6px 0;line-height:1.5}
+  .section .spark img{width:100%;height:auto;border-radius:12px;display:block}
+
   .error{margin-top:12px;color:#b91c1c;background:#fee2e2;border:1px solid #fecaca;padding:12px;border-radius:12px;display:none}
   .loading{display:none;align-items:center;gap:10px;margin-top:12px;color:#334155}
   .spinner{width:16px;height:16px;border:3px solid #e5e7eb;border-top-color:#3b82f6;border-radius:50%;animation:spin .9s linear infinite}
@@ -256,3 +266,4 @@
 </script>
 </body>
 </html>
+
