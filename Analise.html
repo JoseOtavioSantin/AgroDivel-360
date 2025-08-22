@@ -242,30 +242,42 @@
     $("chipPeriodo").textContent = `Período: ${per?.inicio || "N/D"} → ${per?.fim || "N/D"}`;
 
     const host = $("sections");
-    host.innerHTML = "";
-    (data.sections || []).forEach(sec => {
-      const card = document.createElement("section");
-      card.className = "section";
-      const h3 = document.createElement("h3");
-      h3.textContent = sec.title || "Seção";
-      card.appendChild(h3);
+host.innerHTML = "";
+(data.sections || []).forEach(sec => {
+  const card = document.createElement("section");
+  card.className = "section";
 
-      if (sec.bullets?.length){
-        const ul = document.createElement("ul");
-        sec.bullets.forEach(b => {
-          const li = document.createElement("li");
-          li.textContent = b;
-          ul.appendChild(li);
-        });
-        card.appendChild(ul);
-      }
-      host.appendChild(card);
-    });
-
-    $("analysisText").textContent = data.analysis || "—";
-    window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
+  const body = document.createElement("div");
+  const h3 = document.createElement("h3");
+  h3.textContent = sec.title || "Seção";
+  body.appendChild(h3);
+  if (sec.bullets?.length){
+    const ul = document.createElement("ul");
+    sec.bullets.forEach(b => { const li = document.createElement("li"); li.textContent = b; ul.appendChild(li); });
+    body.appendChild(ul);
   }
+  card.appendChild(body);
+
+  if (sec.spark){
+    const spark = document.createElement("div");
+    spark.className = "spark";
+    const img = document.createElement("img");
+    img.src = sec.spark;
+    img.alt = "mini gráfico";
+    spark.appendChild(img);
+    card.appendChild(spark);
+  } else {
+    // mantém grid alinhado quando não houver gráfico
+    const spacer = document.createElement("div");
+    spacer.style.display = "none";
+    card.appendChild(spacer);
+  }
+
+  host.appendChild(card);
+});
+    
 </script>
 </body>
 </html>
+
 
