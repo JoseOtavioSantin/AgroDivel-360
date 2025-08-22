@@ -103,7 +103,11 @@ function shouldIgnore(header, values) {
   if (!s) return true;
   const range = (s.max - s.min);
   const isAlmostConst = range === 0 || (s.mean !== 0 && range / Math.abs(s.mean) < 0.002);
-  if (isAlmostConst && !["carga","desliz","velocidade","consumo","rpm","horas","pressao","pressao_oleo","temperatura"].includes(t)) {
+  if (isAlmostConst && ![
+    "carga","desliz","velocidade","consumo","rpm","horas",
+    "pressao","pressao_oleo","temperatura",
+    "nivel_combustivel","consumo_lh","temp_motor","pressao_turbo","pressao_hidraulica","temp_ar_admissao"
+  ].includes(t)) {
     return true;
   }
   return false;
@@ -324,48 +328,53 @@ export default async function handler(req, res) {
           if (low >= 25)  bullets.push(`📌 Baixa carga elevada (${low.toFixed(1)}%) — redimensionar implemento e reduzir marcha lenta/manobras longas.`);
           if (sweet < 40) bullets.push(`📌 Elevar tempo em 60–80% (atual ${sweet.toFixed(1)}%) para ~50–60% com seleção de marcha/engate e ajuste de velocidade.`);
           if (high >= 15) bullets.push(`📌 Cargas >80% em ${high.toFixed(1)}% — risco de sobrecarga; ajustar marcha/velocidade/implemento.`);
+
         } else if (type === "desliz") {
           const over15 = percent(values.filter(v => Number.isFinite(v) && v > 15).length, values.length);
           const over30 = percent(values.filter(v => Number.isFinite(v) && v > 30).length, values.length);
           if (over15 >= 10) bullets.push(`📌 Patinagem >15% em ${over15.toFixed(1)}% — ajustar lastro/pressão (alvo 10–12%).`);
           if (over30 >= 2)  bullets.push(`📌 Picos >30% em ${over30.toFixed(1)}% — reduzir velocidade em entrada de sulco/carga e otimizar técnica do operador.`);
+
         } else if (type === "consumo") {
           const z = percent(values.filter(v => v === 0).length, values.length);
           if (z >= 10) bullets.push(`📌 ${z.toFixed(1)}% de zeros — desligar/eco em ociosidade e revisar leitura/telemetria.`);
           bullets.push("📌 Operar próximo à faixa de torque (carga ~60–80%) e manter rotação estável para melhor km/L.");
+
         } else if (type === "velocidade") {
           if (ociosidadePct != null && ociosidadePct >= 10) bullets.push(`📌 Ociosidade (vel=0) em ${ociosidadePct.toFixed(1)}% — reduzir paradas improdutivas e marcha lenta prolongada.`);
           bullets.push("📌 Segmentar deslocamento vs trabalho; ajustar velocidade-alvo conforme implemento (campo típico ~5–7 km/h).");
+
         } else if (type === "horas") {
           bullets.push("📌 Se for horímetro acumulado, usar Δ(h) por janela para medir uso efetivo e cruzar com carga/velocidade.");
+
         } else if (type === "pressao_oleo") {
           if (st.min === 0) bullets.push("📌 Quedas a 0 podem ser falha de leitura ou evento crítico — verificar alertas e manutenção.");
-        }
+
         } else if (type === "nivel_combustivel") {
           const abaixo15 = percent(values.filter(v => Number.isFinite(v) && v < 15).length, values.length);
           if (abaixo15 >= 5) bullets.push(`📌 Nível <15% em ${abaixo15.toFixed(1)}% — abastecer antes de 15% para evitar cavitação/borra no tanque.`);
           bullets.push("📌 Planejar reabastecimento por turno/área; investigar oscilações bruscas (terreno inclinado vs sensor).");
-        
+
         } else if (type === "consumo_lh") {
           const altos = percent(values.filter(v => Number.isFinite(v) && v > 20).length, values.length); // limiar ajustável
           if (altos >= 10) bullets.push(`📌 Consumo >20 L/h em ${altos.toFixed(1)}% — reduzir marcha lenta e alinhar carga/rotação à faixa de torque.`);
           bullets.push("📌 Verificar regulagens do implemento e calibração de pneus/lastro; aplicar modo ECO quando disponível.");
-        
+
         } else if (type === "temp_motor") {
           const over105 = percent(values.filter(v => Number.isFinite(v) && v > 105).length, values.length);
           if (over105 > 0) bullets.push(`📌 Pico de temperatura >105°C detectado — inspecionar sistema de arrefecimento (radiador, nível e fluxo).`);
           bullets.push("📌 Manter colmeia limpa e verificar viscosidade/nível do refrigerante conforme manual.");
-        
+
         } else if (type === "pressao_turbo") {
           bullets.push("📌 Checar filtro de ar, vazamentos na admissão/intercooler e integridade de mangueiras; avaliar resposta sob carga (60–80%).");
-        
+
         } else if (type === "pressao_hidraulica") {
           bullets.push("📌 Se picos/quedas recorrentes: revisar válvulas/linhas e demanda do implemento; evitar alívio prolongado do sistema.");
-        
+
         } else if (type === "temp_ar_admissao") {
           const over60 = percent(values.filter(v => Number.isFinite(v) && v > 60).length, values.length);
           if (over60 >= 10) bullets.push(`📌 Ar de admissão >60°C em ${over60.toFixed(1)}% — verificar intercooler/fluxo de ar; possível perda de densidade e torque.`);
-
+        }
         
 
         // spark
@@ -484,6 +493,5 @@ ${JSON.stringify(sample)}
     }
   });
 }
-
 
 
