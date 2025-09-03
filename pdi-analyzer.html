@@ -6,7 +6,7 @@
 <title>Agro Divel • Comparador PDI vs. ETIM</title>
 <meta name="theme-color" content="#001439" />
 <style>
-  /* Seu CSS original vai aqui - ele é perfeito, não precisa mudar nada. */
+  /* CSS completo da sua interface original - Nenhuma alteração necessária */
   :root{--bg:#f5f7fb;--card:#ffffff;--ink:#111827;--muted:#6b7280;--brand:#001439;--brand-2:#0f2a66;--ok:#0ea5e9;--shadow:0 10px 30px rgba(0,0,0,.08);--radius:14px;}
   *{box-sizing:border-box}
   html,body{height:100%}
@@ -20,27 +20,30 @@
   .grid{display:grid;gap:14px}
   @media (min-width:700px){ .grid.cols-2{grid-template-columns:repeat(2,minmax(0,1fr))} }
   label{font-size:13px;color:var(--muted);display:block;margin:2px 2px 6px}
-  .file{position:relative;border:1px dashed #cbd5e1;border-radius:12px;background:#f8fafc;padding:16px;display:flex;align-items:center;gap:12px;cursor:pointer}
+  .file{position:relative;border:1px dashed #cbd5e1;border-radius:12px;background:#f8fafc;padding:16px;display:flex;align-items:center;gap:12px;cursor:pointer;transition: border-color .15s ease;}
   .file input{position:absolute;inset:0;opacity:0;cursor:pointer}
-  .file .hint{font-size:13px;color:var(--muted)}
+  .file .hint{font-size:13px;color:var(--muted);pointer-events:none;}
   .actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:12px}
-  button{appearance:none;border:0;border-radius:12px;padding:12px 16px;font-weight:700;cursor:pointer}
+  button{appearance:none;border:0;border-radius:12px;padding:12px 16px;font-weight:700;cursor:pointer;transition: background-color .15s ease, filter .15s ease;}
+  button:disabled{cursor:not-allowed;opacity:.7}
   .btn-primary{background:var(--brand);color:#fff}
-  .btn-primary:hover{background:var(--brand-2)}
+  .btn-primary:hover:not(:disabled){background:var(--brand-2)}
   .btn-ghost{background:#eef2ff;color:var(--brand)}
-  .btn-ghost:hover{filter:brightness(.97)}
+  .btn-ghost:hover:not(:disabled){filter:brightness(.97)}
   .report{margin-top:22px;display:none}
   .report-header{background:linear-gradient(135deg,#001439, #20386f);color:#fff;border-radius:var(--radius);padding:18px;box-shadow:var(--shadow)}
   .report-header h2{margin:0 0 6px;font-size:20px}
   .report-header p{margin:0;font-size:13px;opacity:.9}
-  .chip{display:inline-block;padding:6px 10px;border-radius:999px;font-size:12px;background:#eef2ff;color:#1e3a8a;margin-right:6px}
-  .error{margin-top:12px;color:#b91c1c;background:#fee2e2;border:1px solid #fecaca;padding:12px;border-radius:12px;display:none}
+  .footer-actions{margin-top:14px;display:flex;gap:10px;flex-wrap:wrap}
+  .chip{display:inline-block;padding:6px 10px;border-radius:999px;font-size:12px;background:rgba(255,255,255,.15);color:#fff;margin-right:6px}
+  .error{margin-top:12px;color:#b91c1c;background:#fee2e2;border:1px solid #fecaca;padding:12px;border-radius:12px;display:none;font-size: 14px; line-height: 1.5;}
   .loading{display:none;align-items:center;gap:10px;margin-top:12px;color:#334155}
   .spinner{width:16px;height:16px;border:3px solid #e5e7eb;border-top-color:#3b82f6;border-radius:50%;animation:spin .9s linear infinite}
   @keyframes spin{to{transform:rotate(360deg)}}
   .results-table{width:100%;margin-top:16px;border-collapse:collapse;box-shadow:var(--shadow);border-radius:var(--radius);overflow:hidden}
-  .results-table th, .results-table td{border:1px solid #eef2f7;padding:12px;text-align:left}
-  .results-table th{background:#f8fafc;font-size:13px;color:var(--muted)}
+  .results-table th, .results-table td{border:1px solid #eef2f7;padding:12px;text-align:left;font-size:14px;}
+  .results-table th{background:#f8fafc;font-size:13px;color:var(--muted);font-weight:600;}
+  .results-table tbody tr:nth-child(odd){background-color: #fdfdfe;}
 </style>
 </head>
 <body>
@@ -96,16 +99,21 @@
 
 <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
 <script>
-  const API_BASE = ""; // Deixe em branco para usar a API do mesmo projeto Vercel
+  // Se estiver testando localmente fora da Vercel, coloque a URL do seu deploy aqui.
+  // Ex: const API_BASE = "https://seu-projeto.vercel.app";
+  const API_BASE = ""; 
   const $ = (id ) => document.getElementById(id);
 
-  // Função auxiliar para configurar o upload de arquivos
+  // Função auxiliar para configurar o upload de arquivos com drag & drop
   function setupFileUpload(inputId, boxId) {
     const fileInput = $(inputId);
     const fileBox = $(boxId);
+    const hint = fileBox.querySelector(".hint");
+    const originalHint = hint.innerHTML;
+
     fileInput.addEventListener("change", () => {
       const f = fileInput.files[0];
-      fileBox.querySelector(".hint").innerHTML = f ? `<strong>${f.name}</strong>` : `<strong>Escolha o arquivo</strong>`;
+      hint.innerHTML = f ? `<strong>${f.name}</strong>` : originalHint;
     });
     ["dragenter", "dragover"].forEach(ev => fileBox.addEventListener(ev, e => { e.preventDefault(); fileBox.style.borderColor = "#93c5fd"; }));
     ["dragleave", "drop"].forEach(ev => fileBox.addEventListener(ev, e => { e.preventDefault(); fileBox.style.borderColor = "#cbd5e1"; }));
@@ -138,20 +146,25 @@
       const fd = new FormData();
       fd.append("pdi", filePDI);
       fd.append("etim", fileETIM);
-      // Opcional: se o nome da coluna puder variar, envie-o também
-      // fd.append("coluna_chassi", "Chassi");
 
       const resp = await fetch(API_BASE + "/api/compare", { method: "POST", body: fd });
       const resultData = await resp.json();
       
-      if (!resp.ok) { throw new Error(resultData.error || `Falha na API (${resp.status})`); }
+      if (!resp.ok) {
+        // Se a resposta não for OK, lança o erro que veio no JSON da API
+        throw new Error(resultData.error || `Falha na API (${resp.status})`);
+      }
 
-      analysisResult = resultData.data; // Salva os dados para o export
+      analysisResult = resultData.data;
       renderReport(analysisResult);
 
     } catch (e) {
-      err.textContent = e.message || "Ocorreu um erro inesperado.";
+      // --- PONTO DE DEPURAÇÃO ---
+      // Mostra o erro detalhado no console do navegador e na caixa de erro da página.
+      console.error("ERRO DETALHADO RECEBIDO DA API:", e);
+      err.textContent = e.message || "Ocorreu um erro inesperado. Verifique o console do navegador (F12).";
       err.style.display = "block";
+      window.scrollTo({ top: err.offsetTop - 20, behavior: "smooth" });
     } finally {
       loading.style.display = "none";
       $("btnAnalisar").disabled = false;
@@ -159,9 +172,10 @@
   }
 
   function renderReport(data) {
+    const reportDiv = $("report");
     if (data.length === 0) {
         $("repTitle").textContent = "🎉 Tudo em ordem!";
-        $("repSub").textContent = "Nenhum chassi faltante encontrado. Todos os equipamentos do PDI já estão no ETIM.";
+        $("repSub").textContent = "Nenhum chassi faltante foi encontrado. Todos os equipamentos do PDI já estão no ETIM.";
         $("chipFaltantes").textContent = "Chassis Faltantes: 0";
         $("resultsHost").innerHTML = "";
         $("btnExportar").style.display = "none";
@@ -170,14 +184,17 @@
         $("repSub").textContent = "Abaixo estão os chassis do PDI que não foram encontrados no ETIM.";
         $("chipFaltantes").textContent = `Chassis Faltantes: ${data.length}`;
         
-        // Cria a tabela de resultados
+        // Cria a tabela de resultados dinamicamente
         const headers = Object.keys(data[0]);
         let tableHTML = '<table class="results-table"><thead><tr>';
         headers.forEach(h => tableHTML += `<th>${h}</th>`);
         tableHTML += '</tr></thead><tbody>';
         data.forEach(row => {
             tableHTML += '<tr>';
-            headers.forEach(h => tableHTML += `<td>${row[h]}</td>`);
+            headers.forEach(h => {
+                const cellValue = row[h] !== null && row[h] !== undefined ? row[h] : '';
+                tableHTML += `<td>${cellValue}</td>`
+            });
             tableHTML += '</tr>';
         });
         tableHTML += '</tbody></table>';
@@ -185,8 +202,8 @@
         $("btnExportar").style.display = "inline-block";
     }
     
-    $("report").style.display = "block";
-    window.scrollTo({ top: $("report").offsetTop - 20, behavior: "smooth" });
+    reportDiv.style.display = "block";
+    window.scrollTo({ top: reportDiv.offsetTop - 20, behavior: "smooth" });
   }
 
   function exportar() {
