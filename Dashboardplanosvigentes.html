@@ -905,8 +905,8 @@ document.getElementById("arquivo-importar").addEventListener("change", async (e)
       let atualizados = 0;
 
       for (const linha of registros) {
-        const chassi = String(linha["Chassi"] || "").trim();
-        const horas = parseFloat(String(linha["Horas"]).replace(",", "."));
+        const chassi = String(linha["PIN"] || "").trim();
+        const horas = parseFloat(String(linha["Horas totais do motor"]).replace(",", "."));
 
         if (!chassi || isNaN(horas)) continue;
 
