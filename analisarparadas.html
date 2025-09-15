@@ -6,7 +6,6 @@
   <title>Análise de Máquinas Paradas</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script src="https://unpkg.com/lucide@latest"></script>
-  <!-- Biblioteca de Gráficos -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     * { box-sizing: border-box; }
@@ -24,7 +23,16 @@
     .card p { font-size: 14px; color: #ccc; margin: 0; display: flex; align-items: center; gap: 8px; }
     .content { flex: 1; padding: 30px; background-color: #262a3d; overflow-y: auto; }
     .graficos-container { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-bottom: 30px; }
-    .grafico-box { background-color: #2c2f3f; padding: 20px; border-radius: 12px; }
+    
+    .grafico-box {
+        background-color: #2c2f3f;
+        padding: 20px;
+        border-radius: 12px;
+        /* --- CORREÇÃO AQUI --- */
+        position: relative; 
+        height: 40vh; /* Altura definida para dar um tamanho inicial estável */
+    }
+
     .grafico-box h3 { margin-top: 0; border-bottom: 1px solid #444; padding-bottom: 10px; }
     table { width: 100%; border-collapse: collapse; background-color: #2c2f3f; border-radius: 12px; overflow: hidden; }
     th, td { font-size: 12px; padding: 12px 15px; text-align: left; border-bottom: 1px solid #444; }
@@ -32,6 +40,7 @@
     
     @media (max-width: 900px) {
         .graficos-container { grid-template-columns: 1fr; }
+        .grafico-box { height: 45vh; } /* Ajusta altura para tela menor */
     }
     @media (max-width: 768px) {
         .sidebar { display: none; }
@@ -144,21 +153,15 @@
     
     const dadosFinalizados = todosDados.filter(d => d.status === 'concluida' && d.dataParada && d.dataFinal);
 
-    // 1. Análise para os KPIs
     analisarKPIs(dadosFinalizados, todosDados);
-
-    // 2. Análise para os Gráficos
     gerarGraficoMotivos(todosDados);
     gerarGraficoMes(dadosFinalizados);
-
-    // 3. Análise para a Tabela de Técnicos
     gerarTabelaTecnicos(dadosFinalizados);
 
     lucide.createIcons();
   }
 
   function analisarKPIs(dadosFinalizados, todosDados) {
-    // KPI: Tempo Médio de Resolução
     let totalDias = 0;
     dadosFinalizados.forEach(d => {
         const inicio = new Date(d.dataParada);
@@ -169,10 +172,8 @@
     const tempoMedio = dadosFinalizados.length > 0 ? (totalDias / dadosFinalizados.length).toFixed(1) : 0;
     document.getElementById('kpi-tempo-medio').textContent = `${tempoMedio} dias`;
 
-    // KPI: Total de Finalizados
     document.getElementById('kpi-total-finalizados').textContent = dadosFinalizados.length;
 
-    // KPIs: Técnico e Motivo mais frequentes
     const contagemTecnicos = contarOcorrencias(todosDados, 'tecnico');
     const contagemMotivos = contarOcorrencias(todosDados, 'motivo');
     
@@ -198,7 +199,11 @@
                 backgroundColor: ['#003f5c', '#58508d', '#bc5090', '#ff6361', '#ffa600', '#d45087', '#f95d6a', '#2f4b7c', '#665191'],
             }]
         },
-        options: { responsive: true, maintainAspectRatio: false }
+        options: { 
+            responsive: true, 
+            maintainAspectRatio: false,
+            plugins: { legend: { labels: { color: '#fff' } } } // Legendas em branco
+        }
     });
   }
 
@@ -223,7 +228,22 @@
                 backgroundColor: '#009bd6',
             }]
         },
-        options: { scales: { y: { beginAtZero: true } }, responsive: true, maintainAspectRatio: false }
+        options: { 
+            responsive: true, 
+            maintainAspectRatio: false,
+            scales: { 
+                y: { 
+                    beginAtZero: true,
+                    ticks: { color: '#fff' }, // Cor dos números do eixo Y
+                    grid: { color: 'rgba(255, 255, 255, 0.1)' } // Cor das linhas de grade
+                },
+                x: {
+                    ticks: { color: '#fff' }, // Cor dos meses do eixo X
+                    grid: { color: 'rgba(255, 255, 255, 0.1)' }
+                }
+            },
+            plugins: { legend: { labels: { color: '#fff' } } }
+        }
     });
   }
 
@@ -244,7 +264,6 @@
       const tabela = document.getElementById('tabela-tecnicos');
       tabela.innerHTML = '';
 
-      // Ordena por número de chamados
       const sortedPerformance = Object.entries(performance).sort((a, b) => b[1].chamados - a[1].chamados);
 
       sortedPerformance.forEach(([tecnico, dados]) => {
@@ -260,7 +279,6 @@
       });
   }
 
-  // Funções utilitárias
   function contarOcorrencias(dados, campo) {
       return dados.reduce((acc, curr) => {
           const valor = curr[campo];
@@ -272,7 +290,8 @@
   }
 
   function obterMaisFrequente(contagem) {
-      return Object.keys(contagem).reduce((a, b) => contagem[a] > contagem[b] ? a : b, null);
+      if (Object.keys(contagem).length === 0) return null;
+      return Object.keys(contagem).reduce((a, b) => contagem[a] > contagem[b] ? a : b);
   }
 
   document.addEventListener("DOMContentLoaded", carregarEAnalisarDados);
