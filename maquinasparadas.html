@@ -10,71 +10,15 @@
   <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
   <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/pt.js"></script>
   <style>
+    /* CSS OMITIDO PARA BREVIDADE - É O MESMO DA VERSÃO ANTERIOR */
     * { box-sizing: border-box; }
-
-    body {
-      margin: 0;
-      /* Fonte padronizada */
-      font-family: Arial, sans-serif;
-      background-color: #1e1e2f;
-      color: white;
-      display: flex;
-      flex-direction: column;
-      height: 100vh;
-    }
-
-    header {
-      background-color: #2c2f3f;
-      padding: 20px;
-      text-align: center;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.2 );
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-    
-    .logo {
-        /* Tamanho do logo padronizado */
-        height: 80px;
-        margin-left: 45px;
-        margin-right: 15px;
-    }
-
-    .header-center {
-        flex: 1;
-        text-align: center;
-        /* Estilo do título principal padronizado */
-        font-size: 20px;
-        font-weight: bold;
-        color: #ffffff;
-        letter-spacing: 1px;
-    }
-
-    /* Estilo do subtítulo (Filial) padronizado */
-    #dynamic-title {
-      margin-top: 10px;
-      font-size: 16px;
-      font-weight: normal;
-      color: #ccc;
-      font-style: italic;
-    }
-
-    .btn-voltar {
-        background: linear-gradient(135deg, #00205b, #009bd6);
-        border: none;
-        padding: 10px 16px;
-        border-radius: 8px;
-        color: white;
-        cursor: pointer;
-        transition: transform 0.2s;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        margin-right: 20px;
-        font-size: 14px;
-    }
+    body { margin: 0; font-family: Arial, sans-serif; background-color: #1e1e2f; color: white; display: flex; flex-direction: column; height: 100vh; }
+    header { background-color: #2c2f3f; padding: 20px; text-align: center; box-shadow: 0 2px 4px rgba(0,0,0,0.2 ); display: flex; align-items: center; justify-content: space-between; }
+    .logo { height: 80px; margin-left: 45px; margin-right: 15px; }
+    .header-center { flex: 1; text-align: center; font-size: 20px; font-weight: bold; color: #ffffff; letter-spacing: 1px; }
+    #dynamic-title { margin-top: 10px; font-size: 16px; font-weight: normal; color: #ccc; font-style: italic; }
+    .btn-voltar { background: linear-gradient(135deg, #00205b, #009bd6); border: none; padding: 10px 16px; border-radius: 8px; color: white; cursor: pointer; transition: transform 0.2s; display: flex; align-items: center; gap: 8px; margin-right: 20px; font-size: 14px; }
     .btn-voltar:hover { transform: scale(1.05); }
-
     .main { display: flex; flex: 1; overflow: hidden; }
     .sidebar { width: 250px; background-color: #2c2f3f; padding: 20px; display: flex; flex-direction: column; gap: 20px; overflow-y: auto; }
     .card { padding: 20px; border-radius: 16px; color: white; background: linear-gradient(145deg, #3a3d5e, #2c2f4f); box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3); text-align: left; display: flex; flex-direction: column; gap: 5px; }
@@ -114,7 +58,6 @@
 </head>
 <body>
   <header>
-    <!-- Caminho do logo atualizado -->
     <img src="assets/logo.png" alt="Logo" class="logo">
     <div class="header-center">
         <em>Controle de Máquinas Paradas</em>
@@ -270,18 +213,44 @@
 
   let dadosMaquinas = [];
 
+  // **NOVA FUNÇÃO** para buscar as filiais do gestor de forma robusta
+  async function getFiliaisDoGestor() {
+      let filiais = JSON.parse(localStorage.getItem("gestorFilial") || "[]");
+      if (filiais.length > 0) {
+          return filiais;
+      }
+
+      const emailGestor = localStorage.getItem("gestorEmail");
+      if (!emailGestor) {
+          alert("E-mail do gestor não encontrado. Faça login novamente.");
+          return [];
+      }
+
+      const gestoresRef = collection(db, "gestores");
+      const q = query(gestoresRef, where("email", "==", emailGestor));
+      const snapshot = await getDocs(q);
+
+      if (!snapshot.empty) {
+          const dadosGestor = snapshot.docs[0].data();
+          filiais = dadosGestor.filial || [];
+          localStorage.setItem("gestorFilial", JSON.stringify(filiais)); // Salva para uso futuro
+          return filiais;
+      } else {
+          alert("Gestor não encontrado no banco de dados.");
+          return [];
+      }
+  }
+
   async function carregarDados() {
-    // Adicionado para carregar a filial do gestor, como no script de referência
-    const filiaisLogadas = JSON.parse(localStorage.getItem("gestorFilial") || "[]");
+    const filiaisLogadas = await getFiliaisDoGestor(); // **CORREÇÃO AQUI**
+
     if (filiaisLogadas.length === 0) {
-        document.getElementById("dynamic-title").textContent = "Nenhuma filial selecionada";
-        // Você pode querer buscar as filiais aqui se o localStorage estiver vazio
-        // await carregarFiliaisDoGestor(); // Exemplo
+        document.getElementById("dynamic-title").textContent = "Nenhuma filial encontrada";
+        document.getElementById("tabela-maquinas").innerHTML = '<tr><td colspan="9">Nenhuma filial de gestor encontrada para carregar os dados.</td></tr>';
         return;
     }
     document.getElementById("dynamic-title").textContent = `Filial: ${filiaisLogadas.join(", ")}`;
 
-    // Query para buscar apenas documentos da filial logada
     const q = query(maquinasCollection, where("filial", "in", filiaisLogadas));
     
     try {
@@ -332,14 +301,18 @@
     });
 
     renderizarTabela(dadosFiltrados);
-    // **ALTERAÇÃO PRINCIPAL AQUI:** Os cards agora são atualizados com base nos dados já filtrados
     atualizarCards(dadosFiltrados);
   }
 
   function renderizarTabela(dados) {
     const tabela = document.getElementById('tabela-maquinas');
     tabela.innerHTML = '';
-    dados.sort((a, b) => new Date(b.dataParada) - new Date(a.dataParada)); // Ordena por data mais recente
+    dados.sort((a, b) => new Date(b.dataParada) - new Date(a.dataParada));
+
+    if (dados.length === 0) {
+        tabela.innerHTML = '<tr><td colspan="9" style="text-align: center;">Nenhum registro encontrado para os filtros aplicados.</td></tr>';
+        return;
+    }
 
     dados.forEach(dado => {
         const linha = `
@@ -364,14 +337,12 @@
     });
   }
   
-  // A função agora recebe os dados filtrados como parâmetro
   function atualizarCards(dadosParaCalculo) {
       const hoje = new Date();
       const mesAtual = hoje.getMonth();
       const anoAtual = hoje.getFullYear();
       const trintaDiasAtras = new Date(hoje - 30 * 24 * 60 * 60 * 1000);
 
-      // Usa os dados filtrados para os cálculos
       const totalAberto = dadosParaCalculo.filter(d => d.status === 'parada').length;
       
       const abertasNoMes = dadosParaCalculo.filter(d => {
@@ -379,8 +350,6 @@
           return dataAbertura.getMonth() === mesAtual && dataAbertura.getFullYear() === anoAtual;
       }).length;
 
-      // Para fechadas e concluídas, ainda usamos o array completo (dadosMaquinas)
-      // para refletir o total do mês, independente do filtro atual.
       const fechadasNoMes = dadosMaquinas.filter(d => {
           if (!d.dataFinal) return false;
           const dataFechamento = new Date(d.dataFinal + 'T12:00:00');
@@ -440,8 +409,7 @@
         return;
     }
 
-    // Adiciona a filial ao salvar, como no script de referência
-    const filiaisLogadas = JSON.parse(localStorage.getItem("gestorFilial") || "[]");
+    const filiaisLogadas = await getFiliaisDoGestor();
 
     const novaMaquina = {
         dataParada,
@@ -453,7 +421,7 @@
         tecnico: document.getElementById('novo-tecnico').value,
         motivo,
         status: 'parada',
-        filial: filiaisLogadas[0] || "Não informado" // Salva a primeira filial do gestor
+        filial: filiaisLogadas[0] || "Não informado"
     };
 
     try {
