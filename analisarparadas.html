@@ -6,7 +6,10 @@
   <title>Análise de Máquinas Paradas</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- Biblioteca de Gráficos -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- Plugin para mostrar labels (percentuais ) no gráfico -->
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
   <style>
     * { box-sizing: border-box; }
     body { margin: 0; font-family: Arial, sans-serif; background-color: #1e1e2f; color: white; display: flex; flex-direction: column; height: 100vh; }
@@ -21,6 +24,14 @@
     .card { padding: 20px; border-radius: 16px; color: white; background: linear-gradient(145deg, #3a3d5e, #2c2f4f); box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3); text-align: left; display: flex; flex-direction: column; gap: 5px; }
     .card h2 { font-size: 28px; margin: 0; }
     .card p { font-size: 14px; color: #ccc; margin: 0; display: flex; align-items: center; gap: 8px; }
+    
+    /* --- AJUSTE DE FONTE AQUI --- */
+    .card h2.texto-longo {
+        font-size: 18px; /* Fonte menor para textos */
+        font-weight: bold;
+        line-height: 1.2; /* Melhora o espaçamento se quebrar a linha */
+    }
+
     .content { flex: 1; padding: 30px; background-color: #262a3d; overflow-y: auto; }
     .graficos-container { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-bottom: 30px; }
     
@@ -28,9 +39,15 @@
         background-color: #2c2f3f;
         padding: 20px;
         border-radius: 12px;
-        /* --- CORREÇÃO AQUI --- */
         position: relative; 
-        height: 40vh; /* Altura definida para dar um tamanho inicial estável */
+        height: 40vh;
+    }
+    
+    /* --- AJUSTE DE LAYOUT DO GRÁFICO AQUI --- */
+    #grafico-motivos-container {
+        width: 75%; /* Reduz a largura do container do canvas */
+        margin: 0 auto; /* Centraliza o container */
+        height: 100%;
     }
 
     .grafico-box h3 { margin-top: 0; border-bottom: 1px solid #444; padding-bottom: 10px; }
@@ -40,7 +57,7 @@
     
     @media (max-width: 900px) {
         .graficos-container { grid-template-columns: 1fr; }
-        .grafico-box { height: 45vh; } /* Ajusta altura para tela menor */
+        .grafico-box { height: 45vh; }
     }
     @media (max-width: 768px) {
         .sidebar { display: none; }
@@ -71,11 +88,11 @@
           <p><i data-lucide="check-check"></i> Total de Finalizados</p>
         </div>
         <div class="card">
-          <h2 id="kpi-tecnico-destaque">-</h2>
+          <h2 id="kpi-tecnico-destaque" class="texto-longo">-</h2>
           <p><i data-lucide="user-check"></i> Técnico Mais Acionado</p>
         </div>
         <div class="card">
-          <h2 id="kpi-principal-motivo">-</h2>
+          <h2 id="kpi-principal-motivo" class="texto-longo">-</h2>
           <p><i data-lucide="wrench"></i> Principal Causa de Parada</p>
         </div>
     </div>
@@ -84,7 +101,10 @@
         <div class="graficos-container">
             <div class="grafico-box">
                 <h3>Principais Motivos de Parada</h3>
-                <canvas id="grafico-motivos"></canvas>
+                <!-- Container extra para controlar o tamanho do canvas -->
+                <div id="grafico-motivos-container">
+                    <canvas id="grafico-motivos"></canvas>
+                </div>
             </div>
             <div class="grafico-box">
                 <h3>Chamados Finalizados por Mês</h3>
@@ -114,13 +134,16 @@
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
   import { getFirestore, collection, getDocs, query, where } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
+  // Registra o plugin de datalabels globalmente
+  Chart.register(ChartDataLabels );
+
   const firebaseConfig = {
     apiKey: "AIzaSyDcjPa9jXsCCu6lNc1fjVg4Bzz1toKWAGY",
     authDomain: "agro-divel.firebaseapp.com",
     projectId: "agro-divel"
   };
 
-  const app = initializeApp(firebaseConfig );
+  const app = initializeApp(firebaseConfig);
   const db = getFirestore(app);
 
   async function getFiliaisDoGestor() {
@@ -194,7 +217,6 @@
         data: {
             labels: labels,
             datasets: [{
-                label: 'Motivos de Parada',
                 data: data,
                 backgroundColor: ['#003f5c', '#58508d', '#bc5090', '#ff6361', '#ffa600', '#d45087', '#f95d6a', '#2f4b7c', '#665191'],
             }]
@@ -202,7 +224,24 @@
         options: { 
             responsive: true, 
             maintainAspectRatio: false,
-            plugins: { legend: { labels: { color: '#fff' } } } // Legendas em branco
+            plugins: {
+                legend: { 
+                    position: 'bottom', // Posição da legenda
+                    labels: { color: '#fff' } 
+                },
+                // --- CONFIGURAÇÃO DO PERCENTUAL AQUI ---
+                datalabels: {
+                    formatter: (value, ctx) => {
+                        const sum = ctx.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
+                        const percentage = (value * 100 / sum).toFixed(1) + '%';
+                        return percentage;
+                    },
+                    color: '#fff',
+                    font: {
+                        weight: 'bold'
+                    }
+                }
+            }
         }
     });
   }
@@ -234,15 +273,18 @@
             scales: { 
                 y: { 
                     beginAtZero: true,
-                    ticks: { color: '#fff' }, // Cor dos números do eixo Y
-                    grid: { color: 'rgba(255, 255, 255, 0.1)' } // Cor das linhas de grade
+                    ticks: { color: '#fff', stepSize: 1 },
+                    grid: { color: 'rgba(255, 255, 255, 0.1)' }
                 },
                 x: {
-                    ticks: { color: '#fff' }, // Cor dos meses do eixo X
-                    grid: { color: 'rgba(255, 255, 255, 0.1)' }
+                    ticks: { color: '#fff' },
+                    grid: { display: false } // Remove linhas de grade verticais
                 }
             },
-            plugins: { legend: { labels: { color: '#fff' } } }
+            plugins: { 
+                legend: { display: false }, // Esconde a legenda "Chamados Finalizados"
+                datalabels: { display: false } // Garante que o plugin não atue neste gráfico
+            }
         }
     });
   }
