@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="theme-color" content="#2c2f3f" />
+  <title>Análise de Máquinas Paradas</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- Biblioteca de Gráficos -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: Arial, sans-serif; background-color: #1e1e2f; color: white; display: flex; flex-direction: column; height: 100vh; }
+    header { background-color: #2c2f3f; padding: 20px; text-align: center; box-shadow: 0 2px 4px rgba(0,0,0,0.2 ); display: flex; align-items: center; justify-content: space-between; }
+    .logo { height: 80px; margin-left: 45px; margin-right: 15px; }
+    .header-center { flex: 1; text-align: center; font-size: 20px; font-weight: bold; color: #ffffff; letter-spacing: 1px; }
+    #dynamic-title { margin-top: 10px; font-size: 16px; font-weight: normal; color: #ccc; font-style: italic; }
+    .btn-voltar { background: linear-gradient(135deg, #00205b, #009bd6); border: none; padding: 10px 16px; border-radius: 8px; color: white; cursor: pointer; transition: transform 0.2s; display: flex; align-items: center; gap: 8px; margin-right: 20px; font-size: 14px; }
+    .btn-voltar:hover { transform: scale(1.05); }
+    .main { display: flex; flex: 1; overflow: hidden; }
+    .sidebar { width: 250px; background-color: #2c2f3f; padding: 20px; display: flex; flex-direction: column; gap: 20px; overflow-y: auto; }
+    .card { padding: 20px; border-radius: 16px; color: white; background: linear-gradient(145deg, #3a3d5e, #2c2f4f); box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3); text-align: left; display: flex; flex-direction: column; gap: 5px; }
+    .card h2 { font-size: 28px; margin: 0; }
+    .card p { font-size: 14px; color: #ccc; margin: 0; display: flex; align-items: center; gap: 8px; }
+    .content { flex: 1; padding: 30px; background-color: #262a3d; overflow-y: auto; }
+    .graficos-container { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-bottom: 30px; }
+    .grafico-box { background-color: #2c2f3f; padding: 20px; border-radius: 12px; }
+    .grafico-box h3 { margin-top: 0; border-bottom: 1px solid #444; padding-bottom: 10px; }
+    table { width: 100%; border-collapse: collapse; background-color: #2c2f3f; border-radius: 12px; overflow: hidden; }
+    th, td { font-size: 12px; padding: 12px 15px; text-align: left; border-bottom: 1px solid #444; }
+    th { background-color: #ffffff; color: #00205b; }
+    
+    @media (max-width: 900px) {
+        .graficos-container { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 768px) {
+        .sidebar { display: none; }
+        .main { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <img src="assets/logo.png" alt="Logo" class="logo">
+    <div class="header-center">
+        <em>Análise de Máquinas Paradas</em>
+        <div id="dynamic-title">Carregando...</div>
+    </div>
+    <button class="btn-voltar" title="Voltar" onclick="window.history.back()">
+        <i data-lucide="arrow-left" style="width: 16px; height: 16px;"></i> Voltar
+    </button>
+  </header>
+
+  <div class="main">
+    <div class="sidebar">
+        <div class="card">
+          <h2 id="kpi-tempo-medio">0 dias</h2>
+          <p><i data-lucide="timer"></i> Tempo Médio de Resolução</p>
+        </div>
+        <div class="card">
+          <h2 id="kpi-total-finalizados">0</h2>
+          <p><i data-lucide="check-check"></i> Total de Finalizados</p>
+        </div>
+        <div class="card">
+          <h2 id="kpi-tecnico-destaque">-</h2>
+          <p><i data-lucide="user-check"></i> Técnico Mais Acionado</p>
+        </div>
+        <div class="card">
+          <h2 id="kpi-principal-motivo">-</h2>
+          <p><i data-lucide="wrench"></i> Principal Causa de Parada</p>
+        </div>
+    </div>
+
+    <div class="content">
+        <div class="graficos-container">
+            <div class="grafico-box">
+                <h3>Principais Motivos de Parada</h3>
+                <canvas id="grafico-motivos"></canvas>
+            </div>
+            <div class="grafico-box">
+                <h3>Chamados Finalizados por Mês</h3>
+                <canvas id="grafico-mes"></canvas>
+            </div>
+        </div>
+
+        <div class="tabela-container">
+            <h3>Performance por Técnico</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Técnico</th>
+                        <th>Chamados Resolvidos</th>
+                        <th>Tempo Médio de Resolução (dias)</th>
+                    </tr>
+                </thead>
+                <tbody id="tabela-tecnicos">
+                    <!-- Dados preenchidos via JS -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+  </div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import { getFirestore, collection, getDocs, query, where } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyDcjPa9jXsCCu6lNc1fjVg4Bzz1toKWAGY",
+    authDomain: "agro-divel.firebaseapp.com",
+    projectId: "agro-divel"
+  };
+
+  const app = initializeApp(firebaseConfig );
+  const db = getFirestore(app);
+
+  async function getFiliaisDoGestor() {
+      let filiais = JSON.parse(localStorage.getItem("gestorFilial") || "[]");
+      if (filiais.length > 0) return filiais;
+      const emailGestor = localStorage.getItem("gestorEmail");
+      if (!emailGestor) return [];
+      const gestoresRef = collection(db, "gestores");
+      const q = query(gestoresRef, where("email", "==", emailGestor));
+      const snapshot = await getDocs(q);
+      if (!snapshot.empty) {
+          filiais = snapshot.docs[0].data().filial || [];
+          localStorage.setItem("gestorFilial", JSON.stringify(filiais));
+          return filiais;
+      }
+      return [];
+  }
+
+  async function carregarEAnalisarDados() {
+    const filiaisLogadas = await getFiliaisDoGestor();
+    if (filiaisLogadas.length === 0) {
+        document.getElementById("dynamic-title").textContent = "Nenhuma filial encontrada";
+        return;
+    }
+    document.getElementById("dynamic-title").textContent = `Filial: ${filiaisLogadas.join(", ")}`;
+
+    const q = query(collection(db, "maquinasParadas"), where("filial", "in", filiaisLogadas));
+    const snapshot = await getDocs(q);
+    const todosDados = snapshot.docs.map(doc => doc.data());
+    
+    const dadosFinalizados = todosDados.filter(d => d.status === 'concluida' && d.dataParada && d.dataFinal);
+
+    // 1. Análise para os KPIs
+    analisarKPIs(dadosFinalizados, todosDados);
+
+    // 2. Análise para os Gráficos
+    gerarGraficoMotivos(todosDados);
+    gerarGraficoMes(dadosFinalizados);
+
+    // 3. Análise para a Tabela de Técnicos
+    gerarTabelaTecnicos(dadosFinalizados);
+
+    lucide.createIcons();
+  }
+
+  function analisarKPIs(dadosFinalizados, todosDados) {
+    // KPI: Tempo Médio de Resolução
+    let totalDias = 0;
+    dadosFinalizados.forEach(d => {
+        const inicio = new Date(d.dataParada);
+        const fim = new Date(d.dataFinal);
+        const diff = (fim - inicio) / (1000 * 60 * 60 * 24);
+        totalDias += diff;
+    });
+    const tempoMedio = dadosFinalizados.length > 0 ? (totalDias / dadosFinalizados.length).toFixed(1) : 0;
+    document.getElementById('kpi-tempo-medio').textContent = `${tempoMedio} dias`;
+
+    // KPI: Total de Finalizados
+    document.getElementById('kpi-total-finalizados').textContent = dadosFinalizados.length;
+
+    // KPIs: Técnico e Motivo mais frequentes
+    const contagemTecnicos = contarOcorrencias(todosDados, 'tecnico');
+    const contagemMotivos = contarOcorrencias(todosDados, 'motivo');
+    
+    const tecnicoDestaque = obterMaisFrequente(contagemTecnicos);
+    const motivoDestaque = obterMaisFrequente(contagemMotivos);
+
+    document.getElementById('kpi-tecnico-destaque').textContent = tecnicoDestaque || '-';
+    document.getElementById('kpi-principal-motivo').textContent = motivoDestaque || '-';
+  }
+
+  function gerarGraficoMotivos(todosDados) {
+    const contagem = contarOcorrencias(todosDados, 'motivo');
+    const labels = Object.keys(contagem);
+    const data = Object.values(contagem);
+
+    new Chart(document.getElementById('grafico-motivos'), {
+        type: 'pie',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Motivos de Parada',
+                data: data,
+                backgroundColor: ['#003f5c', '#58508d', '#bc5090', '#ff6361', '#ffa600', '#d45087', '#f95d6a', '#2f4b7c', '#665191'],
+            }]
+        },
+        options: { responsive: true, maintainAspectRatio: false }
+    });
+  }
+
+  function gerarGraficoMes(dadosFinalizados) {
+    const chamadosPorMes = {};
+    const nomesMeses = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
+    
+    nomesMeses.forEach(mes => chamadosPorMes[mes] = 0);
+
+    dadosFinalizados.forEach(d => {
+        const mes = new Date(d.dataFinal + 'T12:00:00').getMonth();
+        chamadosPorMes[nomesMeses[mes]]++;
+    });
+
+    new Chart(document.getElementById('grafico-mes'), {
+        type: 'bar',
+        data: {
+            labels: Object.keys(chamadosPorMes),
+            datasets: [{
+                label: 'Chamados Finalizados',
+                data: Object.values(chamadosPorMes),
+                backgroundColor: '#009bd6',
+            }]
+        },
+        options: { scales: { y: { beginAtZero: true } }, responsive: true, maintainAspectRatio: false }
+    });
+  }
+
+  function gerarTabelaTecnicos(dadosFinalizados) {
+      const performance = {};
+
+      dadosFinalizados.forEach(d => {
+          if (!d.tecnico) return;
+          if (!performance[d.tecnico]) {
+              performance[d.tecnico] = { chamados: 0, totalDias: 0 };
+          }
+          performance[d.tecnico].chamados++;
+          const inicio = new Date(d.dataParada);
+          const fim = new Date(d.dataFinal);
+          performance[d.tecnico].totalDias += (fim - inicio) / (1000 * 60 * 60 * 24);
+      });
+
+      const tabela = document.getElementById('tabela-tecnicos');
+      tabela.innerHTML = '';
+
+      // Ordena por número de chamados
+      const sortedPerformance = Object.entries(performance).sort((a, b) => b[1].chamados - a[1].chamados);
+
+      sortedPerformance.forEach(([tecnico, dados]) => {
+          const tempoMedio = (dados.totalDias / dados.chamados).toFixed(1);
+          const linha = `
+              <tr>
+                  <td>${tecnico}</td>
+                  <td>${dados.chamados}</td>
+                  <td>${tempoMedio}</td>
+              </tr>
+          `;
+          tabela.innerHTML += linha;
+      });
+  }
+
+  // Funções utilitárias
+  function contarOcorrencias(dados, campo) {
+      return dados.reduce((acc, curr) => {
+          const valor = curr[campo];
+          if (valor) {
+              acc[valor] = (acc[valor] || 0) + 1;
+          }
+          return acc;
+      }, {});
+  }
+
+  function obterMaisFrequente(contagem) {
+      return Object.keys(contagem).reduce((a, b) => contagem[a] > contagem[b] ? a : b, null);
+  }
+
+  document.addEventListener("DOMContentLoaded", carregarEAnalisarDados);
+
+</script>
+</body>
+</html>
