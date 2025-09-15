@@ -10,7 +10,6 @@
   <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
   <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/pt.js"></script>
   <style>
-    /* CSS OMITIDO PARA BREVIDADE - É O MESMO DA VERSÃO ANTERIOR */
     * { box-sizing: border-box; }
     body { margin: 0; font-family: Arial, sans-serif; background-color: #1e1e2f; color: white; display: flex; flex-direction: column; height: 100vh; }
     header { background-color: #2c2f3f; padding: 20px; text-align: center; box-shadow: 0 2px 4px rgba(0,0,0,0.2 ); display: flex; align-items: center; justify-content: space-between; }
@@ -54,6 +53,19 @@
     ::-webkit-scrollbar-thumb { background: #009bd6; border-radius: 10px; }
     ::-webkit-scrollbar-thumb:hover { background: #00bfff; }
     * { scrollbar-width: thin; scrollbar-color: #009bd6 #1e1e2f; }
+
+    /* --- NOVOS ESTILOS --- */
+    .status-concluido { background-color: #193b7c; } /* Verde escuro para concluído */
+    .status-cancelado { background-color: #626262; } /* Cinza para cancelado */
+
+    .linha-alerta {
+      animation: pulsarAlerta 1.5s ease-in-out infinite alternate;
+    }
+
+    @keyframes pulsarAlerta {
+      from { background-color: #950000; } /* Vermelho escuro */
+      to { background-color: #c72c41; } /* Vermelho mais claro */
+    }
   </style>
 </head>
 <body>
@@ -213,17 +225,12 @@
 
   let dadosMaquinas = [];
 
-  // **FUNÇÃO CORRIGIDA** para buscar as filiais do gestor de forma robusta
   async function getFiliaisDoGestor() {
       let filiais = JSON.parse(localStorage.getItem("gestorFilial") || "[]");
-      if (filiais.length > 0) {
-          return filiais;
-      }
+      if (filiais.length > 0) return filiais;
 
       const emailGestor = localStorage.getItem("gestorEmail");
       if (!emailGestor) {
-          // Se não houver e-mail, não podemos buscar. Retorna vazio.
-          // O ideal é que o usuário seja redirecionado para o login.
           console.warn("E-mail do gestor não encontrado no localStorage.");
           return [];
       }
@@ -236,7 +243,7 @@
         if (!snapshot.empty) {
             const dadosGestor = snapshot.docs[0].data();
             filiais = dadosGestor.filial || [];
-            localStorage.setItem("gestorFilial", JSON.stringify(filiais)); // Salva para uso futuro
+            localStorage.setItem("gestorFilial", JSON.stringify(filiais));
             return filiais;
         } else {
             console.warn("Gestor com e-mail " + emailGestor + " não encontrado no banco de dados.");
@@ -304,7 +311,8 @@
             buscaPeriodo = dataParada >= filtroPeriodo[0] && dataParada <= filtroPeriodo[1];
         }
 
-        return dado.status === 'parada' && buscaCliente && buscaMotivo && buscaTecnico && buscaPeriodo;
+        // **ALTERAÇÃO AQUI**: A tabela agora mostra todos os status, não apenas 'parada'
+        return buscaCliente && buscaMotivo && buscaTecnico && buscaPeriodo;
     });
 
     renderizarTabela(dadosFiltrados);
@@ -314,7 +322,21 @@
   function renderizarTabela(dados) {
     const tabela = document.getElementById('tabela-maquinas');
     tabela.innerHTML = '';
-    dados.sort((a, b) => new Date(b.dataParada) - new Date(a.dataParada));
+
+    // Lógica de ordenação: Alertas primeiro, depois em andamento, depois concluídos/cancelados
+    dados.sort((a, b) => {
+        const statusOrder = { 'parada': 1, 'concluida': 2, 'cancelada': 3 };
+        const aIsAlert = isOverdue(a.dataParada) && a.status === 'parada';
+        const bIsAlert = isOverdue(b.dataParada) && b.status === 'parada';
+
+        if (aIsAlert && !bIsAlert) return -1;
+        if (!aIsAlert && bIsAlert) return 1;
+        
+        const statusDiff = (statusOrder[a.status] || 4) - (statusOrder[b.status] || 4);
+        if (statusDiff !== 0) return statusDiff;
+
+        return new Date(b.dataParada) - new Date(a.dataParada);
+    });
 
     if (dados.length === 0) {
         tabela.innerHTML = '<tr><td colspan="9" style="text-align: center;">Nenhum registro encontrado para os filtros aplicados.</td></tr>';
@@ -322,8 +344,18 @@
     }
 
     dados.forEach(dado => {
+        // **NOVAS CLASSES DE STATUS E ALERTA**
+        let classesLinha = '';
+        if (dado.status === 'concluida') {
+            classesLinha = 'status-concluido';
+        } else if (dado.status === 'cancelada') {
+            classesLinha = 'status-cancelado';
+        } else if (isOverdue(dado.dataParada)) {
+            classesLinha = 'linha-alerta';
+        }
+
         const linha = `
-            <tr id="maquina-${dado.id}">
+            <tr id="maquina-${dado.id}" class="${classesLinha}">
                 <td>${formatarData(dado.dataParada)}</td>
                 <td>${dado.cliente || '-'}</td>
                 <td>${dado.chassis || '-'}</td>
@@ -334,14 +366,25 @@
                 <td>${dado.motivo || '-'}</td>
                 <td>
                     <div class="acoes-botoes">
-                        <button class="btn-acao btn-concluir" onclick="abrirPopup('popup-concluir', '${dado.id}')">Concluir</button>
-                        <button class="btn-acao btn-cancelar" onclick="abrirPopup('popup-cancelar', '${dado.id}')">Cancelar</button>
+                        ${dado.status === 'parada' ? `
+                            <button class="btn-acao btn-concluir" onclick="abrirPopup('popup-concluir', '${dado.id}')">Concluir</button>
+                            <button class="btn-acao btn-cancelar" onclick="abrirPopup('popup-cancelar', '${dado.id}')">Cancelar</button>
+                        ` : `<span>Finalizado</span>`}
                     </div>
                 </td>
             </tr>
         `;
         tabela.innerHTML += linha;
     });
+  }
+
+  // **NOVA FUNÇÃO** para verificar se está atrasado
+  function isOverdue(dataParadaStr) {
+      if (!dataParadaStr) return false;
+      const cincoDiasEmMs = 5 * 24 * 60 * 60 * 1000;
+      const dataParada = new Date(dataParadaStr + "T00:00:00");
+      const hoje = new Date();
+      return (hoje - dataParada) > cincoDiasEmMs;
   }
   
   function atualizarCards(dadosParaCalculo) {
@@ -353,6 +396,7 @@
       const totalAberto = dadosParaCalculo.filter(d => d.status === 'parada').length;
       
       const abertasNoMes = dadosParaCalculo.filter(d => {
+          if (d.status !== 'parada') return false; // Conta apenas as abertas no mês que ainda estão em aberto no filtro
           const dataAbertura = new Date((d.dataParada || "1970-01-01") + 'T12:00:00');
           return dataAbertura.getMonth() === mesAtual && dataAbertura.getFullYear() === anoAtual;
       }).length;
@@ -416,7 +460,7 @@
         return;
     }
 
-    const filiaisLogadas = await getFiliaisDoGestor(); // **GARANTE QUE TEMOS A FILIAL**
+    const filiaisLogadas = await getFiliaisDoGestor();
     if (filiaisLogadas.length === 0) {
         alert("Não foi possível identificar a filial do gestor. O registro não pode ser salvo.");
         return;
@@ -432,7 +476,7 @@
         tecnico: document.getElementById('novo-tecnico').value,
         motivo,
         status: 'parada',
-        filial: filiaisLogadas[0] // **ADICIONA A PRIMEIRA FILIAL DA LISTA**
+        filial: filiaisLogadas[0]
     };
 
     try {
@@ -493,6 +537,3 @@
     }
   }
 </script>
-
-</body>
-</html>
