@@ -213,7 +213,7 @@
 
   let dadosMaquinas = [];
 
-  // **NOVA FUNÇÃO** para buscar as filiais do gestor de forma robusta
+  // **FUNÇÃO CORRIGIDA** para buscar as filiais do gestor de forma robusta
   async function getFiliaisDoGestor() {
       let filiais = JSON.parse(localStorage.getItem("gestorFilial") || "[]");
       if (filiais.length > 0) {
@@ -222,31 +222,38 @@
 
       const emailGestor = localStorage.getItem("gestorEmail");
       if (!emailGestor) {
-          alert("E-mail do gestor não encontrado. Faça login novamente.");
+          // Se não houver e-mail, não podemos buscar. Retorna vazio.
+          // O ideal é que o usuário seja redirecionado para o login.
+          console.warn("E-mail do gestor não encontrado no localStorage.");
           return [];
       }
 
       const gestoresRef = collection(db, "gestores");
       const q = query(gestoresRef, where("email", "==", emailGestor));
-      const snapshot = await getDocs(q);
-
-      if (!snapshot.empty) {
-          const dadosGestor = snapshot.docs[0].data();
-          filiais = dadosGestor.filial || [];
-          localStorage.setItem("gestorFilial", JSON.stringify(filiais)); // Salva para uso futuro
-          return filiais;
-      } else {
-          alert("Gestor não encontrado no banco de dados.");
+      
+      try {
+        const snapshot = await getDocs(q);
+        if (!snapshot.empty) {
+            const dadosGestor = snapshot.docs[0].data();
+            filiais = dadosGestor.filial || [];
+            localStorage.setItem("gestorFilial", JSON.stringify(filiais)); // Salva para uso futuro
+            return filiais;
+        } else {
+            console.warn("Gestor com e-mail " + emailGestor + " não encontrado no banco de dados.");
+            return [];
+        }
+      } catch (error) {
+          console.error("Erro ao buscar gestor:", error);
           return [];
       }
   }
 
   async function carregarDados() {
-    const filiaisLogadas = await getFiliaisDoGestor(); // **CORREÇÃO AQUI**
+    const filiaisLogadas = await getFiliaisDoGestor();
 
     if (filiaisLogadas.length === 0) {
         document.getElementById("dynamic-title").textContent = "Nenhuma filial encontrada";
-        document.getElementById("tabela-maquinas").innerHTML = '<tr><td colspan="9">Nenhuma filial de gestor encontrada para carregar os dados.</td></tr>';
+        document.getElementById("tabela-maquinas").innerHTML = '<tr><td colspan="9" style="text-align:center;">Nenhuma filial de gestor foi encontrada. Faça login novamente.</td></tr>';
         return;
     }
     document.getElementById("dynamic-title").textContent = `Filial: ${filiaisLogadas.join(", ")}`;
@@ -409,7 +416,11 @@
         return;
     }
 
-    const filiaisLogadas = await getFiliaisDoGestor();
+    const filiaisLogadas = await getFiliaisDoGestor(); // **GARANTE QUE TEMOS A FILIAL**
+    if (filiaisLogadas.length === 0) {
+        alert("Não foi possível identificar a filial do gestor. O registro não pode ser salvo.");
+        return;
+    }
 
     const novaMaquina = {
         dataParada,
@@ -421,7 +432,7 @@
         tecnico: document.getElementById('novo-tecnico').value,
         motivo,
         status: 'parada',
-        filial: filiaisLogadas[0] || "Não informado"
+        filial: filiaisLogadas[0] // **ADICIONA A PRIMEIRA FILIAL DA LISTA**
     };
 
     try {
