@@ -54,17 +54,18 @@
     ::-webkit-scrollbar-thumb:hover { background: #00bfff; }
     * { scrollbar-width: thin; scrollbar-color: #009bd6 #1e1e2f; }
 
-    /* --- NOVOS ESTILOS --- */
-    .status-concluido { background-color: #193b7c; } /* Verde escuro para concluído */
-    .status-cancelado { background-color: #626262; } /* Cinza para cancelado */
+    /* --- CORES PADRONIZADAS --- */
+    .status-parada { background-color: #c67903; } /* Laranja para "Em Andamento" */
+    .status-concluida { background-color: #193b7c; } /* Azul escuro para "Concluído" */
+    .status-cancelada { background-color: #626262; } /* Cinza para "Cancelado" */
 
     .linha-alerta {
-      animation: pulsarAlerta 1.5s ease-in-out infinite alternate;
+      animation: pulsarAlerta 1.2s ease-in-out infinite alternate;
     }
 
     @keyframes pulsarAlerta {
       from { background-color: #950000; } /* Vermelho escuro */
-      to { background-color: #c72c41; } /* Vermelho mais claro */
+      to { background-color: #c67903; } /* Laranja (mesma cor do em andamento) */
     }
   </style>
 </head>
@@ -105,17 +106,11 @@
             <div class="filters">
                 <input id="filtro-cliente" type="text" placeholder="Buscar por cliente ou chassi..." />
                 <input id="filtro-tecnico" type="text" placeholder="Buscar por técnico..." />
-                <select id="filtro-motivo">
-                    <option value="">Todos os Motivos</option>
-                    <option value="THD">THD</option>
-                    <option value="APROVAÇÃO DO SEGURO">APROVAÇÃO DO SEGURO</option>
-                    <option value="PEÇAS">PEÇAS</option>
-                    <option value="SEGURO">SEGURO</option>
-                    <option value="APROVAÇÃO DO CLIENTE">APROVAÇÃO DO CLIENTE</option>
-                    <option value="FERRAMENTAS">FERRAMENTAS</option>
-                    <option value="SERVIÇO DE TERCEIRO">SERVIÇO DE TERCEIRO</option>
-                    <option value="GARANTIA DE TERCEIRO">GARANTIA DE TERCEIRO</option>
-                    <option value="INDISPONIBILIDADE DE TECNICO">INDISPONIBILIDADE DE TECNICO</option>
+                <select id="filtro-status">
+                    <option value="">Todos os Status</option>
+                    <option value="parada">Em Andamento</option>
+                    <option value="concluida">Concluído</option>
+                    <option value="cancelada">Cancelado</option>
                 </select>
                 <input id="filtro-periodo" placeholder="Selecione o período" />
             </div>
@@ -288,7 +283,7 @@
     });
 
     document.getElementById('filtro-cliente').addEventListener('input', aplicarFiltros);
-    document.getElementById('filtro-motivo').addEventListener('change', aplicarFiltros);
+    document.getElementById('filtro-status').addEventListener('change', aplicarFiltros); // Adicionado filtro de status
     document.getElementById('filtro-tecnico').addEventListener('input', aplicarFiltros);
 
     carregarDados();
@@ -296,13 +291,13 @@
 
   function aplicarFiltros() {
     const filtroCliente = document.getElementById('filtro-cliente').value.toLowerCase();
-    const filtroMotivo = document.getElementById('filtro-motivo').value;
+    const filtroStatus = document.getElementById('filtro-status').value; // Novo filtro
     const filtroTecnico = document.getElementById('filtro-tecnico').value.toLowerCase();
     const filtroPeriodo = document.getElementById('filtro-periodo')._flatpickr.selectedDates;
 
     const dadosFiltrados = dadosMaquinas.filter(dado => {
         const buscaCliente = (dado.cliente || "").toLowerCase().includes(filtroCliente) || (dado.chassis || "").toLowerCase().includes(filtroCliente);
-        const buscaMotivo = !filtroMotivo || dado.motivo === filtroMotivo;
+        const buscaStatus = !filtroStatus || dado.status === filtroStatus; // Lógica do filtro de status
         const buscaTecnico = !filtroTecnico || (dado.tecnico || "").toLowerCase().includes(filtroTecnico);
         
         let buscaPeriodo = true;
@@ -311,8 +306,7 @@
             buscaPeriodo = dataParada >= filtroPeriodo[0] && dataParada <= filtroPeriodo[1];
         }
 
-        // **ALTERAÇÃO AQUI**: A tabela agora mostra todos os status, não apenas 'parada'
-        return buscaCliente && buscaMotivo && buscaTecnico && buscaPeriodo;
+        return buscaCliente && buscaStatus && buscaTecnico && buscaPeriodo;
     });
 
     renderizarTabela(dadosFiltrados);
@@ -323,7 +317,6 @@
     const tabela = document.getElementById('tabela-maquinas');
     tabela.innerHTML = '';
 
-    // Lógica de ordenação: Alertas primeiro, depois em andamento, depois concluídos/cancelados
     dados.sort((a, b) => {
         const statusOrder = { 'parada': 1, 'concluida': 2, 'cancelada': 3 };
         const aIsAlert = isOverdue(a.dataParada) && a.status === 'parada';
@@ -344,14 +337,9 @@
     }
 
     dados.forEach(dado => {
-        // **NOVAS CLASSES DE STATUS E ALERTA**
-        let classesLinha = '';
-        if (dado.status === 'concluida') {
-            classesLinha = 'status-concluido';
-        } else if (dado.status === 'cancelada') {
-            classesLinha = 'status-cancelado';
-        } else if (isOverdue(dado.dataParada)) {
-            classesLinha = 'linha-alerta';
+        let classesLinha = `status-${dado.status}`; // Aplica a cor baseada no status
+        if (dado.status === 'parada' && isOverdue(dado.dataParada)) {
+            classesLinha += ' linha-alerta'; // Adiciona o alerta se estiver em andamento e atrasado
         }
 
         const linha = `
@@ -369,7 +357,7 @@
                         ${dado.status === 'parada' ? `
                             <button class="btn-acao btn-concluir" onclick="abrirPopup('popup-concluir', '${dado.id}')">Concluir</button>
                             <button class="btn-acao btn-cancelar" onclick="abrirPopup('popup-cancelar', '${dado.id}')">Cancelar</button>
-                        ` : `<span>Finalizado</span>`}
+                        ` : `<span>${dado.status.charAt(0).toUpperCase() + dado.status.slice(1)}</span>`}
                     </div>
                 </td>
             </tr>
@@ -378,7 +366,6 @@
     });
   }
 
-  // **NOVA FUNÇÃO** para verificar se está atrasado
   function isOverdue(dataParadaStr) {
       if (!dataParadaStr) return false;
       const cincoDiasEmMs = 5 * 24 * 60 * 60 * 1000;
@@ -396,7 +383,7 @@
       const totalAberto = dadosParaCalculo.filter(d => d.status === 'parada').length;
       
       const abertasNoMes = dadosParaCalculo.filter(d => {
-          if (d.status !== 'parada') return false; // Conta apenas as abertas no mês que ainda estão em aberto no filtro
+          if (d.status !== 'parada') return false;
           const dataAbertura = new Date((d.dataParada || "1970-01-01") + 'T12:00:00');
           return dataAbertura.getMonth() === mesAtual && dataAbertura.getFullYear() === anoAtual;
       }).length;
@@ -537,3 +524,6 @@
     }
   }
 </script>
+
+</body>
+</html>
