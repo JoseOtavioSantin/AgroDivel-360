@@ -153,19 +153,22 @@
         <input type="number" id="novo-horas">
         <label for="novo-os">Ordem de Serviço</label>
         <input type="text" id="novo-os">
+        
+        <!-- === CAMPO DE TÉCNICO MODIFICADO === -->
         <label for="novo-tecnico">Técnico Responsável</label>
-        <input type="text" id="novo-tecnico">
+        <select id="novo-tecnico">
+            <option value="">Carregando técnicos...</option>
+        </select>
         
         <label for="novo-motivo">Máquina Parada Por*</label>
         <input type="text" id="novo-motivo" list="motivos-sugeridos" oninput="verificarMotivoPecas(this.value)">
         <datalist id="motivos-sugeridos">
-            <option value="THD"></option>
-            <option value="APROVAÇÃO DO SEGURO"></option>
-            <option value="PEÇAS"></option>
-            <option value="APROVAÇÃO CLIENTE"></option>
-            <option value="FALTA FERRAMENTAS"></option>
-            <option value="SERVIÇOS DE TERCEIROS"></option>
-            <option value="INDISPONIBILIDADE DE TÉCNICO"></option>
+            <option value="Peças"></option>
+            <option value="Técnico"></option>
+            <option value="Cliente"></option>
+            <option value="Garantia"></option>
+            <option value="Manutenção Preventiva"></option>
+            <option value="Outros"></option>
         </datalist>
         
         <div id="campo-curva-peca">
@@ -176,7 +179,6 @@
                 <option value="B">B</option>
                 <option value="C">C</option>
                 <option value="D">D</option>
-                <option value="E">E</option>
             </select>
         </div>
 
@@ -229,7 +231,6 @@
 
   window.verificarMotivoPecas = (motivo) => {
     const campoCurva = document.getElementById('campo-curva-peca');
-    // Usamos toLowerCase() e trim() para tornar a verificação mais robusta
     if (motivo.trim().toLowerCase() === 'peças') {
         campoCurva.style.display = 'block';
     } else {
@@ -254,6 +255,49 @@
       } catch (error) { console.error("Erro ao buscar gestor:", error); return []; }
   }
 
+  // === NOVA FUNÇÃO PARA CARREGAR TÉCNICOS FILTRADOS ===
+  async function carregarTecnicosDaFilial() {
+    const selectTecnico = document.getElementById('novo-tecnico');
+    selectTecnico.innerHTML = '<option value="">Carregando...</option>';
+
+    try {
+        const filiaisDoGestor = await getFiliaisDoGestor();
+        if (filiaisDoGestor.length === 0) {
+            selectTecnico.innerHTML = '<option value="">Nenhuma filial encontrada</option>';
+            return;
+        }
+
+        const tecnicosRef = collection(db, "tecnicos");
+        // Nota: Se um técnico pode pertencer a múltiplas filiais (array), 
+        // a consulta 'in' pode não funcionar como esperado para encontrar correspondências de array.
+        // A consulta 'array-contains-any' seria ideal, mas 'in' funciona se o campo 'filial' for uma string única.
+        // Vamos usar 'in' assumindo que o gestor pode ter mais de uma filial e o técnico está em uma delas.
+        const q = query(tecnicosRef, where("filial", "in", filiaisDoGestor));
+        
+        const snapshot = await getDocs(q);
+
+        if (snapshot.empty) {
+            selectTecnico.innerHTML = '<option value="">Nenhum técnico para esta filial</option>';
+            return;
+        }
+
+        selectTecnico.innerHTML = '<option value="">Selecione um técnico</option>';
+        
+        const nomesTecnicos = snapshot.docs.map(doc => doc.data().nome).sort();
+        
+        nomesTecnicos.forEach(nome => {
+            const option = document.createElement('option');
+            option.value = nome;
+            option.textContent = nome;
+            selectTecnico.appendChild(option);
+        });
+
+    } catch (error) {
+        console.error("Erro ao carregar técnicos da filial:", error);
+        selectTecnico.innerHTML = '<option value="">Erro ao carregar</option>';
+    }
+  }
+
   async function carregarDados() {
     const filiaisLogadas = await getFiliaisDoGestor();
     if (filiaisLogadas.length === 0) {
@@ -270,13 +314,16 @@
     } catch (error) { console.error("Erro ao carregar dados:", error); }
   }
 
+  // === EVENTO DOMContentLoaded MODIFICADO ===
   document.addEventListener("DOMContentLoaded", () => {
     lucide.createIcons();
     flatpickr("#filtro-periodo", { mode: "range", dateFormat: "Y-m-d", locale: "pt", onChange: () => aplicarFiltros() });
     document.getElementById('filtro-cliente').addEventListener('input', aplicarFiltros);
     document.getElementById('filtro-status').addEventListener('change', aplicarFiltros);
     document.getElementById('filtro-tecnico').addEventListener('input', aplicarFiltros);
+    
     carregarDados();
+    carregarTecnicosDaFilial(); // Carrega os técnicos filtrados
   });
 
   function aplicarFiltros() {
@@ -380,9 +427,9 @@
 
   window.salvarNovaMaquina = async () => {
     const motivoInput = document.getElementById('novo-motivo');
-    const dataParada = document.getElementById('novo-dataParada').value, cliente = document.getElementById('novo-cliente').value, chassis = document.getElementById('novo-chassis').value, motivo = motivoInput.value.trim();
+    const dataParada = document.getElementById('novo-dataParada').value, cliente = document.getElementById('novo-cliente').value, chassis = document.getElementById('novo-chassis').value, motivo = motivoInput.value.trim(), tecnico = document.getElementById('novo-tecnico').value;
     
-    if (!dataParada || !cliente || !chassis || !motivo) { alert('Preencha os campos obrigatórios: Data, Cliente, Chassis e Motivo.'); return; }
+    if (!dataParada || !cliente || !chassis || !motivo || !tecnico) { alert('Preencha todos os campos obrigatórios: Data, Cliente, Chassis, Técnico e Motivo.'); return; }
     
     const curvaPeca = document.getElementById('novo-curva').value;
     if (motivo.toLowerCase() === 'peças' && !curvaPeca) {
@@ -400,7 +447,7 @@
         modelo: document.getElementById('novo-modelo').value, 
         horas: parseInt(document.getElementById('novo-horas').value) || 0, 
         os: document.getElementById('novo-os').value, 
-        tecnico: document.getElementById('novo-tecnico').value, 
+        tecnico, 
         motivo, 
         status: 'parada', 
         filial: filiaisLogadas[0] 
@@ -431,4 +478,3 @@
 
 </body>
 </html>
-
