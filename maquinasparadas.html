@@ -12,7 +12,7 @@
   <style>
     * { box-sizing: border-box; }
     body { margin: 0; font-family: Arial, sans-serif; background-color: #1e1e2f; color: white; display: flex; flex-direction: column; height: 100vh; }
-    header { background-color: #2c2f3f; padding: 20px; text-align: center; box-shadow: 0 2px 4px rgba(0,0,0,0.2  ); display: flex; align-items: center; justify-content: space-between; }
+    header { background-color: #2c2f3f; padding: 20px; text-align: center; box-shadow: 0 2px 4px rgba(0,0,0,0.2   ); display: flex; align-items: center; justify-content: space-between; }
     .logo { height: 80px; margin-left: 45px; margin-right: 15px; }
     .header-center { flex: 1; text-align: center; font-size: 20px; font-weight: bold; color: #ffffff; letter-spacing: 1px; }
     #dynamic-title { margin-top: 10px; font-size: 16px; font-weight: normal; color: #ccc; font-style: italic; }
@@ -48,6 +48,8 @@
     .popup-content input, .popup-content textarea, .popup-content select { width: 100%; padding: 10px; border-radius: 6px; border: none; margin-bottom: 15px; }
     .popup-content textarea { min-height: 80px; resize: vertical; }
     .popup-buttons { text-align: right; display: flex; gap: 10px; justify-content: flex-end; }
+    /* === ALTERAÇÃO AQUI: Estilo para o campo de curva escondido === */
+    #campo-curva-peca { display: none; }
     ::-webkit-scrollbar { width: 10px; }
     ::-webkit-scrollbar-track { background: #1e1e2f; }
     ::-webkit-scrollbar-thumb { background: #009bd6; border-radius: 10px; }
@@ -108,7 +110,6 @@
                 </select>
                 <input id="filtro-periodo" placeholder="Selecione o período" />
             </div>
-            <!-- === ALTERAÇÃO AQUI === -->
             <div class="acoes-topo">
                 <button class="btn-acao-topo" title="Ir para Análise" onclick="window.location.href='analisarparadas.html'">
                     <i data-lucide="pie-chart"></i>
@@ -117,7 +118,6 @@
                     <i data-lucide="plus"></i>
                 </button>
             </div>
-            <!-- === FIM DA ALTERAÇÃO === -->
         </div>
 
       <table>
@@ -139,13 +139,79 @@
     </div>
   </div>
 
-  <!-- POPUPS (Omitidos para brevidade, são os mesmos da versão anterior) -->
-  <div id="popup-adicionar" class="popup">...</div>
-  <div id="popup-concluir" class="popup">...</div>
-  <div id="popup-cancelar" class="popup">...</div>
+  <!-- === ALTERAÇÃO AQUI: Popup de Adicionar com o novo campo === -->
+  <div id="popup-adicionar" class="popup">
+    <div class="popup-content">
+        <h3>Adicionar Nova Máquina Parada</h3>
+        <label for="novo-dataParada">Data da Parada*</label>
+        <input type="date" id="novo-dataParada">
+        <label for="novo-cliente">Cliente*</label>
+        <input type="text" id="novo-cliente">
+        <label for="novo-chassis">Chassis*</label>
+        <input type="text" id="novo-chassis">
+        <label for="novo-modelo">Modelo</label>
+        <input type="text" id="novo-modelo">
+        <label for="novo-horas">Horas</label>
+        <input type="number" id="novo-horas">
+        <label for="novo-os">Ordem de Serviço</label>
+        <input type="text" id="novo-os">
+        <label for="novo-tecnico">Técnico Responsável</label>
+        <input type="text" id="novo-tecnico">
+        <label for="novo-motivo">Máquina Parada Por*</label>
+        <select id="novo-motivo" onchange="verificarMotivoPecas(this.value)">
+            <option value="">Selecione o motivo</option>
+            <option value="Peças">Peças</option>
+            <option value="Técnico">Técnico</option>
+            <option value="Cliente">Cliente</option>
+            <option value="Outros">Outros</option>
+        </select>
+        
+        <!-- Novo campo que aparece condicionalmente -->
+        <div id="campo-curva-peca">
+            <label for="novo-curva">Curva da Peça*</label>
+            <select id="novo-curva">
+                <option value="">Selecione a curva</option>
+                <option value="A">A</option>
+                <option value="B">B</option>
+                <option value="C">C</option>
+                <option value="D">D</option>
+            </select>
+        </div>
+
+        <div class="popup-buttons">
+            <button class="btn-acao btn-cancelar" onclick="fecharPopup('popup-adicionar')">Cancelar</button>
+            <button class="btn-acao btn-concluir" onclick="salvarNovaMaquina()">Salvar</button>
+        </div>
+    </div>
+  </div>
+
+  <div id="popup-concluir" class="popup">
+    <div class="popup-content">
+        <h3>Concluir Parada</h3>
+        <input type="hidden" id="maquina-id-concluir">
+        <label for="data-resolucao">Data da Resolução*</label>
+        <input type="date" id="data-resolucao">
+        <div class="popup-buttons">
+            <button class="btn-acao btn-cancelar" onclick="fecharPopup('popup-concluir')">Cancelar</button>
+            <button class="btn-acao btn-concluir" onclick="salvarConclusao()">Salvar</button>
+        </div>
+    </div>
+  </div>
+
+  <div id="popup-cancelar" class="popup">
+    <div class="popup-content">
+        <h3>Cancelar Parada</h3>
+        <input type="hidden" id="maquina-id-cancelar">
+        <label for="motivo-cancelamento">Motivo do Cancelamento*</label>
+        <textarea id="motivo-cancelamento" placeholder="Descreva por que esta parada está sendo cancelada..."></textarea>
+        <div class="popup-buttons">
+            <button class="btn-acao btn-cancelar" onclick="fecharPopup('popup-cancelar')">Voltar</button>
+            <button class="btn-acao btn-concluir" onclick="salvarCancelamento()">Confirmar Cancelamento</button>
+        </div>
+    </div>
+  </div>
 
 <script type="module">
-  // SCRIPT (Omitido para brevidade, é o mesmo da versão anterior)
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
   import { getFirestore, collection, getDocs, addDoc, doc, updateDoc, query, where } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
@@ -154,10 +220,20 @@
     authDomain: "agro-divel.firebaseapp.com",
     projectId: "agro-divel"
   };
-  const app = initializeApp(firebaseConfig );
+  const app = initializeApp(firebaseConfig  );
   const db = getFirestore(app);
   const maquinasCollection = collection(db, "maquinasParadas");
   let dadosMaquinas = [];
+
+  // === ALTERAÇÃO AQUI: Nova função para mostrar/esconder o campo de curva ===
+  window.verificarMotivoPecas = (motivo) => {
+    const campoCurva = document.getElementById('campo-curva-peca');
+    if (motivo === 'Peças') {
+        campoCurva.style.display = 'block';
+    } else {
+        campoCurva.style.display = 'none';
+    }
+  }
 
   async function getFiliaisDoGestor() {
       let filiais = JSON.parse(localStorage.getItem("gestorFilial") || "[]");
@@ -241,7 +317,9 @@
     dados.forEach(dado => {
         let classesLinha = `status-${dado.status}`;
         if (dado.status === 'parada' && isOverdue(dado.dataParada)) { classesLinha += ' linha-alerta'; }
-        const linha = `<tr id="maquina-${dado.id}" class="${classesLinha}"><td>${formatarData(dado.dataParada)}</td><td>${dado.cliente||'-'}</td><td>${dado.chassis||'-'}</td><td>${dado.modelo||'-'}</td><td>${dado.horas||'-'}</td><td>${dado.os||'-'}</td><td>${dado.tecnico||'-'}</td><td>${dado.motivo||'-'}</td><td><div class="acoes-botoes">${dado.status==='parada'?`<button class="btn-acao btn-concluir" onclick="abrirPopup('popup-concluir','${dado.id}')">Concluir</button><button class="btn-acao btn-cancelar" onclick="abrirPopup('popup-cancelar','${dado.id}')">Cancelar</button>`:`<span>${dado.status.charAt(0).toUpperCase()+dado.status.slice(1)}</span>`}</div></td></tr>`;
+        // === ALTERAÇÃO AQUI: Mostrar a curva na tabela se o motivo for Peças ===
+        const motivoDisplay = dado.motivo === 'Peças' && dado.curvaPeca ? `Peças (Curva ${dado.curvaPeca})` : (dado.motivo || '-');
+        const linha = `<tr id="maquina-${dado.id}" class="${classesLinha}"><td>${formatarData(dado.dataParada)}</td><td>${dado.cliente||'-'}</td><td>${dado.chassis||'-'}</td><td>${dado.modelo||'-'}</td><td>${dado.horas||'-'}</td><td>${dado.os||'-'}</td><td>${dado.tecnico||'-'}</td><td>${motivoDisplay}</td><td><div class="acoes-botoes">${dado.status==='parada'?`<button class="btn-acao btn-concluir" onclick="abrirPopup('popup-concluir','${dado.id}')">Concluir</button><button class="btn-acao btn-cancelar" onclick="abrirPopup('popup-cancelar','${dado.id}')">Cancelar</button>`:`<span>${dado.status.charAt(0).toUpperCase()+dado.status.slice(1)}</span>`}</div></td></tr>`;
         tabela.innerHTML += linha;
     });
   }
@@ -294,15 +372,44 @@
     document.getElementById(popupId).style.display = 'none';
     if (popupId === 'popup-adicionar') {
         document.getElementById('novo-dataParada').value = ''; document.getElementById('novo-cliente').value = ''; document.getElementById('novo-chassis').value = ''; document.getElementById('novo-modelo').value = ''; document.getElementById('novo-horas').value = ''; document.getElementById('novo-os').value = ''; document.getElementById('novo-tecnico').value = ''; document.getElementById('novo-motivo').value = '';
+        // === ALTERAÇÃO AQUI: Limpar e esconder o campo de curva ao fechar ===
+        document.getElementById('novo-curva').value = '';
+        verificarMotivoPecas(''); // Esconde o campo
     }
   }
 
+  // === ALTERAÇÃO AQUI: Função de salvar modificada para incluir a curva ===
   window.salvarNovaMaquina = async () => {
     const dataParada = document.getElementById('novo-dataParada').value, cliente = document.getElementById('novo-cliente').value, chassis = document.getElementById('novo-chassis').value, motivo = document.getElementById('novo-motivo').value;
     if (!dataParada || !cliente || !chassis || !motivo) { alert('Preencha os campos obrigatórios: Data, Cliente, Chassis e Motivo.'); return; }
+    
+    const curvaPeca = document.getElementById('novo-curva').value;
+    if (motivo === 'Peças' && !curvaPeca) {
+        alert('Por favor, selecione a Curva da Peça.');
+        return;
+    }
+
     const filiaisLogadas = await getFiliaisDoGestor();
     if (filiaisLogadas.length === 0) { alert("Não foi possível identificar a filial do gestor."); return; }
-    const novaMaquina = { dataParada, cliente, chassis, modelo: document.getElementById('novo-modelo').value, horas: parseInt(document.getElementById('novo-horas').value) || 0, os: document.getElementById('novo-os').value, tecnico: document.getElementById('novo-tecnico').value, motivo, status: 'parada', filial: filiaisLogadas[0] };
+    
+    const novaMaquina = { 
+        dataParada, 
+        cliente, 
+        chassis, 
+        modelo: document.getElementById('novo-modelo').value, 
+        horas: parseInt(document.getElementById('novo-horas').value) || 0, 
+        os: document.getElementById('novo-os').value, 
+        tecnico: document.getElementById('novo-tecnico').value, 
+        motivo, 
+        status: 'parada', 
+        filial: filiaisLogadas[0] 
+    };
+
+    // Adiciona o campo 'curvaPeca' apenas se o motivo for 'Peças'
+    if (motivo === 'Peças') {
+        novaMaquina.curvaPeca = curvaPeca;
+    }
+
     try { await addDoc(maquinasCollection, novaMaquina); fecharPopup('popup-adicionar'); carregarDados(); } catch (error) { console.error("Erro ao salvar:", error); }
   }
 
