@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cardápio de Serviços - Detalhes da Revisão</title>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: Arial, sans-serif; background-color: #1e1e2f; color: white; display: flex; flex-direction: column; height: 100vh; }
+    header { background-color: #2c2f3f; padding: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.2 ); display: flex; align-items: center; justify-content: space-between; }
+    .logo { height: 60px; margin-left: 20px; }
+    .header-center { flex: 1; text-align: center; }
+    .header-center h1 { font-size: 20px; font-weight: bold; color: #ffffff; letter-spacing: 1px; margin: 0; }
+    .header-center p { margin-top: 10px; font-size: 16px; font-weight: normal; color: #ccc; font-style: italic; }
+    .btn-voltar { background: linear-gradient(135deg, #00205b, #009bd6); border: none; padding: 10px 16px; border-radius: 8px; color: white; cursor: pointer; transition: transform 0.2s; display: flex; align-items: center; gap: 8px; margin-right: 20px; font-size: 14px; }
+    .btn-voltar:hover { transform: scale(1.05); }
+    .main { display: flex; flex: 1; overflow: hidden; }
+    .sidebar { width: 250px; background-color: #2c2f3f; padding: 20px; display: flex; flex-direction: column; gap: 20px; overflow-y: auto; }
+    .card { padding: 20px; border-radius: 16px; color: white; background: linear-gradient(145deg, #3a3d5e, #2c2f4f); box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3); text-align: left; }
+    .card .valor { font-size: 28px; font-weight: bold; margin: 0; }
+    .card .descricao { font-size: 14px; color: #ccc; margin: 5px 0 0 0; display: flex; align-items: center; gap: 8px; }
+    .content { flex: 1; padding: 30px; background-color: #262a3d; overflow-y: auto; }
+    .filters-container { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; align-items: center; }
+    .filters { display: flex; flex-wrap: wrap; gap: 10px; }
+    .filters select { padding: 8px 12px; border-radius: 6px; border: none; min-width: 250px; height: 40px; background-color: #fff; color: #333; font-size: 14px; }
+    .acoes-topo { margin-left: auto; display: flex; gap: 10px; }
+    .btn-acao-topo { background: linear-gradient(135deg, #00205b, #009bd6); border: none; width: 40px; height: 40px; border-radius: 8px; color: white; cursor: pointer; transition: transform 0.2s; display: flex; align-items: center; justify-content: center; }
+    .btn-acao-topo:hover { transform: scale(1.05); }
+    table { width: 100%; border-collapse: collapse; background-color: #2c2f3f; border-radius: 12px; overflow: hidden; }
+    th, td { font-size: 12px; padding: 12px 15px; text-align: left; border-bottom: 1px solid #444; }
+    th { background-color: #ffffff; color: #00205b; font-weight: bold; }
+    .categoria-peca { color: #f1c40f; font-weight: bold; }
+    .categoria-checklist { color: #3498db; font-weight: bold; }
+    .categoria-lubrificante { color: #2ecc71; font-weight: bold; }
+    ::-webkit-scrollbar { width: 10px; }
+    ::-webkit-scrollbar-track { background: #1e1e2f; }
+    ::-webkit-scrollbar-thumb { background: #009bd6; border-radius: 10px; }
+    ::-webkit-scrollbar-thumb:hover { background: #00bfff; }
+  </style>
+</head>
+<body>
+  <header>
+    <img src="assets/logo.png" alt="Logo" class="logo">
+    <div class="header-center">
+      <h1 id="titulo-modelo">Carregando...</h1>
+      <p id="subtitulo-revisao">Selecione uma revisão</p>
+    </div>
+    <button class="btn-voltar" title="Voltar" onclick="window.history.back()">
+        <i data-lucide="arrow-left" style="width: 16px; height: 16px;"></i> Voltar
+    </button>
+  </header>
+  <div class="main">
+    <div class="sidebar">
+      <div class="card">
+        <h2 id="card-tempo" class="valor">--</h2>
+        <p class="descricao"><i data-lucide="clock"></i> Tempo Estimado</p>
+      </div>
+      <div class="card">
+        <h2 id="card-valor" class="valor">--</h2>
+        <p class="descricao"><i data-lucide="dollar-sign"></i> Valor Total (R$)</p>
+      </div>
+    </div>
+    <div class="content">
+      <div class="filters-container">
+        <div class="filters">
+          <select id="select-revisao">
+            <option value="">Carregando revisões...</option>
+          </select>
+        </div>
+        <div class="acoes-topo">
+          <button class="btn-acao-topo" title="Baixar Checklist como PDF" onclick="gerarPDF()">
+            <i data-lucide="download"></i>
+          </button>
+          <button class="btn-acao-topo" title="Exportar para Excel" onclick="gerarExcel()">
+            <i data-lucide="sheet"></i>
+          </button>
+        </div>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>O que é</th>
+            <th>Descrição</th>
+            <th>Rótulo / Especificação</th>
+            <th>Quantidade</th>
+          </tr>
+        </thead>
+        <tbody id="tabela-itens">
+          <tr><td colspan="4" style="text-align: center; padding: 40px;">Selecione uma revisão para ver os detalhes.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDcjPa9jXsCCu6lNc1fjVg4Bzz1toKWAGY",
+      authDomain: "agro-divel.firebaseapp.com",
+      projectId: "agro-divel"
+    };
+
+    const app = initializeApp(firebaseConfig );
+    const db = getFirestore(app);
+
+    let dadosRevisoesCarregadas = {};
+
+    document.addEventListener("DOMContentLoaded", async () => {
+      lucide.createIcons();
+      
+      const params = new URLSearchParams(window.location.search);
+      const modeloTrator = params.get('modelo');
+      
+      const tituloEl = document.getElementById('titulo-modelo');
+      const select = document.getElementById('select-revisao');
+
+      if (!modeloTrator) {
+        tituloEl.textContent = "Modelo não especificado";
+        select.innerHTML = '<option value="">Erro: Modelo não encontrado na URL</option>';
+        return;
+      }
+
+      tituloEl.textContent = `Trator Modelo ${modeloTrator}`;
+      
+      try {
+        const revisoesRef = collection(db, "servicos_revisao", modeloTrator, "revisoes");
+        const snapshot = await getDocs(revisoesRef);
+
+        if (snapshot.empty) {
+          select.innerHTML = `<option value="">Nenhuma revisão para o modelo ${modeloTrator}</option>`;
+          return;
+        }
+
+        select.innerHTML = '<option value="">-- Escolha um plano de revisão --</option>';
+        
+        const revisoes = [];
+        snapshot.forEach(doc => {
+          revisoes.push({ id: parseInt(doc.id), data: doc.data() });
+        });
+
+        revisoes.sort((a, b) => a.id - b.id);
+
+        revisoes.forEach(revisao => {
+          const option = document.createElement('option');
+          option.value = revisao.id;
+          option.textContent = `${revisao.id} Horas`;
+          select.appendChild(option);
+          dadosRevisoesCarregadas[revisao.id] = revisao.data;
+        });
+
+      } catch (error) {
+        console.error(`Erro ao carregar revisões para o modelo ${modeloTrator}:`, error);
+        select.innerHTML = '<option value="">Erro ao carregar dados</option>';
+      }
+
+      select.addEventListener('change', (event) => {
+        exibirDetalhesRevisao(event.target.value);
+      });
+    });
+
+    function exibirDetalhesRevisao(revisaoHoras) {
+      const subtitulo = document.getElementById('subtitulo-revisao');
+      const cardTempo = document.getElementById('card-tempo');
+      const cardValor = document.getElementById('card-valor');
+      const tabelaBody = document.getElementById('tabela-itens');
+      
+      if (!revisaoHoras) {
+        subtitulo.textContent = 'Selecione uma revisão para ver os detalhes';
+        cardTempo.textContent = '--';
+        cardValor.textContent = '--';
+        tabelaBody.innerHTML = `<tr><td colspan="4" style="text-align: center; padding: 40px;">Selecione uma revisão para ver os detalhes.</td></tr>`;
+        return;
+      }
+
+      const dadosDaRevisao = dadosRevisoesCarregadas[revisaoHoras];
+      if (!dadosDaRevisao) return;
+
+      subtitulo.textContent = `Plano de Revisão - ${revisaoHoras} Horas`;
+      cardTempo.textContent = dadosDaRevisao.tempo || '--';
+      cardValor.textContent = dadosDaRevisao.valor ? `R$ ${dadosDaRevisao.valor}` : '--';
+      
+      tabelaBody.innerHTML = '';
+      const itens = dadosDaRevisao.itens;
+
+      if (!itens || itens.length === 0) {
+        tabelaBody.innerHTML = `<tr><td colspan="4" style="text-align: center; padding: 40px;">Não há itens definidos para esta revisão.</td></tr>`;
+        return;
+      }
+
+      itens.forEach(item => {
+        const linha = document.createElement('tr');
+        const categoriaClass = `categoria-${item.categoria.toLowerCase()}`;
+        linha.innerHTML = `
+          <td><span class="${categoriaClass}">${item.categoria}</span></td>
+          <td>${item.descricao}</td>
+          <td>${item.rotulo}</td>
+          <td>${item.quantidade}</td>
+        `;
+        tabelaBody.appendChild(linha);
+      });
+    }
+
+    window.gerarPDF = function() {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+      const revisaoSelecionada = document.getElementById('select-revisao').value;
+      if (!revisaoSelecionada) { alert("Por favor, selecione uma revisão para gerar o PDF."); return; }
+      const modelo = document.getElementById('titulo-modelo').textContent;
+      const titulo = `Checklist de Revisão - ${modelo} (${revisaoSelecionada} Horas)`;
+      doc.text(titulo, 14, 20);
+      doc.autoTable({ startY: 30, html: 'table', headStyles: { fillColor: [0, 20, 57] }, theme: 'grid' });
+      doc.save(`revisao_${modelo.replace(/\s+/g, '_')}_${revisaoSelecionada}h.pdf`);
+    }
+
+    window.gerarExcel = function() {
+      const revisaoSelecionada = document.getElementById('select-revisao').value;
+      if (!revisaoSelecionada) { alert("Por favor, selecione uma revisão para exportar."); return; }
+      const dados = dadosRevisoesCarregadas[revisaoSelecionada]?.itens;
+      if (!dados || dados.length === 0) { alert("Não há itens para exportar nesta revisão."); return; }
+      const worksheet = XLSX.utils.json_to_sheet(dados);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Revisão");
+      worksheet["!cols"] = [ { wch: 15 }, { wch: 40 }, { wch: 30 }, { wch: 15 } ];
+      const modelo = document.getElementById('titulo-modelo').textContent.replace('Trator Modelo ', '');
+      XLSX.writeFile(workbook, `revisao_${modelo}_${revisaoSelecionada}h.xlsx`);
+    }
+  </script>
+</body>
+</html>
