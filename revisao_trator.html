@@ -42,8 +42,10 @@
   </style>
 </head>
 <body>
+  <!-- AJUSTE 1: LOGO DA PÁGINA WEB -->
+  <!-- O caminho da imagem agora aponta para a pasta 'assets' -->
   <header>
-    <img src="logo.png" alt="Logo" class="logo" id="logo-empresa" crossOrigin="anonymous">
+    <img src="assets/logo.png" alt="Logo" class="logo">
     <div class="header-center">
       <h1 id="titulo-modelo">Carregando...</h1>
       <p id="subtitulo-revisao">Selecione uma revisão</p>
@@ -52,6 +54,11 @@
         <i data-lucide="arrow-left" style="width: 16px; height: 16px;"></i> Voltar
     </button>
   </header>
+
+  <!-- AJUSTE 2: LOGO DO PDF -->
+  <!-- Imagem invisível, apenas para ser carregada e usada pelo JavaScript -->
+  <img id="logo-para-pdf" src="assets/logoPDF.png" style="display: none;" crossOrigin="anonymous">
+
   <div class="main">
     <div class="sidebar">
       <div class="card">
@@ -156,7 +163,7 @@
     }
 
     // ===================================================================
-    // FUNÇÃO GERAR PDF - VERSÃO FINAL COM AJUSTES FINOS
+    // FUNÇÃO GERAR PDF - VERSÃO FINAL COM LOGOS SEPARADAS
     // ===================================================================
     window.gerarPDF = function() {
       const { jsPDF } = window.jspdf;
@@ -177,7 +184,8 @@
       const borderColor = '#e0e0e0';
 
       // 1. CABEÇALHO
-      const logoImg = document.getElementById('logo-empresa');
+      // AJUSTE 2: Seleciona a imagem correta para o PDF
+      const logoImg = document.getElementById('logo-para-pdf'); 
       if (logoImg && logoImg.complete && logoImg.naturalHeight !== 0) {
         const canvas = document.createElement('canvas');
         const logoWidth = 45;
@@ -187,7 +195,6 @@
         const ctx = canvas.getContext('2d');
         ctx.drawImage(logoImg, 0, 0);
         const dataURL = canvas.toDataURL('image/png');
-        // AJUSTE: Logo posicionado mais para cima
         doc.addImage(dataURL, 'PNG', margin, margin - 5, logoWidth, logoHeight);
       }
       
@@ -227,7 +234,6 @@
       doc.text(dadosRevisao.tempo ? `${dadosRevisao.tempo} Horas` : 'N/A', pageWidth / 2, currentY + 7);
 
       // 3. TABELA
-      // AJUSTE: Adicionado o título "CHECKLIST" na última coluna
       const head = [['O QUE É', 'DESCRIÇÃO', 'RÓTULO / ESPECIFICAÇÃO', 'QTD.', 'CHECKLIST']];
       const body = dadosRevisao.itens.map(item => [
         item.categoria || '',
@@ -259,8 +265,8 @@
         },
         columnStyles: {
           0: { fontStyle: 'bold', halign: 'left' },
-          3: { halign: 'center' }, // Alinha Qtd. ao centro
-          4: { halign: 'center' }  // Alinha Checklist ao centro
+          3: { halign: 'center' },
+          4: { halign: 'center' }
         },
         didParseCell: function (data) {
             if (data.row.index === body.length - 1) {
@@ -286,7 +292,6 @@
       doc.setDrawColor(darkText);
       doc.setLineWidth(0.3);
       
-      // AJUSTE: Centralização do texto da assinatura
       doc.line(margin, signatureY, margin + signatureWidth, signatureY);
       doc.setFontSize(8);
       doc.setTextColor(lightText);
