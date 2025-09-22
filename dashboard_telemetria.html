@@ -9,21 +9,26 @@
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   
   <style>
-    /* O CSS permanece o mesmo */
     * { box-sizing: border-box; }
     body { margin: 0; font-family: Arial, sans-serif; background-color: #1e1e2f; color: white; display: flex; flex-direction: column; height: 100vh; }
     header { background-color: #2c2f3f; padding: 20px; text-align: center; font-size: 20px; font-weight: bold; color: #ffffff; letter-spacing: 1px; box-shadow: 0 2px 4px rgba(0,0,0,0.2  ); }
     #dynamic-title { margin-top: 10px; font-size: 16px; font-weight: normal; color: #ccc; }
     .main { display: flex; flex: 1; overflow: hidden; }
     .sidebar { width: 250px; background-color: #2c2f3f; padding: 20px; display: flex; flex-direction: column; gap: 20px; overflow-y: auto; }
-    .card { padding: 20px; border-radius: 16px; color: white; background: #193b7c; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3); text-align: left; display: flex; flex-direction: column; gap: 5px; }
+    .card { padding: 20px; border-radius: 16px; color: white; background: linear-gradient(238deg, #193b7c, #193b7c00); box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3); text-align: left; display: flex; flex-direction: column; gap: 5px; }
     .card h2 { font-size: 28px; margin: 0; }
     .card p { font-size: 14px; color: #eee; margin: 0; display: flex; align-items: center; gap: 8px; }
     .content { flex: 1; padding: 30px; background-color: #262a3d; overflow-y: auto; }
     .filters { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; align-items: center; }
     .filters input, .filters select { padding: 8px 12px; border-radius: 6px; border: 1px solid #ccc; min-width: 180px; height: 40px; background-color: #fff; color: #333; }
     table { width: 100%; border-collapse: collapse; background-color: #2c2f3f; border-radius: 12px; overflow: hidden; }
-    th, td { font-size: 12px; padding: 10px 15px; text-align: left; border-bottom: 1px solid #444; vertical-align: middle; }
+    th, td { 
+      font-size: 12px; 
+      padding: 10px 15px; 
+      text-align: left; 
+      border-bottom: 1px solid #444; 
+      vertical-align: middle; /* Garante alinhamento vertical */
+    }
     th { background-color: #ffffff; color: #00205b; }
     .acoes-topo { margin-left: auto; display: flex; gap: 10px; }
     .btn-acao { background: linear-gradient(145deg, #005c97, #363795); border: none; width: 40px; height: 40px; border-radius: 8px; color: white; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: filter 0.2s, transform 0.2s; }
@@ -34,11 +39,31 @@
     .whatsapp-icon:hover { transform: scale(1.2); }
     .history-icon { color: #00bfff; cursor: pointer; margin-left: 8px; transition: transform 0.2s; }
     .history-icon:hover { transform: scale(1.2); }
-    .status-select { background-color: transparent; color: white; border: none; border-radius: 4px; padding: 4px 6px; font-weight: bold; cursor: pointer; -webkit-appearance: none; -moz-appearance: none; appearance: none; }
+    
+    /* Estilo unificado para todos os dropdowns da tabela */
+    .status-select {
+      background-color: transparent;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      padding: 4px 6px;
+      font-weight: bold;
+      cursor: pointer;
+      width: 100%;
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      appearance: none;
+    }
+    .status-select option {
+      background-color: #2c2f3f;
+      color: white;
+    }
+
     .status-pendente { background-color: #e74c3c !important; }
     .status-em-andamento { background-color: #f39c12 !important; }
     .status-nao-responde { background-color: #f1c40f !important; }
     .status-concluido { background-color: #2ecc71 !important; }
+    
     .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.6); justify-content: center; align-items: center; }
     .modal-content { background-color: #2c2f3f; padding: 25px; border-radius: 12px; width: 90%; max-width: 400px; box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
     .modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #444; padding-bottom: 10px; margin-bottom: 15px; }
@@ -96,7 +121,13 @@
         <input id="filtro-chassi" type="text" placeholder="Buscar chassi..." />
         <input id="filtro-cliente" type="text" placeholder="Buscar cliente..." />
         <input id="filtro-modelo" type="text" placeholder="Buscar modelo..." />
-        <input id="filtro-cidade" type="text" placeholder="Buscar cidade..." />
+        
+        <select id="filtro-cidade">
+          <option value="">Todas as Filiais</option>
+          <option value="CAMPOS NOVOS">CAMPOS NOVOS</option>
+          <option value="LAGES">LAGES</option>
+          <option value="RIO DO SUL">RIO DO SUL</option>
+        </select>
         
         <select id="filtro-visualizacao">
           <option value="pendentes">Visualizar Pendentes</option>
@@ -120,7 +151,7 @@
           <tr>
             <th>Data da Entrega</th>
             <th>Chassi</th>
-            <th>Cidade</th>
+            <th>Filial</th>
             <th>Nome do Cliente</th>
             <th>Telefone</th>
             <th>Modelo do Veículo</th>
@@ -266,19 +297,23 @@
         else if (visualizacao === 'concluidos') condicaoVisualizacao = isConcluido;
         else condicaoVisualizacao = true;
 
+        const condicaoCidade = cidadeFiltro === '' || (registro.cidade || '').toLowerCase() === cidadeFiltro;
+
         return condicaoVisualizacao &&
+               condicaoCidade &&
                (registro.chassi || '').toLowerCase().includes(chassiFiltro) &&
                (registro.nomeCliente || '').toLowerCase().includes(clienteFiltro) &&
-               (registro.modelo || '').toLowerCase().includes(modeloFiltro) &&
-               (registro.cidade || '').toLowerCase().includes(cidadeFiltro);
+               (registro.modelo || '').toLowerCase().includes(modeloFiltro);
       });
 
       renderizarTabela();
-      atualizarCards(); // A mágica acontece aqui!
+      atualizarCards();
     }
 
     function renderizarTabela() {
       tabelaBody.innerHTML = '';
+      const cidadeOptions = `<option value="CAMPOS NOVOS">CAMPOS NOVOS</option><option value="LAGES">LAGES</option><option value="RIO DO SUL">RIO DO SUL</option><option value="-">-</option>`;
+      
       dadosFiltrados.forEach((registro) => {
         const tr = document.createElement('tr');
         tr.dataset.id = registro.id;
@@ -290,7 +325,7 @@
         tr.innerHTML = `
           <td>${registro.dataEntrega}</td>
           <td>${registro.chassi}</td>
-          <td>${registro.cidade}</td>
+          <td><select class="status-select" data-field="cidade">${cidadeOptions}</select></td>
           <td contenteditable="true" data-field="nomeCliente" style="background-color: #3a3f5c; cursor: text;">${registro.nomeCliente || ''}</td>
           <td style="display: flex; align-items: center; gap: 8px;">
             <div contenteditable="true" style="flex: 1; min-width: 80px;">${registro.telefone || ''}</div>
@@ -305,9 +340,13 @@
           </td>`;
         tabelaBody.appendChild(tr);
 
+        const selectCidade = tr.querySelector('select[data-field="cidade"]');
+        selectCidade.value = registro.cidade;
+
         const selectConta = tr.querySelector('select[data-field="statusConta"]');
         selectConta.value = registro.statusConta;
         atualizarCorSelect(selectConta);
+
         const selectEula = tr.querySelector('select[data-field="statusEula"]');
         selectEula.value = registro.statusEula;
         atualizarCorSelect(selectEula);
@@ -326,22 +365,28 @@
         const id = row.dataset.id;
         const registro = dadosCompletos.find(d => d.id === id);
         if (!registro) return;
+
+        row.querySelector('td[data-field="nomeCliente"]').addEventListener('blur', async (e) => {
+            const value = e.target.textContent.trim();
+            if (registro.nomeCliente !== value) {
+                registro.nomeCliente = value;
+                await atualizarDocumento(id, 'nomeCliente', value);
+            }
+        });
+
         row.querySelectorAll('.status-select').forEach(select => {
           select.addEventListener('change', async () => {
             const field = select.dataset.field;
             const value = select.value;
             registro[field] = value;
-            atualizarCorSelect(select);
+            if (field !== 'cidade') { // Só aplica cor para os selects de status
+              atualizarCorSelect(select);
+            }
             await atualizarDocumento(id, field, value);
-            atualizarCards();
+            aplicarFiltros(); // Re-aplica filtros para atualizar a visualização
           });
         });
-        const nomeCell = row.querySelector('td[data-field="nomeCliente"]');
-        nomeCell.addEventListener('blur', async () => {
-          const value = nomeCell.textContent.trim();
-          registro.nomeCliente = value;
-          await atualizarDocumento(id, 'nomeCliente', value);
-        });
+
         const telefoneDiv = row.querySelector('div[contenteditable="true"]');
         const whatsappIcon = row.querySelector('.whatsapp-icon');
         telefoneDiv.addEventListener('input', () => {
@@ -351,6 +396,7 @@
           registro.telefone = value;
           telefoneDiv.onblur = () => atualizarDocumento(id, 'telefone', value);
         });
+
         whatsappIcon.addEventListener('click', async (e) => {
           e.stopPropagation();
           const telefoneLimpo = registro.telefone.replace(/\D/g, '');
@@ -366,6 +412,7 @@
             window.open(`https://wa.me/55${telefoneLimpo}?text=${mensagem}`, '_blank' );
           }
         });
+
         const historyIcon = row.querySelector('.history-icon');
         if (historyIcon) {
           historyIcon.addEventListener('click', () => { abrirModalHistorico(registro.historicoContato); });
@@ -374,7 +421,7 @@
     }
 
     function atualizarCorSelect(select) {
-      select.className = 'status-select';
+      select.className = 'status-select'; // Reseta a classe
       switch (select.value) {
         case 'Pendente': select.classList.add('status-pendente'); break;
         case 'Em Andamento': select.classList.add('status-em-andamento'); break;
@@ -384,8 +431,6 @@
     }
 
     function atualizarCards() {
-        // *** MUDANÇA PRINCIPAL AQUI ***
-        // Os cálculos agora são baseados em 'dadosFiltrados', não em 'dadosCompletos'.
         const totalRegistros = dadosFiltrados.length;
         const totalPendentes = dadosFiltrados.filter(r => r.statusConta !== 'Concluído' || r.statusEula !== 'Concluído').length;
         const semConta = dadosFiltrados.filter(r => r.statusConta !== 'Concluído').length;
@@ -414,7 +459,7 @@
     filtroChassi.addEventListener('input', aplicarFiltros);
     filtroCliente.addEventListener('input', aplicarFiltros);
     filtroModelo.addEventListener('input', aplicarFiltros);
-    filtroCidade.addEventListener('input', aplicarFiltros);
+    filtroCidade.addEventListener('change', aplicarFiltros);
 
     carregarDadosDoFirebase();
   });
