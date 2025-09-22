@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="theme-color" content="#2c2f3f" />
+  <title>Controle de Telemetria</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  
+  <style>
+    /* O CSS permanece o mesmo */
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: Arial, sans-serif; background-color: #1e1e2f; color: white; display: flex; flex-direction: column; height: 100vh; }
+    header { background-color: #2c2f3f; padding: 20px; text-align: center; font-size: 20px; font-weight: bold; color: #ffffff; letter-spacing: 1px; box-shadow: 0 2px 4px rgba(0,0,0,0.2  ); }
+    #dynamic-title { margin-top: 10px; font-size: 16px; font-weight: normal; color: #ccc; }
+    .main { display: flex; flex: 1; overflow: hidden; }
+    .sidebar { width: 250px; background-color: #2c2f3f; padding: 20px; display: flex; flex-direction: column; gap: 20px; overflow-y: auto; }
+    .card { padding: 20px; border-radius: 16px; color: white; background: #193b7c; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3); text-align: left; display: flex; flex-direction: column; gap: 5px; }
+    .card h2 { font-size: 28px; margin: 0; }
+    .card p { font-size: 14px; color: #eee; margin: 0; display: flex; align-items: center; gap: 8px; }
+    .content { flex: 1; padding: 30px; background-color: #262a3d; overflow-y: auto; }
+    .filters { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; align-items: center; }
+    .filters input, .filters select { padding: 8px 12px; border-radius: 6px; border: 1px solid #ccc; min-width: 180px; height: 40px; background-color: #fff; color: #333; }
+    table { width: 100%; border-collapse: collapse; background-color: #2c2f3f; border-radius: 12px; overflow: hidden; }
+    th, td { font-size: 12px; padding: 10px 15px; text-align: left; border-bottom: 1px solid #444; vertical-align: middle; }
+    th { background-color: #ffffff; color: #00205b; }
+    .acoes-topo { margin-left: auto; display: flex; gap: 10px; }
+    .btn-acao { background: linear-gradient(145deg, #005c97, #363795); border: none; width: 40px; height: 40px; border-radius: 8px; color: white; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: filter 0.2s, transform 0.2s; }
+    .btn-acao:hover { filter: brightness(1.1); transform: scale(1.05); }
+    .logo { height: 80px; margin-left: 45px; margin-right: 15px; }
+    .whatsapp-icon { color: #25D366; cursor: pointer; transition: transform 0.2s; visibility: hidden; }
+    .whatsapp-icon.visible { visibility: visible; }
+    .whatsapp-icon:hover { transform: scale(1.2); }
+    .history-icon { color: #00bfff; cursor: pointer; margin-left: 8px; transition: transform 0.2s; }
+    .history-icon:hover { transform: scale(1.2); }
+    .status-select { background-color: transparent; color: white; border: none; border-radius: 4px; padding: 4px 6px; font-weight: bold; cursor: pointer; -webkit-appearance: none; -moz-appearance: none; appearance: none; }
+    .status-pendente { background-color: #e74c3c !important; }
+    .status-em-andamento { background-color: #f39c12 !important; }
+    .status-nao-responde { background-color: #f1c40f !important; }
+    .status-concluido { background-color: #2ecc71 !important; }
+    .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.6); justify-content: center; align-items: center; }
+    .modal-content { background-color: #2c2f3f; padding: 25px; border-radius: 12px; width: 90%; max-width: 400px; box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #444; padding-bottom: 10px; margin-bottom: 15px; }
+    .modal-header h3 { margin: 0; }
+    .close-button { cursor: pointer; font-size: 28px; font-weight: bold; transition: color 0.2s; }
+    .close-button:hover { color: #ff6b6b; }
+    #history-list { list-style: none; padding: 0; max-height: 200px; overflow-y: auto; }
+    #history-list li { background-color: #262a3d; padding: 8px; border-radius: 6px; margin-bottom: 8px; }
+    ::-webkit-scrollbar { width: 10px; }
+    ::-webkit-scrollbar-track { background: #1e1e2f; border-radius: 10px; }
+    ::-webkit-scrollbar-thumb { background: #009bd6; border-radius: 10px; }
+    ::-webkit-scrollbar-thumb:hover { background: #00bfff; }
+    * { scrollbar-width: thin; scrollbar-color: #009bd6 #1e1e2f; }
+    #loader-overlay { display: none; position: fixed; z-index: 9999; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.6); color: white; font-size: 20px; align-items: center; justify-content: center; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <header>
+    <div style="display: flex; align-items: center; justify-content: space-between;">
+      <img src="assets/logo.png" alt="Logo" class="logo">
+      <div style="flex: 1; text-align: center;">
+        <em>Dashboard Agro Divel 360</em>
+        <div id="dynamic-title">Controle de Telemetria</div>
+      </div>
+      <div style="width: 65px;"></div>
+    </div>
+  </header>
+
+  <div class="main">
+    <div class="sidebar">
+      <div class="card">
+        <h2 id="total-pendentes">0</h2>
+        <p><i data-lucide="alert-circle"></i> Pendentes</p>
+      </div>
+      <div class="card">
+        <h2 id="sem-conta-digital">0</h2>
+        <p><i data-lucide="user-x"></i> Contas Pendentes</p>
+      </div>
+      <div class="card">
+        <h2 id="eula-vazio">0</h2>
+        <p><i data-lucide="file-x"></i> EULAs Pendentes</p>
+      </div>
+      <div class="card">
+        <h2 id="total-registros">0</h2>
+        <p><i data-lucide="database"></i> Total de Registros</p>
+      </div>
+    </div>
+
+    <div class="content">
+      <div id="loader-overlay">
+        <div style="margin: auto;">Carregando dados...</div>
+      </div>
+
+      <div class="filters">
+        <input id="filtro-chassi" type="text" placeholder="Buscar chassi..." />
+        <input id="filtro-cliente" type="text" placeholder="Buscar cliente..." />
+        <input id="filtro-modelo" type="text" placeholder="Buscar modelo..." />
+        <input id="filtro-cidade" type="text" placeholder="Buscar cidade..." />
+        
+        <select id="filtro-visualizacao">
+          <option value="pendentes">Visualizar Pendentes</option>
+          <option value="concluidos">Visualizar Concluídos</option>
+          <option value="todos">Visualizar Todos</option>
+        </select>
+
+        <div class="acoes-topo">
+          <button class="btn-acao" id="btn-download-modelo" title="Baixar modelo da planilha">
+            <i data-lucide="download"></i>
+          </button>
+          <label for="file-input" class="btn-acao" style="cursor: pointer;" title="Carregar Planilha Excel">
+            <i data-lucide="upload"></i>
+          </label>
+          <input type="file" id="file-input" accept=".xlsx, .xls" style="display:none;">
+        </div>
+      </div>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Data da Entrega</th>
+            <th>Chassi</th>
+            <th>Cidade</th>
+            <th>Nome do Cliente</th>
+            <th>Telefone</th>
+            <th>Modelo do Veículo</th>
+            <th>Conta Digital?</th>
+            <th>EULA Respondido?</th>
+            <th>Histórico de Contato</th>
+          </tr>
+        </thead>
+        <tbody id="tabela-telemetria"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div id="history-modal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Histórico de Contatos</h3>
+        <span class="close-button">&times;</span>
+      </div>
+      <ul id="history-list"></ul>
+    </div>
+  </div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import { getFirestore, collection, getDocs, doc, updateDoc, addDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyDcjPa9jXsCCu6lNc1fjVg4Bzz1toKWAGY",
+    authDomain: "agro-divel.firebaseapp.com",
+    projectId: "agro-divel",
+    storageBucket: "agro-divel.firebasestorage.app",
+    messagingSenderId: "583977436505",
+    appId: "1:583977436505:web:3754ec029aebb3d9d67848"
+  };
+
+  const app = initializeApp(firebaseConfig );
+  const db = getFirestore(app);
+  const telemetriaCollection = collection(db, "telemetria");
+
+  document.addEventListener("DOMContentLoaded", () => {
+    lucide.createIcons();
+
+    const tabelaBody = document.getElementById('tabela-telemetria');
+    const loaderOverlay = document.getElementById('loader-overlay');
+    const historyModal = document.getElementById('history-modal');
+    const historyList = document.getElementById('history-list');
+    const closeModalButton = historyModal.querySelector('.close-button');
+    
+    let dadosCompletos = [];
+    let dadosFiltrados = [];
+
+    const fileInput = document.getElementById('file-input');
+    const totalPendentesEl = document.getElementById('total-pendentes');
+    const semContaDigitalEl = document.getElementById('sem-conta-digital');
+    const eulaVazioEl = document.getElementById('eula-vazio');
+    const totalRegistrosEl = document.getElementById('total-registros');
+    const filtroChassi = document.getElementById('filtro-chassi');
+    const filtroCliente = document.getElementById('filtro-cliente');
+    const filtroModelo = document.getElementById('filtro-modelo');
+    const filtroCidade = document.getElementById('filtro-cidade');
+    const filtroVisualizacao = document.getElementById('filtro-visualizacao');
+
+    async function carregarDadosDoFirebase() {
+        loaderOverlay.style.display = 'flex';
+        const querySnapshot = await getDocs(telemetriaCollection);
+        dadosCompletos = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        aplicarFiltros();
+        loaderOverlay.style.display = 'none';
+    }
+
+    fileInput.addEventListener('change', (event) => {
+      const file = event.target.files[0];
+      if (!file) return;
+      loaderOverlay.style.display = 'flex';
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        try {
+          const data = new Uint8Array(e.target.result);
+          const workbook = XLSX.read(data, { type: 'array', cellDates: false });
+          const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+          const jsonData = XLSX.utils.sheet_to_json(worksheet, { raw: false });
+          const chassisExistentes = new Set(dadosCompletos.map(d => d.chassi));
+          let novosRegistros = 0;
+          let ignorados = 0;
+
+          for (const row of jsonData) {
+            const chassi = row['Chassi /Chasi'];
+            if (!chassi) continue;
+            if (chassisExistentes.has(chassi)) {
+              ignorados++;
+              continue;
+            }
+
+            const contaDigital = row['Conta Digital do Cliente? / ¿Cuenta Digital del Cliente?'];
+            const eula = row['Eula Respondido / Eula Respondio'];
+            const cidade = row['Cidade / Ciudad'] || '-';
+
+            const contaPendente = !contaDigital || String(contaDigital).trim() === '' || String(contaDigital).toLowerCase().trim() === 'não';
+            const eulaPendente = !eula || String(eula).trim() === '' || String(eula).toLowerCase() === 'nan';
+
+            const novoRegistro = {
+              dataEntrega: row['Data da Entrega / Fecha de Entrega'] || '-',
+              chassi: chassi,
+              cidade: cidade,
+              nomeCliente: '',
+              telefone: '',
+              modelo: row['Modelo do Veículo / Modelo de Vehículo'] || '-',
+              statusConta: contaPendente ? 'Pendente' : 'Concluído',
+              statusEula: eulaPendente ? 'Pendente' : 'Concluído',
+              historicoContato: []
+            };
+
+            await addDoc(telemetriaCollection, novoRegistro);
+            novosRegistros++;
+          }
+          
+          alert(`${novosRegistros} novos registros foram adicionados.\n${ignorados} registros existentes foram ignorados.`);
+          await carregarDadosDoFirebase();
+
+        } catch (error) {
+          console.error("Erro ao processar o arquivo:", error);
+          alert("Erro ao ler o arquivo. Verifique o formato.");
+        } finally {
+          loaderOverlay.style.display = 'none';
+        }
+      };
+      reader.readAsArrayBuffer(file);
+    });
+
+    function aplicarFiltros() {
+      const chassiFiltro = filtroChassi.value.toLowerCase();
+      const clienteFiltro = filtroCliente.value.toLowerCase();
+      const modeloFiltro = filtroModelo.value.toLowerCase();
+      const cidadeFiltro = filtroCidade.value.toLowerCase();
+      const visualizacao = filtroVisualizacao.value;
+
+      dadosFiltrados = dadosCompletos.filter(registro => {
+        const isConcluido = registro.statusConta === 'Concluído' && registro.statusEula === 'Concluído';
+        
+        let condicaoVisualizacao;
+        if (visualizacao === 'pendentes') condicaoVisualizacao = !isConcluido;
+        else if (visualizacao === 'concluidos') condicaoVisualizacao = isConcluido;
+        else condicaoVisualizacao = true;
+
+        return condicaoVisualizacao &&
+               (registro.chassi || '').toLowerCase().includes(chassiFiltro) &&
+               (registro.nomeCliente || '').toLowerCase().includes(clienteFiltro) &&
+               (registro.modelo || '').toLowerCase().includes(modeloFiltro) &&
+               (registro.cidade || '').toLowerCase().includes(cidadeFiltro);
+      });
+
+      renderizarTabela();
+      atualizarCards(); // A mágica acontece aqui!
+    }
+
+    function renderizarTabela() {
+      tabelaBody.innerHTML = '';
+      dadosFiltrados.forEach((registro) => {
+        const tr = document.createElement('tr');
+        tr.dataset.id = registro.id;
+        const ultimoContato = registro.historicoContato.length > 0 ? registro.historicoContato[registro.historicoContato.length - 1] : '';
+        const temHistorico = registro.historicoContato.length > 1;
+        const hasNumber = String(registro.telefone).replace(/\D/g, '').length > 0;
+        const statusOptions = `<option value="Pendente">Pendente</option><option value="Em Andamento">Em Andamento</option><option value="Cliente não responde">Cliente não responde</option><option value="Concluído">Concluído</option>`;
+        
+        tr.innerHTML = `
+          <td>${registro.dataEntrega}</td>
+          <td>${registro.chassi}</td>
+          <td>${registro.cidade}</td>
+          <td contenteditable="true" data-field="nomeCliente" style="background-color: #3a3f5c; cursor: text;">${registro.nomeCliente || ''}</td>
+          <td style="display: flex; align-items: center; gap: 8px;">
+            <div contenteditable="true" style="flex: 1; min-width: 80px;">${registro.telefone || ''}</div>
+            <i data-lucide="send" class="whatsapp-icon ${hasNumber ? 'visible' : ''}" title="Chamar no WhatsApp"></i>
+          </td>
+          <td>${registro.modelo}</td>
+          <td><select class="status-select" data-field="statusConta">${statusOptions}</select></td>
+          <td><select class="status-select" data-field="statusEula">${statusOptions}</select></td>
+          <td style="display: flex; align-items: center; gap: 8px;">
+            <span>${ultimoContato}</span>
+            ${temHistorico ? '<i data-lucide="history" class="history-icon" title="Ver histórico completo"></i>' : ''}
+          </td>`;
+        tabelaBody.appendChild(tr);
+
+        const selectConta = tr.querySelector('select[data-field="statusConta"]');
+        selectConta.value = registro.statusConta;
+        atualizarCorSelect(selectConta);
+        const selectEula = tr.querySelector('select[data-field="statusEula"]');
+        selectEula.value = registro.statusEula;
+        atualizarCorSelect(selectEula);
+      });
+      lucide.createIcons();
+      adicionarEventosTabela();
+    }
+
+    async function atualizarDocumento(id, campo, valor) {
+        const docRef = doc(db, "telemetria", id);
+        await updateDoc(docRef, { [campo]: valor });
+    }
+
+    function adicionarEventosTabela() {
+      tabelaBody.querySelectorAll('tr').forEach(row => {
+        const id = row.dataset.id;
+        const registro = dadosCompletos.find(d => d.id === id);
+        if (!registro) return;
+        row.querySelectorAll('.status-select').forEach(select => {
+          select.addEventListener('change', async () => {
+            const field = select.dataset.field;
+            const value = select.value;
+            registro[field] = value;
+            atualizarCorSelect(select);
+            await atualizarDocumento(id, field, value);
+            atualizarCards();
+          });
+        });
+        const nomeCell = row.querySelector('td[data-field="nomeCliente"]');
+        nomeCell.addEventListener('blur', async () => {
+          const value = nomeCell.textContent.trim();
+          registro.nomeCliente = value;
+          await atualizarDocumento(id, 'nomeCliente', value);
+        });
+        const telefoneDiv = row.querySelector('div[contenteditable="true"]');
+        const whatsappIcon = row.querySelector('.whatsapp-icon');
+        telefoneDiv.addEventListener('input', () => {
+          const value = telefoneDiv.textContent.trim();
+          const hasNumber = value.replace(/\D/g, '').length > 0;
+          whatsappIcon.classList.toggle('visible', hasNumber);
+          registro.telefone = value;
+          telefoneDiv.onblur = () => atualizarDocumento(id, 'telefone', value);
+        });
+        whatsappIcon.addEventListener('click', async (e) => {
+          e.stopPropagation();
+          const telefoneLimpo = registro.telefone.replace(/\D/g, '');
+          if (telefoneLimpo) {
+            const agora = new Date();
+            const dataFormatada = agora.toLocaleDateString('pt-BR');
+            const horaFormatada = agora.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+            const novoHistorico = [...registro.historicoContato, `${dataFormatada} às ${horaFormatada}`];
+            registro.historicoContato = novoHistorico;
+            await atualizarDocumento(id, 'historicoContato', novoHistorico);
+            renderizarTabela();
+            const mensagem = encodeURIComponent("Olá! Identificamos uma pendência em sua telemetria. Poderia nos ajudar a regularizar?");
+            window.open(`https://wa.me/55${telefoneLimpo}?text=${mensagem}`, '_blank' );
+          }
+        });
+        const historyIcon = row.querySelector('.history-icon');
+        if (historyIcon) {
+          historyIcon.addEventListener('click', () => { abrirModalHistorico(registro.historicoContato); });
+        }
+      });
+    }
+
+    function atualizarCorSelect(select) {
+      select.className = 'status-select';
+      switch (select.value) {
+        case 'Pendente': select.classList.add('status-pendente'); break;
+        case 'Em Andamento': select.classList.add('status-em-andamento'); break;
+        case 'Cliente não responde': select.classList.add('status-nao-responde'); break;
+        case 'Concluído': select.classList.add('status-concluido'); break;
+      }
+    }
+
+    function atualizarCards() {
+        // *** MUDANÇA PRINCIPAL AQUI ***
+        // Os cálculos agora são baseados em 'dadosFiltrados', não em 'dadosCompletos'.
+        const totalRegistros = dadosFiltrados.length;
+        const totalPendentes = dadosFiltrados.filter(r => r.statusConta !== 'Concluído' || r.statusEula !== 'Concluído').length;
+        const semConta = dadosFiltrados.filter(r => r.statusConta !== 'Concluído').length;
+        const eulaVazio = dadosFiltrados.filter(r => r.statusEula !== 'Concluído').length;
+        
+        totalRegistrosEl.textContent = totalRegistros;
+        totalPendentesEl.textContent = totalPendentes;
+        semContaDigitalEl.textContent = semConta;
+        eulaVazioEl.textContent = eulaVazio;
+    }
+
+    function abrirModalHistorico(historico) {
+      historyList.innerHTML = '';
+      [...historico].reverse().forEach(item => {
+        const li = document.createElement('li');
+        li.textContent = item;
+        historyList.appendChild(li);
+      });
+      historyModal.style.display = 'flex';
+    }
+
+    closeModalButton.onclick = () => { historyModal.style.display = 'none'; };
+    window.onclick = (event) => { if (event.target == historyModal) { historyModal.style.display = 'none'; } };
+
+    filtroVisualizacao.addEventListener('change', aplicarFiltros);
+    filtroChassi.addEventListener('input', aplicarFiltros);
+    filtroCliente.addEventListener('input', aplicarFiltros);
+    filtroModelo.addEventListener('input', aplicarFiltros);
+    filtroCidade.addEventListener('input', aplicarFiltros);
+
+    carregarDadosDoFirebase();
+  });
+</script>
+
+</body>
+</html>
