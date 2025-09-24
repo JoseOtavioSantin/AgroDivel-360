@@ -9,10 +9,15 @@
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <!-- PASSO 1: Adicionado arquivo de tradução para Português -->
+    <script src="https://npmcdn.com/flatpickr/dist/l10n/pt.js"></script>
+
     <style>
         * { box-sizing: border-box; }
         body { margin: 0; font-family: Arial, sans-serif; background-color: #1e1e2f; color: white; display: flex; flex-direction: column; height: 100vh; }
-        header { background-color: #2c2f3f; padding: 10px 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.2 ); }
+        header { background-color: #2c2f3f; padding: 10px 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.2  ); }
         .header-content { display: flex; align-items: center; justify-content: space-between; }
         .header-title { flex: 1; text-align: center; }
         #dynamic-title { margin-top: 10px; font-size: 16px; font-weight: normal; color: #ccc; }
@@ -22,6 +27,7 @@
         .card { padding: 15px; border-radius: 16px; color: white; background: linear-gradient(238deg, #193b7c, #193b7c00); box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3); text-align: left; display: flex; flex-direction: column; gap: 5px; }
         .card h2 { font-size: 26px; margin: 0; }
         .card p { font-size: 13px; color: #eee; margin: 0; display: flex; align-items: center; gap: 8px; }
+        .card .percentage { font-size: 12px; color: #aaa; font-weight: bold; margin-top: 4px; }
         .content { flex: 1; padding: 30px; background-color: #262a3d; overflow-y: auto; }
         .filters { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; align-items: center; }
         .filters input, .filters select { padding: 8px 12px; border-radius: 6px; border: 1px solid #ccc; min-width: 180px; height: 40px; background-color: #fff; color: #333; }
@@ -36,8 +42,6 @@
         #loader-overlay { display: none; position: fixed; z-index: 9999; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.6); color: white; font-size: 20px; align-items: center; justify-content: center; font-weight: bold; }
         .sobra-estoque { background-color: #2c4a3b !important; }
         .falta-estoque { background-color: #4a2c2c !important; }
-        
-        /* --- Estilos do Modal de Análise Aprimorado --- */
         .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.7); justify-content: center; align-items: center; backdrop-filter: blur(5px); }
         .modal-content { background-color: #2c2f3f; padding: 25px; border-radius: 12px; width: 95%; max-width: 900px; box-shadow: 0 5px 15px rgba(0,0,0,0.5); display: flex; flex-direction: column; gap: 20px; border: 1px solid #444; }
         .modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #444; padding-bottom: 10px; }
@@ -70,15 +74,27 @@
 
     <div class="main">
         <div class="sidebar">
-            <div class="card"><h2 id="total-itens">0</h2><p><i data-lucide="package"></i> Total de Itens</p></div>
-            <div class="card"><h2 id="estoque-baixo">0</h2><p><i data-lucide="alert-triangle"></i> Estoque Baixo</p></div>
-            <div class="card"><h2 id="sobra-estoque">0</h2><p><i data-lucide="arrow-up-circle"></i> Sobra de Estoque</p></div>
-            <div class="card"><h2 id="falta-estoque">0</h2><p><i data-lucide="arrow-down-circle"></i> Falta de Estoque</p></div>
+            <div class="card">
+                <h2 id="total-itens">0</h2>
+                <p><i data-lucide="package"></i> Total de Itens</p>
+            </div>
+
+            <div class="card">
+                <h2 id="sobra-estoque">0</h2>
+                <p><i data-lucide="arrow-up-circle"></i> Sobra de Estoque</p>
+                <div class="percentage" id="sobra-percent"></div>
+            </div>
+            <div class="card">
+                <h2 id="falta-estoque">0</h2>
+                <p><i data-lucide="arrow-down-circle"></i> Falta de Estoque</p>
+                <div class="percentage" id="falta-percent"></div>
+            </div>
         </div>
 
         <div class="content">
             <div id="loader-overlay"><div style="margin: auto;">Carregando dados...</div></div>
             <div class="filters">
+                <input type="text" id="filtro-data" placeholder="Selecione o período">
                 <input id="filtro-codigo" type="text" placeholder="Buscar código..." />
                 <input id="filtro-descricao" type="text" placeholder="Buscar descrição..." />
                 <select id="filtro-status">
@@ -96,7 +112,7 @@
             <table>
                 <thead>
                     <tr>
-                        <th>Cód. Produto</th><th>Descrição</th><th>Prateleira</th><th>Estoque Sistema</th><th>Estoque Contado</th><th>Diferença</th><th>Última Contagem</th><th>Ações</th>
+                        <th>Cód. Produto</th><th>Descrição</th><th>Prateleira</th><th>Estoque Sistema</th><th>Estoque Contado</th><th>Diferença</th><th>Ações</th>
                     </tr>
                 </thead>
                 <tbody id="tabela-estoque"></tbody>
@@ -104,13 +120,9 @@
         </div>
     </div>
 
-    <!-- Modal de Análise Aprimorado -->
     <div id="analise-modal" class="modal">
         <div class="modal-content">
-            <div class="modal-header">
-                <h3>Análise de Item</h3>
-                <span class="close-button">&times;</span>
-            </div>
+            <div class="modal-header"><h3>Análise de Item</h3><span class="close-button">&times;</span></div>
             <div id="analise-info"></div>
             <div id="analise-kpis"></div>
             <div><canvas id="analise-grafico"></canvas></div>
@@ -131,7 +143,7 @@
             appId: "1:583977436505:web:3754ec029aebb3d9d67848"
         };
 
-        firebase.initializeApp(firebaseConfig );
+        firebase.initializeApp(firebaseConfig  );
         const db = firebase.firestore();
         const inventarioCollection = db.collection('inventario');
 
@@ -151,11 +163,12 @@
                     dadosLocais[doc.id] = doc.data();
                 });
                 console.log("Dados sincronizados do Firebase.");
+                popularFiltroData();
                 aplicarFiltros();
                 loaderOverlay.style.display = 'none';
             }, error => {
                 console.error("Erro ao escutar atualizações:", error);
-                alert("Não foi possível conectar ao banco de dados. Verifique as regras de segurança no Firebase.");
+                alert("Não foi possível conectar ao banco de dados.");
                 loaderOverlay.style.display = 'none';
             });
         }
@@ -271,25 +284,109 @@
         const filtroCodigo = document.getElementById('filtro-codigo');
         const filtroDescricao = document.getElementById('filtro-descricao');
         const filtroStatus = document.getElementById('filtro-status');
-        const totalItensEl = document.getElementById('total-itens');
-        const estoqueBaixoEl = document.getElementById('estoque-baixo');
-        const sobraEstoqueEl = document.getElementById('sobra-estoque');
-        const faltaEstoqueEl = document.getElementById('falta-estoque');
+        const filtroData = document.getElementById("filtro-data");
+        const totalItensEl = document.getElementById("total-itens");
+        const sobraEstoqueEl = document.getElementById("sobra-estoque");
+        const faltaEstoqueEl = document.getElementById("falta-estoque");
+        const sobraPercentEl = document.getElementById('sobra-percent');
+        const faltaPercentEl = document.getElementById('falta-percent');
         const analiseModal = document.getElementById('analise-modal');
         const closeModalButton = analiseModal.querySelector('.close-button');
         let graficoAnalise = null;
+
+        // PASSO 2: Ativada a tradução na inicialização do Flatpickr
+        flatpickr(filtroData, {
+            locale: "pt", // Ativa a localização para português
+            dateFormat: "d/m/Y",
+            mode: "range", // Permite seleção de período
+            onChange: function(selectedDates, dateStr, instance) {
+                aplicarFiltros();
+            }
+        });
+
+        function popularFiltroData() {
+            const datas = new Set();
+            Object.values(dadosLocais).forEach(item => {
+                if (item.historico) {
+                    item.historico.forEach(registro => datas.add(registro.data));
+                }
+            });
+
+            const fp = filtroData._flatpickr;
+            if (!fp) return;
+
+            fp.set("enable", [
+                function(date) {
+                    const dataFormatada = `${('0' + date.getDate()).slice(-2)}/${('0' + (date.getMonth() + 1)).slice(-2)}/${date.getFullYear()}`;
+                    return datas.has(dataFormatada);
+                }
+            ]);
+
+            const datasOrdenadas = Array.from(datas).sort((a, b) => {
+                const [da, ma, aa] = a.split('/').map(Number);
+                const [db, mb, ab] = b.split('/').map(Number);
+                return new Date(ab, mb - 1, db) - new Date(aa, ma - 1, da);
+            });
+
+            if (datasOrdenadas.length > 0 && !filtroData.value) {
+                fp.setDate(datasOrdenadas[0], true);
+            }
+        }
 
         function aplicarFiltros() {
             const codigoFiltro = filtroCodigo.value.toLowerCase();
             const descricaoFiltro = filtroDescricao.value.toLowerCase();
             const statusFiltro = filtroStatus.value;
-            
-            const dadosParaFiltrar = Object.keys(dadosLocais).map(codigoSeguro => {
-                const item = dadosLocais[codigoSeguro];
-                if (!item.historico || item.historico.length === 0) return null;
-                const registroMaisRecente = [...item.historico].sort((a, b) => new Date(b.data.split('/').reverse().join('-')) - new Date(a.data.split('/').reverse().join('-')))[0];
-                return { codigoSeguro, ...item.info, ...registroMaisRecente };
-            }).filter(Boolean);
+            const periodoSelecionado = filtroData.value;
+
+            let dadosParaFiltrar = [];
+            if (periodoSelecionado) {
+                // Se for um período (contém " até "), dividir as datas
+                if (periodoSelecionado.includes(" até ")) {
+                    const [dataInicio, dataFim] = periodoSelecionado.split(" até ");
+                    
+                    dadosParaFiltrar = Object.keys(dadosLocais).map(codigoSeguro => {
+                        const item = dadosLocais[codigoSeguro];
+                        if (!item.historico) return null;
+                        
+                        // Filtrar registros dentro do período
+                        const registrosDoPeriodo = item.historico.filter(h => {
+                            const dataRegistro = h.data;
+                            
+                            // Converter datas para formato comparável
+                            const [dReg, mReg, aReg] = dataRegistro.split('/').map(Number);
+                            const [dIni, mIni, aIni] = dataInicio.split('/').map(Number);
+                            const [dFim, mFim, aFim] = dataFim.split('/').map(Number);
+                            
+                            const dateReg = new Date(aReg, mReg - 1, dReg);
+                            const dateIni = new Date(aIni, mIni - 1, dIni);
+                            const dateFim = new Date(aFim, mFim - 1, dFim);
+                            
+                            return dateReg >= dateIni && dateReg <= dateFim;
+                        });
+                        
+                        if (registrosDoPeriodo.length === 0) return null;
+                        
+                        // Usar o registro mais recente do período
+                        const registroMaisRecente = registrosDoPeriodo.sort((a, b) => {
+                            const [da, ma, aa] = a.data.split('/').map(Number);
+                            const [db, mb, ab] = b.data.split('/').map(Number);
+                            return new Date(ab, mb - 1, db) - new Date(aa, ma - 1, da);
+                        })[0];
+                        
+                        return { codigoSeguro, ...item.info, ...registroMaisRecente };
+                    }).filter(Boolean);
+                } else {
+                    // Se for uma data única
+                    dadosParaFiltrar = Object.keys(dadosLocais).map(codigoSeguro => {
+                        const item = dadosLocais[codigoSeguro];
+                        if (!item.historico) return null;
+                        const registro = item.historico.find(h => h.data === periodoSelecionado);
+                        if (!registro) return null;
+                        return { codigoSeguro, ...item.info, ...registro };
+                    }).filter(Boolean);
+                }
+            }
 
             const dadosFiltrados = dadosParaFiltrar.filter(item => {
                 const sobra = item.estoqueContado > item.estoqueSistema;
@@ -305,7 +402,7 @@
             });
 
             renderizarTabela(dadosFiltrados);
-            atualizarCards(dadosParaFiltrar);
+            atualizarCards(dadosFiltrados);
         }
 
         function renderizarTabela(dados) {
@@ -325,7 +422,6 @@
                         <input type="number" class="quantidade-input" value="${item.estoqueContado}" min="0" data-codigo="${item.codigoSeguro}" data-data="${item.data}">
                     </td>
                     <td style="text-align: center; font-weight: bold;">${diferenca > 0 ? '+' : ''}${diferenca}</td>
-                    <td>${item.data}</td>
                     <td style="text-align: center;">
                         <button class="btn-acao analise-btn" title="Analisar Histórico" data-codigo="${item.codigoSeguro}"><i data-lucide="area-chart"></i></button>
                     </td>`;
@@ -334,128 +430,177 @@
             lucide.createIcons();
         }
 
-        function atualizarCards(dados) {
-            totalItensEl.textContent = dados.length;
-            estoqueBaixoEl.textContent = dados.filter(p => p.estoqueSistema > 0 && p.estoqueSistema < 5).length;
-            sobraEstoqueEl.textContent = dados.filter(p => p.estoqueContado > p.estoqueSistema).length;
-            faltaEstoqueEl.textContent = dados.filter(p => p.estoqueContado < p.estoqueSistema).length;
+        function atualizarCards(dadosExibidos) {
+            const totalItens = dadosExibidos.length;
+            
+            const sobras = dadosExibidos.filter(p => p.estoqueContado > p.estoqueSistema).length;
+            const faltas = dadosExibidos.filter(p => p.estoqueContado < p.estoqueSistema).length;
+
+            totalItensEl.textContent = totalItens;
+            sobraEstoqueEl.textContent = sobras;
+            faltaEstoqueEl.textContent = faltas;
+
+            const sobraPercent = totalItens > 0 ? ((sobras / totalItens) * 100).toFixed(1) : 0;
+            const faltaPercent = totalItens > 0 ? ((faltas / totalItens) * 100).toFixed(1) : 0;
+
+            sobraPercentEl.textContent = `${sobraPercent}% do total`;
+            faltaPercentEl.textContent = `${faltaPercent}% do total`;
         }
-        
-        // --- FUNÇÃO DE ANÁLISE APRIMORADA ---
+
+        document.getElementById('btn-download-modelo').addEventListener('click', () => {
+            const csvContent = "Cod. produto,Descrição,Prateleira,Estoque Hoje Quantidade\n" +
+                               "001,Produto Exemplo,A1,10\n" +
+                               "002,Outro Produto,B2,5";
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+            const url = URL.createObjectURL(blob);
+            link.setAttribute("href", url);
+            link.setAttribute("download", "modelo_inventario.csv");
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        });
+
+        tabelaBody.addEventListener('click', (e) => {
+            if (e.target.closest('.analise-btn')) {
+                const codigoSeguro = e.target.closest('.analise-btn').dataset.codigo;
+                abrirModalAnalise(codigoSeguro);
+            }
+        });
+
         function abrirModalAnalise(codigoSeguro) {
             const item = dadosLocais[codigoSeguro];
-            if (!item) return;
+            if (!item || !item.historico) return;
 
-            analiseModal.querySelector('#analise-info').innerHTML = `<p><strong>Código:</strong> ${item.info.codigoOriginal}</p><p><strong>Descrição:</strong> ${item.info.descricao}</p>`;
-            
-            const historico = [...item.historico].sort((a, b) => new Date(a.data.split('/').reverse().join('-')) - new Date(b.data.split('/').reverse().join('-')));
-            
-            // Calcular KPIs
-            const ultimo = historico[historico.length - 1];
-            const divergenciaAtual = ultimo.estoqueContado - ultimo.estoqueSistema;
-            const diasCorretos = historico.filter(h => h.estoqueContado === h.estoqueSistema).length;
-            const taxaAcerto = (diasCorretos / historico.length * 100).toFixed(0);
-            const maiorSobra = Math.max(0, ...historico.map(h => h.estoqueContado - h.estoqueSistema));
-            const maiorFalta = Math.min(0, ...historico.map(h => h.estoqueContado - h.estoqueSistema));
+            const analiseInfo = document.getElementById('analise-info');
+            const analiseKpis = document.getElementById('analise-kpis');
+            const analiseTabela = document.getElementById('analise-tabela-container');
 
-            const kpisContainer = analiseModal.querySelector('#analise-kpis');
-            kpisContainer.innerHTML = `
+            analiseInfo.innerHTML = `
+                <p><strong>Código:</strong> ${item.info.codigoOriginal}</p>
+                <p><strong>Descrição:</strong> ${item.info.descricao}</p>
+                <p><strong>Prateleira:</strong> ${item.info.prateleira}</p>
+            `;
+
+            const historico = item.historico.sort((a, b) => {
+                const [da, ma, aa] = a.data.split('/').map(Number);
+                const [db, mb, ab] = b.data.split('/').map(Number);
+                return new Date(aa, ma - 1, da) - new Date(ab, mb - 1, db);
+            });
+
+            const totalRegistros = historico.length;
+            const ultimoRegistro = historico[historico.length - 1];
+            const diferencaAtual = ultimoRegistro.estoqueContado - ultimoRegistro.estoqueSistema;
+            const mediaEstoqueSistema = (historico.reduce((sum, h) => sum + h.estoqueSistema, 0) / totalRegistros).toFixed(1);
+
+            analiseKpis.innerHTML = `
                 <div class="kpi-card">
-                    <div class="value ${divergenciaAtual > 0 ? 'positive' : (divergenciaAtual < 0 ? 'negative' : '')}">${divergenciaAtual > 0 ? '+' : ''}${divergenciaAtual}</div>
-                    <div class="label">Divergência Atual</div>
+                    <div class="value">${totalRegistros}</div>
+                    <div class="label">Total de Registros</div>
                 </div>
                 <div class="kpi-card">
-                    <div class="value">${taxaAcerto}%</div>
-                    <div class="label">Taxa de Acerto</div>
+                    <div class="value ${diferencaAtual > 0 ? 'positive' : diferencaAtual < 0 ? 'negative' : ''}">${diferencaAtual > 0 ? '+' : ''}${diferencaAtual}</div>
+                    <div class="label">Diferença Atual</div>
                 </div>
                 <div class="kpi-card">
-                    <div class="value positive">+${maiorSobra}</div>
-                    <div class="label">Maior Sobra</div>
-                </div>
-                <div class="kpi-card">
-                    <div class="value negative">${maiorFalta}</div>
-                    <div class="label">Maior Falta</div>
+                    <div class="value">${mediaEstoqueSistema}</div>
+                    <div class="label">Média Estoque Sistema</div>
                 </div>
             `;
 
-            // Gráfico Aprimorado
-            const ctx = analiseModal.querySelector('#analise-grafico').getContext('2d');
-            const labels = historico.map(h => h.data);
-            const dadosSistema = historico.map(h => h.estoqueSistema);
-            const dadosContado = historico.map(h => h.estoqueContado);
-            const dadosDiferenca = historico.map(h => h.estoqueContado - h.estoqueSistema);
+            let tabelaHtml = `
+                <table style="width: 100%; border-collapse: collapse; background-color: #2c2f3f; border-radius: 8px; overflow: hidden;">
+                    <thead>
+                        <tr style="background-color: #ffffff; color: #00205b;">
+                            <th style="padding: 8px; text-align: left;">Data</th>
+                            <th style="padding: 8px; text-align: center;">Sistema</th>
+                            <th style="padding: 8px; text-align: center;">Contado</th>
+                            <th style="padding: 8px; text-align: center;">Diferença</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
 
-            if (graficoAnalise) graficoAnalise.destroy();
-            graficoAnalise = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: labels,
-                    datasets: [
-                        {
-                            label: 'Estoque Sistema',
-                            data: dadosSistema,
-                            backgroundColor: '#364FC7',
-                            order: 2
-                        },
-                        {
-                            label: 'Estoque Contado',
-                            data: dadosContado,
-                            backgroundColor: dadosContado.map((val, i) => val < dadosSistema[i] ? '#c92a2a' : '#2f9e44'),
-                            order: 2
-                        },
-                        {
-                            label: 'Tendência da Divergência',
-                            data: dadosDiferenca,
-                            type: 'line',
-                            borderColor: '#fab005',
-                            borderDash: [5, 5],
-                            fill: false,
-                            order: 1
-                        }
-                    ]
-                }
-            });
-
-            // Tabela de Histórico Aprimorada
-            let tabelaHTML = `<table style="width: 100%;"><thead><tr><th>Data</th><th>Sistema</th><th>Contado</th><th>Diferença</th><th>Usuário</th></tr></thead><tbody>`;
-            const maiorDivergenciaAbs = Math.max(...historico.map(h => Math.abs(h.estoqueContado - h.estoqueSistema)));
             historico.forEach(h => {
                 const diff = h.estoqueContado - h.estoqueSistema;
-                const isMaxDivergence = Math.abs(diff) === maiorDivergenciaAbs && diff !== 0;
-                tabelaHTML += `<tr class="${isMaxDivergence ? 'highlight-row' : ''}">
-                    <td>${h.data}</td>
-                    <td style="text-align:center">${h.estoqueSistema}</td>
-                    <td style="text-align:center">${h.estoqueContado}</td>
-                    <td style="text-align:center; font-weight:bold;">${diff > 0 ? '+' : ''}${diff}</td>
-                    <td>${h.user || 'N/A'}</td>
-                </tr>`;
+                const rowClass = diff > 0 ? 'sobra-estoque' : diff < 0 ? 'falta-estoque' : '';
+                tabelaHtml += `
+                    <tr class="${rowClass}" style="border-bottom: 1px solid #444;">
+                        <td style="padding: 8px;">${h.data}</td>
+                        <td style="padding: 8px; text-align: center;">${h.estoqueSistema}</td>
+                        <td style="padding: 8px; text-align: center;">${h.estoqueContado}</td>
+                        <td style="padding: 8px; text-align: center; font-weight: bold;">${diff > 0 ? '+' : ''}${diff}</td>
+                    </tr>
+                `;
             });
-            tabelaHTML += `</tbody></table>`;
-            analiseModal.querySelector('#analise-tabela-container').innerHTML = tabelaHTML;
+
+            tabelaHtml += '</tbody></table>';
+            analiseTabela.innerHTML = tabelaHtml;
+
+            const ctx = document.getElementById('analise-grafico').getContext('2d');
+            if (graficoAnalise) {
+                graficoAnalise.destroy();
+            }
+
+            graficoAnalise = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: historico.map(h => h.data),
+                    datasets: [{
+                        label: 'Estoque Sistema',
+                        data: historico.map(h => h.estoqueSistema),
+                        borderColor: '#36a2eb',
+                        backgroundColor: 'rgba(54, 162, 235, 0.1)',
+                        tension: 0.1
+                    }, {
+                        label: 'Estoque Contado',
+                        data: historico.map(h => h.estoqueContado),
+                        borderColor: '#ff6384',
+                        backgroundColor: 'rgba(255, 99, 132, 0.1)',
+                        tension: 0.1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            labels: { color: 'white' }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            ticks: { color: 'white' },
+                            grid: { color: 'rgba(255, 255, 255, 0.1)' }
+                        },
+                        y: {
+                            ticks: { color: 'white' },
+                            grid: { color: 'rgba(255, 255, 255, 0.1)' }
+                        }
+                    }
+                }
+            });
 
             analiseModal.style.display = 'flex';
         }
 
+        closeModalButton.addEventListener('click', () => {
+            analiseModal.style.display = 'none';
+        });
+
+        analiseModal.addEventListener('click', (e) => {
+            if (e.target === analiseModal) {
+                analiseModal.style.display = 'none';
+            }
+        });
+
         filtroCodigo.addEventListener('input', aplicarFiltros);
         filtroDescricao.addEventListener('input', aplicarFiltros);
         filtroStatus.addEventListener('change', aplicarFiltros);
-        closeModalButton.addEventListener('click', () => analiseModal.style.display = 'none');
-        window.addEventListener('click', (e) => { if (e.target == analiseModal) analiseModal.style.display = 'none'; });
-        tabelaBody.addEventListener('click', (e) => {
-            const btn = e.target.closest('.analise-btn');
-            if (btn) abrirModalAnalise(btn.dataset.codigo);
-        });
-        document.getElementById('btn-download-modelo').addEventListener('click', () => {
-            const ws = XLSX.utils.aoa_to_sheet([['Cod. produto', 'Descrição', 'Prateleira', 'Estoque Hoje Quantidade']]);
-            const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, "Modelo");
-            XLSX.writeFile(wb, "modelo_estoque.xlsx");
-        });
 
-        document.addEventListener("DOMContentLoaded", () => {
-            lucide.createIcons();
-            escutarAtualizacoesInventario();
-        });
+        escutarAtualizacoesInventario();
+        lucide.createIcons();
     </script>
 </body>
 </html>
+
