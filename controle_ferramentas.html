@@ -1,0 +1,954 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Controle de Ferramentas</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#2c2f3f" />
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+    <style>
+        :root {
+            --cor-fundo: #1e1e2f;
+            --cor-fundo-secundaria: #262a3d;
+            --cor-sidebar: #2c2f3f;
+            --cor-texto: #ffffff;
+            --cor-borda: #444;
+            --cor-primaria: #193b7c;
+            --cor-sucesso: #40c057;
+            --cor-alerta: #fa5252;
+            --cor-aviso: #fab005;
+            --cor-info: #339af0;
+        }
+        * { box-sizing: border-box; }
+        body { margin: 0; font-family: Arial, sans-serif; background-color: var(--cor-fundo); color: var(--cor-texto); display: flex; flex-direction: column; height: 100vh; }
+        header { background-color: var(--cor-sidebar); padding: 10px 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+        .header-content { display: flex; align-items: center; justify-content: space-between; }
+        .header-title { flex: 1; text-align: center; font-size: 20px; }
+        .logo { height: 50px; margin-right: 15px; }
+        .main { display: flex; flex: 1; overflow: hidden; }
+        .sidebar { width: 250px; background-color: var(--cor-sidebar); padding: 20px; display: flex; flex-direction: column; gap: 15px; }
+        .nav-button { padding: 15px; border-radius: 10px; color: var(--cor-texto); background-color: #3a3f5c; text-align: center; cursor: pointer; transition: background-color 0.3s; font-size: 16px; display: flex; align-items: center; gap: 10px; justify-content: center; }
+        .nav-button.active, .nav-button:hover { background-color: var(--cor-primaria); }
+        .content-view { display: none; flex: 1; padding: 30px; background-color: var(--cor-fundo-secundaria); overflow-y: auto; }
+        .content-view.active { display: flex; flex-direction: column; }
+        .filters { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; align-items: center; }
+        .filters input, .filters select { padding: 8px 12px; border-radius: 6px; border: 1px solid #ccc; height: 40px; background-color: #fff; color: #333; }
+        table { width: 100%; border-collapse: collapse; background-color: var(--cor-sidebar); border-radius: 12px; overflow: hidden; }
+        th, td { padding: 12px 15px; text-align: left; border-bottom: 1px solid var(--cor-borda); vertical-align: middle; }
+        th { background-color: var(--cor-texto); color: #00205b; }
+        .acoes-topo { margin-left: auto; display: flex; gap: 10px; }
+        .btn { border: none; height: 40px; padding: 0 15px; border-radius: 8px; color: white; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; transition: filter 0.2s; }
+        .btn:hover { filter: brightness(1.2); }
+        .btn-primario { background: linear-gradient(145deg, #005c97, #363795); }
+        .btn-sucesso { background-color: var(--cor-sucesso); }
+        .btn-aviso { background-color: var(--cor-aviso); }
+        .btn-alerta { background-color: var(--cor-alerta); }
+        .btn-info { background-color: var(--cor-info); }
+        .status-reparo { padding: 5px 10px; border-radius: 15px; font-weight: bold; color: white; font-size: 11px; }
+        .status-reparo.sim { background-color: var(--cor-alerta); }
+        .status-reparo.nao { background-color: var(--cor-sucesso); }
+        
+        /* Estilos do Modal */
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.7); justify-content: center; align-items: center; backdrop-filter: blur(5px); }
+        .modal.active { display: flex; }
+        .modal-content { background-color: var(--cor-sidebar); padding: 25px; border-radius: 12px; width: 95%; max-width: 500px; box-shadow: 0 5px 15px rgba(0,0,0,0.5); max-height: 90vh; overflow-y: auto; }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--cor-borda); padding-bottom: 10px; margin-bottom: 20px; }
+        .modal-header h3 { margin: 0; font-size: 20px; }
+        .close-button { cursor: pointer; font-size: 28px; font-weight: bold; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; font-size: 14px; color: #ccc; }
+        .form-group input, .form-group select { width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #555; background-color: var(--cor-fundo-secundaria); color: var(--cor-texto); }
+        .form-group-checkbox { display: flex; align-items: center; gap: 10px; }
+        .modal-footer { text-align: right; margin-top: 20px; }
+        #lista-grupos li { display: flex; justify-content: space-between; align-items: center; padding: 8px; border-bottom: 1px solid var(--cor-borda); }
+        #info-disponibilidade { font-size: 12px; color: var(--cor-aviso); background-color: rgba(250, 176, 5, 0.1); border: 1px solid var(--cor-aviso); padding: 8px; border-radius: 6px; margin-top: 5px; }
+        
+        /* Estilos do Log */
+        .log-entry { padding: 10px; margin-bottom: 10px; border-radius: 6px; border-left: 4px solid; }
+        .log-entry.alocacao { border-left-color: var(--cor-info); background-color: rgba(51, 154, 240, 0.1); }
+        .log-entry.devolucao { border-left-color: var(--cor-sucesso); background-color: rgba(64, 192, 87, 0.1); }
+        .log-entry.edicao { border-left-color: var(--cor-aviso); background-color: rgba(250, 176, 5, 0.1); }
+        .log-entry.criacao { border-left-color: var(--cor-primaria); background-color: rgba(25, 59, 124, 0.1); }
+        .log-entry-header { font-weight: bold; margin-bottom: 5px; }
+        .log-entry-details { font-size: 12px; color: #ccc; }
+
+        /* Toast Notifications */
+        .toast-container { position: fixed; top: 20px; right: 20px; z-index: 2000; }
+        .toast { padding: 12px 20px; margin-bottom: 10px; border-radius: 6px; color: white; font-weight: bold; opacity: 0; transform: translateX(100%); transition: all 0.3s ease; }
+        .toast.show { opacity: 1; transform: translateX(0); }
+        .toast.success { background-color: var(--cor-sucesso); }
+        .toast.error { background-color: var(--cor-alerta); }
+        .toast.info { background-color: var(--cor-info); }
+    </style>
+</head>
+<body>
+    <!-- Toast Container -->
+    <div class="toast-container" id="toast-container"></div>
+
+    <header>
+        <div class="header-content">
+            <img src="https://via.placeholder.com/150x50.png?text=SUA+LOGO" alt="Logo" class="logo">
+            <div class="header-title">Controle de Ferramentas</div>
+            <div style="width: 165px;"></div>
+        </div>
+    </header>
+
+    <div class="main">
+        <div class="sidebar">
+            <div id="nav-alocacao" class="nav-button active"><i data-lucide="users"></i> Alocação</div>
+            <div id="nav-estoque" class="nav-button"><i data-lucide="archive"></i> Estoque</div>
+            <div id="nav-grupos" class="nav-button"><i data-lucide="folder-kanban"></i> Grupos</div>
+            <div id="nav-historico" class="nav-button"><i data-lucide="history"></i> Histórico</div>
+        </div>
+
+        <!-- TELA DE ALOCAÇÃO (AGORA PADRÃO) -->
+        <div id="view-alocacao" class="content-view active">
+            <div class="filters">
+                <select id="filtro-aloc-filial">
+                    <option value="">Todas as Filiais</option>
+                    <option value="Campos Novos">Campos Novos</option>
+                    <option value="Rio do Sul">Rio do Sul</option>
+                    <option value="Lages">Lages</option>
+                </select>
+                <input id="filtro-aloc-ferramenta" type="text" placeholder="Buscar por ferramenta..." />
+                <input id="filtro-aloc-funcionario" type="text" placeholder="Buscar por funcionário..." />
+                <div class="acoes-topo">
+                    <button id="btn-abrir-modal-alocacao" class="btn btn-primario"><i data-lucide="plus-circle"></i> Alocar Ferramenta</button>
+                </div>
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Ferramenta</th>
+                        <th>Funcionário</th>
+                        <th>Data Alocação</th>
+                        <th style="text-align: center;">Ações</th>
+                    </tr>
+                </thead>
+                <tbody id="tabela-alocacao"></tbody>
+            </table>
+        </div>
+
+        <!-- TELA DE ESTOQUE -->
+        <div id="view-estoque" class="content-view">
+            <div class="filters">
+                <select id="filtro-filial">
+                    <option value="">Todas as Filiais</option>
+                    <option value="Campos Novos">Campos Novos</option>
+                    <option value="Rio do Sul">Rio do Sul</option>
+                    <option value="Lages">Lages</option>
+                </select>
+                <input id="filtro-codigo" type="text" placeholder="Buscar por código..." />
+                <input id="filtro-descricao" type="text" placeholder="Buscar por descrição..." />
+                <select id="filtro-grupo"></select>
+                <select id="filtro-reparo">
+                    <option value="">Status Reparo</option>
+                    <option value="true">Precisa de Reparo</option>
+                    <option value="false">OK</option>
+                </select>
+                <div class="acoes-topo">
+                    <button id="btn-abrir-modal-ferramenta" class="btn btn-primario"><i data-lucide="plus-circle"></i> Nova Ferramenta</button>
+                </div>
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Filial</th>
+                        <th>Código</th>
+                        <th>Descrição</th>
+                        <th>Grupo</th>
+                        <th>Localização</th>
+                        <th style="text-align: center;">Qtd.</th>
+                        <th style="text-align: center;">Reparo?</th>
+                        <th style="text-align: center;">Ações</th>
+                    </tr>
+                </thead>
+                <tbody id="tabela-ferramentas"></tbody>
+            </table>
+        </div>
+
+        <!-- TELA DE GRUPOS -->
+        <div id="view-grupos" class="content-view">
+            <div style="max-width: 600px; margin: 0 auto; width: 100%;">
+                <h2>Gerenciar Grupos de Ferramentas</h2>
+                <form id="form-grupo" style="display: flex; gap: 10px; margin-bottom: 20px;">
+                    <input type="text" id="grupo-nome" placeholder="Nome do novo grupo" required style="flex: 1; padding: 10px; border-radius: 6px; border: 1px solid #555; background-color: var(--cor-fundo-secundaria); color: var(--cor-texto);">
+                    <button type="submit" class="btn btn-primario">Adicionar</button>
+                </form>
+                <ul id="lista-grupos" style="list-style: none; padding: 0;"></ul>
+            </div>
+        </div>
+
+        <!-- TELA DE HISTÓRICO -->
+        <div id="view-historico" class="content-view">
+            <div class="filters">
+                <select id="filtro-hist-filial">
+                    <option value="">Todas as Filiais</option>
+                    <option value="Campos Novos">Campos Novos</option>
+                    <option value="Rio do Sul">Rio do Sul</option>
+                    <option value="Lages">Lages</option>
+                </select>
+                <input id="filtro-hist-ferramenta" type="text" placeholder="Buscar por ferramenta..." />
+                <input id="filtro-hist-funcionario" type="text" placeholder="Buscar por funcionário..." />
+                <select id="filtro-hist-tipo">
+                    <option value="">Todos os Tipos</option>
+                    <option value="criacao">Criação</option>
+                    <option value="edicao">Edição</option>
+                    <option value="alocacao">Alocação</option>
+                    <option value="devolucao">Devolução</option>
+                </select>
+            </div>
+            <div id="lista-historico"></div>
+        </div>
+    </div>
+
+    <!-- MODAIS -->
+    <div id="modal-ferramenta" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modal-ferramenta-titulo">Nova Ferramenta</h3>
+                <span class="close-button">&times;</span>
+            </div>
+            <form id="form-ferramenta">
+                <input type="hidden" id="ferramenta-id">
+                <div class="form-group">
+                    <label for="ferramenta-filial">Filial</label>
+                    <select id="ferramenta-filial" required>
+                        <option value="">Selecione a Filial</option>
+                        <option value="Campos Novos">Campos Novos</option>
+                        <option value="Rio do Sul">Rio do Sul</option>
+                        <option value="Lages">Lages</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="ferramenta-grupo">Grupo</label>
+                    <select id="ferramenta-grupo" required></select>
+                </div>
+                <div class="form-group">
+                    <label for="ferramenta-codigo">Código da Ferramenta</label>
+                    <input type="text" id="ferramenta-codigo" required>
+                </div>
+                <div class="form-group">
+                    <label for="ferramenta-descricao">Descrição</label>
+                    <input type="text" id="ferramenta-descricao" required>
+                </div>
+                <div class="form-group">
+                    <label for="ferramenta-localizacao">Localização (Ex: Prateleira A-01)</label>
+                    <input type="text" id="ferramenta-localizacao" required>
+                </div>
+                <div class="form-group">
+                    <label for="ferramenta-quantidade">Quantidade</label>
+                    <input type="number" id="ferramenta-quantidade" required min="0">
+                </div>
+                <div class="form-group form-group-checkbox">
+                    <input type="checkbox" id="ferramenta-reparo" style="width: 20px; height: 20px;">
+                    <label for="ferramenta-reparo">Precisa de reparo?</label>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primario">Salvar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="modal-alocacao" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Alocar Ferramenta</h3>
+                <span class="close-button">&times;</span>
+            </div>
+            <form id="form-alocacao">
+                <div class="form-group">
+                    <label for="alocacao-filtro-filial">Filtrar por Filial</label>
+                    <select id="alocacao-filtro-filial">
+                        <option value="">Todas as Filiais</option>
+                        <option value="Campos Novos">Campos Novos</option>
+                        <option value="Rio do Sul">Rio do Sul</option>
+                        <option value="Lages">Lages</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="alocacao-filtro-grupo">Filtrar por Grupo</label>
+                    <select id="alocacao-filtro-grupo"></select>
+                </div>
+                <div class="form-group">
+                    <label for="alocacao-ferramenta-input">Ferramenta (digite o código ou nome)</label>
+                    <input list="ferramentas-datalist" id="alocacao-ferramenta-input" required autocomplete="off" placeholder="Digite para buscar...">
+                    <datalist id="ferramentas-datalist"></datalist>
+                    <div id="info-disponibilidade" style="display: none;"></div>
+                </div>
+                <div class="form-group">
+                    <label for="alocacao-funcionario">Técnico</label>
+                    <select id="alocacao-funcionario" required>
+                        <option value="">Selecione um técnico...</option>
+                    </select>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primario">Alocar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="modal-historico-ferramenta" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modal-historico-titulo">Histórico da Ferramenta</h3>
+                <span class="close-button">&times;</span>
+            </div>
+            <div id="historico-ferramenta-content"></div>
+        </div>
+    </div>
+
+    <script>
+        // --- CONFIGURAÇÃO DO FIREBASE ---
+        const firebaseConfig = {
+        apiKey: "AIzaSyDcjPa9jXsCCu6lNc1fjVg4Bzz1toKWAGY",
+        authDomain: "agro-divel.firebaseapp.com",
+        projectId: "agro-divel",
+        storageBucket: "agro-divel.firebasestorage.app",
+        messagingSenderId: "583977436505",
+        appId: "1:583977436505:web:3754ec029aebb3d9d67848"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        const ferramentasCollection = db.collection('ferramentas');
+        const alocacoesCollection = db.collection('alocacoes');
+        const gruposCollection = db.collection('grupos');
+        const historicoCollection = db.collection('historico');
+        const tecnicosCollection = db.collection('tecnicos');
+
+        // --- ESTADO DA APLICAÇÃO ---
+        let todosGrupos = [];
+        let todasFerramentas = [];
+        let todasAlocacoes = [];
+        let todoHistorico = [];
+        let todosTecnicos = [];
+
+        // --- ELEMENTOS DO DOM ---
+        const navEstoque = document.getElementById('nav-estoque');
+        const navAlocacao = document.getElementById('nav-alocacao');
+        const navGrupos = document.getElementById('nav-grupos');
+        const navHistorico = document.getElementById('nav-historico');
+
+        // --- FUNÇÕES UTILITÁRIAS ---
+        function showToast(message, type = 'info') {
+            const toastContainer = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.textContent = message;
+            
+            toastContainer.appendChild(toast);
+            
+            setTimeout(() => toast.classList.add('show'), 100);
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => toastContainer.removeChild(toast), 300);
+            }, 3000);
+        }
+
+        function formatarDataHora(timestamp) {
+            if (!timestamp) return 'Data inválida';
+            const data = timestamp.seconds ? new Date(timestamp.seconds * 1000) : new Date(timestamp);
+            return data.toLocaleString('pt-BR');
+        }
+
+        async function adicionarHistorico(tipo, ferramentaId, detalhes = {}) {
+            const ferramenta = todasFerramentas.find(f => f.id === ferramentaId);
+            if (!ferramenta) return;
+
+            const historico = {
+                tipo: tipo,
+                ferramentaId: ferramentaId,
+                ferramentaCodigo: ferramenta.codigo,
+                ferramentaDescricao: ferramenta.descricao,
+                filial: ferramenta.filial,
+                timestamp: new Date(),
+                detalhes: detalhes
+            };
+
+            try {
+                await historicoCollection.add(historico);
+            } catch (error) {
+                console.error('Erro ao adicionar histórico:', error);
+            }
+        }
+
+        // --- NAVEGAÇÃO ENTRE TELAS ---
+        function alternarTela(telaAtiva) {
+            document.querySelectorAll('.nav-button').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.content-view').forEach(el => el.classList.remove('active'));
+            document.getElementById(`nav-${telaAtiva}`).classList.add('active');
+            document.getElementById(`view-${telaAtiva}`).classList.add('active');
+        }
+
+        navEstoque.addEventListener('click', () => alternarTela('estoque'));
+        navAlocacao.addEventListener('click', () => alternarTela('alocacao'));
+        navGrupos.addEventListener('click', () => alternarTela('grupos'));
+        navHistorico.addEventListener('click', () => alternarTela('historico'));
+
+        // --- LÓGICA DE RENDERIZAÇÃO ---
+        function renderizarTabelaFerramentas(ferramentas) {
+            const tabelaBody = document.getElementById('tabela-ferramentas');
+            tabelaBody.innerHTML = '';
+            ferramentas.forEach(f => {
+                const grupo = todosGrupos.find(g => g.id === f.grupoId);
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${f.filial}</td>
+                    <td>${f.codigo}</td>
+                    <td>${f.descricao}</td>
+                    <td>${grupo ? grupo.nome : 'Sem grupo'}</td>
+                    <td>${f.localizacao}</td>
+                    <td style="text-align: center;">${f.quantidade}</td>
+                    <td style="text-align: center;">
+                        <span class="status-reparo ${f.reparo ? 'sim' : 'nao'}">${f.reparo ? 'SIM' : 'NÃO'}</span>
+                    </td>
+                    <td style="text-align: center; display: flex; gap: 5px; justify-content: center;">
+                        <button class="btn btn-info btn-historico-ferramenta" data-id="${f.id}" title="Ver Histórico"><i data-lucide="history"></i></button>
+                        <button class="btn btn-aviso btn-editar-ferramenta" data-id="${f.id}" title="Editar"><i data-lucide="edit"></i></button>
+                        <button class="btn btn-alerta btn-remover-ferramenta" data-id="${f.id}" title="Remover"><i data-lucide="trash-2"></i></button>
+                    </td>
+                `;
+                tabelaBody.appendChild(tr);
+            });
+            lucide.createIcons();
+        }
+
+        function renderizarTabelaAlocacao(alocacoes) {
+            const tabelaBody = document.getElementById('tabela-alocacao');
+            tabelaBody.innerHTML = '';
+            alocacoes.forEach(a => {
+                const ferramenta = todasFerramentas.find(f => f.id === a.ferramentaId);
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${ferramenta ? `${ferramenta.descricao} (${ferramenta.filial})` : 'Ferramenta não encontrada'}</td>
+                    <td>${a.funcionario}</td>
+                    <td>${formatarDataHora(a.dataAlocacao)}</td>
+                    <td style="text-align: center;">
+                        <button class="btn btn-sucesso btn-devolver" data-id="${a.id}" data-ferramenta-id="${a.ferramentaId}" data-funcionario="${a.funcionario}" title="Registrar Devolução"><i data-lucide="arrow-left-circle"></i> Devolver</button>
+                    </td>
+                `;
+                tabelaBody.appendChild(tr);
+            });
+            lucide.createIcons();
+        }
+
+        function renderizarListaGrupos() {
+            const lista = document.getElementById('lista-grupos');
+            lista.innerHTML = '';
+            todosGrupos.forEach(g => {
+                const li = document.createElement('li');
+                li.innerHTML = `
+                    <span>${g.nome}</span>
+                    <div>
+                        <button class="btn btn-alerta btn-remover-grupo" data-id="${g.id}" title="Remover"><i data-lucide="trash-2"></i></button>
+                    </div>
+                `;
+                lista.appendChild(li);
+            });
+            lucide.createIcons();
+        }
+
+        function renderizarHistorico(historico) {
+            const container = document.getElementById('lista-historico');
+            container.innerHTML = '';
+            
+            if (historico.length === 0) {
+                container.innerHTML = '<p style="text-align: center; color: #ccc;">Nenhum registro encontrado.</p>';
+                return;
+            }
+
+            historico.forEach(h => {
+                const div = document.createElement('div');
+                div.className = `log-entry ${h.tipo}`;
+                
+                let titulo = '';
+                let detalhes = '';
+                
+                switch (h.tipo) {
+                    case 'criacao':
+                        titulo = `Ferramenta Criada: ${h.ferramentaDescricao}`;
+                        detalhes = `Código: ${h.ferramentaCodigo} | Filial: ${h.filial}`;
+                        break;
+                    case 'edicao':
+                        titulo = `Ferramenta Editada: ${h.ferramentaDescricao}`;
+                        detalhes = `Código: ${h.ferramentaCodigo} | Filial: ${h.filial}`;
+                        if (h.detalhes.alteracoes) {
+                            detalhes += ` | Alterações: ${h.detalhes.alteracoes}`;
+                        }
+                        break;
+                    case 'alocacao':
+                        titulo = `Ferramenta Alocada: ${h.ferramentaDescricao}`;
+                        detalhes = `Para: ${h.detalhes.funcionario} | Código: ${h.ferramentaCodigo} | Filial: ${h.filial}`;
+                        break;
+                    case 'devolucao':
+                        titulo = `Ferramenta Devolvida: ${h.ferramentaDescricao}`;
+                        detalhes = `Por: ${h.detalhes.funcionario} | Código: ${h.ferramentaCodigo} | Filial: ${h.filial}`;
+                        break;
+                }
+                
+                div.innerHTML = `
+                    <div class="log-entry-header">${titulo}</div>
+                    <div class="log-entry-details">${detalhes}</div>
+                    <div class="log-entry-details">${formatarDataHora(h.timestamp)}</div>
+                `;
+                
+                container.appendChild(div);
+            });
+        }
+
+        function renderizarHistoricoFerramenta(ferramentaId) {
+            const historicoFerramenta = todoHistorico.filter(h => h.ferramentaId === ferramentaId);
+            const container = document.getElementById('historico-ferramenta-content');
+            container.innerHTML = '';
+            
+            if (historicoFerramenta.length === 0) {
+                container.innerHTML = '<p style="text-align: center; color: #ccc;">Nenhum histórico encontrado para esta ferramenta.</p>';
+                return;
+            }
+
+            historicoFerramenta.forEach(h => {
+                const div = document.createElement('div');
+                div.className = `log-entry ${h.tipo}`;
+                
+                let titulo = '';
+                let detalhes = '';
+                
+                switch (h.tipo) {
+                    case 'criacao':
+                        titulo = 'Ferramenta Criada';
+                        detalhes = 'Ferramenta adicionada ao sistema';
+                        break;
+                    case 'edicao':
+                        titulo = 'Ferramenta Editada';
+                        detalhes = h.detalhes.alteracoes || 'Dados da ferramenta foram alterados';
+                        break;
+                    case 'alocacao':
+                        titulo = 'Ferramenta Alocada';
+                        detalhes = `Alocada para: ${h.detalhes.funcionario}`;
+                        break;
+                    case 'devolucao':
+                        titulo = 'Ferramenta Devolvida';
+                        detalhes = `Devolvida por: ${h.detalhes.funcionario}`;
+                        break;
+                }
+                
+                div.innerHTML = `
+                    <div class="log-entry-header">${titulo}</div>
+                    <div class="log-entry-details">${detalhes}</div>
+                    <div class="log-entry-details">${formatarDataHora(h.timestamp)}</div>
+                `;
+                
+                container.appendChild(div);
+            });
+        }
+
+        // --- LÓGICA DO FIREBASE (CRUD) ---
+        function carregarDados() {
+            gruposCollection.orderBy('nome').onSnapshot(snapshot => {
+                todosGrupos = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                renderizarListaGrupos();
+                atualizarSelectsDeGrupo();
+                aplicarFiltrosEstoque();
+            });
+
+            ferramentasCollection.orderBy('codigo').onSnapshot(snapshot => {
+                todasFerramentas = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                aplicarFiltrosEstoque();
+                atualizarDatalistFerramentas();
+            });
+
+            alocacoesCollection.orderBy('dataAlocacao', 'desc').onSnapshot(snapshot => {
+                todasAlocacoes = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                aplicarFiltrosAlocacao();
+                atualizarDatalistFerramentas();
+            });
+
+            historicoCollection.orderBy('timestamp', 'desc').onSnapshot(snapshot => {
+                todoHistorico = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                aplicarFiltrosHistorico();
+            });
+
+            // Carregar técnicos
+            tecnicosCollection.onSnapshot(snapshot => {
+                todosTecnicos = [];
+                snapshot.docs.forEach(doc => {
+                    const data = doc.data();
+                    todosTecnicos.push({
+                        id: doc.id,
+                        nome: data.nome,
+                        filial: data.filial
+                    });
+                });
+                atualizarSelectTecnicos();
+            });
+        }
+
+        // --- LÓGICA DOS MODAIS E FORMULÁRIOS ---
+        function abrirModal(modal) { modal.classList.add('active'); }
+        function fecharModal(modal) { modal.classList.remove('active'); }
+
+        document.querySelectorAll('.modal .close-button').forEach(btn => {
+            btn.addEventListener('click', () => fecharModal(btn.closest('.modal')));
+        });
+
+        // Formulário de Grupo
+        document.getElementById('form-grupo').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const nomeInput = document.getElementById('grupo-nome');
+            const nome = nomeInput.value.trim().toUpperCase();
+            if (nome) {
+                try {
+                    await gruposCollection.add({ nome });
+                    nomeInput.value = '';
+                    showToast('Grupo adicionado com sucesso!', 'success');
+                } catch (error) {
+                    showToast('Erro ao adicionar grupo', 'error');
+                }
+            }
+        });
+
+        document.getElementById('lista-grupos').addEventListener('click', (e) => {
+            const btnRemover = e.target.closest('.btn-remover-grupo');
+            if (btnRemover) {
+                const id = btnRemover.dataset.id;
+                const ferramentasNoGrupo = todasFerramentas.some(f => f.grupoId === id);
+                if (ferramentasNoGrupo) {
+                    showToast('Não é possível remover este grupo, pois existem ferramentas associadas a ele.', 'error');
+                    return;
+                }
+                if (confirm('Tem certeza que deseja remover este grupo?')) {
+                    gruposCollection.doc(id).delete()
+                        .then(() => showToast('Grupo removido com sucesso!', 'success'))
+                        .catch(() => showToast('Erro ao remover grupo', 'error'));
+                }
+            }
+        });
+
+        // Modal de Ferramentas
+        document.getElementById('btn-abrir-modal-ferramenta').addEventListener('click', () => {
+            document.getElementById('form-ferramenta').reset();
+            document.getElementById('ferramenta-id').value = '';
+            document.getElementById('modal-ferramenta-titulo').innerText = 'Nova Ferramenta';
+            abrirModal(document.getElementById('modal-ferramenta'));
+        });
+
+        document.getElementById('form-ferramenta').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const id = document.getElementById('ferramenta-id').value;
+            const dados = {
+                filial: document.getElementById('ferramenta-filial').value,
+                grupoId: document.getElementById('ferramenta-grupo').value,
+                codigo: document.getElementById('ferramenta-codigo').value.toUpperCase(),
+                descricao: document.getElementById('ferramenta-descricao').value.toUpperCase(),
+                localizacao: document.getElementById('ferramenta-localizacao').value.toUpperCase(),
+                quantidade: parseInt(document.getElementById('ferramenta-quantidade').value),
+                reparo: document.getElementById('ferramenta-reparo').checked,
+            };
+
+            try {
+                if (id) {
+                    await ferramentasCollection.doc(id).update(dados);
+                    await adicionarHistorico('edicao', id, { alteracoes: 'Dados da ferramenta foram atualizados' });
+                    showToast('Ferramenta atualizada com sucesso!', 'success');
+                } else {
+                    const docRef = await ferramentasCollection.add(dados);
+                    await adicionarHistorico('criacao', docRef.id);
+                    showToast('Ferramenta criada com sucesso!', 'success');
+                }
+                fecharModal(document.getElementById('modal-ferramenta'));
+            } catch (error) {
+                console.error("Erro ao salvar ferramenta: ", error);
+                showToast('Erro ao salvar ferramenta', 'error');
+            }
+        });
+
+        document.getElementById('tabela-ferramentas').addEventListener('click', (e) => {
+            const btnHistorico = e.target.closest('.btn-historico-ferramenta');
+            if (btnHistorico) {
+                const id = btnHistorico.dataset.id;
+                const ferramenta = todasFerramentas.find(f => f.id === id);
+                if (ferramenta) {
+                    document.getElementById('modal-historico-titulo').innerText = `Histórico: ${ferramenta.descricao}`;
+                    renderizarHistoricoFerramenta(id);
+                    abrirModal(document.getElementById('modal-historico-ferramenta'));
+                }
+            }
+
+            const btnEditar = e.target.closest('.btn-editar-ferramenta');
+            if (btnEditar) {
+                const id = btnEditar.dataset.id;
+                const ferramenta = todasFerramentas.find(f => f.id === id);
+                if (ferramenta) {
+                    document.getElementById('ferramenta-id').value = ferramenta.id;
+                    document.getElementById('ferramenta-filial').value = ferramenta.filial;
+                    document.getElementById('ferramenta-grupo').value = ferramenta.grupoId;
+                    document.getElementById('ferramenta-codigo').value = ferramenta.codigo;
+                    document.getElementById('ferramenta-descricao').value = ferramenta.descricao;
+                    document.getElementById('ferramenta-localizacao').value = ferramenta.localizacao;
+                    document.getElementById('ferramenta-quantidade').value = ferramenta.quantidade;
+                    document.getElementById('ferramenta-reparo').checked = ferramenta.reparo;
+                    document.getElementById('modal-ferramenta-titulo').innerText = 'Editar Ferramenta';
+                    abrirModal(document.getElementById('modal-ferramenta'));
+                }
+            }
+
+            const btnRemover = e.target.closest('.btn-remover-ferramenta');
+            if (btnRemover) {
+                if (confirm('Tem certeza que deseja remover esta ferramenta?')) {
+                    ferramentasCollection.doc(btnRemover.dataset.id).delete()
+                        .then(() => showToast('Ferramenta removida com sucesso!', 'success'))
+                        .catch(() => showToast('Erro ao remover ferramenta', 'error'));
+                }
+            }
+        });
+
+        // Modal de Alocação
+        document.getElementById('btn-abrir-modal-alocacao').addEventListener('click', () => {
+            document.getElementById('form-alocacao').reset();
+            atualizarDatalistFerramentas();
+            atualizarSelectTecnicos();
+            document.getElementById('info-disponibilidade').style.display = 'none';
+            abrirModal(document.getElementById('modal-alocacao'));
+        });
+
+        document.getElementById('form-alocacao').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const inputValor = document.getElementById('alocacao-ferramenta-input').value;
+            const funcionario = document.getElementById('alocacao-funcionario').value;
+            const datalist = document.getElementById('ferramentas-datalist');
+            let ferramentaId = null;
+
+            for (const option of datalist.options) {
+                if (option.value === inputValor) {
+                    ferramentaId = option.dataset.id;
+                    break;
+                }
+            }
+
+            if (!ferramentaId) {
+                showToast('Ferramenta inválida ou não selecionada. Por favor, escolha uma opção da lista.', 'error');
+                return;
+            }
+
+            if (!funcionario) {
+                showToast('Por favor, selecione um técnico.', 'error');
+                return;
+            }
+
+            const dados = {
+                ferramentaId: ferramentaId,
+                funcionario: funcionario,
+                dataAlocacao: new Date(),
+            };
+
+            try {
+                await alocacoesCollection.add(dados);
+                await adicionarHistorico('alocacao', ferramentaId, { funcionario: funcionario });
+                showToast('Ferramenta alocada com sucesso!', 'success');
+                fecharModal(document.getElementById('modal-alocacao'));
+            } catch (error) {
+                showToast('Erro ao alocar ferramenta', 'error');
+            }
+        });
+        
+        document.getElementById('tabela-alocacao').addEventListener('click', async (e) => {
+            const btnDevolver = e.target.closest('.btn-devolver');
+            if (btnDevolver) {
+                if (confirm('Confirmar a devolução desta ferramenta?')) {
+                    try {
+                        const ferramentaId = btnDevolver.dataset.ferramentaId;
+                        const funcionario = btnDevolver.dataset.funcionario;
+                        
+                        await alocacoesCollection.doc(btnDevolver.dataset.id).delete();
+                        await adicionarHistorico('devolucao', ferramentaId, { funcionario: funcionario });
+                        showToast('Ferramenta devolvida com sucesso!', 'success');
+                    } catch (error) {
+                        showToast('Erro ao devolver ferramenta', 'error');
+                    }
+                }
+            }
+        });
+
+        // --- ATUALIZAÇÃO DE SELECTS E FILTROS ---
+        function atualizarSelectsDeGrupo() {
+            const selects = [
+                document.getElementById('filtro-grupo'),
+                document.getElementById('ferramenta-grupo'),
+                document.getElementById('alocacao-filtro-grupo')
+            ];
+            selects.forEach(select => {
+                const currentValue = select.value;
+                select.innerHTML = `<option value="">${select.id.includes('filtro') ? 'Todos os Grupos' : 'Selecione um Grupo'}</option>`;
+                todosGrupos.forEach(g => {
+                    select.innerHTML += `<option value="${g.id}">${g.nome}</option>`;
+                });
+                select.value = currentValue;
+            });
+        }
+
+        function atualizarSelectTecnicos() {
+            const select = document.getElementById('alocacao-funcionario');
+            const filialFiltro = document.getElementById('alocacao-filtro-filial').value;
+            
+            select.innerHTML = '<option value="">Selecione um técnico...</option>';
+            
+            let tecnicosFiltrados = todosTecnicos;
+            if (filialFiltro) {
+                tecnicosFiltrados = todosTecnicos.filter(t => t.filial === filialFiltro);
+            }
+            
+            tecnicosFiltrados.forEach(t => {
+                select.innerHTML += `<option value="${t.nome}">${t.nome}</option>`;
+            });
+        }
+
+        function atualizarDatalistFerramentas() {
+            const datalist = document.getElementById('ferramentas-datalist');
+            const filialFiltro = document.getElementById('alocacao-filtro-filial').value;
+            const grupoFiltro = document.getElementById('alocacao-filtro-grupo').value;
+            
+            datalist.innerHTML = '';
+            
+            let ferramentasFiltradas = todasFerramentas;
+            if (filialFiltro) {
+                ferramentasFiltradas = ferramentasFiltradas.filter(f => f.filial === filialFiltro);
+            }
+            if (grupoFiltro) {
+                ferramentasFiltradas = ferramentasFiltradas.filter(f => f.grupoId === grupoFiltro);
+            }
+
+            const ferramentasDisponiveis = ferramentasFiltradas.filter(f => {
+                const alocadas = todasAlocacoes.filter(a => a.ferramentaId === f.id).length;
+                return f.quantidade > alocadas && !f.reparo;
+            });
+
+            ferramentasDisponiveis.forEach(f => {
+                const alocadas = todasAlocacoes.filter(a => a.ferramentaId === f.id).length;
+                const disponiveis = f.quantidade - alocadas;
+                const option = document.createElement('option');
+                option.value = `${f.codigo} - ${f.descricao} (${disponiveis} disp.)`;
+                option.dataset.id = f.id;
+                datalist.appendChild(option);
+            });
+        }
+        
+        document.getElementById('alocacao-filtro-grupo').addEventListener('change', atualizarDatalistFerramentas);
+        document.getElementById('alocacao-filtro-filial').addEventListener('change', () => {
+            atualizarDatalistFerramentas();
+            atualizarSelectTecnicos();
+        });
+        
+        document.getElementById('alocacao-ferramenta-input').addEventListener('input', (e) => {
+            const infoDiv = document.getElementById('info-disponibilidade');
+            const inputValor = e.target.value;
+            const datalist = document.getElementById('ferramentas-datalist');
+            let ferramentaId = null;
+
+            for (const option of datalist.options) {
+                if (option.value === inputValor) {
+                    ferramentaId = option.dataset.id;
+                    break;
+                }
+            }
+
+            if (!ferramentaId) {
+                infoDiv.style.display = 'none';
+                return;
+            }
+
+            const alocacoesDaFerramenta = todasAlocacoes.filter(a => a.ferramentaId === ferramentaId);
+            const nomes = alocacoesDaFerramenta.map(a => a.funcionario).join(', ');
+            
+            if (nomes) {
+                infoDiv.textContent = `Em uso por: ${nomes}.`;
+                infoDiv.style.display = 'block';
+            } else {
+                infoDiv.style.display = 'none';
+            }
+        });
+
+        // --- FILTROS ---
+        function aplicarFiltrosEstoque() {
+            const filialFiltro = document.getElementById('filtro-filial').value;
+            const codFiltro = document.getElementById('filtro-codigo').value.toLowerCase();
+            const descFiltro = document.getElementById('filtro-descricao').value.toLowerCase();
+            const grupoFiltro = document.getElementById('filtro-grupo').value;
+            const reparoFiltro = document.getElementById('filtro-reparo').value;
+
+            const filtrado = todasFerramentas.filter(f => {
+                const matchFilial = !filialFiltro || f.filial === filialFiltro;
+                const matchGrupo = !grupoFiltro || f.grupoId === grupoFiltro;
+                const matchReparo = !reparoFiltro || String(f.reparo) === reparoFiltro;
+                return matchFilial &&
+                       f.codigo.toLowerCase().includes(codFiltro) &&
+                       f.descricao.toLowerCase().includes(descFiltro) &&
+                       matchGrupo && matchReparo;
+            });
+            renderizarTabelaFerramentas(filtrado);
+        }
+
+        function aplicarFiltrosAlocacao() {
+            const filialFiltro = document.getElementById('filtro-aloc-filial').value;
+            const ferrFiltro = document.getElementById('filtro-aloc-ferramenta').value.toLowerCase();
+            const funcFiltro = document.getElementById('filtro-aloc-funcionario').value.toLowerCase();
+
+            const filtrado = todasAlocacoes.filter(a => {
+                const ferramenta = todasFerramentas.find(f => f.id === a.ferramentaId);
+                const matchFilial = !filialFiltro || (ferramenta && ferramenta.filial === filialFiltro);
+                const descFerramenta = ferramenta ? ferramenta.descricao.toLowerCase() : '';
+                return matchFilial &&
+                       descFerramenta.includes(ferrFiltro) &&
+                       a.funcionario.toLowerCase().includes(funcFiltro);
+            });
+            renderizarTabelaAlocacao(filtrado);
+        }
+
+        function aplicarFiltrosHistorico() {
+            const filialFiltro = document.getElementById('filtro-hist-filial').value;
+            const ferrFiltro = document.getElementById('filtro-hist-ferramenta').value.toLowerCase();
+            const funcFiltro = document.getElementById('filtro-hist-funcionario').value.toLowerCase();
+            const tipoFiltro = document.getElementById('filtro-hist-tipo').value;
+
+            const filtrado = todoHistorico.filter(h => {
+                const matchFilial = !filialFiltro || h.filial === filialFiltro;
+                const matchFerramenta = !ferrFiltro || 
+                    h.ferramentaDescricao.toLowerCase().includes(ferrFiltro) ||
+                    h.ferramentaCodigo.toLowerCase().includes(ferrFiltro);
+                const matchFuncionario = !funcFiltro || 
+                    (h.detalhes.funcionario && h.detalhes.funcionario.toLowerCase().includes(funcFiltro));
+                const matchTipo = !tipoFiltro || h.tipo === tipoFiltro;
+                
+                return matchFilial && matchFerramenta && matchFuncionario && matchTipo;
+            });
+            renderizarHistorico(filtrado);
+        }
+
+        // Event listeners para filtros
+        document.querySelectorAll('#filtro-filial, #filtro-codigo, #filtro-descricao, #filtro-grupo, #filtro-reparo').forEach(el => {
+            el.addEventListener('input', aplicarFiltrosEstoque);
+            el.addEventListener('change', aplicarFiltrosEstoque);
+        });
+
+        document.querySelectorAll('#filtro-aloc-filial, #filtro-aloc-ferramenta, #filtro-aloc-funcionario').forEach(el => {
+            el.addEventListener('input', aplicarFiltrosAlocacao);
+        });
+
+        document.querySelectorAll('#filtro-hist-filial, #filtro-hist-ferramenta, #filtro-hist-funcionario, #filtro-hist-tipo').forEach(el => {
+            el.addEventListener('input', aplicarFiltrosHistorico);
+            el.addEventListener('change', aplicarFiltrosHistorico);
+        });
+
+        // --- INICIALIZAÇÃO ---
+        document.addEventListener("DOMContentLoaded", () => {
+            lucide.createIcons();
+            carregarDados();
+            alternarTela('alocacao'); // Agora inicia na tela de alocação
+        });
+    </script>
+</body>
+</html>
