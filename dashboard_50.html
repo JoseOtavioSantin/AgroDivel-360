@@ -296,64 +296,66 @@
 
     // *** 2. FUNÇÃO GERAR PDF MODIFICADA ***
     function gerarPDF(kit) {
-        const doc = new jsPDF();
+    const doc = new jsPDF();
 
-        // Adiciona o logo a partir da variável Base64
-        if (logoBase64) {
-            doc.addImage(logoBase64, 'PNG', 15, 15, 45, 15);
-        } else {
-            console.warn("Logo não carregado, PDF será gerado sem ele.");
-        }
-
-        doc.setFont('Helvetica', 'bold');
-        doc.setFontSize(12);
-
-        let y = 50;
-        const lineHeight = 12;
-
-        doc.text('CLIENTE:', 15, y);
-        doc.setFont('Helvetica', 'normal');
-        doc.text('AGRO DIVEL', 55, y);
-        y += lineHeight;
-
-        doc.setFont('Helvetica', 'bold');
-        doc.text('MODELO:', 15, y);
-        doc.setFont('Helvetica', 'normal');
-        doc.text(kit.modelo || '-', 55, y);
-        y += lineHeight;
-
-        doc.setFont('Helvetica', 'bold');
-        doc.text('CHASSI:', 15, y);
-        doc.setFont('Helvetica', 'normal');
-        doc.text(kit.chassi || '-', 55, y);
-        y += lineHeight;
-
-        doc.setFont('Helvetica', 'bold');
-        doc.text('DESCRIÇÃO:', 15, y);
-        doc.setFont('Helvetica', 'normal');
-        doc.text(kit.descricao || '-', 55, y);
-        y += lineHeight;
-
-        doc.setFont('Helvetica', 'bold');
-        doc.text('RESPONSÁVEL:', 15, y);
-        doc.setFont('Helvetica', 'normal');
-        doc.text(kit.quemEntregou || '-', 55, y);
-        y += lineHeight;
-
-        doc.setFont('Helvetica', 'bold');
-        doc.text('DATA:', 15, y);
-        doc.setFont('Helvetica', 'normal');
-        doc.text(formatarData(kit.dataEntrega) || '-', 55, y);
-        y += lineHeight;
-
-        doc.setFont('Helvetica', 'bold');
-        doc.text('ORDEM SERVIÇO:', 15, y);
-        doc.setFont('Helvetica', 'normal');
-        doc.text(kit.os || '-', 55, y);
-
-        doc.save(`Comprovante_${kit.chassi || 'kit'}.pdf`);
+    // Adiciona o logo a partir da variável Base64
+    if (logoBase64) {
+        // *** A CORREÇÃO ESTÁ AQUI ***
+        // Adicionamos os parâmetros 'undefined' e 'NONE' para desativar a compressão
+        // e manter a qualidade máxima da imagem PNG.
+        doc.addImage(logoBase64, 'PNG', 15, 15, 45, 15, undefined, 'NONE');
+    } else {
+        console.warn("Logo não carregado, PDF será gerado sem ele.");
     }
 
+    doc.setFont('Helvetica', 'bold');
+    doc.setFontSize(12);
+
+    let y = 50;
+    const lineHeight = 12;
+
+    doc.text('CLIENTE:', 15, y);
+    doc.setFont('Helvetica', 'normal');
+    doc.text('AGRO DIVEL', 55, y);
+    y += lineHeight;
+
+    doc.setFont('Helvetica', 'bold');
+    doc.text('MODELO:', 15, y);
+    doc.setFont('Helvetica', 'normal');
+    doc.text(kit.modelo || '-', 55, y);
+    y += lineHeight;
+
+    doc.setFont('Helvetica', 'bold');
+    doc.text('CHASSI:', 15, y);
+    doc.setFont('Helvetica', 'normal');
+    doc.text(kit.chassi || '-', 55, y);
+    y += lineHeight;
+
+    doc.setFont('Helvetica', 'bold');
+    doc.text('DESCRIÇÃO:', 15, y);
+    doc.setFont('Helvetica', 'normal');
+    doc.text(kit.descricao || '-', 55, y);
+    y += lineHeight;
+
+    doc.setFont('Helvetica', 'bold');
+    doc.text('RESPONSÁVEL:', 15, y);
+    doc.setFont('Helvetica', 'normal');
+    doc.text(kit.quemEntregou || '-', 55, y);
+    y += lineHeight;
+
+    doc.setFont('Helvetica', 'bold');
+    doc.text('DATA:', 15, y);
+    doc.setFont('Helvetica', 'normal');
+    doc.text(formatarData(kit.dataEntrega) || '-', 55, y);
+    y += lineHeight;
+
+    doc.setFont('Helvetica', 'bold');
+    doc.text('ORDEM SERVIÇO:', 15, y);
+    doc.setFont('Helvetica', 'normal');
+    doc.text(kit.os || '-', 55, y);
+
+    doc.save(`Comprovante_${kit.chassi || 'kit'}.pdf`);
+}
     function adicionarEventosTabela() {
         tabelaBody.querySelectorAll('tr').forEach(row => {
             const id = row.dataset.id;
@@ -466,3 +468,4 @@
 
 </body>
 </html>
+
