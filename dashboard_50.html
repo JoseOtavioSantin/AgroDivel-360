@@ -52,6 +52,7 @@
 <body>
   <header>
     <div style="display: flex; align-items: center; justify-content: space-between;">
+      <!-- Verifique se o caminho para esta imagem está correto no seu projeto -->
       <img src="assets/logo.png" alt="Logo" class="logo">
       <div style="flex: 1; text-align: center;">
         <em>Dashboard Agro Divel 360</em>
@@ -135,7 +136,6 @@
   </div>
 
 <script type="module">
-  // *** CORREÇÃO ***: Os imports devem vir primeiro, sempre no topo do script.
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
   import { getFirestore, collection, getDocs, doc, updateDoc, addDoc, orderBy, query } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
@@ -151,15 +151,20 @@
 
   document.addEventListener("DOMContentLoaded", () => {
     
-    // *** CORREÇÃO ***: A verificação de login foi movida para dentro do 'DOMContentLoaded'.
-    // Isso garante que os imports já foram processados e o código pode ser executado.
     if (localStorage.getItem("gestorLogado") !== "true") {
         alert("Acesso restrito! Faça login como gestor.");
-        window.location.href = "index.html"; // Redireciona para a página de login
-        return; // Para a execução do script se o usuário não estiver logado
+        window.location.href = "index.html";
+        return;
     }
 
-    lucide.createIcons();
+    // *** CORREÇÃO APLICADA AQUI ***
+    // Colocamos a chamada dos ícones dentro de um try...catch.
+    // Se a biblioteca de ícones falhar, o resto do código não para de executar.
+    try {
+      lucide.createIcons();
+    } catch (error) {
+      console.error("Falha ao carregar os ícones Lucide. Verifique a conexão e o script.", error);
+    }
 
     const tabelaBody = document.getElementById('tabela-kits');
     const loaderOverlay = document.getElementById('loader-overlay');
@@ -184,7 +189,7 @@
         if (filiaisLogadas.length === 0) {
             alert("Nenhuma filial associada a este gestor. Faça login novamente.");
             loaderOverlay.style.display = 'none';
-            window.location.href = "index.html"; // Redireciona se não houver filial
+            window.location.href = "index.html";
             return;
         }
 
@@ -268,7 +273,7 @@
                 const value = e.target.value;
                 await atualizarDocumento(id, { status: value });
                 
-                row.className = ''; // Limpa classes antigas
+                row.className = '';
                 if (value === 'Em Andamento') {
                     row.classList.add('status-em-andamento');
                 } else if (value === 'Concluído') {
@@ -335,7 +340,7 @@
             quemEntregou: document.getElementById('form-quem-entregou').value.trim(),
             quemPegou: document.getElementById('form-quem-pegou').value.trim(),
             status: document.getElementById('form-status').value,
-            filial: filialPrincipal // Campo da filial adicionado
+            filial: filialPrincipal
         };
 
         if (!novoKit.dataEntrega || !novoKit.chassi) {
@@ -348,7 +353,6 @@
         await carregarDadosDoFirebase();
     }
 
-    // Adiciona os event listeners
     btnAddKit.addEventListener('click', abrirModal);
     closeModalButton.addEventListener('click', fecharModal);
     btnCancel.addEventListener('click', fecharModal);
@@ -359,7 +363,6 @@
     filtroModelo.addEventListener('input', aplicarFiltros);
     filtroDescricao.addEventListener('input', aplicarFiltros);
 
-    // Inicia o carregamento dos dados
     carregarDadosDoFirebase();
   });
 </script>
