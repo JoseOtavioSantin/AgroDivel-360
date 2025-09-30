@@ -8,10 +8,10 @@
   <script src="https://unpkg.com/lucide@latest"></script>
   
   <style>
-    /* Estilos reaproveitados */
+    /* Seus estilos permanecem os mesmos */
     * { box-sizing: border-box; }
     body { margin: 0; font-family: Arial, sans-serif; background-color: #1e1e2f; color: white; display: flex; flex-direction: column; height: 100vh; }
-    header { background-color: #2c2f3f; padding: 20px; text-align: center; font-size: 20px; font-weight: bold; color: #ffffff; letter-spacing: 1px; box-shadow: 0 2px 4px rgba(0,0,0,0.2  ); }
+    header { background-color: #2c2f3f; padding: 20px; text-align: center; font-size: 20px; font-weight: bold; color: #ffffff; letter-spacing: 1px; box-shadow: 0 2px 4px rgba(0,0,0,0.2 ); }
     #dynamic-title { margin-top: 10px; font-size: 16px; font-weight: normal; color: #ccc; }
     .main { display: flex; flex: 1; overflow: hidden; }
     .sidebar { width: 250px; background-color: #2c2f3f; padding: 20px; display: flex; flex-direction: column; gap: 20px; overflow-y: auto; }
@@ -30,11 +30,8 @@
     .logo { height: 80px; margin-left: 45px; margin-right: 15px; }
     .status-select { background-color: transparent; color: white; border: none; border-radius: 4px; padding: 4px 6px; font-weight: bold; cursor: pointer; width: 100%; -webkit-appearance: none; -moz-appearance: none; appearance: none; }
     .status-select option { background-color: #2c2f3f; color: white; }
-    
-    /* *** MUDANÇA PRINCIPAL AQUI: Estilos aplicados à linha (tr) *** */
     .status-em-andamento { background-color: #c67903; }
     .status-concluido { background-color: #193b7c; }
-    
     .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.6); justify-content: center; align-items: center; }
     .modal-content { background-color: #2c2f3f; padding: 25px; border-radius: 12px; width: 90%; max-width: 500px; box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
     .modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #444; padding-bottom: 10px; margin-bottom: 15px; }
@@ -138,16 +135,10 @@
   </div>
 
 <script type="module">
-
+  // *** CORREÇÃO ***: Os imports devem vir primeiro, sempre no topo do script.
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
   import { getFirestore, collection, getDocs, doc, updateDoc, addDoc, orderBy, query } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-    if (localStorage.getItem("gestorLogado") !== "true") {
-        alert("Acesso restrito! Faça login como gestor.");
-        window.location.href = "index.html"; // Redireciona para a página de login
-    }
-
-  
   const firebaseConfig = {
     apiKey: "AIzaSyDcjPa9jXsCCu6lNc1fjVg4Bzz1toKWAGY",
     authDomain: "agro-divel.firebaseapp.com",
@@ -159,6 +150,15 @@
   const kitsCollection = collection(db, "kits50Horas");
 
   document.addEventListener("DOMContentLoaded", () => {
+    
+    // *** CORREÇÃO ***: A verificação de login foi movida para dentro do 'DOMContentLoaded'.
+    // Isso garante que os imports já foram processados e o código pode ser executado.
+    if (localStorage.getItem("gestorLogado") !== "true") {
+        alert("Acesso restrito! Faça login como gestor.");
+        window.location.href = "index.html"; // Redireciona para a página de login
+        return; // Para a execução do script se o usuário não estiver logado
+    }
+
     lucide.createIcons();
 
     const tabelaBody = document.getElementById('tabela-kits');
@@ -180,15 +180,14 @@
     async function carregarDadosDoFirebase() {
         loaderOverlay.style.display = 'flex';
 
-        // Pega as filiais do gestor logado (igual ao seu código de exemplo)
         const filiaisLogadas = JSON.parse(localStorage.getItem("gestorFilial") || "[]");
         if (filiaisLogadas.length === 0) {
             alert("Nenhuma filial associada a este gestor. Faça login novamente.");
             loaderOverlay.style.display = 'none';
+            window.location.href = "index.html"; // Redireciona se não houver filial
             return;
         }
 
-        // Atualiza o título da página com as filiais
         const dynamicTitle = document.getElementById('dynamic-title');
         dynamicTitle.textContent = `Controle de Kits 50 Horas - Filial: ${filiaisLogadas.join(", ")}`;
 
@@ -197,11 +196,8 @@
         
         const todosOsKits = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
-        // *** AQUI ESTÁ A MUDANÇA PRINCIPAL ***
-        // Filtra os kits para mostrar apenas os da filial do gestor
         dadosCompletos = todosOsKits.filter(kit => {
             const filialDoKit = (kit.filial || "").toLowerCase().trim();
-            // Verifica se a filial do kit está na lista de filiais permitidas para o gestor
             return filiaisLogadas.some(f => f.toLowerCase().trim() === filialDoKit);
         });
 
@@ -230,7 +226,6 @@
         const tr = document.createElement('tr');
         tr.dataset.id = kit.id;
         
-        // *** MUDANÇA AQUI: Adiciona a classe de cor na linha ***
         if (kit.status === 'Em Andamento') {
             tr.classList.add('status-em-andamento');
         } else if (kit.status === 'Concluído') {
@@ -273,7 +268,6 @@
                 const value = e.target.value;
                 await atualizarDocumento(id, { status: value });
                 
-                // *** MUDANÇA AQUI: Atualiza a cor da linha inteira ***
                 row.className = ''; // Limpa classes antigas
                 if (value === 'Em Andamento') {
                     row.classList.add('status-em-andamento');
@@ -324,7 +318,6 @@
     }
 
     async function salvarKit() {
-        // Pega a primeira filial da lista do gestor para associar ao novo kit
         const filiaisDoGestor = JSON.parse(localStorage.getItem("gestorFilial") || "[]");
         const filialPrincipal = filiaisDoGestor.length > 0 ? filiaisDoGestor[0] : "";
 
@@ -342,7 +335,7 @@
             quemEntregou: document.getElementById('form-quem-entregou').value.trim(),
             quemPegou: document.getElementById('form-quem-pegou').value.trim(),
             status: document.getElementById('form-status').value,
-            filial: filialPrincipal // <-- CAMPO NOVO ADICIONADO AQUI
+            filial: filialPrincipal // Campo da filial adicionado
         };
 
         if (!novoKit.dataEntrega || !novoKit.chassi) {
@@ -355,9 +348,10 @@
         await carregarDadosDoFirebase();
     }
 
+    // Adiciona os event listeners
     btnAddKit.addEventListener('click', abrirModal);
     closeModalButton.addEventListener('click', fecharModal);
-btnCancel.addEventListener('click', fecharModal);
+    btnCancel.addEventListener('click', fecharModal);
     btnSave.addEventListener('click', salvarKit);
     window.addEventListener('click', (e) => { if (e.target == kitModal) fecharModal(); });
 
@@ -365,10 +359,10 @@ btnCancel.addEventListener('click', fecharModal);
     filtroModelo.addEventListener('input', aplicarFiltros);
     filtroDescricao.addEventListener('input', aplicarFiltros);
 
+    // Inicia o carregamento dos dados
     carregarDadosDoFirebase();
   });
 </script>
 
 </body>
 </html>
-
