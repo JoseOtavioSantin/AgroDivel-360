@@ -7,8 +7,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script src="https://unpkg.com/lucide@latest"></script>
   
+  <!-- 1. ADICIONANDO A BIBLIOTECA jspdf -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
   <style>
-    /* Seus estilos permanecem os mesmos */
+    /* Seus estilos... */
     * { box-sizing: border-box; }
     body { margin: 0; font-family: Arial, sans-serif; background-color: #1e1e2f; color: white; display: flex; flex-direction: column; height: 100vh; }
     header { background-color: #2c2f3f; padding: 20px; text-align: center; font-size: 20px; font-weight: bold; color: #ffffff; letter-spacing: 1px; box-shadow: 0 2px 4px rgba(0,0,0,0.2 ); }
@@ -47,13 +50,30 @@
     .btn-save { background-color: #27ae60; color: white; }
     .btn-cancel { background-color: #7f8c8d; color: white; margin-left: 10px; }
     #loader-overlay { display: none; position: fixed; z-index: 9999; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.6); color: white; font-size: 20px; align-items: center; justify-content: center; font-weight: bold; }
+    
+    /* Estilo para o novo botão de imprimir */
+    .btn-print {
+        background: #007bff;
+        border: none;
+        width: 32px;
+        height: 32px;
+        border-radius: 6px;
+        color: white;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: background-color 0.2s;
+    }
+    .btn-print:hover {
+        background: #0056b3;
+    }
   </style>
 </head>
 <body>
   <header>
     <div style="display: flex; align-items: center; justify-content: space-between;">
-      <!-- Verifique se o caminho para esta imagem está correto no seu projeto -->
-      <img src="assets/logo.png" alt="Logo" class="logo">
+      <img src="assets/logo.png" alt="Logo" class="logo" id="logo-img">
       <div style="flex: 1; text-align: center;">
         <em>Dashboard Agro Divel 360</em>
         <div id="dynamic-title">Controle de Kits 50 Horas</div>
@@ -104,6 +124,8 @@
             <th>Quem Entregou</th>
             <th>Quem Retirou</th>
             <th>Status</th>
+            <!-- 2. ADICIONANDO A COLUNA DE AÇÕES -->
+            <th>Ações</th>
           </tr>
         </thead>
         <tbody id="tabela-kits"></tbody>
@@ -139,6 +161,9 @@
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
   import { getFirestore, collection, getDocs, doc, updateDoc, addDoc, orderBy, query } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
+  // 3. INICIALIZANDO O jspdf
+  const { jsPDF } = window.jspdf;
+
   const firebaseConfig = {
     apiKey: "AIzaSyDcjPa9jXsCCu6lNc1fjVg4Bzz1toKWAGY",
     authDomain: "agro-divel.firebaseapp.com",
@@ -157,13 +182,10 @@
         return;
     }
 
-    // *** CORREÇÃO APLICADA AQUI ***
-    // Colocamos a chamada dos ícones dentro de um try...catch.
-    // Se a biblioteca de ícones falhar, o resto do código não para de executar.
     try {
       lucide.createIcons();
     } catch (error) {
-      console.error("Falha ao carregar os ícones Lucide. Verifique a conexão e o script.", error);
+      console.error("Falha ao carregar os ícones Lucide.", error);
     }
 
     const tabelaBody = document.getElementById('tabela-kits');
@@ -184,30 +206,32 @@
 
     async function carregarDadosDoFirebase() {
         loaderOverlay.style.display = 'flex';
+        try {
+            const filiaisLogadas = JSON.parse(localStorage.getItem("gestorFilial") || "[]");
+            if (filiaisLogadas.length === 0) {
+                throw new Error("Nenhuma filial associada a este gestor.");
+            }
 
-        const filiaisLogadas = JSON.parse(localStorage.getItem("gestorFilial") || "[]");
-        if (filiaisLogadas.length === 0) {
-            alert("Nenhuma filial associada a este gestor. Faça login novamente.");
+            const dynamicTitle = document.getElementById('dynamic-title');
+            dynamicTitle.textContent = `Controle de Kits 50 Horas - Filial: ${filiaisLogadas.join(", ")}`;
+
+            const q = query(kitsCollection, orderBy("dataEntrega", "desc"));
+            const querySnapshot = await getDocs(q);
+            
+            const todosOsKits = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+            dadosCompletos = todosOsKits.filter(kit => {
+                const filialDoKit = (kit.filial || "").toLowerCase().trim();
+                return filiaisLogadas.some(f => f.toLowerCase().trim() === filialDoKit);
+            });
+
+            aplicarFiltros();
+        } catch (error) {
+            console.error("Erro ao carregar dados do Firebase:", error);
+            loaderOverlay.innerHTML = `<div style="margin: auto; text-align: center;">Erro ao carregar. Verifique o console (F12) e se o índice do Firestore foi criado.</div>`;
+        } finally {
             loaderOverlay.style.display = 'none';
-            window.location.href = "index.html";
-            return;
         }
-
-        const dynamicTitle = document.getElementById('dynamic-title');
-        dynamicTitle.textContent = `Controle de Kits 50 Horas - Filial: ${filiaisLogadas.join(", ")}`;
-
-        const q = query(kitsCollection, orderBy("dataEntrega", "desc"));
-        const querySnapshot = await getDocs(q);
-        
-        const todosOsKits = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-
-        dadosCompletos = todosOsKits.filter(kit => {
-            const filialDoKit = (kit.filial || "").toLowerCase().trim();
-            return filiaisLogadas.some(f => f.toLowerCase().trim() === filialDoKit);
-        });
-
-        aplicarFiltros();
-        loaderOverlay.style.display = 'none';
     }
 
     function aplicarFiltros() {
@@ -239,6 +263,7 @@
         
         const statusOptions = `<option value="Em Andamento">Em Andamento</option><option value="Concluído">Concluído</option>`;
         
+        // 4. ADICIONANDO O BOTÃO DE IMPRIMIR NA LINHA
         tr.innerHTML = `
           <td>${formatarData(kit.dataEntrega)}</td>
           <td contenteditable="true" data-field="chassi">${kit.chassi || ''}</td>
@@ -248,14 +273,91 @@
           <td contenteditable="true" data-field="quemEntregou">${kit.quemEntregou || ''}</td>
           <td contenteditable="true" data-field="quemPegou">${kit.quemPegou || ''}</td>
           <td><select class="status-select" data-field="status">${statusOptions}</select></td>
+          <td>
+            <button class="btn-print" title="Gerar PDF">
+              <i data-lucide="printer" style="width: 18px; height: 18px;"></i>
+            </button>
+          </td>
         `;
         tabelaBody.appendChild(tr);
 
         const statusSelect = tr.querySelector('select[data-field="status"]');
         statusSelect.value = kit.status;
+
+        // Adiciona o evento de clique para o botão de imprimir
+        tr.querySelector('.btn-print').addEventListener('click', () => gerarPDF(kit));
       });
+      
+      // Recria os ícones Lucide após renderizar a tabela
+      try {
+        lucide.createIcons();
+      } catch (e) { console.error(e); }
+
       adicionarEventosTabela();
     }
+
+    // 5. FUNÇÃO PARA GERAR O PDF
+    function gerarPDF(kit) {
+        const doc = new jsPDF();
+        const logoImg = document.getElementById('logo-img');
+
+        // Adiciona o logo
+        if (logoImg.complete) {
+            doc.addImage(logoImg, 'PNG', 15, 15, 45, 15);
+        }
+
+        // Define a fonte e o tamanho
+        doc.setFont('Helvetica', 'bold');
+        doc.setFontSize(12);
+
+        // Adiciona os campos de texto
+        let y = 50; // Posição vertical inicial
+        const lineHeight = 12; // Espaçamento entre linhas
+
+        doc.text('CLIENTE:', 15, y);
+        doc.setFont('Helvetica', 'normal');
+        doc.text('AGRO DIVEL', 55, y);
+        y += lineHeight;
+
+        doc.setFont('Helvetica', 'bold');
+        doc.text('MODELO:', 15, y);
+        doc.setFont('Helvetica', 'normal');
+        doc.text(kit.modelo || '-', 55, y);
+        y += lineHeight;
+
+        doc.setFont('Helvetica', 'bold');
+        doc.text('CHASSI:', 15, y);
+        doc.setFont('Helvetica', 'normal');
+        doc.text(kit.chassi || '-', 55, y);
+        y += lineHeight;
+
+        doc.setFont('Helvetica', 'bold');
+        doc.text('DESCRIÇÃO:', 15, y);
+        doc.setFont('Helvetica', 'normal');
+        doc.text(kit.descricao || '-', 55, y);
+        y += lineHeight;
+
+        doc.setFont('Helvetica', 'bold');
+        doc.text('RESPONSÁVEL:', 15, y);
+        doc.setFont('Helvetica', 'normal');
+        doc.text(kit.quemEntregou || '-', 55, y);
+        y += lineHeight;
+
+        doc.setFont('Helvetica', 'bold');
+        doc.text('DATA:', 15, y);
+        doc.setFont('Helvetica', 'normal');
+        doc.text(formatarData(kit.dataEntrega) || '-', 55, y);
+        y += lineHeight;
+
+        doc.setFont('Helvetica', 'bold');
+        doc.text('ORDEM SERVIÇO:', 15, y);
+        doc.setFont('Helvetica', 'normal');
+        doc.text(kit.os || '-', 55, y);
+
+        // Salva o arquivo
+        doc.save(`Comprovante_${kit.chassi || 'kit'}.pdf`);
+    }
+
 
     function adicionarEventosTabela() {
         tabelaBody.querySelectorAll('tr').forEach(row => {
