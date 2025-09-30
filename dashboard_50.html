@@ -6,12 +6,10 @@
   <title>Controle de Kits 50 Horas</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script src="https://unpkg.com/lucide@latest"></script>
-  
-  <!-- 1. ADICIONANDO A BIBLIOTECA jspdf -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
   <style>
-    /* Seus estilos... */
+    /* Seus estilos permanecem os mesmos */
     * { box-sizing: border-box; }
     body { margin: 0; font-family: Arial, sans-serif; background-color: #1e1e2f; color: white; display: flex; flex-direction: column; height: 100vh; }
     header { background-color: #2c2f3f; padding: 20px; text-align: center; font-size: 20px; font-weight: bold; color: #ffffff; letter-spacing: 1px; box-shadow: 0 2px 4px rgba(0,0,0,0.2 ); }
@@ -50,30 +48,14 @@
     .btn-save { background-color: #27ae60; color: white; }
     .btn-cancel { background-color: #7f8c8d; color: white; margin-left: 10px; }
     #loader-overlay { display: none; position: fixed; z-index: 9999; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.6); color: white; font-size: 20px; align-items: center; justify-content: center; font-weight: bold; }
-    
-    /* Estilo para o novo botão de imprimir */
-    .btn-print {
-        background: #007bff;
-        border: none;
-        width: 32px;
-        height: 32px;
-        border-radius: 6px;
-        color: white;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        transition: background-color 0.2s;
-    }
-    .btn-print:hover {
-        background: #0056b3;
-    }
+    .btn-print { background: #007bff; border: none; width: 32px; height: 32px; border-radius: 6px; color: white; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background-color 0.2s; }
+    .btn-print:hover { background: #0056b3; }
   </style>
 </head>
 <body>
   <header>
     <div style="display: flex; align-items: center; justify-content: space-between;">
-      <img src="assets/logo.png" alt="Logo" class="logo" id="logo-img">
+      <img src="assets/logo.png" alt="Logo" class="logo">
       <div style="flex: 1; text-align: center;">
         <em>Dashboard Agro Divel 360</em>
         <div id="dynamic-title">Controle de Kits 50 Horas</div>
@@ -100,19 +82,16 @@
 
     <div class="content">
       <div id="loader-overlay"><div style="margin: auto;">Carregando...</div></div>
-
       <div class="filters">
         <input id="filtro-chassi" type="text" placeholder="Buscar chassi..." />
         <input id="filtro-modelo" type="text" placeholder="Buscar modelo..." />
         <input id="filtro-descricao" type="text" placeholder="Buscar descrição..." />
-        
         <div class="acoes-topo">
           <button class="btn-acao" id="btn-add-kit" title="Adicionar Novo Kit">
             <i data-lucide="plus"></i>
           </button>
         </div>
       </div>
-
       <table>
         <thead>
           <tr>
@@ -124,7 +103,6 @@
             <th>Quem Entregou</th>
             <th>Quem Retirou</th>
             <th>Status</th>
-            <!-- 2. ADICIONANDO A COLUNA DE AÇÕES -->
             <th>Ações</th>
           </tr>
         </thead>
@@ -133,7 +111,6 @@
     </div>
   </div>
 
-  <!-- Modal para Adicionar/Editar Kit -->
   <div id="kit-modal" class="modal">
     <div class="modal-content">
       <div class="modal-header">
@@ -161,7 +138,6 @@
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
   import { getFirestore, collection, getDocs, doc, updateDoc, addDoc, orderBy, query } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-  // 3. INICIALIZANDO O jspdf
   const { jsPDF } = window.jspdf;
 
   const firebaseConfig = {
@@ -174,8 +150,33 @@
   const db = getFirestore(app);
   const kitsCollection = collection(db, "kits50Horas");
 
-  document.addEventListener("DOMContentLoaded", () => {
+  // *** 1. NOVA ABORDAGEM: Carregar a imagem do logo e converter para Base64 ***
+  let logoBase64 = null;
+  async function carregarLogoParaPDF() {
+    try {
+      const response = await fetch('assets/logoPDF.png');
+      if (!response.ok) throw new Error('Imagem do logo não encontrada.');
+      const blob = await response.blob();
+      const reader = new FileReader();
+      reader.readAsDataURL(blob);
+      return new Promise(resolve => {
+        reader.onloadend = () => {
+          logoBase64 = reader.result;
+          console.log("Logo para PDF carregado com sucesso.");
+          resolve();
+        };
+      });
+    } catch (error) {
+      console.error("Erro ao carregar o logo para o PDF:", error);
+      // O PDF será gerado sem logo se houver erro
+    }
+  }
+
+  document.addEventListener("DOMContentLoaded", async () => {
     
+    // Carrega o logo assim que a página estiver pronta
+    await carregarLogoParaPDF();
+
     if (localStorage.getItem("gestorLogado") !== "true") {
         alert("Acesso restrito! Faça login como gestor.");
         window.location.href = "index.html";
@@ -228,7 +229,7 @@
             aplicarFiltros();
         } catch (error) {
             console.error("Erro ao carregar dados do Firebase:", error);
-            loaderOverlay.innerHTML = `<div style="margin: auto; text-align: center;">Erro ao carregar. Verifique o console (F12) e se o índice do Firestore foi criado.</div>`;
+            loaderOverlay.innerHTML = `<div style="margin: auto; text-align: center;">Erro ao carregar. Verifique o console (F12).</div>`;
         } finally {
             loaderOverlay.style.display = 'none';
         }
@@ -263,7 +264,6 @@
         
         const statusOptions = `<option value="Em Andamento">Em Andamento</option><option value="Concluído">Concluído</option>`;
         
-        // 4. ADICIONANDO O BOTÃO DE IMPRIMIR NA LINHA
         tr.innerHTML = `
           <td>${formatarData(kit.dataEntrega)}</td>
           <td contenteditable="true" data-field="chassi">${kit.chassi || ''}</td>
@@ -284,11 +284,9 @@
         const statusSelect = tr.querySelector('select[data-field="status"]');
         statusSelect.value = kit.status;
 
-        // Adiciona o evento de clique para o botão de imprimir
         tr.querySelector('.btn-print').addEventListener('click', () => gerarPDF(kit));
       });
       
-      // Recria os ícones Lucide após renderizar a tabela
       try {
         lucide.createIcons();
       } catch (e) { console.error(e); }
@@ -296,23 +294,22 @@
       adicionarEventosTabela();
     }
 
-    // 5. FUNÇÃO PARA GERAR O PDF
+    // *** 2. FUNÇÃO GERAR PDF MODIFICADA ***
     function gerarPDF(kit) {
         const doc = new jsPDF();
-        const logoImg = document.getElementById('logo-img');
 
-        // Adiciona o logo
-        if (logoImg.complete) {
-            doc.addImage(logoImg, 'PNG', 15, 15, 45, 15);
+        // Adiciona o logo a partir da variável Base64
+        if (logoBase64) {
+            doc.addImage(logoBase64, 'PNG', 15, 15, 45, 15);
+        } else {
+            console.warn("Logo não carregado, PDF será gerado sem ele.");
         }
 
-        // Define a fonte e o tamanho
         doc.setFont('Helvetica', 'bold');
         doc.setFontSize(12);
 
-        // Adiciona os campos de texto
-        let y = 50; // Posição vertical inicial
-        const lineHeight = 12; // Espaçamento entre linhas
+        let y = 50;
+        const lineHeight = 12;
 
         doc.text('CLIENTE:', 15, y);
         doc.setFont('Helvetica', 'normal');
@@ -354,10 +351,8 @@
         doc.setFont('Helvetica', 'normal');
         doc.text(kit.os || '-', 55, y);
 
-        // Salva o arquivo
         doc.save(`Comprovante_${kit.chassi || 'kit'}.pdf`);
     }
-
 
     function adicionarEventosTabela() {
         tabelaBody.querySelectorAll('tr').forEach(row => {
