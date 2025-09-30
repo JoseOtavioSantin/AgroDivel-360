@@ -139,14 +139,15 @@
 
 <script type="module">
 
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import { getFirestore, collection, getDocs, doc, updateDoc, addDoc, orderBy, query } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
     if (localStorage.getItem("gestorLogado") !== "true") {
         alert("Acesso restrito! Faça login como gestor.");
         window.location.href = "index.html"; // Redireciona para a página de login
     }
 
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-  import { getFirestore, collection, getDocs, doc, updateDoc, addDoc, orderBy, query } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-
+  
   const firebaseConfig = {
     apiKey: "AIzaSyDcjPa9jXsCCu6lNc1fjVg4Bzz1toKWAGY",
     authDomain: "agro-divel.firebaseapp.com",
