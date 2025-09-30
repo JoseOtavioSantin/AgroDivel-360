@@ -138,6 +138,12 @@
   </div>
 
 <script type="module">
+
+    if (localStorage.getItem("gestorLogado") !== "true") {
+        alert("Acesso restrito! Faça login como gestor.");
+        window.location.href = "index.html"; // Redireciona para a página de login
+    }
+
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
   import { getFirestore, collection, getDocs, doc, updateDoc, addDoc, orderBy, query } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
@@ -172,9 +178,32 @@
 
     async function carregarDadosDoFirebase() {
         loaderOverlay.style.display = 'flex';
+
+        // Pega as filiais do gestor logado (igual ao seu código de exemplo)
+        const filiaisLogadas = JSON.parse(localStorage.getItem("gestorFilial") || "[]");
+        if (filiaisLogadas.length === 0) {
+            alert("Nenhuma filial associada a este gestor. Faça login novamente.");
+            loaderOverlay.style.display = 'none';
+            return;
+        }
+
+        // Atualiza o título da página com as filiais
+        const dynamicTitle = document.getElementById('dynamic-title');
+        dynamicTitle.textContent = `Controle de Kits 50 Horas - Filial: ${filiaisLogadas.join(", ")}`;
+
         const q = query(kitsCollection, orderBy("dataEntrega", "desc"));
         const querySnapshot = await getDocs(q);
-        dadosCompletos = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        
+        const todosOsKits = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+        // *** AQUI ESTÁ A MUDANÇA PRINCIPAL ***
+        // Filtra os kits para mostrar apenas os da filial do gestor
+        dadosCompletos = todosOsKits.filter(kit => {
+            const filialDoKit = (kit.filial || "").toLowerCase().trim();
+            // Verifica se a filial do kit está na lista de filiais permitidas para o gestor
+            return filiaisLogadas.some(f => f.toLowerCase().trim() === filialDoKit);
+        });
+
         aplicarFiltros();
         loaderOverlay.style.display = 'none';
     }
@@ -294,6 +323,15 @@
     }
 
     async function salvarKit() {
+        // Pega a primeira filial da lista do gestor para associar ao novo kit
+        const filiaisDoGestor = JSON.parse(localStorage.getItem("gestorFilial") || "[]");
+        const filialPrincipal = filiaisDoGestor.length > 0 ? filiaisDoGestor[0] : "";
+
+        if (!filialPrincipal) {
+            alert("Não foi possível identificar a sua filial. Faça o login novamente.");
+            return;
+        }
+
         const novoKit = {
             dataEntrega: document.getElementById('form-data-entrega').value,
             chassi: document.getElementById('form-chassi').value.trim(),
@@ -302,7 +340,8 @@
             os: document.getElementById('form-os').value.trim(),
             quemEntregou: document.getElementById('form-quem-entregou').value.trim(),
             quemPegou: document.getElementById('form-quem-pegou').value.trim(),
-            status: document.getElementById('form-status').value
+            status: document.getElementById('form-status').value,
+            filial: filialPrincipal // <-- CAMPO NOVO ADICIONADO AQUI
         };
 
         if (!novoKit.dataEntrega || !novoKit.chassi) {
@@ -331,3 +370,4 @@ btnCancel.addEventListener('click', fecharModal);
 
 </body>
 </html>
+
