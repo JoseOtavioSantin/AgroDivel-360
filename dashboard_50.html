@@ -308,63 +308,75 @@
     }
 
     function gerarPDF(kit) {
-        const doc = new jsPDF();
+    const doc = new jsPDF();
 
-        if (logoBase64) {
-            // Parâmetros para desativar a compressão e manter a qualidade
-            doc.addImage(logoBase64, 'PNG', 15, 15, 45, 15, undefined, 'NONE');
-        } else {
-            console.warn("Logo não carregado, PDF será gerado sem ele.");
-        }
+    if (logoBase64) {
+        // *** A SOLUÇÃO DEFINITIVA ESTÁ AQUI ***
 
-        doc.setFont('Helvetica', 'bold');
-        doc.setFontSize(12);
+        // 1. Definimos a largura desejada para o logo no PDF.
+        const logoWidth = 45; 
+        
+        // 2. Como a imagem original é quadrada (300x300), a altura no PDF
+        //    deve ser igual à largura para manter a proporção e não distorcer.
+        const logoHeight = logoWidth; 
 
-        let y = 50;
-        const lineHeight = 12;
-
-        doc.text('CLIENTE:', 15, y);
-        doc.setFont('Helvetica', 'normal');
-        doc.text('AGRO DIVEL', 55, y);
-        y += lineHeight;
-
-        doc.setFont('Helvetica', 'bold');
-        doc.text('MODELO:', 15, y);
-        doc.setFont('Helvetica', 'normal');
-        doc.text(kit.modelo || '-', 55, y);
-        y += lineHeight;
-
-        doc.setFont('Helvetica', 'bold');
-        doc.text('CHASSI:', 15, y);
-        doc.setFont('Helvetica', 'normal');
-        doc.text(kit.chassi || '-', 55, y);
-        y += lineHeight;
-
-        doc.setFont('Helvetica', 'bold');
-        doc.text('DESCRIÇÃO:', 15, y);
-        doc.setFont('Helvetica', 'normal');
-        doc.text(kit.descricao || '-', 55, y);
-        y += lineHeight;
-
-        doc.setFont('Helvetica', 'bold');
-        doc.text('RESPONSÁVEL:', 15, y);
-        doc.setFont('Helvetica', 'normal');
-        doc.text(kit.quemEntregou || '-', 55, y);
-        y += lineHeight;
-
-        doc.setFont('Helvetica', 'bold');
-        doc.text('DATA:', 15, y);
-        doc.setFont('Helvetica', 'normal');
-        doc.text(formatarData(kit.dataEntrega) || '-', 55, y);
-        y += lineHeight;
-
-        doc.setFont('Helvetica', 'bold');
-        doc.text('ORDEM SERVIÇO:', 15, y);
-        doc.setFont('Helvetica', 'normal');
-        doc.text(kit.os || '-', 55, y);
-
-        doc.save(`Comprovante_${kit.chassi || 'kit'}.pdf`);
+        // 3. Adicionamos a imagem com as dimensões corretas.
+        //    A imagem ficará na posição x=15, y=15, com 45 de largura e 45 de altura.
+        doc.addImage(logoBase64, 'PNG', 15, 15, logoWidth, logoHeight, undefined, 'NONE');
+    } else {
+        console.warn("Logo não carregado, PDF será gerado sem ele.");
     }
+
+    doc.setFont('Helvetica', 'bold');
+    doc.setFontSize(12);
+
+    // Ajustamos a posição inicial do texto para começar abaixo da imagem.
+    // Como a imagem agora tem 45 de altura, começamos o texto em y=70.
+    let y = 70; 
+    const lineHeight = 12;
+
+    doc.text('CLIENTE:', 15, y);
+    doc.setFont('Helvetica', 'normal');
+    doc.text('AGRO DIVEL', 55, y);
+    y += lineHeight;
+
+    doc.setFont('Helvetica', 'bold');
+    doc.text('MODELO:', 15, y);
+    doc.setFont('Helvetica', 'normal');
+    doc.text(kit.modelo || '-', 55, y);
+    y += lineHeight;
+
+    doc.setFont('Helvetica', 'bold');
+    doc.text('CHASSI:', 15, y);
+    doc.setFont('Helvetica', 'normal');
+    doc.text(kit.chassi || '-', 55, y);
+    y += lineHeight;
+
+    doc.setFont('Helvetica', 'bold');
+    doc.text('DESCRIÇÃO:', 15, y);
+    doc.setFont('Helvetica', 'normal');
+    doc.text(kit.descricao || '-', 55, y);
+    y += lineHeight;
+
+    doc.setFont('Helvetica', 'bold');
+    doc.text('RESPONSÁVEL:', 15, y);
+    doc.setFont('Helvetica', 'normal');
+    doc.text(kit.quemEntregou || '-', 55, y);
+    y += lineHeight;
+
+    doc.setFont('Helvetica', 'bold');
+    doc.text('DATA:', 15, y);
+    doc.setFont('Helvetica', 'normal');
+    doc.text(formatarData(kit.dataEntrega) || '-', 55, y);
+    y += lineHeight;
+
+    doc.setFont('Helvetica', 'bold');
+    doc.text('ORDEM SERVIÇO:', 15, y);
+    doc.setFont('Helvetica', 'normal');
+    doc.text(kit.os || '-', 55, y);
+
+    doc.save(`Comprovante_${kit.chassi || 'kit'}.pdf`);
+}
 
     function adicionarEventosTabela() {
         tabelaBody.querySelectorAll('tr').forEach(row => {
@@ -478,6 +490,7 @@
 
 </body>
 </html>
+
 
 
 
