@@ -238,13 +238,27 @@
       const chassiFiltro = filtroChassi.value.toLowerCase();
       const modeloFiltro = filtroModelo.value.toLowerCase();
       const descricaoFiltro = filtroDescricao.value.toLowerCase();
-
+    
+      // 1. Filtra os dados como antes
       dadosFiltrados = dadosCompletos.filter(kit => 
         (kit.chassi || '').toLowerCase().includes(chassiFiltro) &&
         (kit.modelo || '').toLowerCase().includes(modeloFiltro) &&
         (kit.descricao || '').toLowerCase().includes(descricaoFiltro)
       );
-
+    
+      // *** 2. A MÁGICA ACONTECE AQUI: Ordena os dados filtrados ***
+      // A função sort() reorganiza o array.
+      dadosFiltrados.sort((a, b) => {
+        // Se os status forem diferentes, ordena por status
+        if (a.status !== b.status) {
+          // 'Em Andamento' vem antes de 'Concluído'
+          return a.status === 'Em Andamento' ? -1 : 1;
+        }
+        // Se os status forem iguais, mantém a ordenação original por data (que já veio do Firebase)
+        return 0; 
+      });
+    
+      // 3. Renderiza a tabela com os dados já ordenados
       renderizarTabela();
       atualizarCards();
     }
@@ -464,3 +478,4 @@
 
 </body>
 </html>
+
