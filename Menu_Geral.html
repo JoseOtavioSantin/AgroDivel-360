@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Seu Projeto - Menu Acordeão Vertical</title>
+    
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap' );
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        :root {
+            --body-color: #F0F2F5;
+            --sidebar-color: #2A3F54;
+            --primary-color: #FFFFFF;
+            --toggle-color: #FFF;
+            --text-color: #CED4DA;
+            --tran-03: all 0.2s ease;
+            --tran-04: all 0.3s ease;
+            --tran-05: all 0.4s ease;
+        }
+
+        body {
+            min-height: 100vh;
+            background-color: var(--body-color);
+            transition: var(--tran-05);
+        }
+
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100%;
+            width: 270px;
+            padding: 10px 14px;
+            background: var(--sidebar-color);
+            transition: var(--tran-05);
+            z-index: 100;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .sidebar.close {
+            width: 88px;
+        }
+
+        .sidebar li {
+            list-style: none;
+            display: flex;
+            align-items: center;
+            margin-top: 10px;
+            flex-wrap: wrap; /* Permite que o submenu quebre a linha */
+        }
+
+        .sidebar .icon {
+            min-width: 60px;
+            border-radius: 6px;
+            height: 50px; /* Altura fixa para alinhamento */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+
+        .sidebar .text, .sidebar .icon {
+            color: var(--text-color);
+            transition: var(--tran-03);
+        }
+
+        .sidebar .text {
+            font-size: 16px;
+            font-weight: 500;
+            white-space: nowrap;
+            opacity: 1;
+        }
+
+        .sidebar.close .text {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .sidebar header {
+            position: relative;
+        }
+
+        .sidebar header .image-logo {
+            min-width: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .sidebar header .image-logo img {
+            width: 45px;
+            border-radius: 6px;
+        }
+        
+        .sidebar.close header .logo-text {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .sidebar header .toggle {
+            position: absolute;
+            top: 50%;
+            right: -25px;
+            transform: translateY(-50%);
+            height: 25px;
+            width: 25px;
+            background-color: var(--sidebar-color);
+            color: var(--toggle-color);
+            border: 1px solid var(--body-color);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            cursor: pointer;
+            transition: var(--tran-05);
+        }
+
+        .sidebar.close .toggle {
+            transform: translateY(-50%) rotate(180deg);
+        }
+
+        .sidebar li > a { /* Seletor para o link principal da categoria */
+            height: 50px;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            border-radius: 6px;
+            text-decoration: none;
+            transition: var(--tran-03);
+        }
+
+        .sidebar li > a:hover .icon, .sidebar li > a:hover .text {
+            color: var(--primary-color);
+        }
+        
+        .nav-link.submenu-parent > a {
+            cursor: pointer;
+        }
+
+        /* --- ESTILO CORRIGIDO DO SUBMENU (ACORDEÃO) --- */
+        .submenu {
+            list-style: none;
+            width: 100%;
+            padding-left: 25px;
+            background: rgba(0,0,0,0.15);
+            border-radius: 6px;
+            margin-top: 5px;
+            max-height: 0; /* Começa com altura 0 */
+            overflow: hidden; /* Esconde o conteúdo */
+            transition: max-height 0.3s ease-out; /* Animação suave */
+        }
+        
+        .submenu.open {
+            max-height: 500px; /* Altura máxima para revelar o submenu */
+        }
+
+        .submenu a {
+            display: flex;
+            align-items: center;
+            height: 50px;
+            width: 100%;
+            border-radius: 6px;
+            text-decoration: none;
+            color: var(--text-color);
+        }
+        
+        .submenu a:hover .icon, .submenu a:hover .text {
+            color: var(--primary-color);
+        }
+
+        .submenu .icon {
+            font-size: 18px;
+            min-width: 35px;
+        }
+        
+        .submenu .text {
+            font-size: 15px;
+        }
+
+        /* Seta para indicar submenu */
+        .submenu-arrow {
+            font-size: 18px;
+            color: var(--text-color);
+            transition: var(--tran-04);
+            margin-left: auto;
+            margin-right: 5px;
+        }
+        
+        .sidebar.close .submenu-arrow {
+            display: none;
+        }
+
+        .nav-link.submenu-parent.open > a .submenu-arrow {
+            transform: rotate(90deg);
+            color: var(--primary-color);
+        }
+        
+        .nav-link.submenu-parent.open > a .text,
+        .nav-link.submenu-parent.open > a .icon {
+            color: var(--primary-color);
+        }
+
+        .menu-bar {
+            height: calc(100% - 70px);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            overflow-y: auto;
+        }
+
+        .menu-bar::-webkit-scrollbar {
+            display: none;
+        }
+
+        .home {
+            position: absolute;
+            top: 0;
+            left: 270px;
+            height: 100vh;
+            width: calc(100% - 250px);
+            background-color: var(--body-color);
+            transition: var(--tran-05);
+            padding: 20px;
+        }
+
+        .sidebar.close ~ .home {
+            left: 88px;
+            width: calc(100% - 88px);
+        }
+
+        .home .text {
+            font-size: 30px;
+            font-weight: 500;
+            color: #333;
+        }
+
+        /* ======================= ESTILOS DO CARD DE CONTEÚDO ======================= */
+.content-card {
+    margin-top: 25px;
+    background-color: #FFF;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    overflow: hidden; /* Garante que o conteúdo respeite as bordas arredondadas */
+}
+
+.content-card-header {
+    padding: 15px 20px;
+    background-color: #F7F9FA;
+    border-bottom: 1px solid #E9ECEF;
+}
+
+.content-card-header h2 {
+    font-size: 18px;
+    font-weight: 600;
+    color: #343A40;
+}
+
+.content-card-body {
+    padding: 20px;
+}
+
+.update-item {
+    display: flex;
+    align-items: flex-start;
+    margin-bottom: 20px;
+}
+
+.update-item:last-child {
+    margin-bottom: 0;
+}
+
+.update-icon {
+    font-size: 24px;
+    color: var(--sidebar-color);
+    margin-right: 15px;
+    background-color: #E9ECEF;
+    border-radius: 50%;
+    width: 45px;
+    height: 45px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.update-content h3 {
+    font-size: 16px;
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 3px;
+}
+
+.update-content p {
+    font-size: 14px;
+    color: #6C757D;
+    line-height: 1.5;
+}
+
+.update-content a {
+    font-weight: 600;
+    color: #007BFF;
+    text-decoration: none;
+}
+
+.update-content a:hover {
+    text-decoration: underline;
+}
+
+
+
+
+    </style>
+</head>
+<body>
+
+    <nav class="sidebar">
+        <header>
+            <div class="image-text">
+                <span class="image-logo">
+                    <img src="https://i.imgur.com/g03F2zT.png" alt="logo">
+                </span>
+                <div class="text logo-text">
+                    <span class="profession" style="color: var(--text-color ); font-size: 16px; font-weight: 600;">Menu Principal</span>
+                </div>
+            </div>
+            <i class='bx bx-chevron-right toggle'></i>
+        </header>
+
+        <div class="menu-bar">
+            <ul class="menu-links">
+                
+                <li class="nav-link submenu-parent">
+                    <a href="#">
+                        <i class='bx bx-bar-chart-square icon'></i>
+                        <span class="text nav-text">Dashboards</span>
+                        <i class='bx bx-chevron-right submenu-arrow'></i>
+                    </a>
+                    <ul class="submenu">
+                        <li><a href="DashboardGeral.html"><i class='bx bx-bar-chart-alt-2 icon'></i><span class="text nav-text">Leads Geral</span></a></li>                        
+                        <li><a href="DashboardComercial.html"><i class='bx bx-bar-chart-alt-2 icon'></i><span class="text nav-text">Comercial</span></a></li>
+                        <li><a href="DashboardPecas.html"><i class='bx bx-wrench icon'></i><span class="text nav-text">Peças</span></a></li>
+                        <li><a href="DashboardServicos.html"><i class='bx bx-cog icon'></i><span class="text nav-text">Serviços</span></a></li>
+                        <li><a href="Dashboardplanomanutencao.html"><i class='bx bx-wifi icon'></i><span class="text nav-text">Planos de Manutenção</span></a></li>
+                        <li><a href="Dashboardplanosvigentes.html"><i class='bx bx-wifi icon'></i><span class="text nav-text">Planos Vigentes</span></a></li>
+                    
+
+                    </ul>
+                </li>
+
+                <li class="nav-link submenu-parent">
+                    <a href="#">
+                        <i class='bx bx-slider-alt icon'></i>
+                        <span class="text nav-text">Controles</span>
+                        <i class='bx bx-chevron-right submenu-arrow'></i>
+                    </a>
+                    <ul class="submenu">
+                        <li><a href="controle_estoque.html"><i class='bx bx-package icon'></i><span class="text nav-text">Controle de Estoque</span></a></li>
+                        <li><a href="controle_ferramentas.html"><i class='bx bx-cabinet icon'></i><span class="text nav-text">Controle Ferramentas</span></a></li>
+                    </ul>
+                </li>
+
+                <li class="nav-link submenu-parent">
+                    <a href="#">
+                        <i class='bx bx-file-blank icon'></i>
+                        <span class="text nav-text">Formulários</span>
+                        <i class='bx bx-chevron-right submenu-arrow'></i>
+                    </a>
+                    <ul class="submenu">
+                        <li><a href="form-pecas.html"><i class='bx bx-edit icon'></i><span class="text nav-text">Formulário de Peças</span></a></li>
+                        <li><a href="form-comercial.html"><i class='bx bx-file icon'></i><span class="text nav-text">Formulário Comercial</span></a></li>
+                    </ul>
+                </li>
+                
+                <li class="nav-link">
+                    <a href="#">
+                        <i class='bx bx-log-out icon'></i>
+                        <span class="text nav-text">Logout</span>
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+<!-- ======================= CONTEÚDO DA PÁGINA ======================= -->
+<section class="home">
+    <div class="text">
+        <h1>Bem-vindo ao seu Painel</h1>
+        <p>Acompanhe aqui as principais novidades da plataforma.</p>
+    </div>
+
+    <!-- Card de Novidades e Atualizações -->
+    <div class="content-card">
+        <div class="content-card-header">
+            <h2>Novidades e Atualizações</h2>
+        </div>
+        <div class="content-card-body">
+            
+            <!-- Item de Atualização 1 -->
+            <div class="update-item">
+                <div class="update-icon">
+                    <i class='bx bx-wifi'></i>
+                </div>
+                <div class="update-content">
+                    <h3>Nova Tela: Dashboard de Telemetria</h3>
+                    <p>
+                        Agora você pode monitorar os dados de telemetria em tempo real. A nova tela já está disponível no menu. 
+                        <a href="dashboard_telemetria.html">Acessar agora!</a>
+                    </p>
+                </div>
+            </div>
+
+            <!-- Item de Atualização 2 -->
+            <div class="update-item">
+                <div class="update-icon">
+                    <i class='bx bx-package'></i>
+                </div>
+                <div class="update-content">
+                    <h3>Melhoria: Controle de Estoque</h3>
+                    <p>
+                        O módulo de controle de estoque foi atualizado com filtros mais rápidos e uma nova função para exportar relatórios em PDF.
+                    </p>
+                </div>
+            </div>
+            
+            <!-- Item de Atualização 3 -->
+            <div class="update-item">
+                <div class="update-icon">
+                    <i class='bx bx-palette'></i>
+                </div>
+                <div class="update-content">
+                    <h3>Atualização Visual do Menu</h3>
+                    <p>
+                        O menu de navegação foi redesenhado para uma experiência mais moderna e intuitiva, com submenus expansíveis.
+                    </p>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</section>
+
+    <script>
+        const body = document.querySelector('body'),
+              sidebar = body.querySelector('nav.sidebar'),
+              toggle = body.querySelector(".toggle"),
+              submenuParents = document.querySelectorAll(".submenu-parent");
+
+        toggle.addEventListener("click", () => {
+            sidebar.classList.toggle("close");
+            localStorage.setItem("sidebarState", sidebar.classList.contains("close") ? "closed" : "open");
+
+            // Fecha todos os submenus ao alternar o estado da sidebar
+            submenuParents.forEach(parent => {
+                parent.classList.remove("open");
+                parent.querySelector(".submenu").classList.remove("open");
+            });
+        });
+
+        submenuParents.forEach(parent => {
+            parent.querySelector('a').addEventListener("click", (e) => {
+                e.preventDefault();
+
+                // Se a sidebar estiver fechada, o clique apenas a abrirá
+                if (sidebar.classList.contains("close")) {
+                    sidebar.classList.remove("close");
+                    localStorage.setItem("sidebarState", "open");
+                    return;
+                }
+
+                const clickedParent = e.currentTarget.parentElement;
+                const submenu = clickedParent.querySelector(".submenu");
+                const isOpen = clickedParent.classList.contains("open");
+
+                // Fecha todos os outros submenus
+                submenuParents.forEach(p => {
+                    if (p !== clickedParent) {
+                        p.classList.remove("open");
+                        p.querySelector(".submenu").classList.remove("open");
+                    }
+                });
+
+                // Alterna o estado do submenu clicado
+                if (isOpen) {
+                    clickedParent.classList.remove("open");
+                    submenu.classList.remove("open");
+                } else {
+                    clickedParent.classList.add("open");
+                    submenu.classList.add("open");
+                }
+            });
+        });
+
+        document.addEventListener("DOMContentLoaded", () => {
+            if (localStorage.getItem("sidebarState") === "closed") {
+                sidebar.classList.add("close");
+            }
+        });
+    </script>
+
+</body>
+</html>
