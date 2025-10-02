@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Seu Projeto - Menu Acordeão Vertical</title>
+    <title>Agro Divel - 360</title>
     
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
 
-        <style>
-        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap' );
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap'  );
 
         * {
             margin: 0;
@@ -19,7 +19,7 @@
 
         :root {
             --body-color: #F0F2F5;
-            --sidebar-color: #001439; /* <<< COR ATUALIZADA */
+            --sidebar-color: #001439;
             --primary-color: #FFFFFF;
             --toggle-color: #FFF;
             --text-color: #CED4DA;
@@ -72,6 +72,7 @@
         .sidebar .text, .sidebar .icon {
             color: var(--text-color);
             transition: var(--tran-03);
+            margin-top: 20px;
         }
 
         .sidebar .text {
@@ -79,6 +80,7 @@
             font-weight: 500;
             white-space: nowrap;
             opacity: 1;
+            margin-top: 20px;
         }
 
         .sidebar.close .text {
@@ -86,21 +88,34 @@
             pointer-events: none;
         }
 
+        /* ==================================================================== */
+        /* <<< CÓDIGO CORRIGIDO PARA ALINHAMENTO DO HEADER E LOGO >>> */
         .sidebar header {
             position: relative;
         }
 
+        .sidebar header .image-text {
+            display: flex;
+            align-items: center;
+            justify-content: center; /* Centraliza o conteúdo (logo + texto) */
+            width: 100%;
+        }
+
         .sidebar header .image-logo {
-            min-width: 60px;
             display: flex;
             align-items: center;
             justify-content: center;
         }
 
         .sidebar header .image-logo img {
-            width: 45px;
-            border-radius: 6px;
+            height: 80px;
+            transition: var(--tran-04);
         }
+        
+        .sidebar.close header .image-logo img {
+            height: 45px;
+        }
+        /* ==================================================================== */
         
         .sidebar.close header .logo-text {
             opacity: 0;
@@ -152,7 +167,7 @@
             list-style: none;
             width: 100%;
             padding-left: 25px;
-            background: rgba(255, 255, 255, 0.05); /* Fundo do submenu ajustado para a nova cor */
+            background: rgba(255, 255, 255, 0.05);
             border-radius: 6px;
             margin-top: 5px;
             max-height: 0;
@@ -226,7 +241,7 @@
             top: 0;
             left: 270px;
             height: 100vh;
-            width: calc(100% - 250px);
+            width: calc(100% - 270px);
             background-color: var(--body-color);
             transition: var(--tran-05);
             padding: 20px;
@@ -321,14 +336,15 @@
         <header>
             <div class="image-text">
                 <span class="image-logo">
-                    <img src="https://i.imgur.com/g03F2zT.png" alt="logo">
+                    <img src="assets/logo.png" alt="logo">
                 </span>
-                <div class="text logo-text">
-                    <span class="profession" style="color: var(--text-color ); font-size: 16px; font-weight: 600;">Menu Principal</span>
-                </div>
             </div>
             <i class='bx bx-chevron-right toggle'></i>
         </header>
+
+                <div class="text logo-text">
+                    <span class="profession" style="color: var(--text-color ); font-size: 16px; font-weight: 600;">Menu Principal</span>
+                </div>
 
         <div class="menu-bar">
             <ul class="menu-links">
@@ -346,8 +362,6 @@
                         <li><a href="DashboardServicos.html"><i class='bx bx-cog icon'></i><span class="text nav-text">Serviços</span></a></li>
                         <li><a href="Dashboardplanomanutencao.html"><i class='bx bx-wifi icon'></i><span class="text nav-text">Planos de Manutenção</span></a></li>
                         <li><a href="Dashboardplanosvigentes.html"><i class='bx bx-wifi icon'></i><span class="text nav-text">Planos Vigentes</span></a></li>
-                    
-
                     </ul>
                 </li>
 
@@ -385,63 +399,41 @@
         </div>
     </nav>
 
-<!-- ======================= CONTEÚDO DA PÁGINA ======================= -->
-<section class="home">
-    <div class="text">
-        <h1>Bem-vindo ao seu Painel</h1>
-        <p>Acompanhe aqui as principais novidades da plataforma.</p>
-    </div>
-
-    <!-- Card de Novidades e Atualizações -->
-    <div class="content-card">
-        <div class="content-card-header">
-            <h2>Novidades e Atualizações</h2>
+    <section class="home">
+        <div class="text">
+            <h1>Bem-vindo ao seu Painel</h1>
+            <p>Acompanhe aqui as principais novidades da plataforma.</p>
         </div>
-        <div class="content-card-body">
-            
-            <!-- Item de Atualização 1 -->
-            <div class="update-item">
-                <div class="update-icon">
-                    <i class='bx bx-wifi'></i>
-                </div>
-                <div class="update-content">
-                    <h3>Nova Tela: Dashboard de Telemetria</h3>
-                    <p>
-                        Agora você pode monitorar os dados de telemetria em tempo real. A nova tela já está disponível no menu. 
-                        <a href="dashboard_telemetria.html">Acessar agora!</a>
-                    </p>
-                </div>
-            </div>
 
-            <!-- Item de Atualização 2 -->
-            <div class="update-item">
-                <div class="update-icon">
-                    <i class='bx bx-package'></i>
+        <div class="content-card">
+            <div class="content-card-header">
+                <h2>Novidades e Atualizações</h2>
+            </div>
+            <div class="content-card-body">
+                <div class="update-item">
+                    <div class="update-icon"><i class='bx bx-wifi'></i></div>
+                    <div class="update-content">
+                        <h3>Nova Tela: Dashboard de Telemetria</h3>
+                        <p>Agora você pode monitorar os dados de telemetria em tempo real. A nova tela já está disponível no menu. <a href="dashboard_telemetria.html">Acessar agora!</a></p>
+                    </div>
                 </div>
-                <div class="update-content">
-                    <h3>Melhoria: Controle de Estoque</h3>
-                    <p>
-                        O módulo de controle de estoque foi atualizado com filtros mais rápidos e uma nova função para exportar relatórios em PDF.
-                    </p>
+                <div class="update-item">
+                    <div class="update-icon"><i class='bx bx-package'></i></div>
+                    <div class="update-content">
+                        <h3>Melhoria: Controle de Estoque</h3>
+                        <p>O módulo de controle de estoque foi atualizado com filtros mais rápidos e uma nova função para exportar relatórios em PDF.</p>
+                    </div>
+                </div>
+                <div class="update-item">
+                    <div class="update-icon"><i class='bx bx-palette'></i></div>
+                    <div class="update-content">
+                        <h3>Atualização Visual do Menu</h3>
+                        <p>O menu de navegação foi redesenhado para uma experiência mais moderna e intuitiva, com submenus expansíveis.</p>
+                    </div>
                 </div>
             </div>
-            
-            <!-- Item de Atualização 3 -->
-            <div class="update-item">
-                <div class="update-icon">
-                    <i class='bx bx-palette'></i>
-                </div>
-                <div class="update-content">
-                    <h3>Atualização Visual do Menu</h3>
-                    <p>
-                        O menu de navegação foi redesenhado para uma experiência mais moderna e intuitiva, com submenus expansíveis.
-                    </p>
-                </div>
-            </div>
-
         </div>
-    </div>
-</section>
+    </section>
 
     <script>
         const body = document.querySelector('body'),
@@ -453,7 +445,6 @@
             sidebar.classList.toggle("close");
             localStorage.setItem("sidebarState", sidebar.classList.contains("close") ? "closed" : "open");
 
-            // Fecha todos os submenus ao alternar o estado da sidebar
             submenuParents.forEach(parent => {
                 parent.classList.remove("open");
                 parent.querySelector(".submenu").classList.remove("open");
@@ -464,7 +455,6 @@
             parent.querySelector('a').addEventListener("click", (e) => {
                 e.preventDefault();
 
-                // Se a sidebar estiver fechada, o clique apenas a abrirá
                 if (sidebar.classList.contains("close")) {
                     sidebar.classList.remove("close");
                     localStorage.setItem("sidebarState", "open");
@@ -475,7 +465,6 @@
                 const submenu = clickedParent.querySelector(".submenu");
                 const isOpen = clickedParent.classList.contains("open");
 
-                // Fecha todos os outros submenus
                 submenuParents.forEach(p => {
                     if (p !== clickedParent) {
                         p.classList.remove("open");
@@ -483,7 +472,6 @@
                     }
                 });
 
-                // Alterna o estado do submenu clicado
                 if (isOpen) {
                     clickedParent.classList.remove("open");
                     submenu.classList.remove("open");
