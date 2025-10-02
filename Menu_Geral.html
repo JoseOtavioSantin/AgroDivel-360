@@ -7,7 +7,7 @@
     
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
 
-    <style>
+        <style>
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap' );
 
         * {
@@ -19,7 +19,7 @@
 
         :root {
             --body-color: #F0F2F5;
-            --sidebar-color: #2A3F54;
+            --sidebar-color: #001439; /* <<< COR ATUALIZADA */
             --primary-color: #FFFFFF;
             --toggle-color: #FFF;
             --text-color: #CED4DA;
@@ -56,13 +56,13 @@
             display: flex;
             align-items: center;
             margin-top: 10px;
-            flex-wrap: wrap; /* Permite que o submenu quebre a linha */
+            flex-wrap: wrap;
         }
 
         .sidebar .icon {
             min-width: 60px;
             border-radius: 6px;
-            height: 50px; /* Altura fixa para alinhamento */
+            height: 50px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -130,7 +130,7 @@
             transform: translateY(-50%) rotate(180deg);
         }
 
-        .sidebar li > a { /* Seletor para o link principal da categoria */
+        .sidebar li > a {
             height: 50px;
             width: 100%;
             display: flex;
@@ -148,21 +148,20 @@
             cursor: pointer;
         }
 
-        /* --- ESTILO CORRIGIDO DO SUBMENU (ACORDEÃO) --- */
         .submenu {
             list-style: none;
             width: 100%;
             padding-left: 25px;
-            background: rgba(0,0,0,0.15);
+            background: rgba(255, 255, 255, 0.05); /* Fundo do submenu ajustado para a nova cor */
             border-radius: 6px;
             margin-top: 5px;
-            max-height: 0; /* Começa com altura 0 */
-            overflow: hidden; /* Esconde o conteúdo */
-            transition: max-height 0.3s ease-out; /* Animação suave */
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
         }
         
         .submenu.open {
-            max-height: 500px; /* Altura máxima para revelar o submenu */
+            max-height: 500px;
         }
 
         .submenu a {
@@ -188,7 +187,6 @@
             font-size: 15px;
         }
 
-        /* Seta para indicar submenu */
         .submenu-arrow {
             font-size: 18px;
             color: var(--text-color);
@@ -244,82 +242,78 @@
             font-weight: 500;
             color: #333;
         }
+        
+        .content-card {
+            margin-top: 25px;
+            background-color: #FFF;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            overflow: hidden;
+        }
 
-        /* ======================= ESTILOS DO CARD DE CONTEÚDO ======================= */
-.content-card {
-    margin-top: 25px;
-    background-color: #FFF;
-    border-radius: 8px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-    overflow: hidden; /* Garante que o conteúdo respeite as bordas arredondadas */
-}
+        .content-card-header {
+            padding: 15px 20px;
+            background-color: #F7F9FA;
+            border-bottom: 1px solid #E9ECEF;
+        }
 
-.content-card-header {
-    padding: 15px 20px;
-    background-color: #F7F9FA;
-    border-bottom: 1px solid #E9ECEF;
-}
+        .content-card-header h2 {
+            font-size: 18px;
+            font-weight: 600;
+            color: #343A40;
+        }
 
-.content-card-header h2 {
-    font-size: 18px;
-    font-weight: 600;
-    color: #343A40;
-}
+        .content-card-body {
+            padding: 20px;
+        }
 
-.content-card-body {
-    padding: 20px;
-}
+        .update-item {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 20px;
+        }
 
-.update-item {
-    display: flex;
-    align-items: flex-start;
-    margin-bottom: 20px;
-}
+        .update-item:last-child {
+            margin-bottom: 0;
+        }
 
-.update-item:last-child {
-    margin-bottom: 0;
-}
+        .update-icon {
+            font-size: 24px;
+            color: var(--sidebar-color);
+            margin-right: 15px;
+            background-color: #E9ECEF;
+            border-radius: 50%;
+            width: 45px;
+            height: 45px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
 
-.update-icon {
-    font-size: 24px;
-    color: var(--sidebar-color);
-    margin-right: 15px;
-    background-color: #E9ECEF;
-    border-radius: 50%;
-    width: 45px;
-    height: 45px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
+        .update-content h3 {
+            font-size: 16px;
+            font-weight: 600;
+            color: #495057;
+            margin-bottom: 3px;
+        }
 
-.update-content h3 {
-    font-size: 16px;
-    font-weight: 600;
-    color: #495057;
-    margin-bottom: 3px;
-}
+        .update-content p {
+            font-size: 14px;
+            color: #6C757D;
+            line-height: 1.5;
+        }
 
-.update-content p {
-    font-size: 14px;
-    color: #6C757D;
-    line-height: 1.5;
-}
+        .update-content a {
+            font-weight: 600;
+            color: #007BFF;
+            text-decoration: none;
+        }
 
-.update-content a {
-    font-weight: 600;
-    color: #007BFF;
-    text-decoration: none;
-}
-
-.update-content a:hover {
-    text-decoration: underline;
-}
-
-
-
-
+        .update-content a:hover {
+            text-decoration: underline;
+        }
     </style>
+
 </head>
 <body>
 
