@@ -1,4 +1,4 @@
-const CACHE_NAME = "agrodivel-cache-v0.3"; // <- aumentei o número pra forçar atualização
+const CACHE_NAME = "agrodivel-cache-v0.1"; // <- aumentei o número pra forçar atualização
 
 const urlsToCache = [
   "index.html",
@@ -57,6 +57,7 @@ self.addEventListener("message", (event) => {
     self.skipWaiting();
   }
 });
+
 
 
 
