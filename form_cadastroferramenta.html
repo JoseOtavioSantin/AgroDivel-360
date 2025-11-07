@@ -62,17 +62,9 @@
             color: var(--cor-texto);
             font-size: 16px;
         }
-        /* Estilo para forçar texto em maiúsculo visualmente */
         .uppercase-input {
             text-transform: uppercase;
         }
-        .form-group-checkbox {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-top: 20px;
-        }
-        .form-group-checkbox input { width: auto; }
         .form-footer { text-align: right; margin-top: 25px; }
         .btn {
             border: none;
@@ -146,12 +138,10 @@
             </div>
             <div class="form-group">
                 <label for="ferramenta-codigo">Código da Ferramenta</label>
-                <!-- Adicionada a classe 'uppercase-input' -->
                 <input type="text" id="ferramenta-codigo" required class="uppercase-input">
             </div>
             <div class="form-group">
                 <label for="ferramenta-descricao">Descrição</label>
-                <!-- Adicionada a classe 'uppercase-input' -->
                 <input type="text" id="ferramenta-descricao" required class="uppercase-input">
             </div>
             <div class="form-group">
@@ -165,11 +155,16 @@
 
             <div class="form-group">
                 <label for="ferramenta-fotos">Fotos da Ferramenta (selecione uma ou mais)</label>
-                <!-- Removido o atributo 'capture' para permitir múltiplas fotos no celular -->
                 <input type="file" id="ferramenta-fotos" accept="image/*" multiple>
                 <div id="preview-container"></div>
             </div>
-            
+
+            <!-- O campo de reparo agora está oculto -->
+            <div class="form-group form-group-checkbox" style="display: none;">
+                <input type="checkbox" id="ferramenta-reparo" style="width: 20px; height: 20px;">
+                <label for="ferramenta-reparo">Precisa de reparo?</label>
+            </div>
+
             <div class="form-footer">
                 <button type="submit" class="btn btn-primario" id="btn-salvar">
                     <i data-lucide="save"></i> Salvar Ferramenta
@@ -205,22 +200,10 @@
         const codigoInput = document.getElementById('ferramenta-codigo');
         const descricaoInput = document.getElementById('ferramenta-descricao');
 
-        // --- FUNÇÕES ---
-        async function carregarGrupos() { /* ...código sem alterações... */ }
-        function mostrarStatus(mensagem, sucesso = true) { /* ...código sem alterações... */ }
-        function formatarLocalizacao(input) { /* ...código sem alterações... */ }
-
         // --- EVENT LISTENERS ---
+        codigoInput.addEventListener('input', (e) => { e.target.value = e.target.value.toUpperCase(); });
+        descricaoInput.addEventListener('input', (e) => { e.target.value = e.target.value.toUpperCase(); });
 
-        // Converte para maiúsculo enquanto digita
-        codigoInput.addEventListener('input', (e) => {
-            e.target.value = e.target.value.toUpperCase();
-        });
-        descricaoInput.addEventListener('input', (e) => {
-            e.target.value = e.target.value.toUpperCase();
-        });
-
-        // Preview de múltiplas imagens
         fotosInput.addEventListener('change', (e) => {
             previewContainer.innerHTML = '';
             const files = e.target.files;
@@ -238,7 +221,6 @@
             }
         });
 
-        // Envio do formulário
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
             btnSalvar.disabled = true;
@@ -262,11 +244,11 @@
                 const dados = {
                     filial: document.getElementById('ferramenta-filial').value,
                     grupoId: document.getElementById('ferramenta-grupo').value,
-                    codigo: codigoInput.value, // Já está em maiúsculo
-                    descricao: descricaoInput.value, // Já está em maiúsculo
+                    codigo: codigoInput.value,
+                    descricao: descricaoInput.value,
                     localizacao: formatarLocalizacao(document.getElementById('ferramenta-localizacao').value),
                     quantidade: parseInt(document.getElementById('ferramenta-quantidade').value),
-                    reparo: document.getElementById('ferramenta-reparo').checked,
+                    reparo: false, // <-- VALOR FIXO COMO 'false'
                     fotosURLs: fotosURLs,
                     dataCriacao: new Date()
                 };
@@ -288,13 +270,11 @@
             }
         });
 
-        // --- INICIALIZAÇÃO ---
+        // --- INICIALIZAÇÃO E FUNÇÕES AUXILIARES (sem alterações) ---
         document.addEventListener("DOMContentLoaded", () => {
             lucide.createIcons();
             carregarGrupos();
         });
-
-        // --- CÓDIGO SEM ALTERAÇÕES ---
         async function carregarGrupos() {
             const selectGrupo = document.getElementById('ferramenta-grupo');
             selectGrupo.innerHTML = '<option value="">Selecione um Grupo</option>';
@@ -307,10 +287,7 @@
                     option.textContent = grupo.nome;
                     selectGrupo.appendChild(option);
                 });
-            } catch (error) {
-                console.error("Erro ao carregar grupos: ", error);
-                selectGrupo.innerHTML = '<option value="">Erro ao carregar</option>';
-            }
+            } catch (error) { console.error("Erro ao carregar grupos: ", error); }
         }
         function mostrarStatus(mensagem, sucesso = true) {
             statusMessage.textContent = mensagem;
@@ -328,4 +305,3 @@
     </script>
 </body>
 </html>
-
