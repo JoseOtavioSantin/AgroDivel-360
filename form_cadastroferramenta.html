@@ -90,22 +90,32 @@
             filter: brightness(0.7);
         }
         .btn-primario { background: linear-gradient(145deg, #005c97, #363795); }
-        #preview-imagem {
-            max-width: 150px;
-            max-height: 150px;
-            border-radius: 8px;
-            border: 2px dashed var(--cor-borda);
+        
+        /* Estilos para o preview de múltiplas imagens */
+        #preview-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
             margin-top: 10px;
-            display: none;
-            object-fit: cover;
+            border: 2px dashed var(--cor-borda);
+            padding: 10px;
+            border-radius: 8px;
+            min-height: 100px; /* Altura mínima para a área de drop */
         }
+        .preview-image {
+            width: 100px;
+            height: 100px;
+            object-fit: cover;
+            border-radius: 6px;
+        }
+
         .status-message {
             padding: 12px;
             margin-top: 20px;
             border-radius: 6px;
             text-align: center;
             font-weight: bold;
-            display: none; /* Começa escondido */
+            display: none;
         }
         .status-message.success { background-color: var(--cor-sucesso); color: white; }
         .status-message.error { background-color: var(--cor-alerta); color: white; }
@@ -116,6 +126,7 @@
     <div class="form-container">
         <h2 class="form-header">Cadastrar Nova Ferramenta</h2>
         <form id="form-ferramenta">
+            <!-- Campos existentes (filial, grupo, etc.) -->
             <div class="form-group">
                 <label for="ferramenta-filial">Filial</label>
                 <select id="ferramenta-filial" required>
@@ -147,15 +158,14 @@
                 <label for="ferramenta-quantidade">Quantidade</label>
                 <input type="number" id="ferramenta-quantidade" required min="1" value="1">
             </div>
+
+            <!-- NOVO CAMPO PARA MÚLTIPLAS FOTOS -->
             <div class="form-group">
-                <label for="ferramenta-foto">Foto da Ferramenta</label>
-                <input type="file" id="ferramenta-foto" accept="image/*" capture="environment">
-                <img id="preview-imagem" src="#" alt="Preview da imagem" />
+                <label for="ferramenta-fotos">Fotos da Ferramenta (selecione uma ou mais)</label>
+                <input type="file" id="ferramenta-fotos" accept="image/*" capture="environment" multiple>
+                <div id="preview-container"></div>
             </div>
-            <div class="form-group form-group-checkbox">
-                <input type="checkbox" id="ferramenta-reparo" style="width: 20px; height: 20px;">
-                <label for="ferramenta-reparo">Precisa de reparo?</label>
-            </div>
+            
             <div class="form-footer">
                 <button type="submit" class="btn btn-primario" id="btn-salvar">
                     <i data-lucide="save"></i> Salvar Ferramenta
@@ -166,154 +176,150 @@
     </div>
 
     <script>
-    // --- CONFIGURAÇÃO DO FIREBASE ---
-    const firebaseConfig = {
-        apiKey: "AIzaSyDcjPa9jXsCCu6lNc1fjVg4Bzz1toKWAGY",
-        authDomain: "agro-divel.firebaseapp.com",
-        projectId: "agro-divel",
-        // LINHA CORRIGIDA ABAIXO
-        storageBucket: "agro-divel.firebasestorage.app",
-        messagingSenderId: "583977436505",
-        appId: "1:583977436505:web:3754ec029aebb3d9d67848"
-    };
+        // --- CONFIGURAÇÃO DO FIREBASE ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyDcjPa9jXsCCu6lNc1fjVg4Bzz1toKWAGY",
+            authDomain: "agro-divel.firebaseapp.com",
+            projectId: "agro-divel",
+            storageBucket: "agro-divel.firebasestorage.app",
+            messagingSenderId: "583977436505",
+            appId: "1:583977436505:web:3754ec029aebb3d9d67848"
+        };
 
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.firestore();
-    const storage = firebase.storage();
-    const ferramentasCollection = db.collection('ferramentas');
-    const gruposCollection = db.collection('grupos');
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        const storage = firebase.storage();
+        const ferramentasCollection = db.collection('ferramentas');
+        const gruposCollection = db.collection('grupos');
 
-    // --- ELEMENTOS DO DOM ---
-    const form = document.getElementById('form-ferramenta');
-    const fotoInput = document.getElementById('ferramenta-foto');
-    const previewImagem = document.getElementById('preview-imagem');
-    const statusMessage = document.getElementById('status-message');
-    const btnSalvar = document.getElementById('btn-salvar');
+        // --- ELEMENTOS DO DOM ---
+        const form = document.getElementById('form-ferramenta');
+        const fotosInput = document.getElementById('ferramenta-fotos');
+        const previewContainer = document.getElementById('preview-container');
+        const statusMessage = document.getElementById('status-message');
+        const btnSalvar = document.getElementById('btn-salvar');
 
-    // --- FUNÇÕES ---
-
-    // Carrega os grupos do Firestore e preenche o select
-    async function carregarGrupos() {
-        const selectGrupo = document.getElementById('ferramenta-grupo');
-        selectGrupo.innerHTML = '<option value="">Selecione um Grupo</option>';
-        try {
-            const snapshot = await gruposCollection.orderBy('nome').get();
-            snapshot.forEach(doc => {
-                const grupo = doc.data();
-                const option = document.createElement('option');
-                option.value = doc.id;
-                option.textContent = grupo.nome;
-                selectGrupo.appendChild(option);
-            });
-        } catch (error) {
-            console.error("Erro ao carregar grupos: ", error);
-            selectGrupo.innerHTML = '<option value="">Erro ao carregar</option>';
-        }
-    }
-
-    // Mostra uma mensagem de status (sucesso ou erro)
-    function mostrarStatus(mensagem, sucesso = true) {
-        statusMessage.textContent = mensagem;
-        statusMessage.className = `status-message ${sucesso ? 'success' : 'error'}`;
-        statusMessage.style.display = 'block';
-    }
-
-    // Formata a localização
-    function formatarLocalizacao(input) {
-        const numeros = input.match(/\d+/g);
-        if (!numeros || numeros.length < 2) {
-            return input.toUpperCase();
-        }
-        const prateleira = numeros[0];
-        const nivel = numeros[1];
-        return `${prateleira} A ${nivel}`;
-    }
-
-    // --- EVENT LISTENERS ---
-
-    // Preview da imagem ao selecionar um arquivo
-    fotoInput.addEventListener('change', (e) => {
-        const file = e.target.files[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onload = (event) => {
-                previewImagem.src = event.target.result;
-                previewImagem.style.display = 'block';
+        // --- FUNÇÕES ---
+        async function carregarGrupos() {
+            const selectGrupo = document.getElementById('ferramenta-grupo');
+            selectGrupo.innerHTML = '<option value="">Selecione um Grupo</option>';
+            try {
+                const snapshot = await gruposCollection.orderBy('nome').get();
+                snapshot.forEach(doc => {
+                    const grupo = doc.data();
+                    const option = document.createElement('option');
+                    option.value = doc.id;
+                    option.textContent = grupo.nome;
+                    selectGrupo.appendChild(option);
+                });
+            } catch (error) {
+                console.error("Erro ao carregar grupos: ", error);
+                selectGrupo.innerHTML = '<option value="">Erro ao carregar</option>';
             }
-            reader.readAsDataURL(file);
-        } else {
-            previewImagem.style.display = 'none';
         }
-    });
 
-    // Envio do formulário
-    form.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        btnSalvar.disabled = true;
-        btnSalvar.innerHTML = '<i data-lucide="loader-2" class="spin"></i> Salvando...';
-        lucide.createIcons();
+        function mostrarStatus(mensagem, sucesso = true) {
+            statusMessage.textContent = mensagem;
+            statusMessage.className = `status-message ${sucesso ? 'success' : 'error'}`;
+            statusMessage.style.display = 'block';
+        }
 
-        const fotoFile = fotoInput.files[0];
-        let fotoURL = '';
+        function formatarLocalizacao(input) {
+            const numeros = input.match(/\d+/g);
+            if (!numeros || numeros.length < 2) return input.toUpperCase();
+            return `${numeros[0]} A ${numeros[1]}`;
+        }
 
-        try {
-            if (fotoFile) {
-                const filePath = `ferramentas/${Date.now()}_${fotoFile.name}`;
-                const storageRef = storage.ref(filePath);
-                const uploadTask = await storageRef.put(fotoFile);
-                fotoURL = await uploadTask.ref.getDownloadURL();
+        // --- EVENT LISTENERS ---
+
+        // Preview de múltiplas imagens
+        fotosInput.addEventListener('change', (e) => {
+            previewContainer.innerHTML = ''; // Limpa o preview anterior
+            const files = e.target.files;
+            if (files) {
+                Array.from(files).forEach(file => {
+                    const reader = new FileReader();
+                    reader.onload = (event) => {
+                        const img = document.createElement('img');
+                        img.src = event.target.result;
+                        img.className = 'preview-image';
+                        previewContainer.appendChild(img);
+                    }
+                    reader.readAsDataURL(file);
+                });
             }
+        });
 
-            const localizacaoInput = document.getElementById('ferramenta-localizacao').value;
-            const localizacaoFormatada = formatarLocalizacao(localizacaoInput);
-
-            const dados = {
-                filial: document.getElementById('ferramenta-filial').value,
-                grupoId: document.getElementById('ferramenta-grupo').value,
-                codigo: document.getElementById('ferramenta-codigo').value.toUpperCase(),
-                descricao: document.getElementById('ferramenta-descricao').value.toUpperCase(),
-                localizacao: localizacaoFormatada,
-                quantidade: parseInt(document.getElementById('ferramenta-quantidade').value),
-                reparo: document.getElementById('ferramenta-reparo').checked,
-                fotoURL: fotoURL,
-                dataCriacao: new Date()
-            };
-
-            await ferramentasCollection.add(dados);
-
-            mostrarStatus('Ferramenta cadastrada com sucesso!', true);
-            form.reset();
-            previewImagem.style.display = 'none';
-            setTimeout(() => statusMessage.style.display = 'none', 4000);
-
-        } catch (error) {
-            console.error("Erro ao salvar ferramenta: ", error);
-            mostrarStatus(`Erro ao salvar: ${error.message}`, false);
-        } finally {
-            btnSalvar.disabled = false;
-            btnSalvar.innerHTML = '<i data-lucide="save"></i> Salvar Ferramenta';
+        // Envio do formulário
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            btnSalvar.disabled = true;
+            btnSalvar.innerHTML = '<i data-lucide="loader-2" class="spin"></i> Salvando...';
             lucide.createIcons();
-        }
-    });
 
-    // --- INICIALIZAÇÃO ---
-    document.addEventListener("DOMContentLoaded", () => {
-        lucide.createIcons();
-        carregarGrupos();
-    });
+            const fotosFiles = fotosInput.files;
+            const fotosURLs = []; // Array para guardar as URLs das fotos
 
-    // Adiciona animação de spin para o loader
-    const style = document.createElement('style');
-    style.innerHTML = `
-        @keyframes spin {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
-        }
-        .spin { animation: spin 1s linear infinite; }
-    `;
-    document.head.appendChild(style);
-</script>
+            try {
+                // 1. Faz upload de todas as fotos em paralelo
+                if (fotosFiles.length > 0) {
+                    const uploadPromises = Array.from(fotosFiles).map(file => {
+                        const filePath = `ferramentas/${Date.now()}_${file.name}`;
+                        const storageRef = storage.ref(filePath);
+                        return storageRef.put(file).then(uploadTask => {
+                            return uploadTask.ref.getDownloadURL();
+                        });
+                    });
+                    
+                    // Espera todas as promessas de upload terminarem
+                    const urls = await Promise.all(uploadPromises);
+                    fotosURLs.push(...urls);
+                }
 
+                // 2. Monta o objeto com os dados da ferramenta
+                const localizacaoFormatada = formatarLocalizacao(document.getElementById('ferramenta-localizacao').value);
+
+                const dados = {
+                    filial: document.getElementById('ferramenta-filial').value,
+                    grupoId: document.getElementById('ferramenta-grupo').value,
+                    codigo: document.getElementById('ferramenta-codigo').value.toUpperCase(),
+                    descricao: document.getElementById('ferramenta-descricao').value.toUpperCase(),
+                    localizacao: localizacaoFormatada,
+                    quantidade: parseInt(document.getElementById('ferramenta-quantidade').value),
+                    reparo: document.getElementById('ferramenta-reparo').checked,
+                    fotosURLs: fotosURLs, // Salva o ARRAY de URLs
+                    dataCriacao: new Date()
+                };
+
+                // 3. Salva os dados no Firestore
+                await ferramentasCollection.add(dados);
+
+                // 4. Feedback para o usuário e reseta o formulário
+                mostrarStatus('Ferramenta cadastrada com sucesso!', true);
+                form.reset();
+                previewContainer.innerHTML = '';
+                setTimeout(() => statusMessage.style.display = 'none', 4000);
+
+            } catch (error) {
+                console.error("Erro ao salvar ferramenta: ", error);
+                mostrarStatus(`Erro ao salvar: ${error.message}`, false);
+            } finally {
+                btnSalvar.disabled = false;
+                btnSalvar.innerHTML = '<i data-lucide="save"></i> Salvar Ferramenta';
+                lucide.createIcons();
+            }
+        });
+
+        // --- INICIALIZAÇÃO ---
+        document.addEventListener("DOMContentLoaded", () => {
+            lucide.createIcons();
+            carregarGrupos();
+        });
+
+        // Animação de spin para o loader
+        const style = document.createElement('style');
+        style.innerHTML = `@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } } .spin { animation: spin 1s linear infinite; }`;
+        document.head.appendChild(style);
+    </script>
 </body>
 </html>
-
