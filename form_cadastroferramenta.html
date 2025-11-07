@@ -62,6 +62,10 @@
             color: var(--cor-texto);
             font-size: 16px;
         }
+        /* Estilo para forçar texto em maiúsculo visualmente */
+        .uppercase-input {
+            text-transform: uppercase;
+        }
         .form-group-checkbox {
             display: flex;
             align-items: center;
@@ -91,7 +95,6 @@
         }
         .btn-primario { background: linear-gradient(145deg, #005c97, #363795); }
         
-        /* Estilos para o preview de múltiplas imagens */
         #preview-container {
             display: flex;
             flex-wrap: wrap;
@@ -100,7 +103,7 @@
             border: 2px dashed var(--cor-borda);
             padding: 10px;
             border-radius: 8px;
-            min-height: 100px; /* Altura mínima para a área de drop */
+            min-height: 100px;
         }
         .preview-image {
             width: 100px;
@@ -126,7 +129,6 @@
     <div class="form-container">
         <h2 class="form-header">Cadastrar Nova Ferramenta</h2>
         <form id="form-ferramenta">
-            <!-- Campos existentes (filial, grupo, etc.) -->
             <div class="form-group">
                 <label for="ferramenta-filial">Filial</label>
                 <select id="ferramenta-filial" required>
@@ -144,11 +146,13 @@
             </div>
             <div class="form-group">
                 <label for="ferramenta-codigo">Código da Ferramenta</label>
-                <input type="text" id="ferramenta-codigo" required>
+                <!-- Adicionada a classe 'uppercase-input' -->
+                <input type="text" id="ferramenta-codigo" required class="uppercase-input">
             </div>
             <div class="form-group">
                 <label for="ferramenta-descricao">Descrição</label>
-                <input type="text" id="ferramenta-descricao" required>
+                <!-- Adicionada a classe 'uppercase-input' -->
+                <input type="text" id="ferramenta-descricao" required class="uppercase-input">
             </div>
             <div class="form-group">
                 <label for="ferramenta-localizacao">Localização (Ex: 14 A 9)</label>
@@ -159,13 +163,17 @@
                 <input type="number" id="ferramenta-quantidade" required min="1" value="1">
             </div>
 
-            <!-- NOVO CAMPO PARA MÚLTIPLAS FOTOS -->
             <div class="form-group">
                 <label for="ferramenta-fotos">Fotos da Ferramenta (selecione uma ou mais)</label>
-                <input type="file" id="ferramenta-fotos" accept="image/*" capture="environment" multiple>
+                <!-- Removido o atributo 'capture' para permitir múltiplas fotos no celular -->
+                <input type="file" id="ferramenta-fotos" accept="image/*" multiple>
                 <div id="preview-container"></div>
             </div>
-            
+
+            <div class="form-group form-group-checkbox">
+                <input type="checkbox" id="ferramenta-reparo" style="width: 20px; height: 20px;">
+                <label for="ferramenta-reparo">Precisa de reparo?</label>
+            </div>
             <div class="form-footer">
                 <button type="submit" class="btn btn-primario" id="btn-salvar">
                     <i data-lucide="save"></i> Salvar Ferramenta
@@ -198,43 +206,27 @@
         const previewContainer = document.getElementById('preview-container');
         const statusMessage = document.getElementById('status-message');
         const btnSalvar = document.getElementById('btn-salvar');
+        const codigoInput = document.getElementById('ferramenta-codigo');
+        const descricaoInput = document.getElementById('ferramenta-descricao');
 
         // --- FUNÇÕES ---
-        async function carregarGrupos() {
-            const selectGrupo = document.getElementById('ferramenta-grupo');
-            selectGrupo.innerHTML = '<option value="">Selecione um Grupo</option>';
-            try {
-                const snapshot = await gruposCollection.orderBy('nome').get();
-                snapshot.forEach(doc => {
-                    const grupo = doc.data();
-                    const option = document.createElement('option');
-                    option.value = doc.id;
-                    option.textContent = grupo.nome;
-                    selectGrupo.appendChild(option);
-                });
-            } catch (error) {
-                console.error("Erro ao carregar grupos: ", error);
-                selectGrupo.innerHTML = '<option value="">Erro ao carregar</option>';
-            }
-        }
-
-        function mostrarStatus(mensagem, sucesso = true) {
-            statusMessage.textContent = mensagem;
-            statusMessage.className = `status-message ${sucesso ? 'success' : 'error'}`;
-            statusMessage.style.display = 'block';
-        }
-
-        function formatarLocalizacao(input) {
-            const numeros = input.match(/\d+/g);
-            if (!numeros || numeros.length < 2) return input.toUpperCase();
-            return `${numeros[0]} A ${numeros[1]}`;
-        }
+        async function carregarGrupos() { /* ...código sem alterações... */ }
+        function mostrarStatus(mensagem, sucesso = true) { /* ...código sem alterações... */ }
+        function formatarLocalizacao(input) { /* ...código sem alterações... */ }
 
         // --- EVENT LISTENERS ---
 
+        // Converte para maiúsculo enquanto digita
+        codigoInput.addEventListener('input', (e) => {
+            e.target.value = e.target.value.toUpperCase();
+        });
+        descricaoInput.addEventListener('input', (e) => {
+            e.target.value = e.target.value.toUpperCase();
+        });
+
         // Preview de múltiplas imagens
         fotosInput.addEventListener('change', (e) => {
-            previewContainer.innerHTML = ''; // Limpa o preview anterior
+            previewContainer.innerHTML = '';
             const files = e.target.files;
             if (files) {
                 Array.from(files).forEach(file => {
@@ -258,43 +250,33 @@
             lucide.createIcons();
 
             const fotosFiles = fotosInput.files;
-            const fotosURLs = []; // Array para guardar as URLs das fotos
+            const fotosURLs = [];
 
             try {
-                // 1. Faz upload de todas as fotos em paralelo
                 if (fotosFiles.length > 0) {
                     const uploadPromises = Array.from(fotosFiles).map(file => {
                         const filePath = `ferramentas/${Date.now()}_${file.name}`;
                         const storageRef = storage.ref(filePath);
-                        return storageRef.put(file).then(uploadTask => {
-                            return uploadTask.ref.getDownloadURL();
-                        });
+                        return storageRef.put(file).then(uploadTask => uploadTask.ref.getDownloadURL());
                     });
-                    
-                    // Espera todas as promessas de upload terminarem
                     const urls = await Promise.all(uploadPromises);
                     fotosURLs.push(...urls);
                 }
 
-                // 2. Monta o objeto com os dados da ferramenta
-                const localizacaoFormatada = formatarLocalizacao(document.getElementById('ferramenta-localizacao').value);
-
                 const dados = {
                     filial: document.getElementById('ferramenta-filial').value,
                     grupoId: document.getElementById('ferramenta-grupo').value,
-                    codigo: document.getElementById('ferramenta-codigo').value.toUpperCase(),
-                    descricao: document.getElementById('ferramenta-descricao').value.toUpperCase(),
-                    localizacao: localizacaoFormatada,
+                    codigo: codigoInput.value, // Já está em maiúsculo
+                    descricao: descricaoInput.value, // Já está em maiúsculo
+                    localizacao: formatarLocalizacao(document.getElementById('ferramenta-localizacao').value),
                     quantidade: parseInt(document.getElementById('ferramenta-quantidade').value),
                     reparo: document.getElementById('ferramenta-reparo').checked,
-                    fotosURLs: fotosURLs, // Salva o ARRAY de URLs
+                    fotosURLs: fotosURLs,
                     dataCriacao: new Date()
                 };
 
-                // 3. Salva os dados no Firestore
                 await ferramentasCollection.add(dados);
 
-                // 4. Feedback para o usuário e reseta o formulário
                 mostrarStatus('Ferramenta cadastrada com sucesso!', true);
                 form.reset();
                 previewContainer.innerHTML = '';
@@ -316,7 +298,34 @@
             carregarGrupos();
         });
 
-        // Animação de spin para o loader
+        // --- CÓDIGO SEM ALTERAÇÕES ---
+        async function carregarGrupos() {
+            const selectGrupo = document.getElementById('ferramenta-grupo');
+            selectGrupo.innerHTML = '<option value="">Selecione um Grupo</option>';
+            try {
+                const snapshot = await gruposCollection.orderBy('nome').get();
+                snapshot.forEach(doc => {
+                    const grupo = doc.data();
+                    const option = document.createElement('option');
+                    option.value = doc.id;
+                    option.textContent = grupo.nome;
+                    selectGrupo.appendChild(option);
+                });
+            } catch (error) {
+                console.error("Erro ao carregar grupos: ", error);
+                selectGrupo.innerHTML = '<option value="">Erro ao carregar</option>';
+            }
+        }
+        function mostrarStatus(mensagem, sucesso = true) {
+            statusMessage.textContent = mensagem;
+            statusMessage.className = `status-message ${sucesso ? 'success' : 'error'}`;
+            statusMessage.style.display = 'block';
+        }
+        function formatarLocalizacao(input) {
+            const numeros = input.match(/\d+/g);
+            if (!numeros || numeros.length < 2) return input.toUpperCase();
+            return `${numeros[0]} A ${numeros[1]}`;
+        }
         const style = document.createElement('style');
         style.innerHTML = `@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } } .spin { animation: spin 1s linear infinite; }`;
         document.head.appendChild(style);
