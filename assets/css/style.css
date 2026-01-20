@@ -1,0 +1,354 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap' );
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Poppins', sans-serif;
+}
+
+:root {
+    --body-color: #F0F2F5;
+    --sidebar-color: #001439;
+    --primary-color: #FFFFFF;
+    --primary-color-light: rgba(255, 255, 255, 0.1); /* Adicionei para o hover do menu */
+    --toggle-color: #FFF;
+    --text-color: #CED4DA;
+    --tran-03: all 0.2s ease;
+    --tran-04: all 0.3s ease;
+    --tran-05: all 0.4s ease;
+}
+
+body {
+    min-height: 100vh;
+    background-color: var(--body-color);
+    transition: var(--tran-05);
+}
+
+.sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 270px;
+    padding: 10px 14px;
+    background: var(--sidebar-color);
+    transition: var(--tran-05);
+    z-index: 100;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+}
+
+.sidebar .menu-links {
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.sidebar .menu-links.loaded {
+    opacity: 1;
+}
+
+.sidebar.close {
+    width: 88px;
+}
+
+.sidebar li {
+    list-style: none;
+    display: flex;
+    align-items: center;
+    margin-top: 10px;
+    flex-wrap: wrap; /* Mantido para flexibilidade */
+}
+
+.sidebar .icon {
+    min-width: 60px;
+    border-radius: 6px;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+}
+
+.sidebar .text, .sidebar .icon {
+    color: var(--text-color);
+    transition: var(--tran-03);
+}
+
+.sidebar .text {
+    font-size: 16px;
+    font-weight: 500;
+    white-space: nowrap;
+    opacity: 1;
+}
+
+.sidebar.close .text {
+    opacity: 0;
+    pointer-events: none;
+}
+
+.sidebar header {
+    position: relative;
+}
+
+.sidebar header .image-text {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+}
+
+.sidebar header .image-logo {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.sidebar header .image-logo img {
+    height: 80px;
+    transition: var(--tran-04);
+}
+
+.sidebar.close header .image-logo img {
+    height: 45px;
+}
+
+.sidebar.close header .logo-text {
+    opacity: 0;
+    pointer-events: none;
+}
+
+.sidebar header .toggle {
+    position: absolute;
+    top: 50%;
+    right: -25px;
+    transform: translateY(-50%);
+    height: 25px;
+    width: 25px;
+    background-color: var(--sidebar-color);
+    color: var(--toggle-color);
+    border: 1px solid var(--body-color);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    cursor: pointer;
+    transition: var(--tran-05);
+}
+
+.sidebar.close .toggle {
+    transform: translateY(-50%) rotate(180deg);
+}
+
+.sidebar li > a {
+    height: 50px;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    border-radius: 6px;
+    text-decoration: none;
+    transition: var(--tran-03);
+}
+
+.sidebar li > a:hover {
+    background-color: var(--primary-color-light);
+}
+
+.sidebar li > a:hover .icon, .sidebar li > a:hover .text {
+    color: var(--primary-color);
+}
+
+.nav-link.submenu-parent > a {
+    cursor: pointer;
+}
+
+/* ==================================================================== */
+/* <<< SEÇÃO DO SUBMENU CORRIGIDA E UNIFICADA >>> */
+/* ==================================================================== */
+
+/* 1. Estilo base do submenu, escondido por padrão com max-height: 0 */
+.submenu {
+    list-style: none;
+    width: 100%;
+    padding-left: 25px;
+    background: rgba(0, 0, 0, 0.15); /* Fundo um pouco mais escuro para contraste */
+    border-radius: 6px;
+    margin-top: 5px;
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.4s ease-out;
+}
+
+/* 2. Regra que MOSTRA o submenu quando o PAI (.submenu-parent) tem a classe .open */
+.nav-link.submenu-parent.open .submenu {
+    max-height: 500px; /* Altura suficiente para todos os itens */
+    padding-top: 5px;
+    padding-bottom: 5px;
+}
+
+/* 3. Estilos dos links dentro do submenu */
+.submenu a {
+    display: flex;
+    align-items: center;
+    height: 50px;
+    width: 100%;
+    border-radius: 6px;
+    text-decoration: none;
+    color: var(--text-color);
+}
+
+.submenu a:hover {
+    background-color: var(--primary-color-light);
+}
+
+.submenu a:hover .icon, .submenu a:hover .text {
+    color: var(--primary-color);
+}
+
+.submenu .icon {
+    font-size: 18px;
+    min-width: 35px;
+}
+
+.submenu .text {
+    font-size: 15px;
+}
+
+/* 4. Estilos da setinha (chevron) */
+.submenu-arrow {
+    font-size: 18px;
+    color: var(--text-color);
+    transition: var(--tran-04);
+    margin-left: auto;
+    margin-right: 5px;
+}
+
+.sidebar.close .submenu-arrow {
+    display: none;
+}
+
+/* 5. Gira a setinha e destaca o menu pai quando o submenu está aberto */
+.nav-link.submenu-parent.open > a .submenu-arrow {
+    transform: rotate(90deg);
+    color: var(--primary-color);
+}
+
+.nav-link.submenu-parent.open > a {
+    background-color: var(--primary-color-light);
+}
+
+.nav-link.submenu-parent.open > a .text,
+.nav-link.submenu-parent.open > a .icon {
+    color: var(--primary-color);
+}
+
+/* ==================================================================== */
+/* <<< FIM DA SEÇÃO DO SUBMENU >>> */
+/* ==================================================================== */
+
+.menu-bar {
+    height: calc(100% - 70px);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    overflow-y: auto;
+}
+
+.menu-bar::-webkit-scrollbar {
+    display: none;
+}
+
+.home {
+    position: absolute;
+    top: 0;
+    left: 270px;
+    height: 100vh;
+    width: calc(100% - 270px);
+    background-color: var(--body-color);
+    transition: var(--tran-05);
+    padding: 20px;
+}
+
+.sidebar.close ~ .home {
+    left: 88px;
+    width: calc(100% - 88px);
+}
+
+.home .text {
+    font-size: 20px;
+    font-weight: 500;
+    color: #333;
+}
+
+/* O resto dos seus estilos para .content-card, etc. continua aqui... */
+/* (Adicionei o que você já tinha) */
+.content-card {
+    margin-top: 15px;
+    background-color: #FFF;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    overflow: hidden;
+    border: 1px solid #f0f0f0;
+}
+
+.content-card-header {
+    padding: 16px 20px;
+    background-color: #fff;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.content-card-header h2 {
+    font-size: 20px;
+    font-weight: 600;
+    color: #1a3263;
+}
+
+.content-card-body {
+    padding: 16px 20px;
+}
+
+.update-item {
+    display: flex;
+    align-items: flex-start;
+    margin-bottom: 20px;
+}
+
+.update-item:last-child {
+    margin-bottom: 0;
+}
+
+.update-icon {
+    font-size: 24px;
+    color: var(--sidebar-color);
+    margin-right: 15px;
+    background-color: #E9ECEF;
+    border-radius: 50%;
+    width: 45px;
+    height: 45px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.update-content h3 {
+    font-size: 16px;
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 3px;
+}
+
+.update-content p {
+    font-size: 14px;
+    color: #6C757D;
+    line-height: 1.5;
+}
+
+.update-content a {
+    font-weight: 600;
+    color: #007BFF;
+    text-decoration: none;
+}
+
+.update-content a:hover {
+    text-decoration: underline;
+}

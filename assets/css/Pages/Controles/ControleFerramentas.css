@@ -1,0 +1,311 @@
+:root {
+    --cor-fundo: #1e1e2f;
+    --cor-fundo-secundaria: #262a3d;
+    --cor-sidebar: #2c2f3f;
+    --cor-texto: #ffffff;
+    --cor-borda: #444;
+    --cor-primaria: #193b7c;
+    --cor-sucesso: #40c057;
+    --cor-alerta: #fa5252;
+    --cor-aviso: #fab005;
+    --cor-info: #339af0;
+}
+
+/* Abas de navegação */
+.tab-nav {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    border-bottom: 1px solid var(--cor-borda);
+}
+.tab-button {
+    padding: 10px 20px;
+    cursor: pointer;
+    border: none;
+    background: none;
+    color: #262a3d; /* Cor do texto das abas inativas */
+    border-bottom: 3px solid transparent;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+.tab-button.active, .tab-button:hover {
+    color: #00205b; /* Cor do texto da aba ativa/hover */
+    border-bottom-color: var(--cor-primaria);
+}
+.tab-content {
+    display: none;
+}
+.tab-content.active {
+    display: block;
+}
+
+/* Estilos dos botões e status */
+.btn {
+    border: none;
+    height: 36px;
+    padding: 0 12px;
+    border-radius: 8px;
+    color: white;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: filter 0.2s;
+    font-size: 14px;
+}
+.btn:hover { filter: brightness(1.2); }
+.btn-primario { background: linear-gradient(145deg, #005c97, #363795); }
+.btn-secundario { 
+    background: linear-gradient(145deg, #6c757d, #5a6268);
+    color: #ffffff !important;
+    font-weight: 500;
+}
+.btn-secundario:hover { 
+    background: linear-gradient(145deg, #5a6268, #495057);
+    filter: none;
+}
+.btn-sucesso { 
+    background: linear-gradient(145deg, #005c97, #363795);
+}
+.btn-aviso { background-color: var(--cor-aviso); }
+.btn-alerta { background-color: var(--cor-alerta); }
+.btn-info { background-color: var(--cor-info); }
+
+.status-reparo { padding: 5px 10px; border-radius: 15px; font-weight: bold; color: white; font-size: 11px; }
+.status-reparo.sim { background: linear-gradient(145deg, #fa5252, #e03131); }
+.status-reparo.nao { background: linear-gradient(145deg, #005c97, #363795); }
+
+/* Estilos do Modal */
+.modal-ferramentas { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.7); justify-content: center; align-items: center; backdrop-filter: blur(5px); }
+.modal-ferramentas.active { display: flex; }
+.modal-content { background-color: var(--cor-sidebar); padding: 25px; border-radius: 12px; width: 95%; max-width: 500px; box-shadow: 0 5px 15px rgba(0,0,0,0.5); max-height: 90vh; overflow-y: auto; }
+.modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--cor-borda); padding-bottom: 10px; margin-bottom: 20px; }
+.modal-header h3 { margin: 0; font-size: 20px; color: #000000;}
+.close-button { cursor: pointer; font-size: 28px; font-weight: bold; }
+.form-group { margin-bottom: 15px; }
+.form-group label { display: block; margin-bottom: 5px; font-size: 14px; color: #ccc; }
+.form-group input, .form-group select { width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #555; background-color: var(--cor-fundo-secundaria); color: var(--cor-texto); }
+.form-group-checkbox { display: flex; align-items: center; gap: 10px; }
+.modal-footer { text-align: right; margin-top: 20px; }
+#lista-grupos li { display: flex; justify-content: space-between; align-items: center; padding: 8px; border-bottom: 1px solid var(--cor-borda); }
+#info-disponibilidade { font-size: 12px; color: var(--cor-aviso); background-color: rgba(250, 176, 5, 0.1); border: 1px solid var(--cor-aviso); padding: 8px; border-radius: 6px; margin-top: 5px; }
+
+
+/* ================================================================== */
+/* ESTILOS DO LOG DE HISTÓRICO (VERSÃO MELHORADA)                     */
+/* ================================================================== */
+
+#lista-historico {
+    display: flex;
+    flex-direction: column;
+    gap: 12px; /* Espaçamento entre os itens do histórico */
+}
+
+.log-entry {
+    background-color: var(--cor-fundo-secundaria); /* Fundo escuro e sólido */
+    padding: 15px;
+    border-radius: 8px;
+    border-left: 5px solid; /* Borda colorida continua sendo o identificador principal */
+    display: flex;
+    gap: 15px;
+    align-items: center;
+}
+
+/* Ícone para cada tipo de ação */
+.log-entry-icon {
+    flex-shrink: 0; /* Impede que o ícone seja esmagado */
+    padding: 8px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.log-entry-icon svg {
+    width: 20px;
+    height: 20px;
+    color: var(--cor-texto);
+}
+
+/* Conteúdo principal do log (título e detalhes) */
+.log-entry-content {
+    flex-grow: 1; /* Ocupa o espaço restante */
+}
+
+.log-entry-header {
+    font-weight: bold;
+    color: var(--cor-texto); /* Texto branco para alto contraste */
+    margin-bottom: 4px;
+    font-size: 15px;
+}
+
+.log-entry-details {
+    font-size: 13px;
+    color: #a0a0b0; /* Um cinza mais claro e legível */
+    line-height: 1.4;
+}
+
+/* Data e hora, alinhadas à direita */
+.log-entry-timestamp {
+    font-size: 12px;
+    color: #808090;
+    text-align: right;
+    flex-shrink: 0; /* Impede que a data quebre linha desnecessariamente */
+}
+
+/* Cores específicas para cada tipo de log */
+.log-entry.alocacao { border-left-color: var(--cor-info); }
+.log-entry.alocacao .log-entry-icon { background-color: rgba(51, 154, 240, 0.2); }
+
+.log-entry.devolucao { border-left-color: var(--cor-sucesso); }
+.log-entry.devolucao .log-entry-icon { background-color: rgba(64, 192, 87, 0.2); }
+
+.log-entry.edicao { border-left-color: var(--cor-aviso); }
+.log-entry.edicao .log-entry-icon { background-color: rgba(250, 176, 5, 0.2); }
+
+.log-entry.criacao { border-left-color: var(--cor-primaria); }
+.log-entry.criacao .log-entry-icon { background-color: rgba(25, 59, 124, 0.3); }
+
+
+/* Notificações Toast */
+.toast-container { position: fixed; top: 20px; right: 20px; z-index: 2000; }
+.toast { padding: 12px 20px; margin-bottom: 10px; border-radius: 6px; color: white; font-weight: bold; opacity: 0; transform: translateX(100%); transition: all 0.3s ease; }
+.toast.show { opacity: 1; transform: translateX(0); }
+.toast.success { background-color: var(--cor-sucesso); }
+.toast.error { background-color: var(--cor-alerta); }
+.toast.info { background-color: var(--cor-info); }
+
+.btn-ver-imagem {
+    background-color: #495057; /* Cinza-azulado escuro */
+    color: white !important; /* Garante que o ícone (Lucide) fique branco */
+}
+
+/* Efeito visual ao passar o mouse */
+.btn-ver-imagem:hover:not(:disabled) {
+    background-color: #343a40; /* Um tom mais escuro para o feedback */
+}
+
+/* Estilo para o botão quando estiver desabilitado (sem imagens) */
+.btn-ver-imagem:disabled {
+    background-color: #f8f9fa; /* Fundo bem claro, quase branco */
+    border: 1px solid #dee2e6; /* Borda cinza clara */
+    color: #adb5bd !important; /* Ícone cinza claro */
+    cursor: not-allowed;
+}
+
+/* NOVOS ESTILOS PARA A TABELA DE ALOCAÇÕES */
+.ferramenta-info {
+    line-height: 1.4;
+}
+
+.ferramenta-detalhes {
+    font-size: 0.85em;
+    color: #a0a0b0;;
+    margin-top: 4px;
+}
+
+.ferramenta-detalhes span {
+    display: inline-block;
+    margin-right: 10px;
+    background: #f5f5f5;
+    padding: 2px 6px;
+    border-radius: 4px;
+}
+
+.funcionario-info {
+    line-height: 1.4;
+}
+
+.responsavel {
+    font-size: 0.8em;
+    color: #888;
+    margin-top: 2px;
+}
+
+.data-info {
+    line-height: 1.4;
+}
+
+.hora {
+    font-size: 0.85em;
+    color: #a0a0b0;;
+}
+
+.status-alocado {
+    font-size: 0.8em;
+    background: #e8f5e8;
+    color: #2d5016;
+    padding: 2px 8px;
+    border-radius: 12px;
+    display: inline-block;
+    margin-top: 4px;
+}
+
+.status-erro {
+    font-size: 0.8em;
+    background: #ffe8e8;
+    color: #d63031;
+    padding: 2px 8px;
+    border-radius: 12px;
+    display: inline-block;
+    margin-top: 4px;
+}
+
+.acoes-container {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    align-items: center;
+}
+
+/* Botão de PDF */
+.btn-pdf {
+    background-color: #17a2b8;
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    text-decoration: none;
+    font-size: 0.85em;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    transition: background-color 0.2s;
+}
+
+.btn-pdf:hover {
+    background-color: #138496;
+    color: white;
+}
+
+/* Melhorias na tabela */
+#tabela-alocacao tr:hover {
+    background-color: #f8f9fa;
+}
+
+#tabela-alocacao td {
+    vertical-align: top;
+    padding: 12px 8px;
+}
+
+/* Adicionar ao arquivo CSS existente */
+
+.os-badge {
+    background: #e3f2fd;
+    color: #1976d2;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 600;
+    border: 1px solid #bbdefb;
+}
+
+.btn-pdf-header {
+    background-color: #d32f2f !important;
+}
+
+.btn-pdf-header:hover {
+    background-color: #b71c1c !important;
+}

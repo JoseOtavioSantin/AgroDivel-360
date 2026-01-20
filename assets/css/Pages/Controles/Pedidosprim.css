@@ -1,0 +1,70 @@
+/* SUBSTITUA TODO O CONTEÚDO DA TAG <style> POR ESTE */
+
+.btn-acao {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;  /* Largura fixa */
+    height: 36px; /* Altura fixa */
+    padding: 0;   /* Remove o padding interno */
+    gap: 0;       /* Remove o espaçamento do gap */
+    background-color: #193b7c;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    text-decoration: none;
+}
+
+.btn-acao:hover {
+    background-color: #132a5a;
+}
+
+/* Garante que o ícone dentro do botão esteja centralizado */
+.btn-acao i {
+    margin: 0; /* Remove qualquer margem do ícone */
+    width: 18px;
+    height: 18px;
+}
+
+/* Estilo específico para o botão de apagar */
+.btn-delete {
+    background-color: #950000; /* Cor vermelha escura para perigo */
+}
+.btn-delete:hover {
+    background-color: #c62828; /* Vermelho mais claro ao passar o mouse */
+}
+
+.acoes-cell {
+    display: flex;
+    gap: 8px;
+}
+
+@keyframes piscar {
+  0%, 100% { background-color: #950000; }
+  50% { background-color: #c67903; }
+}
+.chegou-no-estoque { animation: piscar 1.5s infinite; }
+
+td, input, select { text-transform: uppercase; }
+
+
+/* Verifique se isso está na sua tag <style> */
+
+.status-aguardando {
+    background-color: #c67903; /* Laranja */
+}
+.status-concluido {
+    background-color: #193b7c; /* Azul escuro */
+}
+
+@keyframes piscar {
+  0%, 100% { background-color: #950000; } /* Vermelho escuro */
+  50% { background-color: #c67903; } /* Laranja */
+}
+
+/* A classe da animação deve sobrescrever a cor de fundo normal */
+.chegou-no-estoque td { 
+    animation: piscar 1.5s infinite; 
+}

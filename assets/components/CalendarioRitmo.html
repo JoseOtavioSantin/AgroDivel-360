@@ -1,0 +1,32 @@
+<!-- assets/components/CalendarioRitmo.html -->
+<div class="content-card" id="calendario-ritmo">
+    <div class="content-card-header">
+        <div class="calendario-header-nav">
+            <button id="btn-semana-anterior" class="btn-nav"><i class='bx bx-chevron-left'></i></button>
+            <div class="calendario-titulo">
+                <h2>Calendário da Semana</h2>
+                <p id="legenda-semana">Tarefas e atividades planejadas.</p>
+            </div>
+            <button id="btn-semana-proxima" class="btn-nav"><i class='bx bx-chevron-right'></i></button>
+        </div>
+
+        <!-- Container para os controles da direita (filtro e botão) -->
+        <div class="calendario-controles">
+            <div class="filtro-container">
+                <i class='bx bx-filter-alt'></i>
+                <select id="filtro-gestor">
+                    <option value="todos">Todos os Funcionarios</option>
+                    <!-- Opções serão adicionadas dinamicamente -->
+                </select>
+            </div>
+            <a href="/Pages/Formularios/form-ritmo.html" class="btn-primary">
+                <i class='bx bx-plus'></i> Adicionar Tarefa
+            </a>
+        </div>
+    </div>
+    <div class="content-card-body">
+        <div class="dias-semana">
+            <!-- Conteúdo do calendário -->
+        </div>
+    </div>
+</div>

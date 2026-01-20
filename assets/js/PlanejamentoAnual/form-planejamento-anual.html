@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Planejamento Anual</title>
+    <link rel="icon" type="image/png" href="/assets/images/iconeaba.png">
+    
+    <!-- CSS -->
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <link rel="stylesheet" href="/assets/css/style.css">
+    <link rel="stylesheet" href="/assets/css/Pages/Formularios/form-planejamento-anual.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+<body>
+
+    <!-- Placeholder onde a Sidebar será carregada -->
+    <nav id="sidebar-placeholder"></nav>
+
+    <section class="home">
+        <div class="text">
+            <h1>Planejamento Anual</h1>
+            <p>Defina o orçamento previsto para cada mês do ano.</p>
+        </div>
+
+        <div class="content-card">
+            <div class="content-card-header">
+                <h2>Planejamento</h2>
+                <div class="header-actions">
+                    <input type="number" id="ano" name="ano" min="2020" max="2100" placeholder="Ano" class="ano-input">
+                    <select id="departamento" name="departamento" class="departamento-select">
+                        <option value="">Carregando departamentos...</option>
+                    </select>
+                    <select id="filial" name="filial" class="filial-select">
+                        <option value="">Carregando filiais...</option>
+                    </select>
+                    <button type="button" class="btn-fechar-ano-header" id="btn-fechar-ano" title="Fechar Ano">
+                        <i class='bx bx-lock'></i> Fechar Ano
+                    </button>
+                    <button type="button" class="btn-historico-header" id="btn-historico" title="Ver Histórico de Alterações">
+                        <i class='bx bx-history'></i> Histórico
+                    </button>
+                    <button type="button" class="btn-importar-header" id="btn-importar" title="Importar de Excel">
+                        <i class='bx bx-upload'></i> Importar
+                    </button>
+                    <button type="button" class="btn-novo-grupo-header" id="btn-novo-grupo" title="Adicionar Novo Grupo">
+                        <i class='bx bx-plus'></i> Novo Grupo
+                    </button>
+                    <button type="button" class="btn-limpar-header" id="btn-limpar" title="Limpar Formulário">
+                        <i class='bx bx-trash'></i> Limpar
+                    </button>
+                    <button type="submit" form="form-planejamento" class="btn-salvar-header" title="Salvar Planejamento">
+                        <i class='bx bx-save'></i> Salvar
+                    </button>
+                </div>
+            </div>
+            <div class="content-card-body">
+                <form id="form-planejamento">
+                    <!-- TABELA DE PLANEJAMENTO -->
+                    <div class="tabela-wrapper">
+                        <table id="tabela-planejamento" class="tabela-planejamento">
+                            <thead>
+                                <tr>
+                                    <th>
+                                        <button type="button" class="btn-expandir-tabela" id="btn-expandir-tudo" title="Expandir/Colapsar todas as contas">
+                                            <i class='bx bx-expand'></i>
+                                        </button>
+                                        Conta
+                                    </th>
+                                    <th>Descrição</th>
+                                    <th>Jan</th>
+                                    <th>Fev</th>
+                                    <th>Mar</th>
+                                    <th>Abr</th>
+                                    <th>Mai</th>
+                                    <th>Jun</th>
+                                    <th>Jul</th>
+                                    <th>Ago</th>
+                                    <th>Set</th>
+                                    <th>Out</th>
+                                    <th>Nov</th>
+                                    <th>Dez</th>
+                                    <th>Total</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tabela-body">
+                                <!-- Linhas preenchidas dinamicamente -->
+                            </tbody>
+                        </table>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </section>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script type="module" src="/assets/js/firebase-config.js"></script>
+    <script type="module" src="/assets/js/auth.js"></script>
+    <script src="/assets/js/main.js"></script>
+    <script src="/assets/js/components/Sidebar.js"></script>
+    <script type="module" src="/assets/js/Formularios/form-planejamento-anual.js"></script>
+</body>
+</html>

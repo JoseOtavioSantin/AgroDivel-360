@@ -1,0 +1,100 @@
+/* /assets/css/Pages/Formularios/form-alocacao.css */
+
+#info-disponibilidade {
+    font-size: 0.8rem;
+    color: var(--cor-aviso);
+    background-color: rgb(255, 255, 255);
+    border: 1px solid var(--cor-aviso);
+    padding: 8px;
+    border-radius: 6px;
+    margin-top: 8px;
+}
+
+#ferramenta-imagens {
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;
+    padding: 10px;
+    background-color: var(--cor-fundo);
+    border-radius: 8px;
+    border: 1px solid var(--cor-borda);
+}
+
+#ferramenta-imagens img {
+    width: 100px;
+    height: 100px;
+    object-fit: cover;
+    border-radius: 8px;
+    border: 2px solid var(--cor-borda);
+    cursor: pointer;
+    transition: transform 0.2s, border-color 0.2s;
+}
+
+#ferramenta-imagens img:hover {
+    transform: scale(1.05);
+    border-color: var(--cor-primaria);
+}
+
+#ferramenta-imagens .no-image {
+    width: 100%;
+    text-align: center;
+    color: #888;
+    font-style: italic;
+    padding: 20px 0;
+}
+/* ================================================================= */
+/* ESTILOS PARA O TOM SELECT (TEMA ESCURO) - VERSÃO CORRIGIDA        */
+/* ================================================================= */
+
+/* Estiliza o campo de input principal (sem alterações) */
+.ts-control {
+    background-color: var(--cor-fundo-secundaria) !important;
+    border-color: #555 !important;
+    border-radius: 6px !important;
+}
+.ts-control, .ts-control input {
+    color: var(--cor-texto) !important;
+    font-family: inherit !important;
+}
+
+/* 
+  CORREÇÃO PRINCIPAL:
+  Aplica o z-index tanto no 'wrapper' quanto no 'dropdown' para máxima prioridade.
+  Isso resolve o problema de sobreposição em todas as situações.
+*/
+.ts-wrapper, .ts-dropdown {
+    z-index: 9999 !important;
+}
+
+/* 
+  Define um fundo escuro para o contêiner do dropdown.
+  Este fundo só será visível se houver algum espaço entre as opções.
+*/
+.ts-dropdown {
+    background: var(--cor-sidebar) !important;
+    border: 1px solid #555 !important;
+}
+
+/* 
+  VOLTANDO À LÓGICA ORIGINAL:
+  Cada opção tem seu próprio fundo branco sólido.
+*/
+.ts-dropdown .option {
+    color: #333 !important; /* Cor do texto um pouco mais suave */
+    background-color: #fffefe !important; /* Fundo branco sólido */
+    padding: 10px 12px !important;
+}
+
+/* 
+  Estiliza a opção quando o mouse passa por cima (hover) ou está ativa.
+*/
+.ts-dropdown .option:hover, .ts-dropdown .active {
+    background-color: rgb(25, 60, 124) !important;
+    color: #ffffff !important; /* Texto branco para contraste */
+}
+
+/* Estiliza a opção que já está selecionada na lista */
+.ts-dropdown .selected {
+    background-color: rgba(25, 59, 124, 0.5) !important;
+    color: #ffffff !important; /* Garante que o texto fique branco também */
+}
