@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="theme-color" content="#2c2f3f" />
+  <title>Painel de Gestão (Multi-Coleções)</title>
+  <link rel="icon" type="image/png" href="/assets/images/iconeaba.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/pt.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  
+  <!-- CSS -->
+  <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+  <link rel="stylesheet" href="/assets/css/style.css">
+  <link rel="stylesheet" href="/assets/css/Pages/Dashboard/Principal.css">
+  <link rel="stylesheet" href="/assets/css/Pages/Cadastros/CadastroTecnico.css">
+  
+</head>
+<body>
+
+  <nav id="sidebar-placeholder"></nav>
+
+  <!-- Conteúdo Principal da Página -->
+  <section class="home">
+    <div class="text">
+      <h1>Dashboard - Geral</h1>
+      <p id="dynamic-title">Aguardando autenticação...</p>
+    </div>
+
+    <!-- CARDS DE RESUMO ATUALIZADOS -->
+    <div class="dashboard-cards">
+      <div class="dashboard-card pink-card">
+        <h2 id="total-exibidos">0</h2>
+        <p><i data-lucide="list-checks"></i> Itens no painel</p>
+      </div>
+      <div class="dashboard-card orange-card">
+        <h2 id="total-andamento">0</h2>
+        <p><i data-lucide="clock-6"></i> Em andamento</p>
+      </div>
+      <div class="dashboard-card green-card">
+        <h2 id="total-concluido">0</h2>
+        <p><i data-lucide="check-circle-2"></i> Concluídos</p>
+      </div>
+      <div class="dashboard-card red-card">
+        <h2 id="total-cancelado">0</h2>
+        <p><i data-lucide="x-octagon"></i> Cancelados</p>
+      </div>
+      <div class="dashboard-card green-card">
+        <h2 id="valor-concluido">R$ 0,00</h2>
+        <p><i data-lucide="dollar-sign"></i> Valor Concluído</p>
+      </div>
+    </div>
+
+    <!-- CONTAINER PRINCIPAL DO DASHBOARD -->
+    <div class="content-card">
+      <div class="content-card-header">
+        <h3>Acompanhamento</h3>
+      </div>
+      <div class="content-card-body">
+        <div class="filters">
+          <input id="filtro-cliente" type="text" placeholder="Buscar cliente..." />
+          <select id="filtro-status">
+            <option value="">Todos os status</option>
+            <option value="Em andamento">Em andamento</option>
+            <option value="Concluído">Concluído</option>
+            <option value="Cancelado">Cancelado</option>
+          </select>
+          <input id="filtro-consultor" type="text" placeholder="Buscar consultor..." />
+          <select id="filtro-checklist">
+            <option value="">Todos os checklists</option>
+          </select>
+          <input id="filtro-periodo" placeholder="Selecione o período" />
+          <button id="btn-exportar" class="btn-acao" style="margin-left:auto;" title="Exportar para Excel">
+            <i data-lucide="download" style="width: 20px; height: 20px;"></i>
+          </button>
+        </div>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Departamento</th>
+              <th>Data da Visita</th>
+              <th>Cliente</th>
+              <th>Município</th>
+              <th>Consultor</th>
+              <th>Modelo</th>
+              <th>Horímetro</th>
+              <th>Telefone</th>
+              <th>Observações</th>
+              <th>Resposta do responsável</th>
+              <th>Checklist</th>
+            </tr>
+          </thead>
+          <tbody id="painel-detalhes"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <script type="module">
+    import { garantirAutenticacao } from '/assets/js/auth-guard.js?v=2';
+    import { getApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getFirestore, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+    async function iniciarPagina( ) {
+      try {
+        await garantirAutenticacao();
+        console.log("Autenticação confirmada. Iniciando o painel de gestão...");
+
+        const app = getApp();
+        const db = getFirestore(app);
+
+        let collectionsToWatch = ["checklistComercial", "checklistPecas", "checklistServicos"];
+        const saved = JSON.parse(localStorage.getItem("gestao_colecoes") || "null");
+        if (Array.isArray(saved) && saved.length) collectionsToWatch = saved;
+
+        const byCollection = new Map();
+        let allRows = [];
+        let unsubs = [];
+
+        const low = v => String(v ?? "").toLowerCase().trim();
+        
+        function formatarNomeChecklist(collName) {
+          return collName.replace(/^checklist/, '').replace(/([A-Z])/g, ' $1').trim();
+        }
+        
+        function mapColecaoParaDepartamento(collName){
+          const map = { 
+            checklistPecas: "Peças", 
+            checklistServicos: "Serviços", 
+            checklistComercial: "Comercial", 
+            campanhasAtivas: "Campanhas", 
+            informativos: "Informativos", 
+            planosVigentes: "Planos Vigentes" 
+          };
+          return map[collName] || formatarNomeChecklist(collName);
+        }
+        
+        function getCliente(d){ return d.nomeCliente || d.cliente || d.nome || "-"; }
+        function getMunicipio(d){ return d.municipio || d.cidade || "-"; }
+        function getConsultor(d){ return d.consultor || d.responsavel || "-"; }
+        function getModelo(d){ return d.modelo || d.equipamento || d.maquina || "-"; }
+        function getHorimetro(d){ return d.horimetro ?? d.horímetro ?? "-"; }
+        function getTelefone(d){ return d.telefone || d.celular || d.whatsapp || ""; }
+        function getObs(d){ return d.observacoes || d.observação || d.descricao || d.notas || "-"; }
+        function getResp(d){ return d.comentarioResponsavel || d.respostaResponsavel || "-"; }
+        function getChecklistArr(d){ return Array.isArray(d.checklist) ? d.checklist : (Array.isArray(d.checklistItens) ? d.checklistItens : []); }
+        function formatDate(any){
+          if(!any) return "-";
+          if(typeof any === "string") return any.slice(0,10);
+          if(typeof any === "object" && any.seconds){ const dt = new Date(any.seconds*1000); return dt.toISOString().slice(0,10); }
+          return String(any);
+        }
+        function getData(d){ return formatDate(d.dataVisita || d.data || d.createdAt || d.dt || d.timestamp); }
+        
+        function getValor(d) {
+          const valorEncontrado = d.valorNegociado || d.valor || d.valorTotal || d.valor_total || '0';
+          return parseFloat(String(valorEncontrado).replace(',', '.') || '0');
+        }
+
+        function statusTag(d){
+          const s = low(d.statusChecklist);
+          if (s === "em andamento") return "andamento";
+          if (s === "concluido" || s === "concluído") return "concluido";
+          if (s === "cancelado") return "cancelado";
+          return "outro";
+        }
+
+        const painel = document.getElementById("painel-detalhes");
+        const filtroChecklist = document.getElementById("filtro-checklist");
+
+        function atualizarFiltroChecklists() {
+          const checklistsUnicos = [...new Set(collectionsToWatch)];
+          const opcoesAtuais = Array.from(filtroChecklist.options).map(opt => opt.value);
+          
+          for (let i = filtroChecklist.options.length - 1; i >= 0; i--) {
+            if (filtroChecklist.options[i].value && !checklistsUnicos.includes(filtroChecklist.options[i].value)) {
+              filtroChecklist.remove(i);
+            }
+          }
+          
+          checklistsUnicos.forEach(checklist => {
+            if (!opcoesAtuais.includes(checklist)) {
+              const option = document.createElement('option');
+              option.value = checklist;
+              option.textContent = formatarNomeChecklist(checklist);
+              filtroChecklist.appendChild(option);
+            }
+          });
+        }
+
+        function startWatch(filiaisPermitidas){
+          unsubs.forEach(u => u && u());
+          unsubs = [];
+          byCollection.clear();
+          allRows = [];
+          painel.innerHTML = "";
+          atualizarFiltroChecklists();
+
+          collectionsToWatch.forEach(collName => {
+            try{
+              const unsub = onSnapshot(collection(db, collName), (snap) => {
+                const rows = [];
+                const filtrosAtivos = Array.isArray(filiaisPermitidas) && filiaisPermitidas.length > 0;
+                snap.forEach(docu => {
+                  const d = docu.data();
+                  const filialDoc = low(d.filial || "");
+                  if (filtrosAtivos && !filiaisPermitidas.includes(filialDoc)) return;
+                  const tag = statusTag(d);
+                  if (tag === "outro") return;
+                  rows.push({ 
+                    _id: `${collName}/${docu.id}`, 
+                    collection: collName,
+                    departamento: mapColecaoParaDepartamento(collName), 
+                    dataVisita: getData(d), 
+                    valor: getValor(d),
+                    cliente: getCliente(d), 
+                    municipio: getMunicipio(d), 
+                    consultor: getConsultor(d), 
+                    modelo: getModelo(d), 
+                    horimetro: getHorimetro(d), 
+                    telefone: getTelefone(d), 
+                    observacoes: getObs(d), 
+                    resposta: getResp(d), 
+                    checklist: getChecklistArr(d), 
+                    statusTag: tag 
+                  });
+                });
+                byCollection.set(collName, rows);
+                rebuildAllRows();
+                aplicarFiltros();
+              }, (err)=>console.error("Snapshot error", collName, err));
+              unsubs.push(unsub);
+            }catch(e){ console.error("Erro inscrevendo em", collName, e); }
+          });
+        }
+
+        function rebuildAllRows(){
+          allRows = [];
+          for (const arr of byCollection.values()) allRows = allRows.concat(arr);
+          
+          allRows.sort((a,b)=>{
+            const ordemStatus = { 'andamento': 1, 'concluido': 2, 'cancelado': 3 };
+            const ordemA = ordemStatus[a.statusTag] || 4;
+            const ordemB = ordemStatus[b.statusTag] || 4;
+            if (ordemA !== ordemB) return ordemA - ordemB;
+            if (a.departamento !== b.departamento) return a.departamento.localeCompare(b.departamento);
+            return (b.dataVisita||"").localeCompare(a.dataVisita||"");
+          });
+        }
+
+        function aplicarFiltros(){
+          const clienteFiltro = document.getElementById("filtro-cliente").value.toLowerCase();
+          const statusFiltroRaw = document.getElementById("filtro-status").value;
+          const consultorFiltro = document.getElementById("filtro-consultor").value.toLowerCase();
+          const checklistFiltro = document.getElementById("filtro-checklist").value;
+          const instance = document.getElementById("filtro-periodo")._flatpickr;
+          const selectedDates = instance?.selectedDates || [];
+          let dataInicio = "", dataFim = "";
+          if (selectedDates.length === 2) { dataInicio = selectedDates[0].toISOString().slice(0, 10); dataFim = selectedDates[1].toISOString().slice(0, 10); }
+          else if (selectedDates.length === 1) { dataInicio = dataFim = selectedDates[0].toISOString().slice(0, 10); }
+
+          const filtrados = allRows.filter(r => {
+            const dentroDoPeriodo = (!dataInicio && !dataFim) || ((!dataInicio || r.dataVisita >= dataInicio) && (!dataFim || r.dataVisita <= dataFim));
+            const passaStatus = statusFiltroRaw === "" ? (["andamento", "concluido", "cancelado"].includes(r.statusTag)) : statusFiltroRaw === "Em andamento" ? (r.statusTag === "andamento") : statusFiltroRaw === "Concluído" ? (r.statusTag === "concluido") : statusFiltroRaw === "Cancelado" ? (r.statusTag === "cancelado") : false;
+            const passaChecklist = !checklistFiltro || r.collection === checklistFiltro;
+
+            return r.cliente.toLowerCase().includes(clienteFiltro) &&
+                   r.consultor.toLowerCase().includes(consultorFiltro) &&
+                   dentroDoPeriodo &&
+                   passaStatus &&
+                   passaChecklist;
+          });
+
+          const concluidosFiltrados = filtrados.filter(r => r.statusTag === "concluido");
+          const valorTotalConcluido = concluidosFiltrados.reduce((acc, item) => acc + item.valor, 0);
+
+          document.getElementById("total-exibidos").textContent = filtrados.length;
+          document.getElementById("total-andamento").textContent = filtrados.filter(r => r.statusTag === "andamento").length;
+          document.getElementById("total-concluido").textContent = concluidosFiltrados.length;
+          document.getElementById("total-cancelado").textContent = filtrados.filter(r => r.statusTag === "cancelado").length;
+          document.getElementById("valor-concluido").textContent = valorTotalConcluido.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+
+          painel.innerHTML = "";
+          filtrados.forEach(r => {
+            const statusClass = r.statusTag === "andamento" ? "status-em-andamento" :
+                              r.statusTag === "concluido" ? "status-concluido" :
+                              r.statusTag === "cancelado" ? "status-cancelado" : "";
+
+            const whats = r.telefone ? `<a href="https://wa.me/55${String(r.telefone ).replace(/\D/g, '')}" target="_blank" title="Chamar no WhatsApp" style="color:#25D366; font-size:22px; display:inline-block;"><i class="fa-brands fa-whatsapp"></i></a>` : "-";
+
+            const checklistItens = r.checklist.map(item =>
+              `<span style="background:#fff; color:#00205b; padding:3px 8px; border-radius:5px; margin:2px; display:inline-block; font-size:10px">${item}</span>`
+            ).join("");
+
+            painel.innerHTML += `
+              <tr class="${statusClass}">
+                <td>${r.departamento}</td>
+                <td>${r.dataVisita || "-"}</td>
+                <td>${r.cliente}</td>
+                <td>${r.municipio}</td>
+                <td>${r.consultor}</td>
+                <td>${r.modelo}</td>
+                <td>${r.horimetro}</td>
+                <td style="text-align:center;">${whats}</td>
+                <td>${r.observacoes}</td>
+                <td>${r.resposta}</td>
+                <td>${checklistItens}</td>
+              </tr>`;
+          });
+        }
+
+        function exportarParaExcel() {
+          const headers = ["Departamento","Data da Visita","Cliente","Município","Consultor","Modelo","Horímetro","Telefone","Observações","Resposta do responsável","Checklist","Status"];
+          const linhas = Array.from(document.querySelectorAll("#painel-detalhes tr")).map(tr=>{
+            const tds = tr.querySelectorAll("td");
+            const status = tr.classList.contains("status-em-andamento") ? "Em andamento" : 
+                          tr.classList.contains("status-concluido") ? "Concluído" : 
+                          tr.classList.contains("status-cancelado") ? "Cancelado" : "";
+            return [tds[0]?.textContent.trim(), tds[1]?.textContent.trim(), tds[2]?.textContent.trim(), tds[3]?.textContent.trim(), tds[4]?.textContent.trim(), tds[5]?.textContent.trim(), tds[6]?.textContent.trim(), tds[7]?.textContent.trim(), tds[8]?.textContent.trim(), tds[9]?.textContent.trim(), tds[10]?.innerText.trim(), status];
+          });
+          const planilha = XLSX.utils.aoa_to_sheet([headers, ...linhas]);
+          const wb = XLSX.utils.book_new();
+          XLSX.utils.book_append_sheet(wb, planilha, "Gestão");
+          XLSX.writeFile(wb, "gestao_multicolecoes_completa.xlsx");
+        }
+
+        lucide.createIcons();
+        const filiais = JSON.parse(localStorage.getItem("gestorFilial") || "[]").map(f => low(f));
+        if (filiais.length) {
+            document.getElementById("dynamic-title").textContent = `Filiais: ${JSON.parse(localStorage.getItem("gestorFilial")).join(", ")}`;
+        } else {
+            document.getElementById("dynamic-title").textContent = 'Visualizando todas as filiais';
+        }
+        
+        document.getElementById("filtro-cliente").addEventListener("input", aplicarFiltros);
+        document.getElementById("filtro-status").addEventListener("change", aplicarFiltros);
+        document.getElementById("filtro-consultor").addEventListener("input", aplicarFiltros);
+        document.getElementById("filtro-checklist").addEventListener("change", aplicarFiltros);
+        flatpickr("#filtro-periodo",{ mode:"range", dateFormat:"Y-m-d", locale:"pt", onChange:aplicarFiltros });
+        document.getElementById("btn-exportar").addEventListener("click", exportarParaExcel);
+        
+        atualizarFiltroChecklists();
+        
+        startWatch(filiais);
+        setInterval(aplicarFiltros, 60000);
+
+      } catch (error) {
+        console.error("Falha na autenticação:", error);
+      }
+    }
+
+    iniciarPagina();
+  </script>
+
+  <!-- Scripts Globais -->
+  <script type="module" src="/assets/js/firebase-config.js"></script>
+  <script type="module" src="/assets/js/auth.js"></script>
+  <script src="/assets/js/main.js"></script> 
+  <script src="/assets/js/components/Sidebar.js"></script>
+
+</body>
+</html>

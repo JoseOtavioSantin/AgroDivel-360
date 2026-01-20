@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Adicionar Tarefa - Ritmo da Semana</title>
+    <link rel="icon" type="image/png" href="/assets/images/iconeaba.png">
+    
+    <!-- CSS -->
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <link rel="stylesheet" href="/assets/css/style.css">
+    <link rel="stylesheet" href="/assets/css/Pages/Formularios/form-ritmo.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+<body>
+
+    <!-- Placeholder onde a Sidebar será carregada -->
+    <nav id="sidebar-placeholder"></nav>
+
+    <section class="home">
+        <div class="text">
+            <h1>Adicionar Nova Tarefa</h1>
+            <p>Preencha os dados abaixo para registrar uma atividade no calendário.</p>
+        </div>
+
+        <div class="content-card">
+            <div class="content-card-body">
+                <form id="form-ritmo">
+                    <!-- CAMPOS COMUNS -->
+                    <div class="form-group">
+                        <label for="gestor">Funcionário Responsável</label>
+                        <input type="text" id="gestor" name="gestor" required readonly>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="tipo-tarefa">Tipo de Tarefa</label>
+                        <select id="tipo-tarefa" name="tipo-tarefa" required>
+                            <option value="" disabled selected>Selecione um tipo...</option>
+                            <option value="deslocamento">Deslocamento para Filial</option>
+                            <option value="reuniao">Reunião</option>
+                            <option value="atendimento">Atendimento a Cliente</option>
+                            <option value="agendamento_reuniao">Agendamento (Sala de Reunião )</option>
+                            <option value="agendamento_treinamento">Agendamento (Sala de Treinamento)</option>
+                            <option value="ferias">Férias</option>
+                            <option value="outro">Outra Atividade</option>
+                        </select>
+                    </div>
+
+                    <!-- CAMPOS DINÂMICOS -->
+                     
+                    <div id="campos-deslocamento" class="campos-dinamicos hidden">
+                        <div class="form-group">
+                            <label for="deslocamento-filial">Filial de Destino</label>
+                            <input type="text" id="deslocamento-filial" name="deslocamento-filial">
+                        </div>
+                        <div class="form-group">
+                            <div class="form-row">
+                                <div class="form-group-col">
+                                    <label for="deslocamento-ida">Data de Ida</label>
+                                    <input type="date" id="deslocamento-ida" name="deslocamento-ida">
+                                </div>
+                                <div class="form-group-col">
+                                    <label for="deslocamento-volta">Data de Volta</label>
+                                    <input type="date" id="deslocamento-volta" name="deslocamento-volta">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Campos para REUNIÃO -->
+                    <div id="campos-reuniao" class="campos-dinamicos hidden">
+                        <div class="form-group">
+                            <label for="reuniao-data">Data da Reunião</label>
+                            <input type="date" id="reuniao-data" name="reuniao-data">
+                        </div>
+                        <div class="form-group">
+                            <div class="form-row">
+                                <div class="form-group-col">
+                                    <label for="reuniao-inicio">Horário de Início</label>
+                                    <input type="time" id="reuniao-inicio" name="reuniao-inicio">
+                                </div>
+                                <div class="form-group-col">
+                                    <label for="reuniao-termino">Horário de Término</label>
+                                    <input type="time" id="reuniao-termino" name="reuniao-termino">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Campos para ATENDIMENTO -->
+                    <div id="campos-atendimento" class="campos-dinamicos hidden">
+                         <div class="form-group">
+                            <label for="atendimento-data">Data do Atendimento</label>
+                            <input type="date" id="atendimento-data" name="atendimento-data">
+                        </div>
+                    </div>
+                    
+                    <!-- NOVOS CAMPOS PARA AGENDAMENTO DE SALA DE REUNIÃO -->
+                    <div id="campos-agendamento_reuniao" class="campos-dinamicos hidden">
+                        <div class="form-group">
+                            <div class="form-row">
+                                <div class="form-group-col">
+                                    <label for="agendamento-reuniao-inicio">Início do Uso</label>
+                                    <input type="date" id="agendamento-reuniao-inicio" name="agendamento-reuniao-inicio">
+                                </div>
+                                <div class="form-group-col">
+                                    <label for="agendamento-reuniao-fim">Fim do Uso</label>
+                                    <input type="date" id="agendamento-reuniao-fim" name="agendamento-reuniao-fim">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- NOVOS CAMPOS PARA AGENDAMENTO DE SALA DE TREINAMENTO -->
+                    <div id="campos-agendamento_treinamento" class="campos-dinamicos hidden">
+                        <div class="form-group">
+                            <div class="form-row">
+                                <div class="form-group-col">
+                                    <label for="agendamento-treinamento-inicio">Início do Uso</label>
+                                    <input type="date" id="agendamento-treinamento-inicio" name="agendamento-treinamento-inicio">
+                                </div>
+                                <div class="form-group-col">
+                                    <label for="agendamento-treinamento-fim">Fim do Uso</label>
+                                    <input type="date" id="agendamento-treinamento-fim" name="agendamento-treinamento-fim">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- NOVOS CAMPOS PARA FÉRIAS -->
+                    <div id="campos-ferias" class="campos-dinamicos hidden">
+                        <div class="form-group">
+                            <div class="form-row">
+                                <div class="form-group-col">
+                                    <label for="ferias-inicio">Data de Início das Férias</label>
+                                    <input type="date" id="ferias-inicio" name="ferias-inicio">
+                                </div>
+                                <div class="form-group-col">
+                                    <label for="ferias-fim">Data de Fim das Férias</label>
+                                    <input type="date" id="ferias-fim" name="ferias-fim">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Campos para OUTRO -->
+                    <div id="campos-outro" class="campos-dinamicos hidden">
+                         <div class="form-group">
+                            <label for="outro-data">Data da Atividade</label>
+                            <input type="date" id="outro-data" name="outro-data">
+                        </div>
+                    </div>
+
+                    <!-- CAMPO DE DESCRIÇÃO (COMUM) -->
+                    <div class="form-group">
+                        <label for="descricao">Descrição / Pauta / Observações</label>
+                        <textarea id="descricao" name="descricao" rows="4" required></textarea>
+                    </div>
+
+                    <!-- BOTÕES DE AÇÃO -->
+                    <div class="form-actions">
+                        <a href="/Pages/Menu.html" class="btn-secondary">Cancelar</a>
+                        <button type="submit" class="btn-primary">Salvar Tarefa</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </section>
+
+    <!-- SCRIPTS -->
+    <script type="module" src="/assets/js/firebase-config.js"></script>
+    <script type="module" src="/assets/js/auth.js"></script>
+    <script src="/assets/js/main.js"></script>
+    <script src="/assets/js/components/Sidebar.js"></script>
+    <script type="module" src="/assets/js/Formularios/form-ritmo.js"></script>
+
+</body>
+</html>

@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agro Divel - 360</title>
+    <link rel="icon" type="image/png" href="/assets/images/iconeaba.png">
+    
+    <!-- CSS -->
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <link rel="stylesheet" href="/assets/css/style.css">
+    <link rel="stylesheet" href="/assets/css/Pages/Components/CalendarioRitmo.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+</head>
+<body>
+
+    <!-- 1. Placeholder onde a Sidebar será carregada pelo Sidebar.js -->
+    <nav id="sidebar-placeholder"></nav>
+
+    <!-- 2. Conteúdo principal da página -->
+    <section class="home">
+        <div class="text">
+            <h1>Bem-vindo ao seu Painel, <span id="user-name"></span>!</h1>
+            <p>Acompanhe aqui as principais novidades da plataforma.</p>
+        </div>
+
+        <!-- Card de Novidades (existente ) -->
+        <div class="content-card">
+            <div class="content-card-header">
+                <h2>Novidades e Atualizações</h2>
+            </div>
+            <div class="content-card-body">
+                <!-- Itens de novidades e atualizações podem ser adicionados aqui -->
+                <p>Nenhuma novidade no momento.</p>
+            </div>
+        </div>
+
+        <!-- 3. Placeholder onde o componente do Calendário de Ritmo será carregado -->
+        <div id="calendario-ritmo-placeholder"></div>
+
+    </section>
+
+    <!-- Scripts Essenciais -->
+
+    <!-- Carrega a configuração do Firebase (deve vir primeiro se outros módulos dependem dele) -->
+    <script type="module" src="/assets/js/firebase-config.js"></script>
+    
+    <!-- Lida com a autenticação e atualização do nome do usuário -->
+    <script type="module" src="/assets/js/auth.js"></script>
+    
+    <!-- Funções gerais da interface (se houver) -->
+    <script src="/assets/js/main.js"></script> 
+    
+    <!-- Carrega a Sidebar dinamicamente -->
+    <script src="/assets/js/components/Sidebar.js"></script>
+
+    <!-- 4. Script para carregar e iniciar o componente do Calendário -->
+    <script type="module">
+        // Importa a função específica do módulo do calendário
+        // O caminho deve ser relativo à raiz do site, começando com '/'
+        import { iniciarCalendarioRitmo } from '/assets/js/components/CalendarioRitmo.js';
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // Busca o HTML do componente do calendário
+            fetch('/assets/components/CalendarioRitmo.html')
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.text();
+                })
+                .then(html => {
+                    // Insere o HTML do componente no placeholder
+                    document.getElementById('calendario-ritmo-placeholder').innerHTML = html;
+                    
+                    // AGORA que o HTML está na página, chama a função para preenchê-lo com dados
+                    iniciarCalendarioRitmo(); 
+                })
+                .catch(error => {
+                    console.error('Falha ao carregar o componente do calendário:', error);
+                    document.getElementById('calendario-ritmo-placeholder').innerHTML = 
+                        '<p style="color: red; text-align: center;">Erro ao carregar o componente de ritmo.</p>';
+                });
+        });
+    </script>
+
+</body>
+</html>

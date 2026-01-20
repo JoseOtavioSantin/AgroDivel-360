@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="theme-color" content="#2c2f3f" />
+  <title>Controle de Máquinas Paradas</title>
+  <link rel="icon" type="image/png" href="/assets/images/iconeaba.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- LIBS EXTERNAS -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/pt.js"></script>
+
+  <!-- CSS -->
+  <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+  <link rel="stylesheet" href="/assets/css/style.css">
+  <link rel="stylesheet" href="/assets/css/Pages/Dashboard/Principal.css">
+
+  <style>
+    tr.linha-alerta td { animation: pulsarAlerta 1.2s ease-in-out infinite alternate; }
+    @keyframes pulsarAlerta { from { background-color: #950000; } to { background-color: #c67903; } }
+    .content-card-header { display: flex; justify-content: space-between; align-items: center; }
+    .header-actions { display: flex; gap: 10px; }
+    .btn-acao { display: inline-flex; align-items: center; justify-content: center; padding: 8px; border-radius: 6px; border: none; cursor: pointer; color: white; text-decoration: none; }
+    .btn-acao i { width: 16px; height: 16px; }
+    .btn-edit { background-color: #f39c12; } .btn-edit:hover { background-color: #e67e22; }
+    .btn-concluir { background-color: #27ae60; } .btn-concluir:hover { background-color: #229954; }
+    .btn-cancelar { background-color: #c0392b; } .btn-cancelar:hover { background-color: #a52335; }
+    .btn-delete { background-color: #e74c3c; } .btn-delete:hover { background-color: #c0392b; }
+    .acoes-cell { display: flex; gap: 4px; }
+  </style>
+</head>
+<body>
+
+  <nav id="sidebar-placeholder"></nav>
+
+  <section class="home">
+    <div class="text">
+      <h1>Controle de Máquinas Paradas</h1>
+      <p id="dynamic-title">Carregando...</p>
+    </div>
+
+    <div class="dashboard-cards">
+      <div class="dashboard-card red-card"><h2 id="card-total-aberto">0</h2><p><i data-lucide="alert-circle"></i> Total em Aberto</p></div>
+      <div class="dashboard-card orange-card"><h2 id="card-mes-aberto">0</h2><p><i data-lucide="calendar-plus"></i> Abertas no Mês</p></div>
+      <div class="dashboard-card blue-card"><h2 id="card-mes-fechado">0</h2><p><i data-lucide="calendar-check"></i> Fechadas no Mês</p></div>
+      <div class="dashboard-card green-card"><h2 id="card-concluido-30d">0</h2><p><i data-lucide="check-circle"></i> Concluído (30 dias )</p></div>
+    </div>
+
+    <div class="content-card">
+      <div class="content-card-header">
+        <h3>Acompanhamento de Paradas</h3>
+        <div class="header-actions">
+          <a href="/Pages/Dashboard/DashboardAnalisarParadas.html" class="btn-acao" title="Ir para Análise"><i data-lucide="pie-chart"></i></a>
+          <a href="/Pages/Formularios/form-maquinasparadas.html" class="btn-acao" title="Adicionar Máquina Parada"><i data-lucide="plus"></i></a>
+        </div>
+      </div>
+      <div class="content-card-body">
+        <div class="filters">
+          <input id="filtro-cliente" type="text" placeholder="Buscar por cliente ou chassi..." />
+          <input id="filtro-tecnico" type="text" placeholder="Buscar por técnico..." />
+          <select id="filtro-status"><option value="">Todos</option><option value="parada">Em Andamento</option><option value="concluida">Concluído</option><option value="cancelada">Cancelado</option></select>
+          <input id="filtro-periodo" placeholder="Selecione o período" />
+        </div>
+        <div class="table-wrapper">
+          <table>
+            <thead><tr><th>Data Parada</th><th>Cliente</th><th>Chassis</th><th>Modelo</th><th>Horas</th><th>OS</th><th>Técnico</th><th>Parada Por</th><th>Ações</th></tr></thead>
+            <tbody id="tabela-maquinas"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- MODAIS DE AÇÃO (CONCLUIR E CANCELAR) -->
+  <div id="modal-concluir" class="modal-overlay">
+    <div class="modal-container" style="max-width: 400px;">
+      <div class="modal-header"><h3>Concluir Parada</h3><button class="modal-close-btn" onclick="fecharModal('modal-concluir')">&times;</button></div>
+      <div class="modal-body"><input type="hidden" id="maquina-id-concluir"><div class="form-group"><label for="data-resolucao">Data da Resolução*</label><input type="date" id="data-resolucao"></div></div>
+      <div class="modal-footer"><button class="modal-btn btn-cancel" onclick="fecharModal('modal-concluir')">Cancelar</button><button id="btn-save-conclusao" class="modal-btn btn-save">Confirmar</button></div>
+    </div>
+  </div>
+
+  <div id="modal-cancelar" class="modal-overlay">
+    <div class="modal-container" style="max-width: 450px;">
+      <div class="modal-header"><h3>Cancelar Parada</h3><button class="modal-close-btn" onclick="fecharModal('modal-cancelar')">&times;</button></div>
+      <div class="modal-body"><input type="hidden" id="maquina-id-cancelar"><div class="form-group"><label for="motivo-cancelamento">Motivo do Cancelamento*</label><textarea id="motivo-cancelamento" placeholder="Descreva o motivo..."></textarea></div></div>
+      <div class="modal-footer"><button class="modal-btn btn-cancel" onclick="fecharModal('modal-cancelar')">Voltar</button><button id="btn-save-cancelamento" class="modal-btn btn-save" style="background: #c72c41;">Confirmar</button></div>
+    </div>
+  </div>
+
+<script type="module">
+  import { garantirAutenticacao } from '/assets/js/auth-guard.js';
+  import { getApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import { getFirestore, collection, getDocs, doc, updateDoc, deleteDoc, query, where } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+  async function iniciarPagina( ) {
+    try {
+      const userData = await garantirAutenticacao();
+      const app = getApp();
+      const db = getFirestore(app);
+      const maquinasCollection = collection(db, "maquinasParadas");
+      let dadosMaquinas = [];
+      let podeAgir = userData.grupo?.includes("admin") || userData.grupo?.includes("servicos");
+      let podeApagar = userData.grupo?.includes("admin");
+      
+      // Se não tem grupo mas tem permissão individual para esta página, libera ação
+      if (!podeAgir && userData.permissoes && userData.permissoes.includes("ctrl-MaquinaParada")) {
+          podeAgir = true;
+      }
+
+      window.fecharModal = (modalId) => document.getElementById(modalId).classList.remove('visible');
+
+      async function carregarDados() {
+        const filiaisLogadas = userData.filial || [];
+        document.getElementById('dynamic-title').textContent = `Filial: ${filiaisLogadas.join(", ")}`;
+        if (filiaisLogadas.length === 0) {
+          document.getElementById("tabela-maquinas").innerHTML = '<tr><td colspan="9" style="text-align:center;">Nenhuma filial associada.</td></tr>';
+          return;
+        }
+        const q = query(maquinasCollection, where("filial", "in", filiaisLogadas));
+        const snapshot = await getDocs(q);
+        dadosMaquinas = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+        aplicarFiltros();
+      }
+
+      function aplicarFiltros() {
+        const filtroCliente = document.getElementById('filtro-cliente').value.toLowerCase();
+        const filtroStatus = document.getElementById('filtro-status').value;
+        const filtroTecnico = document.getElementById('filtro-tecnico').value.toLowerCase();
+        const filtroPeriodo = document.getElementById('filtro-periodo')._flatpickr.selectedDates;
+        
+        const dadosFiltrados = dadosMaquinas.filter(d => {
+          const buscaCliente = (d.cliente || "").toLowerCase().includes(filtroCliente) || (d.chassis || "").toLowerCase().includes(filtroCliente);
+          const buscaStatus = !filtroStatus || d.status === filtroStatus;
+          const buscaTecnico = !filtroTecnico || (d.tecnico || "").toLowerCase().includes(filtroTecnico);
+          let buscaPeriodo = !filtroPeriodo.length;
+          if (filtroPeriodo.length === 2) {
+            const dataParada = new Date(d.dataParada + "T00:00:00");
+            buscaPeriodo = dataParada >= filtroPeriodo[0] && dataParada <= filtroPeriodo[1];
+          }
+          return buscaCliente && buscaStatus && buscaTecnico && buscaPeriodo;
+        });
+        renderizarTabela(dadosFiltrados);
+        atualizarCards(dadosFiltrados);
+      }
+
+      function renderizarTabela(dados) {
+        const tabela = document.getElementById('tabela-maquinas');
+        tabela.innerHTML = '';
+        dados.sort((a, b) => {
+          const statusOrder = { 'parada': 1, 'concluida': 2, 'cancelada': 3 };
+          const aIsAlert = isOverdue(a.dataParada) && a.status === 'parada';
+          const bIsAlert = isOverdue(b.dataParada) && b.status === 'parada';
+          if (aIsAlert !== bIsAlert) return aIsAlert ? -1 : 1;
+          const statusDiff = (statusOrder[a.status] || 4) - (statusOrder[b.status] || 4);
+          return statusDiff !== 0 ? statusDiff : new Date(b.dataParada) - new Date(a.dataParada);
+        });
+        
+        if (dados.length === 0) {
+          tabela.innerHTML = '<tr><td colspan="9" style="text-align: center;">Nenhum registro encontrado.</td></tr>';
+          return;
+        }
+        
+        dados.forEach(dado => {
+          const tr = document.createElement('tr');
+          tr.dataset.id = dado.id;
+          tr.className = `status-${dado.status} ${dado.status === 'parada' && isOverdue(dado.dataParada) ? 'linha-alerta' : ''}`;
+          const motivoDisplay = (dado.motivo || '').toLowerCase() === 'peças' && dado.curvaPeca ? `Peças (Curva ${dado.curvaPeca})` : (dado.motivo || '-');
+          
+          let acoesHTML = `<span>${dado.status.charAt(0).toUpperCase() + dado.status.slice(1)}</span>`;
+          if (dado.status === 'parada') {
+              acoesHTML = '';
+              if (podeAgir) {
+                  acoesHTML += `<a href="/Pages/Formularios/form-maquinasparadas.html?id=${dado.id}" class="btn-acao btn-edit" title="Editar"><i data-lucide="pencil"></i></a>`;
+                  acoesHTML += `<button class="btn-acao btn-concluir" data-id="${dado.id}" title="Concluir"><i data-lucide="check"></i></button>`;
+                  acoesHTML += `<button class="btn-acao btn-cancelar" data-id="${dado.id}" title="Cancelar"><i data-lucide="x"></i></button>`;
+              }
+              if (podeApagar) {
+                  acoesHTML += `<button class="btn-acao btn-delete" data-id="${dado.id}" title="Apagar"><i data-lucide="trash-2"></i></button>`;
+              }
+              if (!podeAgir && !podeApagar) acoesHTML = `<span>Em Andamento</span>`;
+          }
+
+          tr.innerHTML = `<td>${formatarData(dado.dataParada)}</td><td>${dado.cliente||'-'}</td><td>${dado.chassis||'-'}</td><td>${dado.modelo||'-'}</td><td>${dado.horas||'-'}</td><td>${dado.os||'-'}</td><td>${dado.tecnico||'-'}</td><td>${motivoDisplay}</td><td><div class="acoes-cell">${acoesHTML}</div></td>`;
+          tabela.appendChild(tr);
+        });
+        lucide.createIcons();
+      }
+
+      function isOverdue(dataParadaStr) {
+        if (!dataParadaStr) return false;
+        return (new Date() - new Date(dataParadaStr + "T00:00:00")) > (5 * 24 * 60 * 60 * 1000);
+      }
+      
+      function atualizarCards(dados) {
+        const hoje = new Date(), mes = hoje.getMonth(), ano = hoje.getFullYear();
+        const trintaDiasAtras = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+        document.getElementById('card-total-aberto').textContent = dados.filter(d => d.status === 'parada').length;
+        document.getElementById('card-mes-aberto').textContent = dados.filter(d => d.status === 'parada' && new Date(d.dataParada + "T12:00").getMonth() === mes && new Date(d.dataParada + "T12:00").getFullYear() === ano).length;
+        document.getElementById('card-mes-fechado').textContent = dadosMaquinas.filter(d => d.dataFinal && new Date(d.dataFinal + "T12:00").getMonth() === mes && new Date(d.dataFinal + "T12:00").getFullYear() === ano).length;
+        document.getElementById('card-concluido-30d').textContent = dadosMaquinas.filter(d => d.status === 'concluida' && d.dataFinal && new Date(d.dataFinal + "T12:00") >= trintaDiasAtras).length;
+      }
+
+      function formatarData(data) { return data ? data.split('-').reverse().join('/') : '-'; }
+
+      async function salvarConclusao() {
+        const id = document.getElementById('maquina-id-concluir').value;
+        const dataResolucao = document.getElementById('data-resolucao').value;
+        if (!dataResolucao) return Swal.fire('Atenção', 'A data de resolução é obrigatória.', 'warning');
+        try {
+          await updateDoc(doc(db, "maquinasParadas", id), { status: 'concluida', dataFinal: dataResolucao });
+          fecharModal('modal-concluir');
+          carregarDados();
+          Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'Parada concluída!', showConfirmButton: false, timer: 2000 });
+        } catch (error) { Swal.fire('Erro', `Falha ao concluir: ${error.message}`, 'error'); }
+      }
+
+      async function salvarCancelamento() {
+        const id = document.getElementById('maquina-id-cancelar').value;
+        const motivo = document.getElementById('motivo-cancelamento').value.trim();
+        if (!motivo) return Swal.fire('Atenção', 'O motivo do cancelamento é obrigatório.', 'warning');
+        try {
+          await updateDoc(doc(db, "maquinasParadas", id), { status: 'cancelada', motivoCancelamento: motivo, dataFinal: new Date().toISOString().split('T')[0] });
+          fecharModal('modal-cancelar');
+          carregarDados();
+          Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'Parada cancelada!', showConfirmButton: false, timer: 2000 });
+        } catch (error) { Swal.fire('Erro', `Falha ao cancelar: ${error.message}`, 'error'); }
+      }
+
+      function handleTableClick(event) {
+          const button = event.target.closest('button.btn-acao');
+          if (!button) return;
+          const id = button.dataset.id;
+          if (button.classList.contains('btn-concluir')) {
+            document.getElementById('maquina-id-concluir').value = id;
+            document.getElementById('data-resolucao').valueAsDate = new Date();
+            document.getElementById('modal-concluir').classList.add('visible');
+          } else if (button.classList.contains('btn-cancelar')) {
+            document.getElementById('maquina-id-cancelar').value = id;
+            document.getElementById('modal-cancelar').classList.add('visible');
+          } else if (button.classList.contains('btn-delete')) {
+              const maquina = dadosMaquinas.find(m => m.id === id);
+              Swal.fire({
+                  title: 'Tem certeza?', text: `Deseja apagar a parada do chassi "${maquina.chassis}"?`,
+                  icon: 'warning', showCancelButton: true, confirmButtonText: 'Sim, apagar!', cancelButtonText: 'Cancelar'
+              }).then(async (result) => {
+                  if (result.isConfirmed) {
+                      try {
+                          await deleteDoc(doc(db, "maquinasParadas", id));
+                          carregarDados();
+                          Swal.fire('Apagado!', 'Registro apagado com sucesso.', 'success');
+                      } catch (error) { Swal.fire('Erro!', 'Falha ao apagar o registro.', 'error'); }
+                  }
+              });
+          }
+      }
+
+      function setupListeners() {
+        flatpickr("#filtro-periodo", { mode: "range", dateFormat: "Y-m-d", locale: "pt", onChange: aplicarFiltros });
+        document.getElementById('filtro-cliente').addEventListener('input', aplicarFiltros);
+        document.getElementById('filtro-status').addEventListener('change', aplicarFiltros);
+        document.getElementById('filtro-tecnico').addEventListener('input', aplicarFiltros);
+        document.getElementById('btn-save-conclusao').addEventListener('click', salvarConclusao);
+        document.getElementById('btn-save-cancelamento').addEventListener('click', salvarCancelamento);
+        document.getElementById('tabela-maquinas').addEventListener('click', handleTableClick);
+      }
+
+      // --- INÍCIO DA EXECUÇÃO ---
+      setupListeners();
+      await carregarDados();
+
+    } catch (error) {
+      console.error("Falha na inicialização:", error);
+      document.body.innerHTML = `<div style="text-align: center; color: white; padding: 50px;">Falha ao carregar a página. Verifique o console.</div>`;
+    }
+  }
+
+  iniciarPagina();
+</script>
+
+<!-- Scripts Globais -->
+<script type="module" src="/assets/js/firebase-config.js"></script>
+<script type="module" src="/assets/js/auth.js"></script>
+<script src="/assets/js/main.js"></script> 
+<script src="/assets/js/components/Sidebar.js"></script>
+
+</body>
+</html>

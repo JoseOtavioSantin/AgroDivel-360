@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Formulário - Consórcio</title>
+  <link rel="icon" type="image/png" href="/assets/images/iconeaba.png">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background-color: #001439;
+      color: white;
+    }
+
+    .container {
+      max-width: 600px;
+      margin: 40px auto;
+      background-color: #2c2f3f;
+      border-radius: 12px;
+      padding: 30px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.3);
+    }
+
+    h2 {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 14px;
+      font-weight: bold;
+    }
+
+    input, textarea, select {
+      width: 100%;
+      padding: 12px;
+      margin-bottom: 15px;
+      border: none;
+      border-radius: 8px;
+      font-size: 15px;
+      background-color: #f1f1f1;
+      color: #000;
+    }
+
+    input[type="date"], select {
+      appearance: none;
+      -webkit-appearance: none;
+    }
+
+    textarea {
+      resize: vertical;
+    }
+
+    .checkbox-group {
+      margin-bottom: 20px;
+    }
+
+    .checkbox-group label {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      background-color: #373b50;
+      padding: 12px 16px;
+      border-radius: 6px;
+      font-weight: normal;
+      font-size: 14px;
+    }
+
+    .checkbox-group input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      margin: 0;
+    }
+
+    button {
+      width: 100%;
+      padding: 12px;
+      background-color: #001439;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+
+    button:hover {
+      background-color: #033ca7;
+    }
+
+    .voltar {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: white;
+      text-decoration: none;
+      font-size: 16px;
+      font-weight: bold;
+      margin: 20px 0;
+      transition: 0.3s;
+    }
+
+    .voltar:hover {
+      color: #00bbf9;
+      transform: translateX(-5px);
+    }
+
+    @media (max-width: 600px) {
+      .container {
+        max-width: 360px;
+        padding: 20px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <a href="/Pages/index.html" class="voltar">
+      <i class="fas fa-arrow-left"></i> Voltar
+    </a>
+
+    <h2>Formulário de Consórcio</h2>
+
+    <form onsubmit="enviarChecklist(event, 'checklistConsorcio')">
+      <label>Data da Visita *</label>
+      <input type="date" name="dataVisita" id="dataVisita" required>
+
+      <label>Filial *</label>
+      <select name="filial" id="filial" required>
+        <option value="">Selecione a filial</option>
+        <option value="Campos Novos">Campos Novos</option>
+        <option value="Rio do Sul">Rio do Sul</option>
+        <option value="Lages">Lages</option>
+      </select>
+
+      <label>Nome do Cliente *</label>
+      <input type="text" name="nomeCliente" required>
+
+      <label>Nome da Fazenda </label>
+      <input type="text" name="nomeFazenda" >
+
+      <label>Telefone *</label>
+      <input type="tel" name="telefone" required>
+
+      <label>Município *</label>
+      <select name="municipio" id="municipio" required>
+        <option value="">Selecione um município</option>
+      </select>
+
+      <label>Modelo da Máquina *</label>
+        <select name="modeloMaquina" id="modeloMaquina" required>
+            <option value="">Selecione a Modelo</option>
+            <option value="Colheitadeira">Colheitadeira</option>
+            <option value="Trator">Trator</option>
+            <option value="Pulverizador">Pulverizador</option>
+            <option value="Implemento">Implemento</option>
+      </select>
+
+      <label>Horímetro </label>
+      <input type="text" name="horimetro" >
+
+      <label>Nome do Consultor *</label>
+      <select name="nomeConsultor" id="nomeConsultor" required>
+        <option value="">Selecione o consultor</option>
+      </select>
+
+      <div class="checkbox-group">
+        <label>
+          Interesse em simulação
+          <input type="checkbox" name="checklist" value="Interesse em simulação">
+        </label>
+        <label>
+          Interesse em cotas contempladas
+          <input type="checkbox" name="checklist" value="Interesse em cotas contempladas">
+        </label>
+        <label>
+          Deseja mais informações
+          <input type="checkbox" name="checklist" value="Deseja mais informações">
+        </label>
+        <label>
+          Quer visitar unidade
+          <input type="checkbox" name="checklist" value="Quer visitar unidade">
+        </label>
+      </div>
+
+      <label>Observações</label>
+      <textarea name="observacoes" rows="4" placeholder="Descreva aqui..."></textarea>
+
+      <button type="submit">Enviar</button>
+    </form>
+  </div>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const hoje = new Date().toISOString().split('T')[0];
+      document.getElementById('dataVisita').value = hoje;
+
+      const municipiosPorFilial = {
+
+          "Campos Novos": [
+          // Região Campos Novos
+          "Campos Novos", "Abdon Batista", "Vargem", "Zortéa", "Brunópolis", "Monte Carlo", "Frei Rogério",
+          
+          // Região Joaçaba
+          "Joaçaba", "Luzerna", "Herval d’Oeste", "Erval Velho",
+
+          // Região Concórdia
+          "Concórdia", "Irani", "Lindóia do Sul", "Presidente Castello Branco", "Peritiba", "Ipira", "Piratuba",
+
+          // Região Capinzal
+          "Capinzal", "Ouro", "Lacerdópolis",
+
+          // Região Caçador
+          "Caçador", "Calmon", "Matos Costa", "Lebon Régis", "Timbó Grande", "Rio das Antas", "Santa Cecília",
+
+          // Região Curitibanos
+          "Curitibanos", "São Cristóvão do Sul", "Ponte Alta do Norte",
+
+          // Região Videira
+          "Videira", "Iomerê", "Tangará", "Pinheiro Preto", "Arroio Trinta", "Ibicaré", "Treze Tílias"
+        ],
+
+        "Rio do Sul": [
+          // Região Vitor Meireles
+          "Vitor Meireles", "José Boiteux", "Witmarsum",
+
+          // Região Presidente Getúlio
+          "Presidente Getúlio", "Dona Emma", "Ibirama", "Presidente Nereu",
+
+          // Região Pouso Redondo
+          "Pouso Redondo", "Salete", "Taió", "Mirim Doce",
+
+          // Região Ituporanga
+          "Ituporanga", "Petrolândia", "Imbuia", "Atalanta",
+
+          // Região Aurora
+          "Aurora", "Laurentino", "Rio do Oeste", "Agronômica",
+
+          // Outras já existentes
+          "Rio do Sul", "Lontras", "Agrolândia", "Trombudo Central"
+        ],
+
+        "Lages": [
+          // Região São José do Cerrito
+          "Correia Pinto", "Ponte Alta", "São José do Cerrito",
+
+          // Região Anita Garibaldi
+          "Anita Garibaldi", "Campo Belo do Sul", "Capão Alto", "Cerro Negro",
+
+          // Região Urubici
+          "Bom Retiro", "Urubici", "Urupema", "Rio Rufino", "São Joaquim",
+
+          // Região Otacílio Costa
+          "Bocaina do Sul", "Otacílio Costa", "Palmeira", "Painel",
+
+          // Região Lages
+          "Lages"
+        ]
+        
+      };
+
+            const consultoresPorFilial = {
+      "Rio do Sul": [
+        "FRANCISCA DA SILVA SOUZA",
+        "KEILA MAIARA SANDRI VARELA",
+        "TAINÁ LUANA VALLE",
+        "FABIO SCHULTZ",
+        "GIAN PABLO GADOTTI",
+        "SILVIO MEES",
+        "ANDRE MARCOS PIRES DE LIMA",
+        "GABRIEL MONDINI",
+        "RICARDO PICKLER RODRIGUES",
+        "RUBENS STAHNKE",
+        "RUDINEI BEIGER",
+        "CEZAR AUGUSTO WATRAS",
+        "DIEGO CARLOS PEREIRA",
+        "OSVALDINO SOARES FILHO",
+        "ADEMIR KAMMER",
+        "ALAN DIRKSEN",
+        "ALDO FELAU NETO ROSSETTI",
+        "ANDREONE BUZZI",
+        "ANDRÉ WILL",
+        "DEIVIS FERNANDO FERREIRA",
+        "DEIVIS VALMIR WERMEISTER PAHL",
+        "FILIPE GUNTHER",
+        "MARCOS YAN SIEVES",
+        "RODRIGO BENTO",
+        "VITOR SOFKA JUNIOR"
+      ],
+      "Campos Novos": [
+          "CARIANA FLORES FERNANDES",
+          "EDINA DIAS FLORES",
+          "ESTER PADILHA PEGORARO",
+          "GABRIELE DO N DE BRITO",
+          "MAIARA TEREZINHA CAMARGO",
+          "DIEGO RIBEIRO LOPES",
+          "GEANE DE DEUS E SILVA CELSO",
+          "HUGO LUIS DA SILVA",
+          "LEANDRO CRESCENCIO",
+          "LUCAS KRAEMER",
+          "MICHELE ALVES",
+          "PABLO EDUARDO MOREIRA FAGUNDES",
+          "REGINALDO PEDRINHO B BIOLCHI",
+          "SERGIO LUIZ CALEGARI JUNIOR",
+          "EDSON LUCIANO DA SILVA",
+          "JOVANIL RODRIGUES DA SILVA",
+          "ANGELO MURILO ALVES",
+          "CARLOS ANTONIO LAZZARI",
+          "CARLOS EDUARDO MELLO ANTUNES",
+          "DIMITRI MARATEU XAVIER",
+          "GUSTAVO LUIZ FERREIRA",
+          "GUSTAVO PADILHA DE JESUS",
+          "MATHEUS CESAR VARELA RODRIGUES",
+          "SANDRO DA SILVA",
+          "VITOR LOPES",
+          "ANDRE LUIZ PANVLAK",
+          "ALESSANDRO ZIBETTI",
+          "ALIANDRA DOS SANTOS FAGUNDES",
+          "MAURO TREVISOL CRUZ DA SILVA",
+          "SUELLEN SONAGLIO",
+          "ALEXANDRE SCHUSTER",
+          "CARLOS ALEXANDER B CARUSO",
+          "DANIEL CARLOS FRANÇA",
+          "EDER JOSE THIBES",
+          "GILMAR PINHEIRO",
+          "JOSÉ OTÁVIO SANTIN",
+          "LUIZ HENRIQUE GONÇALVES",
+          "LUIZ HENRIQUE PAGANINI",
+          "MARCIO TREVISOL CRUZ DA SILVA",
+          "MARCO ANTONIO SILVA",
+          "VALDEMAR RODRIGUES INACIO"
+        ],
+        "Lages": [
+          "BRUNA CRISTINA CANANI ANTUNES",
+          "FABIANA DE SOUZA SALES L PIRAN",
+          "ALAN ROSSONI DE MELO",
+          "BRUNO ALVES ANTUNES",
+          "DARLON ABREU DE MELO",
+          "LUCAS RANSONI CAMPOS MORAIS",
+          "RONALDO MATEUS LOPES LEITE",
+          "FABIANO DE CARVALHO SOUSA",
+          "LUCAS SILVA DE ANDRADE",
+          "PAULO FERNANDO FERREIRA",
+          "DOUGLAS SAMIR PEREIRA",
+          "FERNANDA DA SILVA DE SOUZA",
+          "JEFERSON VARELA CARVALHO",
+          "JONAS MATEUS DE SOUZA ALMEIDA",
+          "MARCIO DIOGO SILVA SOARES",
+          "PABLO MOREIRA AMARAL",
+          "PEDRO OTAVIO DA SILVA"
+        ]
+      };
+
+      const filialSelect = document.getElementById("filial");
+      const municipioSelect = document.getElementById("municipio");
+      const consultorSelect = document.getElementById("nomeConsultor");
+
+      municipioSelect.disabled = true;
+      consultorSelect.disabled = true;
+
+      filialSelect.addEventListener("change", () => {
+        const filial = filialSelect.value;
+
+        const municipios = municipiosPorFilial[filial] || [];
+        municipioSelect.disabled = !filial;
+        municipioSelect.innerHTML = '<option value="">Selecione um município</option>';
+        municipios.forEach((nome) => {
+          const option = document.createElement("option");
+          option.value = nome;
+          option.textContent = nome;
+          municipioSelect.appendChild(option);
+        });
+
+        const consultores = consultoresPorFilial[filial] || [];
+        consultorSelect.disabled = !filial;
+        consultorSelect.innerHTML = '<option value="">Selecione o consultor</option>';
+        consultores.forEach((nome) => {
+          const option = document.createElement("option");
+          option.value = nome;
+          option.textContent = nome;
+          consultorSelect.appendChild(option);
+        });
+      });
+    });
+  </script>
+
+  <!-- Firebase -->
+  <script type="module" src="/firebase.js"></script>
+</body>
+</html>
+
+

@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="theme-color" content="#2c2f3f" />
+  <title>Detalhes da Solicitação de Suporte</title>
+  <link rel="icon" type="image/png" href="/assets/images/iconeaba.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- LIBS EXTERNAS -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  
+  <!-- CSS -->
+  <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+  <link rel="stylesheet" href="/assets/css/style.css">
+  <link rel="stylesheet" href="/assets/css/Pages/Dashboard/Principal.css">
+
+  <!-- Áudio de notificação -->
+  <audio id="audio-notificacao" src="https://cdn.pixabay.com/audio/2022/07/26/audio_124bfa1c82.mp3" preload="auto"></audio>
+
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: #f5f7fa;
+    }
+
+    .detalhes-container {
+      display: flex;
+      gap: 0;
+      height: calc(100vh - 120px);
+      background: white;
+    }
+
+    .detalhes-info {
+      flex: 0 0 28%;
+      background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%);
+      overflow-y: auto;
+      border-right: 1px solid #e5e7eb;
+      padding: 0;
+    }
+
+    .detalhes-chat {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      background: white;
+      overflow: hidden;
+    }
+
+    /* PAINEL LATERAL */
+    .info-header {
+      background: linear-gradient(135deg, #193b7c 0%, #00205b 100%);
+      color: white;
+      padding: 12px 16px;
+      text-align: center;
+    }
+
+    .info-header h3 {
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      margin: 0;
+    }
+
+    .info-content {
+      padding: 14px 16px;
+    }
+
+    .info-item {
+      margin-bottom: 12px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid #e5e7eb;
+    }
+
+    .info-item:last-child {
+      border-bottom: none;
+      margin-bottom: 0;
+      padding-bottom: 0;
+    }
+
+    .info-label {
+      color: #8b92a9;
+      font-size: 9px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+      margin-bottom: 3px;
+      display: block;
+    }
+
+    .info-value {
+      color: #1a202c;
+      font-size: 12px;
+      font-weight: 500;
+      line-height: 1.4;
+      word-break: break-word;
+    }
+
+    .status-badge {
+      display: inline-block;
+      padding: 5px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 600;
+      color: white;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+
+    .status-pendente {
+      background: linear-gradient(135deg, #ff5252 0%, #ff6e6e 100%);
+    }
+
+    .status-em-andamento {
+      background: linear-gradient(135deg, #ffa726 0%, #ffb74d 100%);
+    }
+
+    .status-resolvido {
+      background: linear-gradient(135deg, #4caf50 0%, #66bb6a 100%);
+    }
+
+    .status-cancelado {
+      background: linear-gradient(135deg, #78909c 0%, #90a4ae 100%);
+    }
+
+    .imagens-preview {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 6px;
+      margin-top: 6px;
+    }
+
+    .imagem-thumb {
+      width: 100%;
+      height: 50px;
+      border-radius: 6px;
+      object-fit: cover;
+      cursor: pointer;
+      border: 1px solid #e5e7eb;
+      transition: all 0.3s;
+    }
+
+    .imagem-thumb:hover {
+      border-color: #193b7c;
+      transform: scale(1.03);
+      box-shadow: 0 2px 8px rgba(25, 59, 124, 0.15);
+    }
+
+    .btn-alterar-status {
+      width: 100%;
+      padding: 10px;
+      background: linear-gradient(135deg, #193b7c 0%, #00205b 100%);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      transition: all 0.3s;
+      margin-bottom: 12px;
+    }
+
+    .btn-alterar-status:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(25, 59, 124, 0.25);
+    }
+
+    /* CHAT */
+    .chat-header {
+      background: white;
+      padding: 16px 20px;
+      border-bottom: 1px solid #e5e7eb;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .chat-header h3 {
+      font-size: 14px;
+      font-weight: 600;
+      color: #1a202c;
+      letter-spacing: 0.3px;
+    }
+
+    .chat-messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px;
+      background: #f9fafb;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .mensagem-grupo {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      margin-bottom: 8px;
+    }
+
+    .mensagem-grupo.mensagem-usuario {
+      align-items: flex-start;
+    }
+
+    .mensagem-grupo.mensagem-suporte {
+      align-items: flex-end;
+    }
+
+    .mensagem-bubble {
+      max-width: 75%;
+      padding: 10px 14px;
+      border-radius: 12px;
+      font-size: 13px;
+      line-height: 1.4;
+    }
+
+    .mensagem-usuario .mensagem-bubble {
+      background: #e3f2fd;
+      color: #1a202c;
+      border-radius: 12px 12px 12px 2px;
+    }
+
+    .mensagem-suporte .mensagem-bubble {
+      background: #193b7c;
+      color: white;
+      border-radius: 12px 12px 2px 12px;
+    }
+
+    .mensagem-meta {
+      font-size: 10px;
+      color: #8b92a9;
+      padding: 0 4px;
+    }
+
+    .mensagem-usuario .mensagem-meta {
+      text-align: left;
+    }
+
+    .mensagem-suporte .mensagem-meta {
+      text-align: right;
+    }
+
+    .vazio-aviso {
+      text-align: center;
+      color: #a0aec0;
+      padding: 40px 20px;
+      font-size: 13px;
+      font-style: italic;
+    }
+
+    .chat-input-area {
+      padding: 16px 20px;
+      background: white;
+      border-top: 1px solid #e5e7eb;
+      display: flex;
+      gap: 10px;
+    }
+
+    .chat-textarea {
+      flex: 1;
+      padding: 10px 14px;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      font-size: 13px;
+      resize: none;
+      max-height: 90px;
+      transition: all 0.3s;
+      background: #f9fafb;
+    }
+
+    .chat-textarea:focus {
+      outline: none;
+      border-color: #193b7c;
+      background: white;
+      box-shadow: 0 0 0 3px rgba(25, 59, 124, 0.1);
+    }
+
+    .chat-button {
+      padding: 10px 16px;
+      background: linear-gradient(135deg, #193b7c 0%, #00205b 100%);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 12px;
+      transition: all 0.3s;
+      white-space: nowrap;
+    }
+
+    .chat-button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(25, 59, 124, 0.25);
+    }
+
+    .btn-voltar {
+      background: #e5e7eb;
+      color: #4b5563;
+      border: none;
+      padding: 10px 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 12px;
+      transition: all 0.3s;
+      margin-bottom: 15px;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+    }
+
+    .btn-voltar:hover {
+      background: #d1d5db;
+      transform: translateX(-2px);
+    }
+
+    /* Scrollbar customizado */
+    .detalhes-info::-webkit-scrollbar,
+    .chat-messages::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .detalhes-info::-webkit-scrollbar-track,
+    .chat-messages::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    .detalhes-info::-webkit-scrollbar-thumb,
+    .chat-messages::-webkit-scrollbar-thumb {
+      background: #cbd5e0;
+      border-radius: 3px;
+    }
+
+    .detalhes-info::-webkit-scrollbar-thumb:hover,
+    .chat-messages::-webkit-scrollbar-thumb:hover {
+      background: #a0aec0;
+    }
+
+    @media (max-width: 1200px) {
+      .detalhes-container {
+        flex-direction: column;
+      }
+
+      .detalhes-info {
+        flex: 0 0 auto;
+        max-height: 280px;
+        border-right: none;
+        border-bottom: 1px solid #e5e7eb;
+      }
+
+      .detalhes-chat {
+        flex: 1;
+      }
+
+      .imagens-preview {
+        grid-template-columns: repeat(3, 1fr);
+      }
+    }
+  </style>
+</head>
+<body>
+
+
+  <!-- Áudio de notificação (deve estar no body para maior compatibilidade) -->
+  <audio id="audio-notificacao" src="https://cdn.pixabay.com/audio/2022/07/26/audio_124bfa1c82.mp3" preload="auto"></audio>
+
+  <nav id="sidebar-placeholder"></nav>
+
+  <section class="home">
+    <div class="text">
+      <h1>Detalhes da Solicitação de Suporte</h1>
+    </div>
+
+    <button class="btn-voltar" onclick="window.history.back()">
+      <i class='bx bx-arrow-back'></i> Voltar
+    </button>
+
+    <div class="detalhes-container">
+      <!-- Painel de Informações -->
+      <div class="detalhes-info">
+        <div class="info-header">
+          <h3>Detalhes</h3>
+        </div>
+        <div class="info-content" id="info-content">
+          <p style="text-align: center; color: #999;">Carregando...</p>
+        </div>
+      </div>
+
+      <!-- Painel de Chat -->
+      <div class="detalhes-chat">
+        <div class="chat-header">
+          <h3>Conversa</h3>
+        </div>
+        <div class="chat-messages" id="chat-messages">
+          <p class="vazio-aviso">Carregando mensagens...</p>
+        </div>
+        <div class="chat-input-area">
+          <textarea class="chat-textarea" id="resposta-texto" placeholder="Escreva sua resposta..."></textarea>
+          <button class="chat-button" onclick="enviarResposta()">
+            <i class='bx bx-send'></i> Enviar
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Scripts -->
+  <script src="/assets/js/main.js"></script>
+  <script src="/assets/js/components/Sidebar.js"></script>
+
+  <script type="module">
+    import { garantirAutenticacao } from '/assets/js/auth-guard.js';
+    import { getApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getFirestore, collection, doc, getDoc, updateDoc, addDoc, serverTimestamp, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+    let userData;
+    let solicitacaoId;
+    let solicitacao;
+    let db;
+    let unsubscribe; // Para desinscrever do listener
+
+    // Inicializar
+    (async () => {
+      try {
+        userData = await garantirAutenticacao();
+        const app = getApp();
+        db = getFirestore(app);
+
+        // Pegar ID da solicitação da URL
+        const params = new URLSearchParams(window.location.search);
+        solicitacaoId = params.get('id');
+
+        if (!solicitacaoId) {
+          document.getElementById('info-content').innerHTML = '<p style="color: #c62828;">ID da solicitação não fornecido</p>';
+          return;
+        }
+
+        // Carregar detalhes
+        await carregarDetalhes();
+        // Iniciar listener em tempo real para mensagens
+        iniciarListenerChat();
+
+        lucide.createIcons();
+
+      } catch (error) {
+        console.error('Erro ao inicializar:', error);
+        Swal.fire('Erro', 'Não foi possível carregar a solicitação', 'error');
+      }
+    })();
+
+    async function carregarDetalhes() {
+      try {
+        const docRef = doc(db, 'SolicitaçõesSuporte', solicitacaoId);
+        const docSnap = await getDoc(docRef);
+
+        if (!docSnap.exists()) {
+          document.getElementById('info-content').innerHTML = '<p style="color: #c62828;">Solicitação não encontrada</p>';
+          return;
+        }
+
+        solicitacao = { id: docSnap.id, ...docSnap.data() };
+
+        // Renderizar informações
+        renderizarInfo();
+        // Renderizar chat inicial
+        renderizarChat();
+
+      } catch (error) {
+        console.error('Erro ao carregar detalhes:', error);
+        document.getElementById('info-content').innerHTML = '<p style="color: #c62828;">Erro ao carregar solicitação</p>';
+      }
+    }
+
+    function iniciarListenerChat() {
+
+      const docRef = doc(db, 'SolicitaçõesSuporte', solicitacaoId);
+      unsubscribe = onSnapshot(docRef, (docSnap) => {
+        if (docSnap.exists()) {
+          const novosDados = docSnap.data();
+          const historicoAntigo = solicitacao.historico || [];
+          const historicoNovo = novosDados.historico || [];
+          const novaMensagem = historicoNovo.length > historicoAntigo.length && historicoNovo[historicoNovo.length-1];
+
+          // Atualizar dados
+          solicitacao = { id: docSnap.id, ...novosDados };
+
+          // Se o histórico foi alterado (nova mensagem ou status), renderizar chat
+          if (historicoNovo.length > historicoAntigo.length) {
+            renderizarChat();
+
+            // Notificação sonora se a aba não está visível e a mensagem não é do próprio usuário
+            if (novaMensagem && document.visibilityState === 'hidden') {
+              const autor = novaMensagem.respondidoPor || '';
+              if (!userData || autor !== (userData.nome || userData.email)) {
+                const audio = document.getElementById('audio-notificacao');
+                if (audio) {
+                  audio.currentTime = 0;
+                  // Tentar tocar, se bloqueado, pedir permissão ao usuário
+                  audio.play().catch(() => {
+                    // Tentar desbloquear autoplay ao clicar em qualquer lugar
+                    const desbloquear = () => {
+                      audio.play().finally(() => {
+                        window.removeEventListener('click', desbloquear);
+                      });
+                    };
+                    window.addEventListener('click', desbloquear);
+                  });
+                }
+              }
+            }
+          }
+
+          // Atualizar info se status mudou
+          if (novosDados.status !== historicoAntigo.status) {
+            renderizarInfo();
+          }
+        }
+      }, (error) => {
+        console.error('Erro no listener do chat:', error);
+      });
+    }
+
+    // Limpar listener ao sair da página
+    window.addEventListener('beforeunload', () => {
+      if (unsubscribe) unsubscribe();
+    });
+
+    function renderizarInfo() {
+      const data = solicitacao.dataAbertura?.toDate 
+        ? solicitacao.dataAbertura.toDate().toLocaleDateString('pt-BR')
+        : 'N/A';
+
+      let statusClass = 'status-pendente';
+      if (solicitacao.status === 'Em Andamento') statusClass = 'status-em-andamento';
+      else if (solicitacao.status === 'Resolvido') statusClass = 'status-resolvido';
+      else if (solicitacao.status === 'Cancelado') statusClass = 'status-cancelado';
+
+      const imagensHTML = solicitacao.imagens && solicitacao.imagens.length > 0
+        ? solicitacao.imagens.map(url => 
+            `<img src="${url}" class="imagem-thumb" onclick="visualizarImagem('${url}')" alt="Imagem">`
+          ).join('')
+        : '<p style="color: #a0aec0; font-size: 12px;">Nenhuma imagem anexada</p>';
+
+      const html = `
+        <div class="info-item">
+          <button class="btn-alterar-status" onclick="alterarStatus()">
+            <i class='bx bx-edit'></i> Alterar Status
+          </button>
+        </div>
+
+        <div class="info-item">
+          <span class="info-label">Status</span>
+          <div class="status-badge ${statusClass}">
+            ${solicitacao.status || 'Pendente'}
+          </div>
+        </div>
+
+        <div class="info-item">
+          <span class="info-label">Solicitante</span>
+          <div class="info-value">${solicitacao.solicitante || 'N/A'}</div>
+        </div>
+
+        <div class="info-item">
+          <span class="info-label">Email</span>
+          <div class="info-value" style="word-break: break-all;">${solicitacao.email || 'N/A'}</div>
+        </div>
+
+        <div class="info-item">
+          <span class="info-label">Filial</span>
+          <div class="info-value">${solicitacao.filial || 'N/A'}</div>
+        </div>
+
+        <div class="info-item">
+          <span class="info-label">Departamento</span>
+          <div class="info-value">${solicitacao.departamento || 'N/A'}</div>
+        </div>
+
+        <div class="info-item">
+          <span class="info-label">Rotina</span>
+          <div class="info-value">${solicitacao.rotina || 'N/A'}</div>
+        </div>
+
+        <div class="info-item">
+          <span class="info-label">Data de Abertura</span>
+          <div class="info-value">${data}</div>
+        </div>
+
+        <div class="info-item">
+          <span class="info-label">Respondido Por</span>
+          <div class="info-value">${solicitacao.respondidoPor || '-'}</div>
+        </div>
+
+        <div class="info-item">
+          <span class="info-label">Descrição</span>
+          <div class="info-value" style="padding: 10px; background: white; border-radius: 6px; border: 1px solid #e5e7eb;">
+            ${solicitacao.descricao || 'Sem descrição'}
+          </div>
+        </div>
+
+        <div class="info-item">
+          <span class="info-label">Imagens</span>
+          <div class="imagens-preview">
+            ${imagensHTML}
+          </div>
+        </div>
+      `;
+
+      document.getElementById('info-content').innerHTML = html;
+    }
+
+    function renderizarChat() {
+      const historico = solicitacao.historico || [];
+      const respostas = historico.filter(h => h.tipo === 'resposta');
+
+      if (respostas.length === 0) {
+        document.getElementById('chat-messages').innerHTML = '<div style="padding: 20px; text-align: center; color: #a0aec0; font-size: 13px;">Nenhuma mensagem ainda</div>';
+        return;
+      }
+
+      const html = respostas.map(h => {
+        const dataResposta = h.data?.toDate 
+          ? h.data.toDate().toLocaleString('pt-BR')
+          : (h.data ? new Date(h.data).toLocaleString('pt-BR') : 'N/A');
+
+        const isUsuario = h.respondidoPor === solicitacao.solicitante || h.respondidoPor === solicitacao.email;
+        const classeMensagem = isUsuario ? 'mensagem-usuario' : 'mensagem-suporte';
+
+        return `
+          <div class="mensagem-grupo ${classeMensagem}">
+            <div class="mensagem-bubble">
+              ${h.mensagem || ''}
+            </div>
+            <div class="mensagem-meta">
+              <span>${h.respondidoPor}</span>
+              <span>${dataResposta}</span>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      document.getElementById('chat-messages').innerHTML = html;
+      document.getElementById('chat-messages').scrollTop = document.getElementById('chat-messages').scrollHeight;
+    }
+
+    window.alterarStatus = async function() {
+      const { value: novoStatus } = await Swal.fire({
+        title: 'Alterar Status',
+        input: 'select',
+        inputOptions: {
+          'Pendente': 'Pendente',
+          'Em Andamento': 'Em Andamento',
+          'Resolvido': 'Resolvido',
+          'Cancelado': 'Cancelado'
+        },
+        inputValue: solicitacao.status,
+        inputPlaceholder: 'Selecione o novo status',
+        showCancelButton: true,
+        confirmButtonText: 'Alterar Status',
+        cancelButtonText: 'Cancelar'
+      });
+
+      if (novoStatus && novoStatus !== solicitacao.status) {
+        try {
+          const historico = solicitacao.historico || [];
+          historico.push({
+            data: new Date(),
+            responsavel: userData.nome || userData.email,
+            statusAnterior: solicitacao.status,
+            statusNovo: novoStatus,
+            tipo: 'mudanca_status'
+          });
+
+          await updateDoc(doc(db, 'SolicitaçõesSuporte', solicitacaoId), {
+            status: novoStatus,
+            respondidoPor: userData.nome || userData.email,
+            historico: historico
+          });
+
+          solicitacao.status = novoStatus;
+          renderizarInfo();
+          Swal.fire('Sucesso!', 'Status atualizado', 'success');
+
+        } catch (error) {
+          console.error('Erro ao alterar status:', error);
+          Swal.fire('Erro', 'Não foi possível alterar o status', 'error');
+        }
+      }
+    };
+
+    window.enviarResposta = async function() {
+      const mensagem = document.getElementById('resposta-texto').value.trim();
+      
+      if (!mensagem) {
+        Swal.showValidationMessage('Digite uma mensagem');
+        return;
+      }
+
+      try {
+        const historico = solicitacao.historico || [];
+        historico.push({
+          data: new Date(),
+          respondidoPor: userData.nome || userData.email,
+          mensagem: mensagem,
+          tipo: 'resposta'
+        });
+
+        await updateDoc(doc(db, 'SolicitaçõesSuporte', solicitacaoId), {
+          ultimaResposta: new Date(),
+          respondidoPor: userData.nome || userData.email,
+          historico: historico
+        });
+
+        solicitacao = { ...solicitacao, historico };
+        document.getElementById('resposta-texto').value = '';
+        renderizarChat();
+        // Popup removido conforme solicitado
+
+      } catch (error) {
+        console.error('Erro ao enviar resposta:', error);
+        Swal.fire('Erro', 'Não foi possível enviar a resposta', 'error');
+      }
+    };
+
+    window.visualizarImagem = function(url) {
+      Swal.fire({
+        imageUrl: url,
+        imageAlt: 'Imagem da solicitação',
+        showCloseButton: true,
+        showConfirmButton: false,
+        width: '80%'
+      });
+    };
+
+    // Enviar mensagem ao pressionar Enter (sem Shift)
+    document.getElementById('resposta-texto').addEventListener('keydown', function(e) {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        enviarResposta();
+      }
+    });
+  </script>
+
+</body>
+</html>

@@ -1,0 +1,11 @@
+[
+  {
+    "origin": [
+      "http://127.0.0.1:5500",
+      "https://agrodivel360.vercel.app",
+      "https://agro-divel360.vercel.app"
+    ],
+    "method": ["GET"],
+    "maxAgeSeconds": 3600
+  }
+]

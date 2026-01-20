@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Peças - Agro Divel</title>
+    <link rel="icon" type="image/png" href="/assets/images/iconeaba.png">
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <link rel="stylesheet" href="/assets/css/style.css">
+    
+    <style>
+        .pecas-section {
+            margin: 30px 0;
+            padding: 20px;
+        }
+
+        .pecas-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .pecas-table th,
+        .pecas-table td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+
+        .pecas-table th {
+            background-color: #f8f9fa;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .pecas-table tr:hover {
+            background-color: #f8f9fa;
+        }
+
+        /* Removidos estilos de valores (cards e container) */
+
+        .breadcrumb {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+
+        .breadcrumb a {
+            color: #193b7c;
+            text-decoration: none;
+        }
+
+        .breadcrumb span {
+            color: #666;
+        }
+
+        .no-pecas {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+            background: white;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+
+        .form-actions {
+            margin-top: 30px;
+            text-align: center;
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .btn-primary {
+            background: #193b7c;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: background 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary:hover {
+            background: #152c5e;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: background 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-secondary:hover {
+            background: #545b62;
+        }
+
+        .btn-success {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: background 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-success:hover {
+            background: #218838;
+        }
+
+        /* Removidos estilos de valor-peca e subtotal-pecas */
+
+        /* Larguras com coluna de catálogo */
+        .pecas-table th:nth-child(1) { width: 15%; } /* Código */
+        .pecas-table th:nth-child(2) { width: 50%; } /* Descrição */
+        .pecas-table th:nth-child(3) { width: 15%; } /* Quantidade */
+        .pecas-table th:nth-child(4) { width: 20%; } /* Catálogo */
+
+        .btn-catalogo {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 6px 12px;
+            background: #193b7c;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            font-size: 13px;
+            font-weight: 500;
+            transition: background 0.3s;
+        }
+
+        .btn-catalogo:hover {
+            background: #152c5e;
+        }
+
+        /* Estilos para checkbox do checklist */
+        .checkbox-tecnico {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+            accent-color: #193b7c;
+        }
+
+        .checkbox-cell {
+            text-align: center;
+            width: 80px;
+        }
+
+        /* Estilos para impressão */
+        @media print {
+            nav, .breadcrumb, .form-actions, .sidebar, #sidebar-placeholder {
+                display: none !important;
+            }
+            
+            .home {
+                margin-left: 0 !important;
+                padding: 0 !important;
+                width: 100% !important;
+            }
+            
+            .text {
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+            
+            .text h1 {
+                margin: 0 0 10px 0 !important;
+                padding: 0 !important;
+            }
+            
+            .text p {
+                margin: 0 0 15px 0 !important;
+            }
+            
+            .pecas-section {
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+            
+            .pecas-table {
+                page-break-inside: auto;
+                width: 100% !important;
+            }
+            
+            .pecas-table tr {
+                page-break-inside: avoid;
+                page-break-after: auto;
+            }
+            
+            body {
+                margin: 0 !important;
+                padding: 10px !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <nav id="sidebar-placeholder"></nav>
+
+    <section class="home">
+        <div class="text">
+            <div class="breadcrumb">
+                <a href="Checklist.html">Checklist</a>
+                <span>></span>
+                <a href="#" id="breadcrumb-tipo">Máquinas</a>
+                <span>></span>
+                <a href="#" id="breadcrumb-maquina">Partes</a>
+                <span>></span>
+                <span id="current-parte">Peças</span>
+            </div>
+            <h1 id="page-title">Peças da Parte</h1>
+            <p id="page-subtitle">Lista de peças desta parte do equipamento.</p>
+        </div>
+
+        <div class="pecas-section">
+            <div id="pecas-container">
+                <div style="text-align: center; padding: 40px; color: #666;">Carregando peças...</div>
+            </div>
+
+            <!-- Botões para gerar PDF e TXT -->
+            <div class="form-actions">
+                <button id="btn-gerar-pdf-pecas" class="btn-primary" disabled>
+                    <i class='bx bx-download'></i> Gerar PDF das Peças
+                </button>
+                <button id="btn-gerar-txt-pecas" class="btn-success" disabled>
+                    <i class='bx bx-file'></i> Exportar TXT
+                </button>
+                <button id="btn-imprimir-pecas" class="btn-secondary" onclick="window.print()">
+                    <i class='bx bx-printer'></i> Imprimir
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Scripts Globais -->
+    <script type="module" src="/assets/js/firebase-config.js"></script>
+    <script type="module" src="/assets/js/auth.js"></script>
+    <script src="/assets/js/main.js"></script>
+    <script src="/assets/js/components/Sidebar.js"></script>
+    
+    <!-- Biblioteca para gerar PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+    <script>
+        let dadosAtuais = null;
+
+        async function carregarPecas() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const parteId = urlParams.get('id');
+            
+            console.log(`Iniciando carregamento... ID: ${parteId}`);
+
+            if (!parteId) {
+                console.log('❌ ID não encontrado na URL');
+                window.location.href = 'Tempario.html';
+                return;
+            }
+
+            try {
+                console.log('📦 Importando Firebase...');
+                
+                // Importar Firebase
+                const { initializeApp, getApp, getApps } = await import("https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js");
+                const { getFirestore, doc, getDoc } = await import("https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js");
+
+                console.log('🔍 Verificando configuração do Firebase...');
+                
+                // Inicializar Firebase
+                let app;
+                const existingApps = getApps();
+                
+                if (existingApps.length === 0) {
+                    console.log('🚀 Inicializando Firebase...');
+                    const firebaseConfig = {
+                        apiKey: "AIzaSyDcjPa9jXsCCu6lNc1fjVg4Bzz1toKWAGY",
+                        authDomain: "agro-divel.firebaseapp.com",
+                        projectId: "agro-divel",
+                        storageBucket: "agro-divel.firebasestorage.app",
+                        messagingSenderId: "583977436505",
+                        appId: "1:583977436505:web:3754ec029aebb3d9d67848"
+                    };
+                    app = initializeApp(firebaseConfig);
+                    console.log('✅ Firebase inicializado');
+                } else {
+                    app = getApp();
+                    console.log('✅ Usando app Firebase existente');
+                }
+
+                const db = getFirestore(app);
+                console.log('🔗 Conectado ao Firestore');
+
+                // Buscar documento
+                console.log(`📄 Buscando documento: equipamentosPartes/${parteId}`);
+                const docRef = doc(db, "equipamentosPartes", parteId);
+                const docSnap = await getDoc(docRef);
+
+                if (!docSnap.exists()) {
+                    console.log('❌ Documento não encontrado');
+                    document.getElementById('pecas-container').innerHTML = '<div class="no-pecas">Parte não encontrada.</div>';
+                    return;
+                }
+
+                const data = docSnap.data();
+                dadosAtuais = data;
+                console.log('✅ Documento carregado com sucesso');
+                console.log('Dados:', data);
+
+                // Atualizar breadcrumb e títulos
+                const tipoEquipamento = data.tipoEquipamento || 'Máquina';
+                const nomeEquipamento = data.nomeEquipamento || 'Não informado';
+                const parteEquipamento = data.parteEquipamento || 'Parte';
+                
+                // Verificar se é CHECKLIST
+                const isChecklist = parteEquipamento.toUpperCase().includes('CHECKLIST') || parteEquipamento.toUpperCase().includes('CHECK');
+
+                document.getElementById('breadcrumb-tipo').href = `ChecklistMaquinas.html?tipo=${tipoEquipamento}`;
+                document.getElementById('breadcrumb-tipo').textContent = tipoEquipamento + 's';
+                document.getElementById('breadcrumb-maquina').href = `ChecklistPartes.html?tipo=${tipoEquipamento}&maquina=${encodeURIComponent(nomeEquipamento)}`;
+                document.getElementById('breadcrumb-maquina').textContent = nomeEquipamento;
+                document.getElementById('current-parte').textContent = 'Peças';
+                document.getElementById('page-title').textContent = `Peças - ${parteEquipamento}`;
+                document.getElementById('page-subtitle').textContent = `Peças da parte ${parteEquipamento} do ${nomeEquipamento}`;
+
+                let containerHTML = '';
+
+                // Removidos cards de valores (simplificação)
+
+                // Informações adicionais (apenas para partes normais, não CHECKLIST)
+                if (!isChecklist && (data.filial || data.dataCriacao)) {
+                    containerHTML += `
+                        <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                            ${data.filial ? `<p><strong>Filial:</strong> ${data.filial}</p>` : ''}
+                            ${data.dataCriacao ? `<p><strong>Data de Criação:</strong> ${new Date(data.dataCriacao).toLocaleDateString('pt-BR')}</p>` : ''}
+                        </div>
+                    `;
+                }
+
+                // Criar tabela de peças
+                if (!data.pecas || data.pecas.length === 0) {
+                    containerHTML += '<div class="no-pecas">Nenhuma peça cadastrada para esta parte.</div>';
+                } else {
+                    // Lista simplificada de peças
+                    containerHTML += `
+                        <h3 style="color: #193b7c; margin-bottom: 15px;">Lista de Peças</h3>
+                        <table class="pecas-table">
+                            <thead>
+                                <tr>`;
+                    
+                    // Cabeçalho diferente para CHECKLIST
+                    if (isChecklist) {
+                        containerHTML += `
+                                    <th>Descrição</th>
+                                    <th>Trabalho a Ser Feito</th>
+                                    <th class="checkbox-cell">Feito</th>`;
+                    } else {
+                        containerHTML += `
+                                    <th>Código</th>
+                                    <th>Descrição</th>
+                                    <th>Quantidade</th>
+                                    <th>Catálogo</th>`;
+                    }
+                    
+                    containerHTML += `
+                                </tr>
+                            </thead>
+                            <tbody>
+                    `;
+
+                    data.pecas.forEach(peca => {
+                        if (isChecklist) {
+                            // Linha para CHECKLIST: Descrição, Trabalho e checkbox
+                            containerHTML += `
+                                <tr>
+                                    <td>${peca.descricao || peca.descriacao || '-'}</td>
+                                    <td>${peca.trabalho || '-'}</td>
+                                    <td class="checkbox-cell">
+                                        <input type="checkbox" class="checkbox-tecnico" title="Marcar como feito">
+                                    </td>
+                                </tr>
+                            `;
+                        } else {
+                            // Linha normal: Código, Descrição, Quantidade, Catálogo
+                            const quantidade = peca.quantidade || 0;
+                            const codigo = peca.codigo || '-';
+                            const linkCatalogo = codigo !== '-' ? 
+                                `https://www.cnh-eparts.com/DC-NA/SA/BR/pt/newholland-ag/cn/filtro-de-combustvel/dc/p/${codigo}` : 
+                                '#';
+                            
+                            containerHTML += `
+                                <tr>
+                                    <td>${codigo}</td>
+                                    <td>${peca.descricao || peca.descriacao || '-'}</td>
+                                    <td>${quantidade}</td>
+                                    <td>
+                                        ${codigo !== '-' ? 
+                                            `<a href="${linkCatalogo}" target="_blank" class="btn-catalogo" rel="noopener noreferrer">
+                                                <i class='bx bx-link-external'></i> Ver Peça
+                                            </a>` : 
+                                            '<span style="color: #999;">-</span>'
+                                        }
+                                    </td>
+                                </tr>
+                            `;
+                        }
+                    });
+
+                    containerHTML += `
+                            </tbody>
+                        </table>
+                    `;
+                }
+
+                document.getElementById('pecas-container').innerHTML = containerHTML;
+                
+                // Habilitar botões de PDF e TXT
+                document.getElementById('btn-gerar-pdf-pecas').disabled = false;
+                document.getElementById('btn-gerar-txt-pecas').disabled = false;
+                
+                console.log('🎉 Página carregada com sucesso!');
+
+            } catch (error) {
+                console.error('Erro ao carregar peças:', error);
+                document.getElementById('pecas-container').innerHTML = 
+                    '<div class="no-pecas" style="color: red;">Erro ao carregar as peças: ' + error.message + '</div>';
+            }
+        }
+
+        // Função para gerar arquivo TXT simples
+        function gerarTXT() {
+            if (!dadosAtuais) {
+                alert('Dados não carregados. Aguarde o carregamento da página.');
+                return;
+            }
+
+            try {
+                console.log('📝 Gerando arquivo TXT...');
+                
+                const pecas = dadosAtuais.pecas || [];
+                
+                if (pecas.length === 0) {
+                    alert('Não há peças para exportar.');
+                    return;
+                }
+                
+                // Criar conteúdo do arquivo TXT
+                let conteudoTXT = 'Código;Quantidade\n'; // Adiciona o cabeçalho
+                
+                pecas.forEach(peca => {
+                    const codigo = peca.codigo || '';
+                    const quantidade = peca.quantidade || 0;
+                    
+                    // Formato: CÓDIGO;QUANTIDADE
+                    conteudoTXT += `${codigo};${quantidade}\n`;
+                });
+                
+                // Criar arquivo e fazer download
+                const blob = new Blob([conteudoTXT], { type: 'text/plain' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                
+                const dataAtual = new Date().toLocaleDateString('pt-BR').replace(/\//g, '-');
+                const nomeArquivo = `pecas_${dataAtual}.txt`;
+                a.download = nomeArquivo;
+                
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                
+                console.log('✅ Arquivo TXT gerado com sucesso!');
+                console.log('Conteúdo do arquivo:');
+                console.log(conteudoTXT);
+                
+            } catch (error) {
+                console.error('Erro ao gerar TXT:', error);
+                alert('Erro ao gerar arquivo TXT: ' + error.message);
+            }
+        }
+
+        // Função para imprimir
+        function imprimirPagina() {
+            window.print();
+        }
+
+        // Event listeners
+        document.addEventListener('DOMContentLoaded', function() {
+            carregarPecas();
+            document.getElementById('btn-gerar-txt-pecas').addEventListener('click', gerarTXT);
+            document.getElementById('btn-imprimir-pecas').addEventListener('click', imprimirPagina);
+        });
+    </script>
+</body>
+</html>

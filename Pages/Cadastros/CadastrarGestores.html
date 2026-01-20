@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerenciar Gestores - Agro Divel 360</title>
+    <link rel="icon" type="image/png" href="/assets/images/iconeaba.png">
+    
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <link rel="stylesheet" href="/assets/css/style.css">
+    <link rel="stylesheet" href="/assets/css/Pages/Cadastros/CadastroTecnico.css">
+
+    <style>
+        .form-group input[type="email"] {
+            width: 100%;
+            padding: 12px 15px;
+            border-radius: 5px;
+            border: 1px solid var(--border-color);
+            background-color: #CDCED0;
+            color: #343a40;
+            font-size: 16px;
+            box-sizing: border-box;
+            transition: all 0.3s ease;
+        }
+
+        .form-group input[type="email"]:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 5px rgba(0, 51, 102, 0.4);
+        }
+
+        .form-group select {
+            color: #343a40;
+        }
+
+        .checkbox-group label {
+            color: #343a40;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        .permissions-section {
+            margin-top: 20px;
+            padding: 15px;
+            border: 1px solid var(--border-color);
+            border-radius: 5px;
+            background-color: #f8f9fa;
+        }
+
+        .permissions-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 10px;
+            max-height: 400px;
+            overflow-y: auto;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: white;
+        }
+
+        .permission-category {
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .permission-category h4 {
+            margin: 0 0 10px 0;
+            color: var(--primary-color);
+            font-size: 14px;
+            text-transform: uppercase;
+        }
+
+        .permission-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 5px 0;
+        }
+
+        .permission-item label {
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        .permissions-header {
+            display: flex;
+            justify-content: between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .select-all-btn {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .select-all-btn:hover {
+            background: var(--primary-dark);
+        }
+    </style>
+</head>
+<body>
+
+    <nav id="sidebar-placeholder"></nav>
+
+    <script type="module">
+        // Carregar Sidebar
+        import '/assets/js/components/Sidebar.js';
+        // Proteger página por autenticação
+        import { garantirAutenticacao } from '/assets/js/auth-guard.js';
+        garantirAutenticacao();
+    </script>
+
+    <section class="home">
+        <div class="text">
+            <h1>Gerenciar Gestores</h1>
+            <p>Adicione, edite ou remova gestores do sistema.</p>
+        </div>
+
+        <div class="content-card">
+            <div class="content-card-header">
+                <h2 id="form-title">Novo Gestor</h2>
+            </div>
+            <div class="content-card-body">
+                <form id="form-cadastro-gestor" class="form-layout">
+                    <input type="hidden" id="gestor-id">
+                    
+                    <div class="form-group">
+                        <label for="uid-gestor">UID do Usuário (ID do Documento)</label>
+                        <input type="text" id="uid-gestor" placeholder="Cole aqui o UID do Firebase Authentication" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="nome-gestor">Nome do Gestor</label>
+                        <input type="text" id="nome-gestor" placeholder="Ex: João da Silva" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="email-gestor">Email (para login)</label>
+                        <input type="email" id="email-gestor" placeholder="Ex: joao.silva@email.com" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="grupo-gestor">Grupo de Permissão</label>
+                        <select id="grupo-gestor" required>
+                            <option value="" disabled selected>Selecione um grupo</option>
+                            <option value="admin">Admin</option>
+                            <option value="diretoria">Diretoria</option>
+                            <option value="comercial">Comercial</option>
+                            <option value="pecas">Peças</option>
+                            <option value="servicos">Serviços</option>
+                            <option value="Nenhum">Nenhum Grupo</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Filiais de Acesso</label>
+                        <div id="filiais-checkboxes" class="checkbox-group">
+                            <label><input type="checkbox" name="filial" value="Campos Novos"> Campos Novos</label>
+                            <label><input type="checkbox" name="filial" value="Rio do Sul"> Rio do Sul</label>
+                            <label><input type="checkbox" name="filial" value="Lages"> Lages</label>
+                            <label><input type="checkbox" name="filial" value="São Miguel do Oeste"> São Miguel do Oeste</label>
+                            <label><input type="checkbox" name="filial" value="Pinhalzinho"> Pinhalzinho</label>
+                            <label><input type="checkbox" name="filial" value="Campo Erê"> Campo Erê</label>
+                        </div>
+                    </div>
+
+                    <!-- NOVA SEÇÃO: PERMISSÕES INDIVIDUAIS -->
+                    <div class="form-group permissions-section">
+                        <div class="permissions-header">
+                            <label>Permissões Individuais (Acesso Extra)</label>
+                            <button type="button" class="select-all-btn" id="select-all-permissions">Selecionar Todas</button>
+                        </div>
+                        <p style="font-size: 12px; color: #666; margin-bottom: 10px;">
+                            Marque as telas específicas que este usuário pode acessar além das permissões do grupo.
+                        </p>
+                        
+                        <div class="permissions-grid" id="permissions-grid">
+                            <!-- As permissões serão carregadas via JavaScript -->
+                        </div>
+                    </div>
+                    
+                    <div class="form-group" style="flex-direction: row; gap: 10px;">
+                        <button type="submit" class="btn-submit">Cadastrar Gestor</button>
+                        <button type="button" id="btn-cancel-edit" class="btn-delete" style="display: none;">Cancelar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="content-card technician-list-container">
+            <div class="content-card-header">
+                <h2>Gestores Cadastrados</h2>
+            </div>
+            <div class="content-card-body">
+                <table class="technician-table">
+                    <thead>
+                        <tr>
+                            <th>Nome</th>
+                            <th>Email</th>
+                            <th>Grupo</th>
+                            <th>Filiais</th>
+                            <th>Permissões Extras</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="gestor-table-body">
+                    </tbody>
+                </table>
+                <div id="loading-message">Carregando gestores...</div>
+                <div id="empty-message" style="display: none;">Nenhum gestor cadastrado.</div>
+            </div>
+        </div>
+    </section>
+
+   <script type="module">
+        import { db } from '/assets/js/firebase-config.js';
+        import { collection, onSnapshot, doc, getDoc, setDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
+
+        // --- MAPA DE PERMISSÕES (igual ao do auth.js) ---
+        const menuPermissions = {
+            
+            // --- CHECKLIST ---
+            'checklist-inicio': ['admin', 'diretoria', 'pecas', 'servicos'],
+
+            // --- ADMIN ---
+            'admin-CadastroGestores': ['admin'],
+            'admin-CadastroTecnicos': ['admin'],
+
+            // --- DIRETORIA ---
+            'dash-geral': ['admin', 'diretoria'],
+            'dash-AnalisarParadas': ['admin', 'diretoria'],
+
+            // --- COMERCIAL ---
+            'dash-comercial': ['admin', 'diretoria', 'comercial'],
+            'dash-Seguro': ['admin', 'diretoria', 'comercial'],
+            'dash-Consorcio': ['admin', 'diretoria', 'comercial'],
+
+            // --- PECAS ---
+            'dash-pecas': ['admin', 'diretoria', 'pecas'],
+            'ctrl-Kit50': ['admin', 'diretoria', 'pecas'],
+            'ctrl-ContagemDiaria': ['admin', 'diretoria', 'pecas'],
+            'ctrl-PedidosPecas': ['admin', 'diretoria', 'pecas'],
+            'ctrl-PedidosPrim': ['admin', 'diretoria', 'pecas'],
+            'ctrl-ControleFerramentas': ['admin', 'diretoria', 'pecas'],
+            'ctrl-Prim': ['admin', 'diretoria', 'pecas'],
+
+            // --- SERVICOS ---
+            'dash-servicos': ['admin', 'diretoria', 'servicos'],
+            'dash-PLM': ['admin', 'diretoria', 'servicos'],
+            'dash-planos-manutencao': ['admin', 'diretoria', 'servicos'],
+            'ctrl-PlanosVigentes': ['admin', 'diretoria', 'servicos'],
+            'ctrl-MaquinaParada': ['admin', 'diretoria', 'servicos'],
+            'ctrl-Telemetria': ['admin', 'diretoria', 'servicos'],
+            'ctrl-Tempario': ['admin', 'diretoria', 'servicos', 'pecas'],
+            
+            // --- LUBRIFICANTES ---
+            'lubri-AnaliseLubrificantes': ['admin', 'diretoria', 'pecas'],
+            
+            // --- PLANEJAMENTO ---
+            'plan-Anual': ['admin', 'diretoria'],
+            'plan-Gerenciar': ['admin', 'diretoria'],
+            'plan-Permissoes': ['admin', 'diretoria'],
+            'plan-Preencher': ['admin', 'diretoria'],
+
+            // --- SUPORTE ---
+            'suporte-SolicitacaoSuporte': ['admin', 'diretoria', 'comercial', 'pecas', 'servicos'],
+            'suporte-MinhasSolicitacoes': ['admin', 'diretoria', 'comercial', 'pecas', 'servicos'],
+            'suporte-GerenciarSolicitacoes': ['admin'],
+        };
+
+        // --- NOMES AMIGÁVEIS PARA AS PERMISSÕES ---
+        const permissionNames = {
+                        'checklist-inicio': 'Checklist',
+            'admin-CadastroGestores': 'Cadastro de Gestores',
+            'admin-CadastroTecnicos': 'Cadastro de Técnicos',
+            'dash-geral': 'Dashboard Geral',
+            'dash-AnalisarParadas': 'Dashboard Analisar Paradas',
+            'dash-comercial': 'Dashboard Comercial',
+            'dash-Seguro': 'Dashboard Seguro',
+            'dash-Consorcio': 'Dashboard Consórcio',
+            'dash-pecas': 'Dashboard Peças',
+            'ctrl-Kit50': 'Controle Kit 50 Horas',
+            'ctrl-ContagemDiaria': 'Contagem Diária',
+            'ctrl-PedidosPecas': 'Pedidos de Peças',
+            'ctrl-PedidosPrim': 'Pedidos de Prim',
+            'ctrl-ControleFerramentas': 'Controle de Ferramentas',
+            'dash-servicos': 'Dashboard Serviços',
+            'dash-PLM': 'Dashboard PLM',
+            'dash-planos-manutencao': 'Planos de Manutenção',
+            'ctrl-PlanosVigentes': 'Planos Vigentes',
+            'ctrl-MaquinaParada': 'Máquina Parada',
+            'ctrl-Tempario': 'Tempario',
+            'ctrl-Telemetria': 'Telemetria',
+            'ctrl-Prim': 'Controle Prim',
+            'lubri-AnaliseLubrificantes': 'Análise de Lubrificantes',
+            'plan-Anual': 'Planejamento Anual',
+            'plan-Gerenciar': 'Gerenciar Planejamento',
+            'plan-Permissoes': 'Gerenciar Permissões de Planejamento',
+            'plan-Preencher': 'Preencher Planejamento',
+            'suporte-SolicitacaoSuporte': 'Nova Solicitação de Suporte',
+            'suporte-MinhasSolicitacoes': 'Minhas Solicitações',
+            'suporte-GerenciarSolicitacoes': 'Gerenciar Solicitações'
+        };
+
+        // --- Elementos do DOM ---
+        const form = document.getElementById('form-cadastro-gestor');
+        const formTitle = document.getElementById('form-title');
+        const submitButton = form.querySelector('.btn-submit');
+        const cancelButton = document.getElementById('btn-cancel-edit');
+        const tableBody = document.getElementById('gestor-table-body');
+        const loadingMessage = document.getElementById('loading-message');
+        const emptyMessage = document.getElementById('empty-message');
+        const permissionsGrid = document.getElementById('permissions-grid');
+        const selectAllBtn = document.getElementById('select-all-permissions');
+        
+        const gestorIdInput = document.getElementById('gestor-id'); 
+        const uidInput = document.getElementById('uid-gestor'); 
+        const nomeInput = document.getElementById('nome-gestor');
+        const emailInput = document.getElementById('email-gestor');
+        const grupoSelect = document.getElementById('grupo-gestor');
+        const filiaisCheckboxes = document.querySelectorAll('input[name="filial"]');
+
+        // --- CARREGAR CHECKBOXES DE PERMISSÕES ---
+        function loadPermissionCheckboxes() {
+            permissionsGrid.innerHTML = '';
+            
+            // Agrupar permissões por categoria
+            const categories = {
+                'Administrativo': [],
+                'Dashboards': [],
+                'Controles': [],
+                'Planejamento': [],
+                'Lubrificantes': [],
+                'Suporte': []
+            };
+
+            for (const [permissionId, groups] of Object.entries(menuPermissions)) {
+                const permissionName = permissionNames[permissionId] || permissionId;
+                
+                let category = 'Controles';
+                if (permissionId.startsWith('admin-')) category = 'Administrativo';
+                else if (permissionId.startsWith('dash-')) category = 'Dashboards';
+                else if (permissionId.startsWith('plan-')) category = 'Planejamento';
+                else if (permissionId.startsWith('lubri-')) category = 'Lubrificantes';
+                else if (permissionId.startsWith('suporte-')) category = 'Suporte';
+                
+                categories[category].push({ id: permissionId, name: permissionName });
+            }
+
+            // Renderizar por categoria
+            for (const [categoryName, permissions] of Object.entries(categories)) {
+                if (permissions.length === 0) continue;
+                
+                const categoryDiv = document.createElement('div');
+                categoryDiv.className = 'permission-category';
+                categoryDiv.innerHTML = `<h4>${categoryName}</h4>`;
+                
+                permissions.forEach(permission => {
+                    const permissionItem = document.createElement('div');
+                    permissionItem.className = 'permission-item';
+                    permissionItem.innerHTML = `
+                        <input type="checkbox" id="perm-${permission.id}" name="permissoes" value="${permission.id}">
+                        <label for="perm-${permission.id}">${permission.name}</label>
+                    `;
+                    categoryDiv.appendChild(permissionItem);
+                });
+                
+                permissionsGrid.appendChild(categoryDiv);
+            }
+        }
+
+        // --- RENDERIZAR TABELA ---
+        const renderTable = (gestores) => {
+            tableBody.innerHTML = '';
+            loadingMessage.style.display = 'none';
+            if (gestores.length === 0) {
+                emptyMessage.style.display = 'block';
+                return;
+            }
+            emptyMessage.style.display = 'none';
+            gestores.sort((a, b) => (a.nome || '').localeCompare(b.nome || ''));
+            gestores.forEach(gestor => {
+                const permissoesExtras = gestor.permissoes || [];
+                const row = document.createElement('tr');
+                row.dataset.id = gestor.id;
+                row.innerHTML = `
+                    <td>${gestor.nome || 'N/A'}</td>
+                    <td>${gestor.email || 'N/A'}</td>
+                    <td>${gestor.grupo || 'N/A'}</td>
+                    <td>${Array.isArray(gestor.filial) ? gestor.filial.join(', ') : 'N/A'}</td>
+                    <td>${permissoesExtras.length > 0 ? permissoesExtras.length + ' permissão(ões)' : 'Nenhuma'}</td>
+                    <td class="action-buttons">
+                        <button class="btn-edit">Editar</button>
+                        <button class="btn-delete">Excluir</button>
+                    </td>
+                `;
+                tableBody.appendChild(row);
+            });
+        };
+
+        // --- CONFIGURAR EDIÇÃO ---
+        const setupEditForm = async (id) => {
+            const docRef = doc(db, "gestores", id);
+            const docSnap = await getDoc(docRef);
+            if (docSnap.exists()) {
+                const data = docSnap.data();
+                gestorIdInput.value = id;
+                uidInput.value = id;
+                uidInput.disabled = true;
+                nomeInput.value = data.nome || '';
+                nomeInput.disabled = false;
+                emailInput.value = data.email || '';
+                emailInput.disabled = true;
+                grupoSelect.value = data.grupo || '';
+                
+                // Filiais
+                filiaisCheckboxes.forEach(cb => cb.checked = false);
+                if (Array.isArray(data.filial)) {
+                    data.filial.forEach(f => {
+                        const checkbox = document.querySelector(`input[name="filial"][value="${f}"]`);
+                        if (checkbox) checkbox.checked = true;
+                    });
+                }
+                
+                // Permissões
+                const permissionCheckboxes = document.querySelectorAll('input[name="permissoes"]');
+                permissionCheckboxes.forEach(cb => cb.checked = false);
+                if (Array.isArray(data.permissoes)) {
+                    data.permissoes.forEach(perm => {
+                        const checkbox = document.querySelector(`input[name="permissoes"][value="${perm}"]`);
+                        if (checkbox) checkbox.checked = true;
+                    });
+                }
+                
+                formTitle.textContent = 'Editando Gestor';
+                submitButton.textContent = 'Salvar Alterações';
+                cancelButton.style.display = 'inline-block';
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+        };
+
+        // --- RESETAR FORMULÁRIO ---
+        const resetForm = () => {
+            form.reset();
+            gestorIdInput.value = '';
+            uidInput.disabled = false;
+            nomeInput.disabled = false;
+            emailInput.disabled = false;
+            formTitle.textContent = 'Novo Gestor';
+            submitButton.textContent = 'Cadastrar Gestor';
+            cancelButton.style.display = 'none';
+        };
+
+        // --- SUBMIT DO FORMULÁRIO ---
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const isEditing = gestorIdInput.value !== '';
+            const docId = uidInput.value.trim();
+            const nome = nomeInput.value.trim();
+            const email = emailInput.value.trim();
+            const grupo = grupoSelect.value;
+            const filiaisSelecionadas = Array.from(filiaisCheckboxes)
+                                            .filter(cb => cb.checked)
+                                            .map(cb => cb.value);
+            
+            // Coletar permissões selecionadas
+            const permissionCheckboxes = document.querySelectorAll('input[name="permissoes"]:checked');
+            const permissoesSelecionadas = Array.from(permissionCheckboxes).map(cb => cb.value);
+
+            if (!docId || !nome || !email || !grupo) {
+                alert('Por favor, preencha todos os campos: UID, Nome, Email e Grupo.');
+                return;
+            }
+
+            submitButton.disabled = true;
+            submitButton.textContent = 'Salvando...';
+
+            try {
+                const docRef = doc(db, "gestores", docId);
+                const dados = { 
+                    nome, 
+                    email, 
+                    grupo, 
+                    filial: filiaisSelecionadas,
+                    permissoes: permissoesSelecionadas // NOVO CAMPO
+                };
+
+                await setDoc(docRef, dados, { merge: isEditing });
+                
+                alert(`Gestor "${nome}" ${isEditing ? 'atualizado' : 'cadastrado'} com sucesso!`);
+                resetForm();
+
+            } catch (error) {
+                console.error("Erro ao salvar gestor: ", error);
+                alert("Ocorreu um erro ao salvar o gestor.");
+            } finally {
+                submitButton.disabled = false;
+            }
+        });
+
+        // --- SELECIONAR TODAS AS PERMISSÕES ---
+        selectAllBtn.addEventListener('click', () => {
+            const permissionCheckboxes = document.querySelectorAll('input[name="permissoes"]');
+            const allChecked = Array.from(permissionCheckboxes).every(cb => cb.checked);
+            
+            permissionCheckboxes.forEach(cb => {
+                cb.checked = !allChecked;
+            });
+            
+            selectAllBtn.textContent = allChecked ? 'Selecionar Todas' : 'Desmarcar Todas';
+        });
+
+        // --- EVENT LISTENERS ---
+        tableBody.addEventListener('click', async (e) => {
+            const button = e.target.closest('button');
+            if (!button) return;
+            const row = button.closest('tr');
+            const id = row.dataset.id;
+            if (button.classList.contains('btn-delete')) {
+                const nome = row.cells[0].textContent;
+                if (confirm(`Tem certeza que deseja excluir o gestor "${nome}"?`)) {
+                    try {
+                        await deleteDoc(doc(db, "gestores", id));
+                        alert('Gestor excluído com sucesso!');
+                        resetForm();
+                    } catch (error) {
+                        console.error("Erro ao excluir gestor: ", error);
+                        alert("Ocorreu um erro ao excluir.");
+                    }
+                }
+            }
+            if (button.classList.contains('btn-edit')) {
+                setupEditForm(id);
+            }
+        });
+
+        cancelButton.addEventListener('click', resetForm);
+
+        // --- INICIALIZAÇÃO ---
+        loadPermissionCheckboxes();
+
+        // --- CARREGAMENTO EM TEMPO REAL ---
+        onSnapshot(collection(db, "gestores"), (querySnapshot) => {
+            const gestores = [];
+            querySnapshot.forEach((doc) => {
+                gestores.push({ id: doc.id, ...doc.data() });
+            });
+            renderTable(gestores);
+        }, (error) => {
+            console.error("Erro ao buscar gestores: ", error);
+            loadingMessage.textContent = 'Erro ao carregar dados.';
+        });
+    </script>
+
+    <!-- Scripts Globais -->
+    <script type="module" src="/assets/js/firebase-config.js"></script>
+    <script type="module" src="/assets/js/auth.js"></script>
+    <script src="/assets/js/main.js"></script> 
+    <script src="/assets/js/components/Sidebar.js"></script>
+    
+</body>
+</html>
+
+
+
