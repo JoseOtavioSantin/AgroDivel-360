@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Agro Divel 360</title>
+
+  <!-- PWA Meta Tags -->
+  <link rel="manifest" href="/manifest.json" />
+  <meta name="theme-color" content="#001439" />
+  <link rel="icon" href="/assets/images/192.png" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="AgroDivel 360" />
+  <link rel="apple-touch-icon" href="/assets/images/192.png" />
+  
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300&display=swap" rel="stylesheet">
+
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background-color: #001439;
+      color: white;
+    }
+
+    .header {
+      padding: 20px;
+      text-align: center;
+      position: relative;
+    }
+
+    .header img {
+      width: 200px;
+    }
+
+    .notification-icon {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      font-size: 22px;
+      cursor: pointer;
+      color: white;
+      background-color: #00bbf9;
+      border-radius: 50%;
+      padding: 4px;
+    }
+
+    @media (max-width: 600px) {
+      .notification-icon {
+        top: 15px;
+        right: 15px;
+      }
+    }
+
+    .notification-icon:hover {
+      color: #00bbf9;
+    }
+
+    #popup {
+      display:none;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 300px;
+      background-color: #2c2f3f;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.5);
+      display: none;
+      z-index: 999;
+      text-align: center;
+    }
+
+    #popup-body p {
+      font-size: 16px;
+      margin: 10px 0;
+    }
+
+    #popup-body p.nps {
+      font-size: 36px;
+      font-weight: bold;
+      margin-top: 20px;
+    }
+
+    .fechar button {
+      background-color: #00bbf9;
+      border: none;
+      padding: 10px 20px;
+      color: white;
+      font-size: 14px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+
+    .fechar button:hover {
+      background-color: #0096c7;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 10px;
+      box-sizing: border-box;
+    }
+
+    .dashboard {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      padding: 20px;
+      gap: 20px;
+    }
+
+    .frase-italico {
+      font-family: 'Poppins', sans-serif;
+      font-style: italic;
+      font-weight: 300;
+      font-size: 100%;
+    }
+
+    .card {
+      background-color: #ffffff;
+      border-radius: 12px;
+      padding: 40px;
+      width: 150px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+      text-align: center;
+      transition: all 0.3s ease;
+    }
+
+    .card:hover {
+      background-color: #3a3d55;
+      box-shadow: 0 0 15px rgba(255, 255, 255, 0.2);
+      cursor: pointer;
+      transform: translateY(-4px);
+    }
+
+    .card i {
+      font-size: 32px;
+      margin-bottom: 10px;
+      color: #001439;
+    }
+
+    .card p {
+      margin-top: 10px;
+      font-size: 18px;
+      font-weight: bold;
+      color: #001439;
+    }
+
+    a, a:visited {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    @media (max-width: 600px) {
+      .dashboard {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 15px;
+        justify-items: center; /* Alinha os cards no centro da célula */
+      }
+
+      .card {
+        width: 90%;
+        max-width: 160px;
+        padding: 20px 10px;
+        margin-left: -10px;
+      }
+
+      .container {
+        max-width: 100%;
+        padding: 10px;
+      }
+   }
+
+
+  </style>
+</head>
+<body>
+
+  <button id="instalarApp" style="display: none;">Instalar AgroDivel 360</button>
+
+  <div class="container">
+    <div class="header">
+      <img src="/assets/images/logo.png" alt="Logo Agro Divel" />
+      <i class="fas fa-circle-info notification-icon" onclick="abrirPopup()"></i>
+      <h1 class="frase-italico">Selecione o setor e conecte o cliente à solução ideal.</h1>
+    </div>
+
+    <div id="popup">
+      <div id="popup-body">
+        <p>Carregando...</p>
+      </div>
+      <div class="fechar" style="margin-top: 20px;">
+        <button onclick="fecharPopup()">Fechar</button>
+      </div>
+    </div>
+
+    <div class="dashboard">
+      <a href="/Pages/Formularios/FormularioIndex/form-pecas.html" class="card">
+        <i class="fas fa-cogs"></i>
+        <p>Peças</p>
+      </a>
+      <a href="/Pages/Formularios/FormularioIndex/form-servicos.html" class="card">
+        <i class="fas fa-wrench"></i>
+        <p>Serviços</p>
+      </a>
+      <a href="/Pages/Formularios/FormularioIndex/form-PLM.html" class="card">
+        <i class="fa-solid fa-satellite"></i>
+        <p>PLM</p>
+      </a>
+      <a href="/Pages/Formularios/FormularioIndex/form-comercial.html" class="card">
+        <i class="fas fa-handshake"></i>
+        <p>Comercial</p>
+      </a>
+      <a href="/Pages/Formularios/FormularioIndex/form-consorcio.html" class="card">
+        <i class="fas fa-piggy-bank"></i>
+        <p>Consórcio</p>
+      </a>
+      <a href="/Pages/Formularios/FormularioIndex/form-seguro.html" class="card">
+        <i class="fa-solid fa-cloud"></i>
+        <p>Seguro</p>
+      </a>
+      <a href="/Pages/Formularios/FormularioIndex/form-planodemanutencao.html" class="card">
+        <i class="fa-solid fa-file"></i>
+        <p>Plano de Manutenção</p>
+      </a>
+      <a href="/Pages/Formularios/PromocaoAtivas.html" class="card">
+        <i class="fa-solid fa-tags"></i>
+        <p>Promoções Ativas</p>
+      </a>
+      <a href="/Pages/Formularios/FormularioIndex/form-insatisfacao.html" class="card">
+        <i class="fa-solid fa-circle-exclamation"></i>
+        <p>Insatisfação do Cliente</p>
+      </a>
+      <a href="/Pages/Login/Login.html" class="card">
+        <i class="fa-solid fa-chart-column"></i>
+        <p>Dashboard</p>
+      </a>
+    </div>
+  </div>
+
+  <script type="module">
+    import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+    import { app } from './firebase.js';
+
+    const db = getFirestore(app);
+
+    window.abrirPopup = async function () {
+      document.getElementById("popup").style.display = "block";
+      const popupBody = document.getElementById("popup-body");
+      popupBody.innerHTML = "<p>Carregando...</p>";
+
+      try {
+        const docNps = await getDoc(doc(db, "informativos", "nps"));
+        const nps = docNps.exists() ? docNps.data().valor : "N/A";
+
+        popupBody.innerHTML = `
+          <p style="font-size: 16px; margin-bottom: 10px;">
+            Com a sua colaboração, nosso NPS segue crescendo!<br>Obrigado por fazer parte disso. 🙌
+          </p>
+          <p class="nps">${nps}%</p>
+        `;
+      } catch (e) {
+        popupBody.innerHTML = "<p>Erro ao carregar dados.</p>";
+        console.error("Erro ao carregar:", e);
+      }
+    }
+
+    window.fecharPopup = function () {
+      document.getElementById("popup").style.display = "none";
+    };
+
+    // Mostrar popup uma vez por dia automaticamente
+    function verificarPopupAutomatico() {
+      const hoje = new Date().toISOString().slice(0, 10); // Ex: "2025-07-22"
+      const ultimoDia = localStorage.getItem('popup_nps_hoje');
+
+      if (hoje !== ultimoDia) {
+        abrirPopup();
+        localStorage.setItem('popup_nps_hoje', hoje);
+      }
+    }
+
+    verificarPopupAutomatico();
+
+  </script>
+
+<!-- Aviso de atualização -->
+<div id="update-banner" style="
+  display: none;
+  background: #ffcc00;
+  color: #000;
+  font-weight: bold;
+  padding: 12px;
+  text-align: center;
+  cursor: pointer;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 9999;
+">
+  ⚠️ Nova versão disponível. Clique aqui para atualizar.
+</div>
+
+<!-- Bloqueio de interação durante atualização -->
+<div id="update-overlay" style="
+  display:none;
+  position:fixed;
+  inset:0;
+  background: rgba(0,0,0,.55);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+  z-index: 9998; /* abaixo do banner (9999), acima do app */
+"></div>
+
+<!-- Aviso de instalação -->
+<div id="install-banner" style="
+  display: none;
+  background: #ffcc00;
+  color: #000;
+  font-weight: bold;
+  padding: 12px;
+  text-align: center;
+  cursor: pointer;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 9999;
+">
+  📲 Instale o Agro Divel 360. Toque aqui para instalar.
+</div>
+
+<script>
+
+  function lockUIForUpdate(lock) {
+    const overlay = document.getElementById('update-overlay');
+    if (!overlay) return;
+    if (lock) {
+      overlay.style.display = 'block';
+      document.documentElement.style.overflow = 'hidden';
+      document.body.style.overscrollBehavior = 'none';
+    } else {
+      overlay.style.display = 'none';
+      document.documentElement.style.overflow = '';
+      document.body.style.overscrollBehavior = 'auto';
+    }
+  }
+
+  if ('serviceWorker' in navigator) {
+    const isLocalhost = ['localhost', '127.0.0.1'].includes(location.hostname);
+    if (window.isSecureContext || isLocalhost) {
+      navigator.serviceWorker.register('service-worker.js').then((reg) => {
+        const showUpdate = (swRef) => {
+          const banner = document.getElementById('update-banner');
+          const installBanner = document.getElementById('install-banner');
+          banner.style.display = 'block';
+
+          // Bloqueia interação e some com o banner de instalar para não confundir
+          lockUIForUpdate(true);
+          if (installBanner) installBanner.style.display = 'none';
+
+          const triggerUpdate = () => {
+            const target = reg.waiting || swRef;
+            if (target) target.postMessage({ action: 'skipWaiting' });
+          };
+
+          banner.addEventListener('click', triggerUpdate, { once: true });
+          document.getElementById('update-overlay')?.addEventListener('click', triggerUpdate, { once: true });
+          setTimeout(triggerUpdate, 10000); // fallback
+        };
+
+        // 1) Se já tem um SW em espera ao carregar
+        if (reg.waiting) {
+          showUpdate(reg.waiting);
+        }
+
+        // 2) Detecta novas instalações durante a sessão
+        reg.addEventListener('updatefound', () => {
+          const novoSW = reg.installing;
+          if (!novoSW) return;
+          novoSW.addEventListener('statechange', () => {
+            if (novoSW.state === 'installed' && navigator.serviceWorker.controller) {
+              showUpdate(novoSW);
+            }
+          });
+        });
+      });
+
+      // Recarrega quando o novo SW assumir
+      let refreshing = false;
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        if (!refreshing) {
+          refreshing = true;
+          try { lockUIForUpdate(false); } catch {}
+          location.reload();
+        }
+      });
+    } else {
+      console.warn('SW desativado: origem não segura (use HTTPS ou http://localhost).');
+    }
+  }
+  
+  // Mantém o botão como fallback, mas usaremos o banner
+  let deferredPrompt;
+  const installBtn = document.getElementById('instalarApp');
+  const installBanner = document.getElementById('install-banner');
+  const updateBanner = document.getElementById('update-banner');
+
+  function openInstallPrompt() {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    deferredPrompt.userChoice.then((choice) => {
+      if (choice.outcome === 'accepted') {
+        console.log('✅ PWA instalada');
+      } else {
+        console.log('ℹ️ Instalação cancelada');
+      }
+      deferredPrompt = null;
+      if (installBanner) installBanner.style.display = 'none';
+    });
+  }
+
+  // Mostra o banner de instalação quando o navegador sinalizar que pode instalar
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+
+    if (installBanner) {
+      // Se o banner de update já estiver visível, empurra o de instalação um pouco pra baixo
+      if (updateBanner && updateBanner.style.display === 'block') {
+        installBanner.style.top = '48px';
+      } else {
+        installBanner.style.top = '0';
+      }
+      installBanner.style.display = 'block';
+      installBanner.onclick = openInstallPrompt;
+    }
+
+    // Fallback: mantém o botão pronto, mas oculto
+    if (installBtn) {
+      installBtn.style.display = 'none';
+      installBtn.onclick = openInstallPrompt;
+    }
+  });
+
+  // Se o usuário instalar por outro caminho (ex.: omnibox)
+  window.addEventListener('appinstalled', () => {
+    if (installBanner) installBanner.style.display = 'none';
+    if (installBtn) installBtn.style.display = 'none';
+    deferredPrompt = null;
+  });
+
+  // iOS não dispara beforeinstallprompt -> mostra instrução amigável
+  const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+  if (isIOS && !isStandalone) {
+    if (installBanner) {
+      installBanner.innerHTML = '📲 Para instalar: toque em <strong>Compartilhar</strong> e depois <strong>Adicionar à Tela de Início</strong>.';
+      installBanner.style.top = '0';
+      installBanner.style.display = 'block';
+      installBanner.style.cursor = 'default';
+      installBanner.onclick = null;
+    }
+  }
+  
+</script>
+
+<!-- PWA Manager - Gerenciamento de Service Worker e Atualizações -->
+<script src="/assets/js/pwa-manager.js"></script>
+
+</body>
+</html>
