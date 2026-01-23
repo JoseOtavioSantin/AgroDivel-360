@@ -63,6 +63,7 @@ function renderTabela() {
                     <td><input type="number" class="input-melhorado" value="${conta.id}" onchange="editarContaId(${grupoIdx},${realContaIdx},this.value)"></td>
                     <td><input type="text" class="input-melhorado" value="${conta.descricao}" onchange="editarContaDescricao(${grupoIdx},${realContaIdx},this.value)"></td>
                     <td>
+                        <button class="btn-acao" onclick="moverConta(${grupoIdx},${realContaIdx})">Mover</button>
                         <button class="btn-acao" onclick="removerConta(${grupoIdx},${realContaIdx})">Remover</button>
                     </td>
                 `;
@@ -110,6 +111,187 @@ window.removerConta = function(grupoIdx, contaIdx) {
     renderTabela();
 }
 
+// Mover uma conta para outro grupo
+window.moverConta = function(grupoIdx, contaIdx) {
+    const conta = gruposContas[grupoIdx].contas[contaIdx];
+    const grupoAtual = gruposContas[grupoIdx].grupo;
+    
+    // Criar opções de grupos (excluindo o grupo atual)
+    const opcoesSgrupos = gruposContas
+        .map((g, idx) => idx !== grupoIdx ? `<option value="${idx}">${g.grupo} (${g.contas.length} conta${g.contas.length !== 1 ? 's' : ''})</option>` : '')
+        .filter(o => o)
+        .join('');
+    
+    if (!opcoesSgrupos) {
+        Swal.fire('Aviso', 'Não há outros grupos para mover esta conta', 'warning');
+        return;
+    }
+    
+    Swal.fire({
+        title: 'Mover Conta',
+        html: `
+            <div style="text-align: left;">
+                <div style="background: #f5f5f5; padding: 10px; border-radius: 4px; margin-bottom: 15px;">
+                    <p style="font-size: 12px; margin: 0 0 5px 0;"><strong>Grupo Atual:</strong> ${grupoAtual}</p>
+                    <p style="font-size: 12px; margin: 0;"><strong>Conta:</strong> ${conta.id} - ${conta.descricao}</p>
+                </div>
+                <p style="margin-bottom: 10px; font-size: 13px; font-weight: bold;">Para qual grupo deseja mover?</p>
+                <select id="select-grupo-mover" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 13px;">
+                    <option value="">-- Selecione um grupo --</option>
+                    ${opcoesSgrupos}
+                </select>
+            </div>
+        `,
+        showCancelButton: true,
+        confirmButtonText: 'Mover',
+        cancelButtonText: 'Cancelar',
+        didOpen: () => {
+            document.getElementById('select-grupo-mover').focus();
+        },
+        preConfirm: () => {
+            const selectElement = document.getElementById('select-grupo-mover');
+            if (!selectElement.value) {
+                Swal.showValidationMessage('Por favor, selecione um grupo');
+                return false;
+            }
+            return parseInt(selectElement.value);
+        }
+    }).then((result) => {
+        if (result.isConfirmed) {
+            const novoGrupoIdx = result.value;
+            
+            // Remover da conta do grupo atual
+            gruposContas[grupoIdx].contas.splice(contaIdx, 1);
+            
+            // Adicionar no novo grupo
+            gruposContas[novoGrupoIdx].contas.push(conta);
+            
+            // Expandir novo grupo
+            gruposExpandidos[novoGrupoIdx] = true;
+            
+            renderTabela();
+            
+            Swal.fire({
+                title: 'Sucesso!',
+                html: `Conta movida para <strong>${gruposContas[novoGrupoIdx].grupo}</strong>`,
+                icon: 'success',
+                confirmButtonText: 'Fechar'
+            });
+        }
+    });
+}
+
+// Mover múltiplas contas em massa
+window.moverEmMassa = function() {
+    if (gruposContas.length === 0) {
+        Swal.fire('Aviso', 'Nenhum grupo disponível', 'warning');
+        return;
+    }
+    
+    // Criar lista de todas as contas com checkbox
+    let htmlContas = '<div style="max-height: 500px; overflow-y: auto; text-align: left; margin-bottom: 20px; padding-right: 10px;">';
+    htmlContas += '<p style="font-size: 13px; color: #666; margin-bottom: 15px; font-weight: bold;"><strong>Selecione as contas para mover:</strong></p>';
+    
+    gruposContas.forEach((grupo, grupoIdx) => {
+        if (grupo.contas.length > 0) {
+            htmlContas += `<p style="font-size: 12px; font-weight: bold; margin: 15px 0 8px 0; color: #1a3263; background: #f0f4f9; padding: 8px 10px; border-radius: 4px;">${grupo.grupo}</p>`;
+            grupo.contas.forEach((conta, contaIdx) => {
+                const id = `check-${grupoIdx}-${contaIdx}`;
+                htmlContas += `
+                    <div style="font-size: 12px; margin-left: 15px; margin-bottom: 8px; display: flex; align-items: center;">
+                        <input type="checkbox" id="${id}" data-grupo="${grupoIdx}" data-conta="${contaIdx}" style="cursor: pointer; margin-right: 10px;">
+                        <label for="${id}" style="cursor: pointer; flex: 1;"><strong>${conta.id}</strong> - ${conta.descricao}</label>
+                    </div>
+                `;
+            });
+        }
+    });
+    htmlContas += '</div>';
+    
+    // Criar opções de grupos
+    const opcoesSgrupos = gruposContas
+        .map((g, idx) => `<option value="${idx}">${g.grupo}</option>`)
+        .join('');
+    
+    Swal.fire({
+        title: 'Mover Contas em Massa',
+        html: `
+            <div style="text-align: left; width: 100%;">
+                ${htmlContas}
+                <p style="margin-bottom: 12px; font-size: 13px; font-weight: bold; color: #1a3263;">Para qual grupo deseja mover?</p>
+                <select id="select-grupo-massa" style="width: 100%; padding: 10px 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 13px;">
+                    <option value="">-- Selecione um grupo --</option>
+                    ${opcoesSgrupos}
+                </select>
+            </div>
+        `,
+        width: '70%',
+        showCancelButton: true,
+        confirmButtonText: 'Mover Selecionadas',
+        cancelButtonText: 'Cancelar',
+        didOpen: () => {
+            document.getElementById('select-grupo-massa').focus();
+        },
+        preConfirm: () => {
+            const selectElement = document.getElementById('select-grupo-massa');
+            if (!selectElement.value) {
+                Swal.showValidationMessage('Por favor, selecione um grupo');
+                return false;
+            }
+            
+            // Verificar se há contas selecionadas
+            const checkboxes = document.querySelectorAll('input[type="checkbox"]:checked');
+            if (checkboxes.length === 0) {
+                Swal.showValidationMessage('Por favor, selecione pelo menos uma conta');
+                return false;
+            }
+            
+            return {
+                novoGrupo: parseInt(selectElement.value),
+                contas: Array.from(checkboxes).map(c => ({
+                    grupoIdx: parseInt(c.dataset.grupo),
+                    contaIdx: parseInt(c.dataset.conta)
+                }))
+            };
+        }
+    }).then((result) => {
+        if (result.isConfirmed) {
+            const { novoGrupo, contas } = result.value;
+            const novoGrupoNome = gruposContas[novoGrupo].grupo;
+            
+            // Coletar as contas e removê-las (do fim para o início para evitar problemas de índice)
+            const contasParaMover = [];
+            
+            // Ordenar por grupoIdx e contaIdx descrescente para remover do final
+            const contasOrdenadas = [...contas].sort((a, b) => {
+                if (a.grupoIdx === b.grupoIdx) {
+                    return b.contaIdx - a.contaIdx;
+                }
+                return b.grupoIdx - a.grupoIdx;
+            });
+            
+            contasOrdenadas.forEach(({ grupoIdx, contaIdx }) => {
+                const conta = gruposContas[grupoIdx].contas[contaIdx];
+                contasParaMover.push(conta);
+                gruposContas[grupoIdx].contas.splice(contaIdx, 1);
+            });
+            
+            // Adicionar no novo grupo
+            gruposContas[novoGrupo].contas.push(...contasParaMover);
+            gruposExpandidos[novoGrupo] = true;
+            
+            renderTabela();
+            
+            Swal.fire({
+                title: 'Sucesso!',
+                html: `<strong>${contasParaMover.length}</strong> conta(s) movida(s) para <strong>${novoGrupoNome}</strong>`,
+                icon: 'success',
+                confirmButtonText: 'Fechar'
+            });
+        }
+    });
+}
+
 
 // Garantir que os botões só sejam registrados após o DOM estar pronto
 document.addEventListener('DOMContentLoaded', () => {
@@ -142,20 +324,24 @@ document.addEventListener('DOMContentLoaded', () => {
 
 function abrirDialogoImportar() {
     Swal.fire({
-        title: 'Importar de Excel',
+        title: 'Importar Plano de Contas',
         html: `
             <div style="text-align: left;">
                 <p style="margin-bottom: 15px; font-size: 14px;">
-                    Carregue um arquivo Excel com a estrutura de grupos e contas.
+                    Carregue um arquivo Excel (CSV) com o plano de contas contábil.
                 </p>
                 <p style="margin-bottom: 10px; font-size: 12px; color: #666;">
                     <strong>Formato esperado:</strong>
                 </p>
                 <ul style="text-align: left; font-size: 12px; margin-bottom: 15px;">
-                    <li><strong>Coluna A:</strong> ID da Conta (vazio para grupos)</li>
-                    <li><strong>Coluna B:</strong> Descrição da Conta ou Nome do Grupo</li>
+                    <li><strong>Coluna A (Situação):</strong> "A" para contas analíticas (será filtrado)</li>
+                    <li><strong>Coluna C (Código):</strong> ID único da conta</li>
+                    <li><strong>Coluna E (Descrição):</strong> Nome/descrição da conta</li>
                 </ul>
-                <input type="file" id="arquivo-excel" accept=".xlsx,.xls" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px;">
+                <p style="margin-bottom: 15px; font-size: 11px; color: #999;">
+                    Apenas contas com situação "A" serão importadas. Você escolherá o grupo onde adicionar as contas.
+                </p>
+                <input type="file" id="arquivo-excel" accept=".xlsx,.xls,.csv" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px;">
             </div>
         `,
         focusConfirm: false,
@@ -189,32 +375,83 @@ function processarArquivoExcel(arquivo) {
             let nomeAba = workbook.SheetNames[0];
             const planilha = workbook.Sheets[nomeAba];
             const dados_json = XLSX.utils.sheet_to_json(planilha, { header: 1 });
+            
             if (dados_json.length < 2) {
                 Swal.fire('Erro', 'Arquivo vazio ou sem dados', 'error');
                 return;
             }
-            const novoGrupos = [];
-            let grupoAtual = null;
-            for (let i = 1; i < dados_json.length; i++) {
+
+            // Parse dos dados com mapeamento de colunas
+            const contas_importadas = [];
+            
+            // Pular linha de cabeçalho (índice 0 e 1)
+            for (let i = 2; i < dados_json.length; i++) {
                 const linha = dados_json[i];
-                const contaId = linha[0];
-                const descricao = linha[1];
-                if (!descricao) continue;
-                if (contaId === undefined || contaId === null || contaId === '') {
-                    grupoAtual = { grupo: String(descricao), contas: [] };
-                    novoGrupos.push(grupoAtual);
-                } else {
-                    if (!grupoAtual) {
-                        grupoAtual = { grupo: 'SEM GRUPO', contas: [] };
-                        novoGrupos.push(grupoAtual);
-                    }
-                    grupoAtual.contas.push({ id: contaId, descricao: String(descricao) });
-                }
+                
+                // Coluna B (índice 1) = A/S
+                const a_s = String(linha[1] || '').trim().toUpperCase();
+                
+                // Filtrar apenas contas analíticas (A/S = "A")
+                if (a_s !== 'A') continue;
+                
+                // Coluna C (índice 2) = Código (ID da conta)
+                const codigo = String(linha[2] || '').trim();
+                
+                // Coluna E (índice 4) = Descrição
+                const descricao = String(linha[4] || '').trim();
+                
+                // Validar dados obrigatórios
+                if (!codigo || !descricao) continue;
+                
+                contas_importadas.push({
+                    id: codigo,
+                    descricao: descricao
+                });
             }
-            gruposContas = novoGrupos;
-            gruposExpandidos = novoGrupos.map(() => true);
-            renderTabela();
-            Swal.fire('Sucesso!', 'Grupos e contas importados!', 'success');
+            
+            if (contas_importadas.length === 0) {
+                Swal.fire('Aviso', 'Nenhuma conta válida foi encontrada no arquivo', 'warning');
+                return;
+            }
+            
+            // Separar contas novas das existentes
+            const contas_novas = [];
+            const contas_existentes = [];
+            
+            contas_importadas.forEach(conta => {
+                let jaExiste = false;
+                
+                // Procurar a conta em todos os grupos
+                for (let grupo of gruposContas) {
+                    for (let contaGrupo of grupo.contas) {
+                        // Comparar como string trimado para evitar problemas de tipo
+                        if (String(contaGrupo.id).trim() === String(conta.id).trim()) {
+                            jaExiste = true;
+                            break;
+                        }
+                    }
+                    if (jaExiste) break;
+                }
+                
+                if (jaExiste) {
+                    contas_existentes.push(conta);
+                } else {
+                    contas_novas.push(conta);
+                }
+            });
+            
+            // Se há contas novas, processar uma por uma
+            if (contas_novas.length > 0) {
+                processarContasNovasSequencial(contas_novas, 0, contas_existentes.length);
+            } else {
+                // Se todas já existem, apenas avisar
+                Swal.fire(
+                    'Aviso',
+                    `Todas as ${contas_existentes.length} conta(s) já existem no sistema.`,
+                    'info'
+                );
+            }
+            
         } catch (error) {
             console.error('Erro ao processar arquivo:', error);
             Swal.fire('Erro', 'Erro ao processar o arquivo: ' + error.message, 'error');
@@ -222,6 +459,105 @@ function processarArquivoExcel(arquivo) {
     };
     reader.readAsBinaryString(arquivo);
 }
+
+// Processar contas novas sequencialmente, uma por uma
+function processarContasNovasSequencial(contas_novas, indice_atual, total_existentes) {
+    // Se chegou ao fim, mostrar resumo final
+    if (indice_atual >= contas_novas.length) {
+        Swal.fire({
+            title: 'Importação Concluída!',
+            html: `
+                <div style="text-align: left; font-size: 13px;">
+                    <p style="margin-bottom: 10px;">
+                        <strong>${contas_novas.length}</strong> conta(s) adicionada(s) com sucesso!
+                    </p>
+                    ${total_existentes > 0 ? `<p style="margin-bottom: 10px; color: #666; font-size: 12px;">(<strong>${total_existentes}</strong> conta(s) ignorada(s) por já existirem)</p>` : ''}
+                    <p style="font-size: 12px; color: #666;">
+                        💾 Não se esqueça de clicar em "Salvar" para guardar as alterações no Firebase!
+                    </p>
+                </div>
+            `,
+            icon: 'success',
+            confirmButtonText: 'Fechar'
+        });
+        return;
+    }
+    
+    const conta_atual = contas_novas[indice_atual];
+    const progresso = `${indice_atual + 1} de ${contas_novas.length}`;
+    
+    // Mostrar diálogo para esta conta específica
+    if (gruposContas.length === 0) {
+        Swal.fire(
+            'Nenhum Grupo',
+            'Você precisa criar um grupo antes de importar contas. Clique em "+ Novo Grupo" para criar um.',
+            'warning'
+        );
+        return;
+    }
+    
+    const opcoesSgrupos = gruposContas
+        .map((g, idx) => `<option value="${idx}">${g.grupo} (${g.contas.length} conta${g.contas.length !== 1 ? 's' : ''})</option>`)
+        .join('');
+    
+    Swal.fire({
+        title: `Adicionar Conta (${progresso})`,
+        html: `
+            <div style="text-align: left;">
+                <div style="background: #e3f2fd; padding: 12px; border-radius: 4px; margin-bottom: 15px; border-left: 4px solid #2196F3;">
+                    <p style="font-size: 12px; margin: 0;"><strong>ID:</strong> ${conta_atual.id}</p>
+                    <p style="font-size: 12px; margin: 5px 0 0 0;"><strong>Descrição:</strong> ${conta_atual.descricao}</p>
+                </div>
+                <p style="margin-bottom: 10px; font-size: 13px; font-weight: bold;">
+                    Em qual grupo deseja adicionar esta conta?
+                </p>
+                <select id="select-grupo-destino" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 13px;">
+                    ${opcoesSgrupos}
+                </select>
+            </div>
+        `,
+        showCancelButton: true,
+        confirmButtonText: 'Adicionar',
+        cancelButtonText: 'Cancelar Importação',
+        didOpen: () => {
+            document.getElementById('select-grupo-destino').focus();
+        },
+        preConfirm: () => {
+            const selectElement = document.getElementById('select-grupo-destino');
+            if (selectElement.value === '') {
+                Swal.showValidationMessage('Por favor, selecione um grupo');
+                return false;
+            }
+            return parseInt(selectElement.value);
+        }
+    }).then((result) => {
+        if (result.isConfirmed) {
+            const grupoIdx = result.value;
+            const grupoDestino = gruposContas[grupoIdx];
+            
+            // Adicionar a conta ao grupo
+            grupoDestino.contas.push(conta_atual);
+            
+            // Expandir o grupo se contraído
+            gruposExpandidos[grupoIdx] = true;
+            
+            // Renderizar tabela
+            renderTabela();
+            
+            // Processar próxima conta
+            processarContasNovasSequencial(contas_novas, indice_atual + 1, total_existentes);
+        } else {
+            // Se cancelou, mostrar aviso
+            Swal.fire(
+                'Importação Cancelada',
+                `${indice_atual} de ${contas_novas.length} conta(s) foram adicionadas antes do cancelamento.`,
+                'warning'
+            );
+        }
+    });
+}
+
+
 
 // Inicializa a tabela
 renderTabela();

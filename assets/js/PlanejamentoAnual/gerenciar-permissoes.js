@@ -21,11 +21,32 @@ let departamentosMarkados = []; // Departamentos selecionados para o usuário
 let filiaisMarkadas = []; // Filiais selecionadas para o usuário
 let geralVisualizar = false; // Permissão para visualizar modo Geral
 let geralEditar = false; // Permissão para editar modo Geral
+let podeEditarFormulas = false; // Permissão para editar fórmulas do sistema
 let termoBusca = '';
 let todosGruposExpandidos = true; // Controlar expansão/colapso de grupos
 
 // Departamentos e Filiais disponíveis no sistema
-const DEPARTAMENTOS_SISTEMA = ['Peças', 'Serviços', 'Pós-vendas', 'PLM'];
+const ESTRUTURA_DEPARTAMENTOS = {
+    'Geral': null,
+    'Vendas': {
+        'Novos': null,
+        'Usados': null
+    },
+    'Pós-vendas': {
+        'Peças': null,
+        'Serviços': null,
+        'PLM': null
+    },
+    'ADM': {
+        'IF': null,
+        'CTB CONTR': null,
+        'FINAN': null,
+        'MARKTING': null,
+        'COMPRAS': null,
+        'RH/DP': null
+    }
+};
+
 const FILIAIS_SISTEMA = ['Campos Novos', 'Rio do Sul', 'Lages', 'São Miguel do Oeste', 'Pinhalzinho', 'Campo Erê'];
 
 // ===== INICIALIZAR =====
@@ -82,16 +103,16 @@ async function carregarUsuarios() {
         usuariosLista = [];
         querySnapshot.forEach((doc) => {
             const dados = doc.data();
+            // Extrair departamentos principais (sem subdepartamentos) da estrutura
+            const departamentosPrincipais = Object.keys(ESTRUTURA_DEPARTAMENTOS);
+            
             usuariosLista.push({
                 uid: doc.id,
                 nome: dados.nome || 'Gestor ' + doc.id.substring(0, 8),
                 email: dados.email || 'sem-email@example.com',
                 departamentos: dados.departamentos && dados.departamentos.length > 0 
                     ? dados.departamentos 
-                    : DEPARTAMENTOS_SISTEMA, // Se não tiver, usa os do sistema
-                filiais: dados.filiais && dados.filiais.length > 0 
-                    ? dados.filiais 
-                    : FILIAIS_SISTEMA // Se não tiver, usa os do sistema
+                    : departamentosPrincipais
             });
         });
 
@@ -156,18 +177,21 @@ async function carregarPermissoesUsuario(uid) {
             filiaisMarkadas = dados.filiais || [];
             geralVisualizar = dados.geral?.visualizar || false;
             geralEditar = dados.geral?.editar || false;
+            podeEditarFormulas = dados.podeEditarFormulas || false;
         } else {
             permissoesSelecionadas = {};
             departamentosMarkados = [];
             filiaisMarkadas = [];
             geralVisualizar = false;
             geralEditar = false;
+            podeEditarFormulas = false;
         }
 
         console.log('✅ Permissões carregadas:', {
             departamentos: departamentosMarkados,
             filiais: filiaisMarkadas,
             geral: { visualizar: geralVisualizar, editar: geralEditar },
+            podeEditarFormulas,
             contas: permissoesSelecionadas
         });
     } catch (error) {
@@ -176,6 +200,182 @@ async function carregarPermissoesUsuario(uid) {
         departamentosMarkados = [];
         filiaisMarkadas = [];
     }
+}
+
+// ===== RENDERIZAR DEPARTAMENTOS COM HIERARQUIA =====
+function renderizarDepartamentosPermissoes() {
+    let html = '';
+    
+    // Geral - simples
+    html += `
+        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; margin: 8px 0; font-weight: 500;">
+            <input 
+                type="checkbox" 
+                ${departamentosMarkados.includes('Geral') ? 'checked' : ''}
+                onchange="window.toggleDepartamento('Geral', this.checked)">
+            <i class='bx bx-folder'></i> Geral
+        </label>
+    `;
+    
+    // Vendas com subdivisões
+    const todosVendas = ['Vendas - Novos', 'Vendas - Usados', 'Vendas - Geral'].every(d => departamentosMarkados.includes(d));
+    html += `
+        <div style="margin: 12px 0; background: white; border: 1px solid #ddd; border-radius: 6px; padding: 0; overflow: hidden;">
+            <div style="display: flex; align-items: center; gap: 8px; padding: 10px; background: #f8f9fa; cursor: pointer; border-bottom: 1px solid #ddd;" onclick="window.toggleGrupoDeptos('vendas-subdeps')">
+                <input 
+                    type="checkbox" 
+                    ${todosVendas ? 'checked' : ''}
+                    onchange="window.marcarTodosSubdeps('Vendas', this.checked)"
+                    onclick="event.stopPropagation()"
+                    style="cursor: pointer;">
+                <i class='bx bx-folder-open'></i>
+                <strong style="color: #0f3460;">Vendas</strong>
+                <span style="font-size: 0.8rem; color: #999; margin-left: auto;">(3 opções)</span>
+            </div>
+            <div id="vendas-subdeps" style="padding: 10px 20px; background: #fafafa; display: block;">
+                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; margin: 6px 0;">
+                    <input 
+                        type="checkbox" 
+                        ${departamentosMarkados.includes('Vendas - Novos') ? 'checked' : ''}
+                        onchange="window.toggleDepartamento('Vendas - Novos', this.checked)">
+                    Novos
+                </label>
+                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; margin: 6px 0;">
+                    <input 
+                        type="checkbox" 
+                        ${departamentosMarkados.includes('Vendas - Usados') ? 'checked' : ''}
+                        onchange="window.toggleDepartamento('Vendas - Usados', this.checked)">
+                    Usados
+                </label>
+                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; margin: 6px 0;">
+                    <input 
+                        type="checkbox" 
+                        ${departamentosMarkados.includes('Vendas - Geral') ? 'checked' : ''}
+                        onchange="window.toggleDepartamento('Vendas - Geral', this.checked)">
+                    Geral
+                </label>
+            </div>
+        </div>
+    `;
+    
+    // Pós-vendas com subdivisões
+    const todosPosVendas = ['Pós-vendas - Peças', 'Pós-vendas - Serviços', 'Pós-vendas - PLM', 'Pós-vendas - Geral'].every(d => departamentosMarkados.includes(d));
+    html += `
+        <div style="margin: 12px 0; background: white; border: 1px solid #ddd; border-radius: 6px; padding: 0; overflow: hidden;">
+            <div style="display: flex; align-items: center; gap: 8px; padding: 10px; background: #f8f9fa; cursor: pointer; border-bottom: 1px solid #ddd;" onclick="window.toggleGrupoDeptos('posvendas-subdeps')">
+                <input 
+                    type="checkbox" 
+                    ${todosPosVendas ? 'checked' : ''}
+                    onchange="window.marcarTodosSubdeps('Pós-vendas', this.checked)"
+                    onclick="event.stopPropagation()"
+                    style="cursor: pointer;">
+                <i class='bx bx-folder-open'></i>
+                <strong style="color: #0f3460;">Pós-vendas</strong>
+                <span style="font-size: 0.8rem; color: #999; margin-left: auto;">(4 opções)</span>
+            </div>
+            <div id="posvendas-subdeps" style="padding: 10px 20px; background: #fafafa; display: block;">
+                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; margin: 6px 0;">
+                    <input 
+                        type="checkbox" 
+                        ${departamentosMarkados.includes('Pós-vendas - Peças') ? 'checked' : ''}
+                        onchange="window.toggleDepartamento('Pós-vendas - Peças', this.checked)">
+                    Peças
+                </label>
+                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; margin: 6px 0;">
+                    <input 
+                        type="checkbox" 
+                        ${departamentosMarkados.includes('Pós-vendas - Serviços') ? 'checked' : ''}
+                        onchange="window.toggleDepartamento('Pós-vendas - Serviços', this.checked)">
+                    Serviços
+                </label>
+                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; margin: 6px 0;">
+                    <input 
+                        type="checkbox" 
+                        ${departamentosMarkados.includes('Pós-vendas - PLM') ? 'checked' : ''}
+                        onchange="window.toggleDepartamento('Pós-vendas - PLM', this.checked)">
+                    PLM
+                </label>
+                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; margin: 6px 0;">
+                    <input 
+                        type="checkbox" 
+                        ${departamentosMarkados.includes('Pós-vendas - Geral') ? 'checked' : ''}
+                        onchange="window.toggleDepartamento('Pós-vendas - Geral', this.checked)">
+                    Geral
+                </label>
+            </div>
+        </div>
+    `;
+    
+    // ADM com subdivisões
+    const todosADM = ['ADM - IF', 'ADM - CTB CONTR', 'ADM - FINAN', 'ADM - MARKTING', 'ADM - COMPRAS', 'ADM - RH/DP', 'ADM - GERAL'].every(d => departamentosMarkados.includes(d));
+    html += `
+        <div style="margin: 12px 0; background: white; border: 1px solid #ddd; border-radius: 6px; padding: 0; overflow: hidden;">
+            <div style="display: flex; align-items: center; gap: 8px; padding: 10px; background: #f8f9fa; cursor: pointer; border-bottom: 1px solid #ddd;" onclick="window.toggleGrupoDeptos('adm-subdeps')">
+                <input 
+                    type="checkbox" 
+                    ${todosADM ? 'checked' : ''}
+                    onchange="window.marcarTodosSubdeps('ADM', this.checked)"
+                    onclick="event.stopPropagation()"
+                    style="cursor: pointer;">
+                <i class='bx bx-folder-open'></i>
+                <strong style="color: #0f3460;">ADM</strong>
+                <span style="font-size: 0.8rem; color: #999; margin-left: auto;">(7 opções)</span>
+            </div>
+            <div id="adm-subdeps" style="padding: 10px 20px; background: #fafafa; display: block;">
+                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; margin: 6px 0;">
+                    <input 
+                        type="checkbox" 
+                        ${departamentosMarkados.includes('ADM - IF') ? 'checked' : ''}
+                        onchange="window.toggleDepartamento('ADM - IF', this.checked)">
+                    IF
+                </label>
+                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; margin: 6px 0;">
+                    <input 
+                        type="checkbox" 
+                        ${departamentosMarkados.includes('ADM - CTB CONTR') ? 'checked' : ''}
+                        onchange="window.toggleDepartamento('ADM - CTB CONTR', this.checked)">
+                    CTB CONTR
+                </label>
+                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; margin: 6px 0;">
+                    <input 
+                        type="checkbox" 
+                        ${departamentosMarkados.includes('ADM - FINAN') ? 'checked' : ''}
+                        onchange="window.toggleDepartamento('ADM - FINAN', this.checked)">
+                    FINAN
+                </label>
+                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; margin: 6px 0;">
+                    <input 
+                        type="checkbox" 
+                        ${departamentosMarkados.includes('ADM - MARKTING') ? 'checked' : ''}
+                        onchange="window.toggleDepartamento('ADM - MARKTING', this.checked)">
+                    MARKTING
+                </label>
+                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; margin: 6px 0;">
+                    <input 
+                        type="checkbox" 
+                        ${departamentosMarkados.includes('ADM - COMPRAS') ? 'checked' : ''}
+                        onchange="window.toggleDepartamento('ADM - COMPRAS', this.checked)">
+                    COMPRAS
+                </label>
+                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; margin: 6px 0;">
+                    <input 
+                        type="checkbox" 
+                        ${departamentosMarkados.includes('ADM - RH/DP') ? 'checked' : ''}
+                        onchange="window.toggleDepartamento('ADM - RH/DP', this.checked)">
+                    RH/DP
+                </label>
+                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; margin: 6px 0;">
+                    <input 
+                        type="checkbox" 
+                        ${departamentosMarkados.includes('ADM - GERAL') ? 'checked' : ''}
+                        onchange="window.toggleDepartamento('ADM - GERAL', this.checked)">
+                    GERAL
+                </label>
+            </div>
+        </div>
+    `;
+    
+    return html;
 }
 
 // ===== RENDERIZAR PAINEL DE PERMISSÕES =====
@@ -195,21 +395,13 @@ function renderPainelPermissoes() {
             
             <!-- FILTROS -->
             <div style="padding: 15px;">
-                <!-- DEPARTAMENTOS CHECKBOX -->
+                <!-- DEPARTAMENTOS COM HIERARQUIA -->
                 <div style="margin-bottom: 20px;">
                     <label style="font-weight: 600; display: block; margin-bottom: 10px; color: #1a3263;">
                         <i class='bx bx-building'></i> Departamentos
                     </label>
-                    <div style="display: grid; grid-template-columns: 1fr; gap: 8px; background: #f9f9f9; padding: 10px; border-radius: 4px;">
-                        ${usuarioSelecionado.departamentos.map(dept => `
-                            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; margin: 0;">
-                                <input 
-                                    type="checkbox" 
-                                    ${departamentosMarkados.includes(dept) ? 'checked' : ''}
-                                    onchange="window.toggleDepartamento('${dept}', this.checked)">
-                                <span>${dept}</span>
-                            </label>
-                        `).join('')}
+                    <div style="background: #f9f9f9; padding: 10px; border-radius: 4px;">
+                        ${renderizarDepartamentosPermissoes()}
                     </div>
                 </div>
 
@@ -219,7 +411,7 @@ function renderPainelPermissoes() {
                         <i class='bx bx-map'></i> Filiais
                     </label>
                     <div style="display: grid; grid-template-columns: 1fr; gap: 8px; background: #f9f9f9; padding: 10px; border-radius: 4px;">
-                        ${usuarioSelecionado.filiais.map(filial => `
+                        ${FILIAIS_SISTEMA.map(filial => `
                             <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; margin: 0;">
                                 <input 
                                     type="checkbox" 
@@ -256,6 +448,24 @@ function renderPainelPermissoes() {
                     </div>
                 </div>
 
+                <!-- PERMISSÃO EDITAR FÓRMULAS -->
+                <div style="margin-bottom: 20px;">
+                    <label style="font-weight: 600; display: block; margin-bottom: 10px; color: #1a3263;">
+                        <i class='bx bx-math'></i> Permissões Avançadas
+                    </label>
+                    <div style="display: grid; grid-template-columns: 1fr; gap: 8px; background: #f3e5ff; padding: 10px; border-radius: 4px; border-left: 3px solid #8b5cf6;">
+                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; margin: 0;">
+                            <input 
+                                type="checkbox" 
+                                ${podeEditarFormulas ? 'checked' : ''}
+                                onchange="window.togglePodeEditarFormulas(this.checked)"
+                                style="accent-color: #8b5cf6;">
+                            <span style="color: #6b21a8; font-weight: 500;">📐 Editar Fórmulas</span>
+                            <span style="font-size: 0.75rem; color: #7c3aed;">(Pode configurar fórmulas automáticas nas contas)</span>
+                        </label>
+                    </div>
+                </div>
+
                 <!-- BUSCA -->
                 <div class="filtro-campo" style="margin-bottom: 15px;">
                     <label>Buscar (Grupo, ID, Descrição)</label>
@@ -269,6 +479,9 @@ function renderPainelPermissoes() {
 
                 <!-- TOOLBAR -->
                 <div class="toolbar-permissoes">
+                    <button type="button" class="btn-toolbar" style="background: #6c757d; margin-right: auto;" onclick="window.voltarListaUsuarios()">
+                        <i class='bx bx-arrow-back'></i> Voltar
+                    </button>
                     <button type="button" class="btn-toolbar marcar" onclick="window.marcarTodos()">
                         <i class='bx bx-check-square'></i> Marcar Todos
                     </button>
@@ -473,6 +686,54 @@ window.toggleGeralEditar = function(marcado) {
     console.log(`✏️ Geral Editar: ${marcado}`);
 };
 
+window.togglePodeEditarFormulas = function(marcado) {
+    podeEditarFormulas = marcado;
+    console.log(`📐 Pode Editar Fórmulas: ${marcado}`);
+};
+
+// ===== FUNÇÕES PARA HIERARQUIA DE DEPARTAMENTOS =====
+window.toggleGrupoDeptos = function(grupoId) {
+    const elemento = document.getElementById(grupoId);
+    if (elemento) {
+        elemento.style.display = elemento.style.display === 'none' ? 'block' : 'none';
+    }
+};
+
+window.marcarTodosSubdeps = function(depPrincipal, marcado) {
+    const subdeps = ESTRUTURA_DEPARTAMENTOS[depPrincipal];
+    if (subdeps) {
+        Object.keys(subdeps).forEach(subdep => {
+            const nomeCombinado = `${depPrincipal} - ${subdep}`;
+            if (marcado) {
+                if (!departamentosMarkados.includes(nomeCombinado)) {
+                    departamentosMarkados.push(nomeCombinado);
+                }
+            } else {
+                departamentosMarkados = departamentosMarkados.filter(d => d !== nomeCombinado);
+            }
+        });
+    }
+    console.log(`🏢 Subdepartamentos de ${depPrincipal} ${marcado ? 'marcados' : 'desmarcados'}:`, departamentosMarkados);
+    renderPainelPermissoes();
+};
+
+window.voltarListaUsuarios = function() {
+    usuarioSelecionado = null;
+    departamentosMarkados = [];
+    filiaisMarkadas = [];
+    geralVisualizar = false;
+    geralEditar = false;
+    podeEditarFormulas = false;
+    
+    const painelPermissoes = document.getElementById('painel-permissoes');
+    if (painelPermissoes) {
+        painelPermissoes.innerHTML = '<div class="msg-selecione">Selecione um usuário para editar suas permissões</div>';
+    }
+    
+    renderListaUsuarios();
+    console.log('⬅️ Voltou para a lista de usuários');
+};
+
 // ===== SALVAR PERMISSÕES =====
 window.salvarPermissoes = async function() {
     if (!usuarioSelecionado) {
@@ -499,6 +760,7 @@ window.salvarPermissoes = async function() {
                 visualizar: geralVisualizar,
                 editar: geralEditar
             },
+            podeEditarFormulas: podeEditarFormulas, // Nova permissão
             dataSalva: new Date(),
             timestamp: new Date().getTime()
         });
