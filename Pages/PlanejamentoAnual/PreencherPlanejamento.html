@@ -12,7 +12,7 @@
     <link rel="stylesheet" href="/assets/css/Pages/Formularios/form-planejamento-anual.css">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
-        /* TELA INICIAL DE SELEÇÃO */
+        /* ===== TELA INICIAL DE SELEÇÃO ===== */
         #tela-selecao-filial {
             position: absolute;
             top: 0;
@@ -26,7 +26,6 @@
             transition: left 0.3s ease, width 0.3s ease;
         }
 
-        /* Quando sidebar está fechada */
         .sidebar.close ~ #tela-selecao-filial {
             left: 88px;
             width: calc(100% - 88px);
@@ -78,8 +77,9 @@
             margin-bottom: 35px;
         }
 
+        /* ===== CARDS DE DEPARTAMENTOS ===== */
         .card-departamento {
-            background: white;
+            background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
             color: #0f3460;
             padding: 40px 30px;
             border-radius: 16px;
@@ -91,7 +91,7 @@
             align-items: center;
             text-align: center;
             position: relative;
-            background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+            min-height: 180px;
         }
 
         .card-departamento::before {
@@ -152,6 +152,7 @@
             letter-spacing: 0.3px;
         }
 
+        /* ===== BOTÕES ===== */
         .btn-confirmar-selecao {
             width: 100%;
             background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
@@ -179,7 +180,24 @@
             box-shadow: none;
         }
 
-        /* Toast Notification */
+        .btn-voltar-selecao {
+            background: #6c757d;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: background 0.2s;
+        }
+
+        .btn-voltar-selecao:hover {
+            background: #5a6268;
+        }
+
+        /* ===== TOAST NOTIFICATIONS ===== */
         #toast-container {
             position: fixed;
             top: 20px;
@@ -228,6 +246,7 @@
             }
         }
 
+        /* ===== TELA DE PLANEJAMENTO ===== */
         #tela-planejamento {
             display: none;
             position: absolute;
@@ -239,28 +258,12 @@
             transition: left 0.3s ease, width 0.3s ease;
         }
 
-        /* Quando sidebar está fechada */
         .sidebar.close ~ #tela-planejamento {
             left: 88px;
             width: calc(100% - 88px);
         }
 
-        #tela-planejamento.ativo {
-            display: block;
-        }
-
-        /* TABELA DE PLANEJAMENTO */
-        .permissao-bloqueada {
-            background-color: #f0f0f0 !important;
-            cursor: not-allowed !important;
-            opacity: 0.6;
-        }
-        
-        .permissao-bloqueada input {
-            background-color: #e0e0e0 !important;
-            cursor: not-allowed !important;
-        }
-
+        /* ===== BADGES E BADGES DE PERMISSÃO ===== */
         .badge-permissao {
             display: inline-block;
             padding: 2px 8px;
@@ -275,46 +278,367 @@
             color: #155724;
         }
 
-        .badge-permissao.bloqueado {
-            background-color: #f8d7da;
-            color: #721c24;
+        /* ===== FILTRO DE FILIAIS PARA MODO GERAL ===== */
+        .filtro-filiais-container {
+            display: none;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border: 1px solid #e9ecef;
         }
 
-        .btn-voltar-selecao {
-            background: #6c757d;
-            color: white;
-            border: none;
-            padding: 8px 16px;
+        .filtro-filiais-container.ativo {
+            display: block;
+        }
+
+        /* Grid para filtros lado a lado */
+        .filtros-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .filtro-item {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .filtro-filiais-label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: #0f3460;
+            font-size: 14px;
+        }
+
+        .filtro-label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: #0f3460;
+            font-size: 14px;
+        }
+
+        /* Dropdown customizado de filiais e departamentos */
+        .dropdown-filiais,
+        .dropdown-departamentos {
+            position: relative;
+            width: 100%;
+        }
+
+        .dropdown-filiais-trigger,
+        .dropdown-departamentos-trigger {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #ddd;
             border-radius: 4px;
+            background-color: white;
             cursor: pointer;
             display: flex;
+            justify-content: space-between;
             align-items: center;
-            gap: 6px;
-            transition: background 0.2s;
+            transition: all 0.2s ease;
+            font-size: 14px;
+            color: #333;
         }
 
-        .btn-voltar-selecao:hover {
-            background: #5a6268;
+        .dropdown-filiais-trigger:hover,
+        .dropdown-departamentos-trigger:hover {
+            border-color: #3498db;
+            box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.1);
+        }
+
+        .dropdown-filiais-trigger.aberto,
+        .dropdown-departamentos-trigger.aberto {
+            border-color: #3498db;
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.15);
+        }
+
+        .dropdown-filiais-trigger i,
+        .dropdown-departamentos-trigger i {
+            font-size: 16px;
+            transition: transform 0.3s ease;
+        }
+
+        .dropdown-filiais-trigger.aberto i,
+        .dropdown-departamentos-trigger.aberto i {
+            transform: rotate(180deg);
+        }
+
+        .dropdown-filiais-content,
+        .dropdown-departamentos-content {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 1px solid #ddd;
+            border-top: none;
+            border-radius: 0 0 4px 4px;
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+            z-index: 100;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .dropdown-filiais-content.aberto,
+        .dropdown-departamentos-content.aberto {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .dropdown-filiais-item,
+        .dropdown-departamentos-item {
+            display: flex;
+            align-items: center;
+            padding: 10px 12px;
+            border-bottom: 1px solid #f0f0f0;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+
+        .dropdown-filiais-item:hover,
+        .dropdown-departamentos-item:hover {
+            background-color: #f8f9fa;
+        }
+
+        .dropdown-filiais-item:last-child,
+        .dropdown-departamentos-item:last-child {
+            border-bottom: none;
+        }
+
+        .dropdown-filiais-item input[type="checkbox"],
+        .dropdown-departamentos-item input[type="checkbox"] {
+            margin-right: 10px;
+            cursor: pointer;
+            width: 16px;
+            height: 16px;
+            accent-color: #3498db;
+        }
+
+        .dropdown-filiais-item label,
+        .dropdown-departamentos-item label {
+            flex: 1;
+            cursor: pointer;
+            margin: 0;
+            font-size: 13px;
+            color: #333;
+        }
+
+        .dropdown-filiais-resumo,
+        .dropdown-departamentos-resumo {
+            color: #666;
+            font-size: 12px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .badge-filiais-selecionadas,
+        .badge-departamentos-selecionados {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .badge-filial,
+        .badge-departamento {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: #e3f2fd;
+            color: #0f3460;
+            padding: 6px 12px;
+            border-radius: 16px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        /* Cabeçalho de seção de departamento */
+        .dropdown-departamento-secao {
+            padding: 10px 12px;
+            background-color: #f0f4f8;
+            border-bottom: 1px solid #e0e0e0;
+            font-weight: 700;
+            font-size: 13px;
+            color: #0f3460;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: default;
+        }
+
+        .dropdown-departamento-secao i {
+            font-size: 16px;
+            color: #3498db;
+        }
+
+        .dropdown-departamentos-item {
+            padding-left: 32px !important;
+        }
+
+        /* ===== FÓRMULAS ===== */
+        .btn-formula {
+            padding: 4px 8px;
+            background: #9b59b6;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 11px;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            margin-left: 8px;
+        }
+
+        .btn-formula:hover {
+            background: #8e44ad;
+            transform: translateY(-1px);
+        }
+
+        .btn-formula i {
+            font-size: 13px;
+        }
+
+        .icone-formula {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 20px;
+            height: 20px;
+            background: #9b59b6;
+            color: white;
+            border-radius: 50%;
+            font-size: 11px;
+            margin-left: 6px;
+            cursor: help;
+            transition: all 0.2s;
+        }
+
+        .icone-formula:hover {
+            background: #8e44ad;
+            transform: scale(1.1);
+        }
+
+        .campo-com-formula {
+            background: #f3e5f5 !important;
+            border: 1px solid #9b59b6 !important;
+            cursor: not-allowed !important;
+        }
+
+        /* ===== LOADING OVERLAY ===== */
+        #loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            backdrop-filter: blur(5px);
+        }
+
+        #loading-overlay.ativo {
+            display: flex;
+        }
+
+        .loading-content {
+            background: white;
+            padding: 40px 50px;
+            border-radius: 16px;
+            text-align: center;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            animation: fadeInScale 0.3s ease;
+        }
+
+        @keyframes fadeInScale {
+            from {
+                opacity: 0;
+                transform: scale(0.9);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .loading-spinner {
+            width: 60px;
+            height: 60px;
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #3498db;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            font-size: 18px;
+            font-weight: 600;
+            color: #0f3460;
+            margin-bottom: 8px;
+        }
+
+        .loading-subtext {
+            font-size: 14px;
+            color: #6c757d;
+        }
+
+        /* ===== REMOVER SPINNERS (SETINHAS) DOS INPUTS NUMÉRICOS ===== */
+        input[type="number"]::-webkit-inner-spin-button,
+        input[type="number"]::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        
+        input[type="number"] {
+            -moz-appearance: textfield;
         }
     </style>
 </head>
 <body>
 
-    <!-- Placeholder onde a Sidebar será carregada -->
+    <!-- Loading Overlay -->
+    <div id="loading-overlay">
+        <div class="loading-content">
+            <div class="loading-spinner"></div>
+            <div class="loading-text">Carregando dados...</div>
+            <div class="loading-subtext">Por favor, aguarde</div>
+        </div>
+    </div>
+
+    <!-- Sidebar Placeholder -->
     <nav id="sidebar-placeholder"></nav>
+    
+    <!-- Toast Container para notificações -->
     <div id="toast-container"></div>
 
-    <!-- TELA 1: SELEÇÃO DE FILIAL/DEPARTAMENTO -->
+    <!-- TELA 1: SELEÇÃO DE DEPARTAMENTO/FILIAL -->
     <div id="tela-selecao-filial">
         <div class="container-selecao">
             <h1>📋 Selecione o Departamento</h1>
             <p>Escolha qual departamento/filial você deseja preencher o planejamento anual:</p>
             
             <div class="grid-departamentos" id="grid-departamentos">
-                <!-- Preenchida dinamicamente -->
+                <!-- Preenchida dinamicamente pelo JavaScript -->
             </div>
 
-            <button type="button" class="btn-confirmar-selecao" id="btn-confirmar-filial" disabled>
+            <button type="button" class="btn-confirmar-selecao" id="btn-confirmar-selecao" disabled>
                 <i class='bx bx-check'></i> Confirmar Seleção
             </button>
         </div>
@@ -332,42 +656,102 @@
                 <div class="content-card-header">
                     <h2>Planejamento</h2>
                     <div class="header-actions">
-                        <button type="button" class="btn-voltar-selecao" id="btn-voltar-filial" title="Voltar para seleção">
+                        <button type="button" class="btn-voltar-selecao" id="btn-voltar-filial" title="Voltar para seleção de departamento">
                             <i class='bx bx-arrow-back'></i> Voltar
                         </button>
-                        <button type="button" class="btn-limpar-header" id="btn-historico" title="Ver Histórico">
+                        <button type="button" class="btn-limpar-header" id="btn-historico" title="Ver histórico de alterações">
                             <i class='bx bx-history'></i> Histórico
                         </button>
-                        <button type="button" class="btn-limpar-header" id="btn-limpar" title="Limpar Formulário">
+                        <button type="button" class="btn-limpar-header" id="btn-limpar" title="Limpar todos os valores">
                             <i class='bx bx-trash'></i> Limpar
                         </button>
-                        <button type="submit" form="form-planejamento" class="btn-salvar-header" title="Salvar Planejamento">
+                        <button type="submit" form="form-planejamento" class="btn-salvar-header" title="Salvar planejamento">
                             <i class='bx bx-save'></i> Salvar
                         </button>
                     </div>
                 </div>
                 <div class="content-card-body">
                     <form id="form-planejamento">
-                        <!-- BARRA DE PESQUISA E CONTROLES -->
+                        <!-- Barra de pesquisa e botões de controle -->
                         <div style="margin-bottom: 20px; display: flex; gap: 10px; align-items: center;">
                             <input 
                                 type="text" 
                                 id="input-pesquisa-planejamento" 
                                 placeholder="🔍 Pesquisar por conta ou descrição..."
                                 style="flex: 1; padding: 10px 12px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px;">
-                            <button type="button" class="btn-expandir-tabela" id="btn-expandir-todos-grupos" title="Expandir/Minimizar todos os grupos" style="padding: 8px 12px; background: #3498db; color: white; border: none; border-radius: 4px; cursor: pointer; display: flex; align-items: center; gap: 5px;">
+                            <button 
+                                type="button" 
+                                class="btn-expandir-tabela" 
+                                id="btn-expandir-todos-grupos" 
+                                title="Expandir/Minimizar todos os grupos" 
+                                style="padding: 8px 12px; background: #3498db; color: white; border: none; border-radius: 4px; cursor: pointer; display: flex; align-items: center; gap: 5px;">
                                 <i class='bx bx-expand'></i>
                                 <span>Expandir Tudo</span>
                             </button>
                         </div>
+
+                        <!-- Filtros para modo GERAL -->
+                        <div class="filtro-filiais-container" id="filtro-filiais-container">
+                            <div class="filtros-grid">
+                                <!-- Filtro de Filiais -->
+                                <div class="filtro-item">
+                                    <label class="filtro-label" for="dropdown-filiais">
+                                        <i class='bx bx-map-pin'></i> Selecione as Filiais:
+                                    </label>
+                                    <div class="dropdown-filiais" id="dropdown-filiais">
+                                        <button 
+                                            type="button" 
+                                            class="dropdown-filiais-trigger" 
+                                            id="dropdown-filiais-trigger"
+                                            onclick="window.toggleDropdownFiliais(event)">
+                                            <span class="dropdown-filiais-resumo" id="dropdown-filiais-resumo">Selecione filiais...</span>
+                                            <i class='bx bx-chevron-down'></i>
+                                        </button>
+                                        <div class="dropdown-filiais-content" id="dropdown-filiais-content">
+                                            <!-- Itens preenchidos dinamicamente -->
+                                        </div>
+                                    </div>
+                                    <div class="badge-filiais-selecionadas" id="badge-filiais-selecionadas">
+                                        <!-- Badges das filiais selecionadas -->
+                                    </div>
+                                </div>
+
+                                <!-- Filtro de Departamentos -->
+                                <div class="filtro-item">
+                                    <label class="filtro-label" for="dropdown-departamentos">
+                                        <i class='bx bx-filter-alt'></i> Filtrar por Departamento:
+                                    </label>
+                                    <div class="dropdown-departamentos" id="dropdown-departamentos">
+                                        <button 
+                                            type="button" 
+                                            class="dropdown-departamentos-trigger" 
+                                            id="dropdown-departamentos-trigger"
+                                            onclick="window.toggleDropdownDepartamentos(event)">
+                                            <span class="dropdown-departamentos-resumo" id="dropdown-departamentos-resumo">Todos os departamentos</span>
+                                            <i class='bx bx-chevron-down'></i>
+                                        </button>
+                                        <div class="dropdown-departamentos-content" id="dropdown-departamentos-content">
+                                            <!-- Itens preenchidos dinamicamente -->
+                                        </div>
+                                    </div>
+                                    <div class="badge-departamentos-selecionados" id="badge-departamentos-selecionados">
+                                        <!-- Badges dos departamentos selecionados -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                         
-                        <!-- TABELA DE PLANEJAMENTO -->
+                        <!-- Tabela de Planejamento -->
                         <div class="tabela-wrapper">
                             <table id="tabela-planejamento" class="tabela-planejamento">
                                 <thead>
                                     <tr>
                                         <th>
-                                            <button type="button" class="btn-expandir-tabela" id="btn-expandir-tudo" title="Expandir/Colapsar todas as contas">
+                                            <button 
+                                                type="button" 
+                                                class="btn-expandir-tabela" 
+                                                id="btn-expandir-tudo" 
+                                                title="Expandir/Colapsar todas as contas">
                                                 <i class='bx bx-expand'></i>
                                             </button>
                                             Conta
