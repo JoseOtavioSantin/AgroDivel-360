@@ -225,6 +225,7 @@
 
             const urlParams = new URLSearchParams(window.location.search);
             docId = urlParams.get('id');
+            const origem = urlParams.get('origem');
 
             if (docId) {
                 // MODO DE EDIÇÃO
@@ -236,6 +237,36 @@
             } else {
                 // MODO DE CRIAÇÃO
                 renderizarChecklists(); // Renderiza os checklists padrão
+                
+                // Se veio da página de Oportunidades, preencher os dados automaticamente
+                if (origem === 'oportunidades') {
+                    document.getElementById('form-title').textContent = 'Novo Plano - Oportunidade de Venda';
+                    document.getElementById('form-subtitle').textContent = 'Complete os dados abaixo para finalizar o plano.';
+                    
+                    const nomeCliente = urlParams.get('nomeCliente');
+                    const chassi = urlParams.get('chassi');
+                    const modelo = urlParams.get('modelo');
+                    const horasIniciais = urlParams.get('horasIniciais');
+                    const filial = urlParams.get('filial');
+                    const whatsapp = urlParams.get('whatsapp');
+                    const eula = urlParams.get('eula');
+                    
+                    if (nomeCliente) document.getElementById('cliente').value = nomeCliente;
+                    if (chassi) document.getElementById('chassi').value = chassi;
+                    if (modelo) document.getElementById('modelo').value = modelo;
+                    if (horasIniciais) document.getElementById('horasIni').value = horasIniciais;
+                    
+                    // Destacar visualmente os campos preenchidos
+                    setTimeout(() => {
+                        ['cliente', 'chassi', 'modelo', 'horasIni'].forEach(id => {
+                            const campo = document.getElementById(id);
+                            if (campo && campo.value) {
+                                campo.style.backgroundColor = '#e8f5e9';
+                                campo.style.border = '2px solid #4caf50';
+                            }
+                        });
+                    }, 100);
+                }
             }
 
             document.getElementById('formPlano').addEventListener('submit', salvarPlano);

@@ -976,28 +976,26 @@
         const app = getApp();
         const db = getFirestore(app);
         
+        // OTIMIZAÇÃO: Verificar duplicatas no frontend usando dados já carregados
+        const chavesExistentes = new Set(
+          dadosCompletos.map(d => `${d.filial}_${d.data}_${d.numeroNF}_${d.codProduto}`)
+        );
+        
+        console.log(`[salvarDados] Verificando ${dadosProcessados.length} registros contra ${chavesExistentes.size} existentes`);
+        
+        // Batch writes para melhor performance
+        const batch = [];
+        
         for (const item of dadosProcessados) {
-          // Verificar se a filial está nas 3 permitidas
           if (FILIAIS.includes(item.filial)) {
-            // Criar chave única para evitar duplicatas: filial + data + numeroNF + codProduto
             const chaveUnica = `${item.filial}_${item.data}_${item.numeroNF}_${item.codProduto}`;
             
-            // Verificar se já existe um documento com essa chave única
-            const q = query(
-              collection(db, "relatorioLubrificantes"),
-              where("filial", "==", item.filial),
-              where("data", "==", item.data),
-              where("numeroNF", "==", item.numeroNF),
-              where("codProduto", "==", item.codProduto)
-            );
-            
-            const querySnapshot = await getDocs(q);
-            
-            if (querySnapshot.empty) {
-              // Não existe duplicata, pode salvar
+            // Verificar duplicata no cache local (SEM query Firebase)
+            if (!chavesExistentes.has(chaveUnica)) {
               const dadosParaSalvar = {
                 filial: item.filial,
                 data: item.data,
+                dataYYYYMMDD: ddmmaaaaToYyyymmdd(item.data), // Para filtros rápidos
                 grupo: item.grupo || '',
                 numeroNF: item.numeroNF,
                 codProduto: item.codProduto,
@@ -1008,23 +1006,28 @@
                 unidade: item.unidade,
                 litros: item.litros,
                 totalLitros: item.totalLitros,
-                chaveUnica: chaveUnica, // Adicionar chave única para facilitar buscas futuras
+                chaveUnica: chaveUnica,
                 usuarioImportacao: userData?.nome || userData?.email || '',
                 dataImportacao: Timestamp.now(),
                 timestamp: Timestamp.now()
               };
-              await addDoc(collection(db, "relatorioLubrificantes"), dadosParaSalvar);
+              
+              batch.push(dadosParaSalvar);
+              chavesExistentes.add(chaveUnica); // Adicionar ao cache
               salvosCount++;
             } else {
-              // Já existe, pular
               duplicatasCount++;
             }
           }
         }
         
-        // Mostrar mensagem com informações sobre duplicatas
+        // Salvar em lote (mais eficiente)
+        for (const dados of batch) {
+          await addDoc(collection(db, "relatorioLubrificantes"), dados);
+        }
+        
         if (duplicatasCount > 0) {
-          console.log(`ℹ️ ${duplicatasCount} registro(s) duplicado(s) ignorado(s)`);
+          console.log(`ℹ️ ${duplicatasCount} registro(s) duplicado(s) ignorado(s) (validação local)`);
         }
         
         return { salvos: salvosCount, duplicatas: duplicatasCount };
@@ -1220,12 +1223,33 @@
     async function carregarDados() {
       const app = getApp();
       const db = getFirestore(app);
-      const q = query(collection(db, "relatorioLubrificantes"), where("filial", "in", FILIAIS));
+      
+      // OTIMIZAÇÃO: Filtro de 2 anos será feito no frontend (dados antigos não têm dataYYYYMMDD)
+      const doisAnosAtras = new Date();
+      doisAnosAtras.setFullYear(doisAnosAtras.getFullYear() - 2);
+      const dataLimite = doisAnosAtras.toISOString().split('T')[0]; // YYYY-MM-DD
+      
+      console.log(`[carregarDados] Carregando vendas e filtrando desde: ${dataLimite}`);
+      
+      const q = query(
+        collection(db, "relatorioLubrificantes"),
+        where("filial", "in", FILIAIS)
+      );
+      
       const snap = await getDocs(q);
       dadosCompletos = [];
+      let filtrados = 0;
+      
       snap.forEach(doc=>{
         const d = doc.data();
-        const dataYYYYMMDD = ddmmaaaaToYyyymmdd(d.data);
+        const dataYYYYMMDD = d.dataYYYYMMDD || ddmmaaaaToYyyymmdd(d.data);
+        
+        // Filtrar últimos 2 anos no frontend
+        if (dataYYYYMMDD && dataYYYYMMDD < dataLimite) {
+          filtrados++;
+          return; // Ignorar dados muito antigos
+        }
+        
         dadosCompletos.push({
           ...d,
           quantNF: Number(d.quantNF)||0,
@@ -1238,6 +1262,8 @@
           codProduto: d.codProduto || ''
         });
       });
+      
+      console.log(`[carregarDados] ${dadosCompletos.length} registros carregados (${filtrados} antigos ignorados)`);
     }
 
     function filtrar() {
@@ -1760,37 +1786,72 @@
             return;
           }
           
-          // Pegar próximo mês para análise (mês seguinte ao atual)
+          // Pegar mês atual para buscar histórico e prever próximo mês
           const hoje = new Date();
-          const proximoMes = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 1); // Primeiro dia do próximo mês
-          const mesAnalise = proximoMes.getMonth() + 1;
-          const anoAnalise = proximoMes.getFullYear();
+          const mesAtual = hoje.getMonth() + 1; // Mês atual (1-12)
+          const anoAtual = hoje.getFullYear();
           
-          // Calcular os 2 anos anteriores dinamicamente
-          const anoUmAnoAtras = anoAnalise - 1;
-          const anoDoisAnosAtras = anoAnalise - 2;
+          // Mês que queremos prever (próximo mês)
+          const proximoMes = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 1);
+          const mesPrevisao = proximoMes.getMonth() + 1;
+          const anoPrevisao = proximoMes.getFullYear();
+          
+          // Buscar histórico do MÊS ATUAL nos anos anteriores (não do mês de previsão)
+          const anoUmAnoAtras = anoAtual - 1;
+          const anoDoisAnosAtras = anoAtual - 2;
+          
+          console.log(`[ANÁLISE] Prevendo necessidade para: ${mesPrevisao}/${anoPrevisao}`);
+          console.log(`[ANÁLISE] Usando histórico de vendas de: ${mesPrevisao}/${anoDoisAnosAtras} e ${mesPrevisao}/${anoUmAnoAtras}`);
           
           // Atualizar texto informativo
           const meses = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
-          document.getElementById('ano-comparacao').textContent = `${anoDoisAnosAtras} e ${anoUmAnoAtras} (Análise para ${meses[mesAnalise - 1]}/${anoAnalise})`;
+          document.getElementById('ano-comparacao').textContent = `${anoDoisAnosAtras} e ${anoUmAnoAtras} (Previsão para ${meses[mesPrevisao - 1]}/${anoPrevisao} baseada em ${meses[mesPrevisao - 1]})`;
           
           // Processar estoque atual
           const estoqueAtual = [];
+          const filiaisEncontradas = new Set(); // Debug: rastrear quais filiais aparecem no CSV
+          let linhasIgnoradas = { total: 0, semFilial: 0, semCodigo: 0, fiscalZero: 0, filialInvalida: 0, colunasFaltando: 0 };
+          
           for (let i = 1; i < linhas.length; i++) {
             const linha = linhas[i].trim();
             if (!linha || linha.startsWith('TOTAL')) continue;
             
             const colunas = linha.split(';');
-            if (colunas.length < 13) continue;
+            if (colunas.length < 13) {
+              linhasIgnoradas.colunasFaltando++;
+              console.warn(`[ANÁLISE] Linha ${i+1}: apenas ${colunas.length} colunas (mínimo: 13)`);
+              continue;
+            }
             
             const filial = colunas[0]?.trim();
+            filiaisEncontradas.add(filial); // Debug
+            
             const codProduto = colunas[2]?.trim().replace(/[="()]/g, '');
             const descricao = colunas[3]?.trim();
             const grupo = colunas[4]?.trim();
             const descGrupo = colunas[5]?.trim();
-            const fiscal = parseFloat(colunas[11]?.trim().replace(',', '.')) || 0;
+            const fiscalStr = colunas[11]?.trim();
+            const fiscal = parseFloat(fiscalStr?.replace(',', '.')) || 0;
             
-            if (!codProduto || fiscal === 0 || !FILIAIS.includes(filial)) continue;
+            // Debug detalhado para as primeiras 3 linhas
+            if (i <= 3) {
+              console.log(`[ANÁLISE] Linha ${i+1}: Filial="${filial}", Cod="${codProduto}", Fiscal="${fiscalStr}" -> ${fiscal}`);
+            }
+            
+            if (!codProduto) {
+              linhasIgnoradas.semCodigo++;
+              continue;
+            }
+            if (fiscal === 0) {
+              linhasIgnoradas.fiscalZero++;
+              if (i <= 5) console.log(`[ANÁLISE] Linha ${i+1} ignorada: fiscal = 0 (string original: "${fiscalStr}")`);
+              continue;
+            }
+            if (!FILIAIS.includes(filial)) {
+              linhasIgnoradas.filialInvalida++;
+              console.warn(`[ANÁLISE] Filial "${filial}" não está em FILIAIS (permitidas: ${FILIAIS.join(', ')})`);
+              continue;
+            }
             
             // Calcular litros
             const conversoesInfo = obterLitrosPorUnidade(codProduto, descricao, descGrupo);
@@ -1807,58 +1868,124 @@
             });
           }
           
-          // Buscar vendas de 2 anos atrás E 1 ano atrás no mês de análise (próximo mês)
-          const mesKey2AnosAtras = `${anoDoisAnosAtras}-${String(mesAnalise).padStart(2, '0')}`;
-          const mesKey1AnoAtras = `${anoUmAnoAtras}-${String(mesAnalise).padStart(2, '0')}`;
-          const db = getFirestore(getApp());
-          const q = query(
-            collection(db, "relatorioLubrificantes"),
-            where("filial", "in", FILIAIS)
+          // Debug: mostrar estatísticas de processamento
+          console.log('[ANÁLISE] Estatísticas de processamento do CSV:');
+          console.log('  Total de linhas ignoradas:', linhasIgnoradas.total);
+          console.log('  - Colunas faltando (<13):', linhasIgnoradas.colunasFaltando);
+          console.log('  - Sem código de produto:', linhasIgnoradas.semCodigo);
+          console.log('  - Fiscal = 0:', linhasIgnoradas.fiscalZero);
+          console.log('  - Filial inválida:', linhasIgnoradas.filialInvalida);
+          console.log('[ANÁLISE] Filiais encontradas no CSV:', Array.from(filiaisEncontradas).join(', '));
+          console.log('[ANÁLISE] Total de itens de estoque processados:', estoqueAtual.length);
+          console.log('[ANÁLISE] Distribuição por filial:', 
+            FILIAIS.map(f => `${NOMES_FILIAIS[f]}: ${estoqueAtual.filter(e => e.filial === f).length} itens`).join(', ')
           );
-          const snap = await getDocs(q);
           
-          // Buscar vendas e consolidar por códigos equivalentes
+          // Buscar vendas de 2 anos atrás E 1 ano atrás do MESMO MÊS que queremos prever
+          const mesKey2AnosAtras = `${anoDoisAnosAtras}-${String(mesPrevisao).padStart(2, '0')}`;
+          const mesKey1AnoAtras = `${anoUmAnoAtras}-${String(mesPrevisao).padStart(2, '0')}`;
+          
+          // OTIMIZAÇÃO: Usar dados já carregados ao invés de query nova
+          console.log('[ANÁLISE] Usando dados já carregados em memória (sem query adicional)');
+          
+          // Se dadosCompletos estiver vazio, carregar
+          if (dadosCompletos.length === 0) {
+            await carregarDados();
+          }
+          
+          // Buscar vendas e consolidar por códigos equivalentes E FILIAL
+          // Estrutura: vendas2AnosAtras[filial][codigo] = { litros, unidades }
           const vendas2AnosAtras = {};
           const vendas1AnoAtras = {};
-          snap.forEach(doc => {
-            const d = doc.data();
-            const dataConverted = ddmmaaaaToYyyymmdd(d.data);
+          
+          // Inicializar estrutura por filial
+          FILIAIS.forEach(f => {
+            vendas2AnosAtras[f] = {};
+            vendas1AnoAtras[f] = {};
+          });
+          
+          // OTIMIZAÇÃO: Processar dados já em memória
+          dadosCompletos.forEach(d => {
+            const dataConverted = d.dataYYYYMMDD || ddmmaaaaToYyyymmdd(d.data);
             if (!dataConverted) return;
             const mesAno = dataConverted.slice(0, 7);
             const cod = d.codProduto || '';
+            const filial = d.filial || '';
+            
+            if (!FILIAIS.includes(filial)) return;
             
             // Vendas de 2 anos atrás
             if (mesAno === mesKey2AnosAtras) {
-              if (!vendas2AnosAtras[cod]) {
-                vendas2AnosAtras[cod] = { litros: 0, unidades: 0 };
+              if (!vendas2AnosAtras[filial][cod]) {
+                vendas2AnosAtras[filial][cod] = { litros: 0, unidades: 0 };
               }
-              vendas2AnosAtras[cod].litros += (d.totalLitros || 0);
-              vendas2AnosAtras[cod].unidades += (d.quantNF || 0);
+              vendas2AnosAtras[filial][cod].litros += (d.totalLitros || 0);
+              vendas2AnosAtras[filial][cod].unidades += (d.quantConvertida || 0);
             }
             
             // Vendas de 1 ano atrás
             if (mesAno === mesKey1AnoAtras) {
-              if (!vendas1AnoAtras[cod]) {
-                vendas1AnoAtras[cod] = { litros: 0, unidades: 0 };
+              if (!vendas1AnoAtras[filial][cod]) {
+                vendas1AnoAtras[filial][cod] = { litros: 0, unidades: 0 };
               }
-              vendas1AnoAtras[cod].litros += (d.totalLitros || 0);
-              vendas1AnoAtras[cod].unidades += (d.quantNF || 0);
+              vendas1AnoAtras[filial][cod].litros += (d.totalLitros || 0);
+              vendas1AnoAtras[filial][cod].unidades += (d.quantConvertida || 0);
             }
           });
           
-          // Consolidar vendas de códigos equivalentes
-          // Para cada código no estoque, somar vendas de todos seus equivalentes
-          function obterVendasConsolidadas(codigo, vendasMap) {
+          // Debug: verificar vendas carregadas
+          console.log('[ANÁLISE] Vendas carregadas por filial:');
+          FILIAIS.forEach(f => {
+            const count2Anos = Object.keys(vendas2AnosAtras[f] || {}).length;
+            const count1Ano = Object.keys(vendas1AnoAtras[f] || {}).length;
+            console.log(`  ${NOMES_FILIAIS[f]}: ${count2Anos} produtos em ${anoDoisAnosAtras}, ${count1Ano} produtos em ${anoUmAnoAtras}`);
+            
+            // Debug específico para códigos equivalentes
+            const codsDebug = ['76176R61BR', 'NH410B'];
+            codsDebug.forEach(cod => {
+              if (vendas1AnoAtras[f] && vendas1AnoAtras[f][cod]) {
+                console.log(`    ${cod} em ${anoUmAnoAtras}: ${Math.round(vendas1AnoAtras[f][cod].litros)}L`);
+              }
+              if (vendas2AnosAtras[f] && vendas2AnosAtras[f][cod]) {
+                console.log(`    ${cod} em ${anoDoisAnosAtras}: ${Math.round(vendas2AnosAtras[f][cod].litros)}L`);
+              }
+            });
+          });
+          
+          // Consolidar vendas de códigos equivalentes POR FILIAL
+          // Para cada código no estoque, somar vendas de todos seus equivalentes NA MESMA FILIAL
+          function obterVendasConsolidadas(codigo, filial, vendasMap) {
             const equivalentes = obterCodigosEquivalentes(codigo);
             let totalLitros = 0;
             let totalUnidades = 0;
             
+            if (!vendasMap[filial]) return { litros: 0, unidades: 0 };
+            
+            // Debug para códigos específicos
+            const debugCodigos = ['76176R61BR', 'NH410B'];
+            const isDebug = debugCodigos.some(d => codigo.toUpperCase().includes(d));
+            
+            if (isDebug) {
+              console.log(`[CONSOLIDAÇÃO] Código: ${codigo}, Filial: ${NOMES_FILIAIS[filial]}`);
+              console.log(`  Equivalentes encontrados:`, equivalentes);
+            }
+            
             equivalentes.forEach(codEquiv => {
-              if (vendasMap[codEquiv]) {
-                totalLitros += vendasMap[codEquiv].litros;
-                totalUnidades += vendasMap[codEquiv].unidades;
+              if (vendasMap[filial][codEquiv]) {
+                const litros = vendasMap[filial][codEquiv].litros;
+                const unidades = vendasMap[filial][codEquiv].unidades;
+                totalLitros += litros;
+                totalUnidades += unidades;
+                
+                if (isDebug) {
+                  console.log(`    ${codEquiv}: ${Math.round(litros)}L, ${Math.round(unidades)} unid`);
+                }
               }
             });
+            
+            if (isDebug) {
+              console.log(`  Total consolidado: ${Math.round(totalLitros)}L, ${Math.round(totalUnidades)} unid`);
+            }
             
             return { litros: totalLitros, unidades: totalUnidades };
           }
@@ -1867,34 +1994,41 @@
           const tbody = document.getElementById('corpo-tabela-analise');
           tbody.innerHTML = '';
           
-          // Agrupar estoque por produto
-          const estoquePorProduto = {};
+          // Agrupar estoque por produto E FILIAL
+          // Chave: 'filial|codProduto'
+          const estoquePorProdutoFilial = {};
           estoqueAtual.forEach(item => {
-            if (!estoquePorProduto[item.codProduto]) {
-              estoquePorProduto[item.codProduto] = {
+            const chave = `${item.filial}|${item.codProduto}`;
+            if (!estoquePorProdutoFilial[chave]) {
+              estoquePorProdutoFilial[chave] = {
                 descricao: item.descricao,
+                filial: item.filial,
+                codProduto: item.codProduto,
                 litros: 0,
                 unidades: 0,
                 litrosPorUnidade: item.litrosPorUnidade
               };
             }
-            estoquePorProduto[item.codProduto].litros += item.totalLitros;
-            estoquePorProduto[item.codProduto].unidades += item.unidades;
+            estoquePorProdutoFilial[chave].litros += item.totalLitros;
+            estoquePorProdutoFilial[chave].unidades += item.unidades;
           });
           
           // Criar linhas da tabela
-          const produtos = Object.keys(estoquePorProduto);
+          const chaves = Object.keys(estoquePorProdutoFilial);
           let totalLinhas = 0;
           let totalSuficiente = 0;
           let totalFalta = 0;
           let totalSemHistorico = 0;
           
           // Preparar array com dados para ordenação
-          const produtosComStatus = produtos.map(cod => {
-            const estoque = estoquePorProduto[cod];
-            // Buscar vendas consolidadas considerando códigos equivalentes
-            const vendas2Anos = obterVendasConsolidadas(cod, vendas2AnosAtras);
-            const vendas1Ano = obterVendasConsolidadas(cod, vendas1AnoAtras);
+          const produtosComStatus = chaves.map(chave => {
+            const estoque = estoquePorProdutoFilial[chave];
+            const cod = estoque.codProduto;
+            const filial = estoque.filial;
+            
+            // Buscar vendas consolidadas considerando códigos equivalentes DA MESMA FILIAL
+            const vendas2Anos = obterVendasConsolidadas(cod, filial, vendas2AnosAtras);
+            const vendas1Ano = obterVendasConsolidadas(cod, filial, vendas1AnoAtras);
             
             // Calcular média de vendas dos 2 anos
             const mediaLitros = (vendas2Anos.litros + vendas1Ano.litros) / 2;
@@ -1951,6 +2085,8 @@
           // Criar linhas
           produtosComStatus.forEach((produto, index) => {
             const { cod, estoque, vendas2Anos, vendas1Ano, mediaLitros, estimativaLitros, status, badgeClass } = produto;
+            const filial = estoque.filial;
+            const nomeFilial = NOMES_FILIAIS[filial] || `Filial ${filial}`;
             
             // Contar por status
             if (produto.prioridade === 1) totalFalta++;
@@ -1968,15 +2104,16 @@
             tr.innerHTML = `
               <td style="padding:16px 20px;">
                 <div style="display:flex; flex-direction:column; gap:4px;">
-                  <strong style="color:#fff; font-size:14px; font-weight:700;">${cod}</strong>
+                  <strong style="color:#193b7c; font-size:14px; font-weight:700;">${cod}</strong>
                   <small style="color:#666; font-size:12px;">${estoque.descricao}</small>
+                  <span style="display:inline-block; margin-top:4px; padding:4px 10px; background:#193b7c; color:white; border-radius:12px; font-size:11px; font-weight:600; width:fit-content;">${nomeFilial}</span>
                 </div>
               </td>
               <td style="padding:16px 20px; text-align:center;">
-                <strong style="color:#fff; font-size:17px; font-weight:700;">${Math.round(estoque.litros)}L</strong>
+                <strong style="color:#193b7c; font-size:17px; font-weight:700;">${Math.round(estoque.litros)}L</strong>
               </td>
               <td style="padding:16px 20px; text-align:center;">
-                <span style="color:#fff; font-size:15px; font-weight:600;">${Math.round(estoque.unidades)}</span>
+                <span style="color:#193b7c; font-size:15px; font-weight:600;">${Math.round(estoque.unidades)}</span>
               </td>
               <td style="padding:16px 20px; text-align:center;">
                 <div class="vendas-historicas">
