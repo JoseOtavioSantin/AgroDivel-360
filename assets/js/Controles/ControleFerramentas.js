@@ -264,26 +264,48 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // --- LÓGICA DO FIREBASE (CRUD) ---
-    function carregarDados() {
-        gruposCollection.orderBy('nome').onSnapshot(snapshot => {
-            todosGrupos = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    // OTIMIZAÇÃO: Usar getDocs ao invés de onSnapshot para reduzir leituras
+    async function carregarDados() {
+        try {
+            console.log('[ControleFerramentas] Carregando dados...');
+            
+            // Carregar grupos
+            const gruposSnapshot = await gruposCollection.orderBy('nome').get();
+            todosGrupos = gruposSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            console.log(`[ControleFerramentas] ${todosGrupos.length} grupos carregados`);
             renderizarListaGrupos();
             atualizarSelectsDeGrupo();
-            aplicarFiltrosEstoque();
-        });
-        ferramentasCollection.orderBy('codigo').onSnapshot(snapshot => {
-            todasFerramentas = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            
+            // Carregar ferramentas
+            const ferramentasSnapshot = await ferramentasCollection.orderBy('codigo').get();
+            todasFerramentas = ferramentasSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            console.log(`[ControleFerramentas] ${todasFerramentas.length} ferramentas carregadas`);
+            
+            // Carregar alocações
+            const alocacoesSnapshot = await alocacoesCollection.orderBy('dataAlocacao', 'desc').get();
+            todasAlocacoes = alocacoesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            console.log(`[ControleFerramentas] ${todasAlocacoes.length} alocações carregadas`);
+            
+            // Carregar histórico (apenas últimos 100 registros)
+            const historicoSnapshot = await historicoCollection.orderBy('timestamp', 'desc').limit(100).get();
+            todoHistorico = historicoSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            console.log(`[ControleFerramentas] ${todoHistorico.length} registros de histórico carregados`);
+            
+            // Aplicar filtros iniciais
             aplicarFiltrosEstoque();
             aplicarFiltrosAlocacao();
-        });
-        alocacoesCollection.orderBy('dataAlocacao', 'desc').onSnapshot(snapshot => {
-            todasAlocacoes = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            aplicarFiltrosAlocacao();
-        });
-        historicoCollection.orderBy('timestamp', 'desc').onSnapshot(snapshot => {
-            todoHistorico = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
             aplicarFiltrosHistorico();
-        });
+            
+            console.log('[ControleFerramentas] Dados carregados com sucesso');
+        } catch (error) {
+            console.error('[ControleFerramentas] Erro ao carregar dados:', error);
+            showToast('Erro ao carregar dados. Recarregue a página.', 'error');
+        }
+    }
+    
+    // Função para recarregar dados quando necessário (após criação/edição/exclusão)
+    async function recarregarDados() {
+        await carregarDados();
     }
 
     // --- LÓGICA DOS MODAIS E FORMULÁRIOS ---
@@ -304,6 +326,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 await gruposCollection.add({ nome });
                 nomeInput.value = '';
                 showToast('Grupo adicionado com sucesso!', 'success');
+                await recarregarDados(); // Recarregar dados
             } catch (error) {
                 showToast('Erro ao adicionar grupo', 'error');
             }
@@ -321,7 +344,10 @@ document.addEventListener("DOMContentLoaded", () => {
             }
             if (confirm('Tem certeza que deseja remover este grupo?')) {
                 gruposCollection.doc(id).delete()
-                    .then(() => showToast('Grupo removido com sucesso!', 'success'))
+                    .then(async () => {
+                        showToast('Grupo removido com sucesso!', 'success');
+                        await recarregarDados(); // Recarregar dados
+                    })
                     .catch(() => showToast('Erro ao remover grupo', 'error'));
             }
         }
@@ -369,7 +395,10 @@ document.addEventListener("DOMContentLoaded", () => {
         if (btnRemover) {
             if (confirm('Tem certeza que deseja remover esta ferramenta? Esta ação não pode ser desfeita.')) {
                 ferramentasCollection.doc(btnRemover.dataset.id).delete()
-                    .then(() => showToast('Ferramenta removida com sucesso!', 'success'))
+                    .then(async () => {
+                        showToast('Ferramenta removida com sucesso!', 'success');
+                        await recarregarDados(); // Recarregar dados
+                    })
                     .catch(() => showToast('Erro ao remover ferramenta', 'error'));
             }
         }
@@ -387,6 +416,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     await alocacoesCollection.doc(btnDevolver.dataset.id).delete();
                     await adicionarHistorico('devolucao', ferramentaId, { funcionario: funcionario });
                     showToast('Ferramenta devolvida com sucesso!', 'success');
+                    await recarregarDados(); // Recarregar dados
                 } catch (error) {
                     showToast('Erro ao devolver ferramenta', 'error');
                 }

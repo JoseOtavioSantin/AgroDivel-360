@@ -35,6 +35,17 @@ let departamentosSelecionadosGeral = []; // Departamentos selecionados no filtro
 let podeEditarFormulas = false; // Permissão para editar fórmulas
 let formulasContas = {}; // Armazenamento de fórmulas: { "Grupo_ContaID": "=CONTA_123 * 0.0165" }
 
+// ===== OTIMIZAÇÕES DE PERFORMANCE =====
+let debounceTimers = {}; // Timers para debounce de salvamento
+let historicoEmBatch = []; // Batch de itens de histórico para salvar de uma vez
+let batchTimerHistorico = null; // Timer para salvar histórico em batch
+const DEBOUNCE_DELAY = 120000; // 2 minutos de delay antes de salvar automaticamente
+const BATCH_HISTORICO_DELAY = 10000; // 10 segundos para acumular histórico
+const CACHE_KEY_PREFIX = 'planejamento_cache_'; // Prefixo para cache no localStorage
+const CACHE_EXPIRATION = 1000 * 60 * 30; // 30 minutos de cache
+let isSaving = false; // Flag para indicar se está salvando
+let temAlteracoesPendentes = false; // Flag para indicar se há alterações não salvas
+
 // Meses do ano
 const MESES = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
 
@@ -53,6 +64,137 @@ function mostrarLoading(texto = 'Carregando dados...', subtexto = 'Por favor, ag
 function esconderLoading() {
     const overlay = document.getElementById('loading-overlay');
     overlay.classList.remove('ativo');
+}
+
+// ===== INDICADOR DE SALVAMENTO =====
+function mostrarIndicadorSalvamento(acao = 'salvando') {
+    let indicador = document.getElementById('indicador-salvamento');
+    
+    if (!indicador) {
+        indicador = document.createElement('div');
+        indicador.id = 'indicador-salvamento';
+        indicador.style.cssText = `
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            z-index: 10000;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: all 0.3s ease;
+            opacity: 0;
+            transform: translateY(20px);
+        `;
+        document.body.appendChild(indicador);
+    }
+    
+    if (acao === 'salvando') {
+        indicador.innerHTML = '<i class="bx bx-loader-alt bx-spin"></i> Salvando alterações...';
+        indicador.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+    } else if (acao === 'salvo') {
+        indicador.innerHTML = '<i class="bx bx-check-circle"></i> Salvo com sucesso!';
+        indicador.style.background = 'linear-gradient(135deg, #11998e 0%, #38ef7d 100%)';
+    } else if (acao === 'erro') {
+        indicador.innerHTML = '<i class="bx bx-error-circle"></i> Erro ao salvar';
+        indicador.style.background = 'linear-gradient(135deg, #eb3349 0%, #f45c43 100%)';
+    } else if (acao === 'pendente') {
+        indicador.innerHTML = '<i class="bx bx-time"></i> Alterações não salvas (clique em Salvar)';
+        indicador.style.background = 'linear-gradient(135deg, #f39c12 0%, #f1c40f 100%)';
+    } else if (acao === 'pendente') {
+        indicador.innerHTML = '<i class="bx bx-time"></i> Alterações não salvas';
+        indicador.style.background = 'linear-gradient(135deg, #f39c12 0%, #f1c40f 100%)';
+    }
+    
+    indicador.style.opacity = '1';
+    indicador.style.transform = 'translateY(0)';
+    
+    // Só fechar automaticamente se for "salvo" ou "erro"
+    // "pendente" fica visível até salvar de verdade
+    if (acao === 'salvo' || acao === 'erro') {
+        setTimeout(() => {
+            indicador.style.opacity = '0';
+            indicador.style.transform = 'translateY(20px)';
+        }, 3000);
+    }
+}
+
+function esconderIndicadorSalvamento() {
+    const indicador = document.getElementById('indicador-salvamento');
+    if (indicador) {
+        indicador.style.opacity = '0';
+        indicador.style.transform = 'translateY(20px)';
+    }
+}
+
+// ===== FUNÇÕES DE CACHE (LOCALSTORAGE) =====
+function salvarNoCache(chave, dados) {
+    try {
+        const cacheData = {
+            dados: dados,
+            timestamp: Date.now()
+        };
+        localStorage.setItem(CACHE_KEY_PREFIX + chave, JSON.stringify(cacheData));
+        console.log(`💾 Dados salvos no cache: ${chave}`);
+    } catch (error) {
+        console.warn('⚠️ Erro ao salvar no cache:', error);
+        // Se o localStorage estiver cheio, limpar caches antigos
+        limparCachesAntigos();
+    }
+}
+
+function obterDoCache(chave) {
+    try {
+        const cachedItem = localStorage.getItem(CACHE_KEY_PREFIX + chave);
+        if (!cachedItem) return null;
+        
+        const cacheData = JSON.parse(cachedItem);
+        const agora = Date.now();
+        
+        // Verificar se o cache expirou
+        if (agora - cacheData.timestamp > CACHE_EXPIRATION) {
+            console.log(`⏰ Cache expirado: ${chave}`);
+            localStorage.removeItem(CACHE_KEY_PREFIX + chave);
+            return null;
+        }
+        
+        console.log(`✅ Dados obtidos do cache: ${chave}`);
+        return cacheData.dados;
+    } catch (error) {
+        console.warn('⚠️ Erro ao obter do cache:', error);
+        return null;
+    }
+}
+
+function limparCachesAntigos() {
+    try {
+        const agora = Date.now();
+        const chavesParaRemover = [];
+        
+        for (let i = 0; i < localStorage.length; i++) {
+            const chave = localStorage.key(i);
+            if (chave && chave.startsWith(CACHE_KEY_PREFIX)) {
+                const cachedItem = localStorage.getItem(chave);
+                if (cachedItem) {
+                    const cacheData = JSON.parse(cachedItem);
+                    if (agora - cacheData.timestamp > CACHE_EXPIRATION) {
+                        chavesParaRemover.push(chave);
+                    }
+                }
+            }
+        }
+        
+        chavesParaRemover.forEach(chave => localStorage.removeItem(chave));
+        console.log(`🧹 ${chavesParaRemover.length} caches antigos removidos`);
+    } catch (error) {
+        console.warn('⚠️ Erro ao limpar caches antigos:', error);
+    }
 }
 
 // ===== ESTRUTURA HIERÁRQUICA DE DEPARTAMENTOS =====
@@ -532,6 +674,132 @@ window.removerFormula = async function(chaveConta) {
         renderTabela(); // Re-renderizar tabela
     }
 };
+
+// ===== FUNÇÕES DE BATCH DE HISTÓRICO =====
+async function adicionarAoHistoricoBatch(itemHistorico) {
+    historicoEmBatch.push(itemHistorico);
+    console.log(`📝 Item adicionado ao batch. Total no batch: ${historicoEmBatch.length}`);
+    
+    // Cancelar timer anterior se existir
+    if (batchTimerHistorico) {
+        clearTimeout(batchTimerHistorico);
+    }
+    
+    // Configurar novo timer para salvar após BATCH_HISTORICO_DELAY
+    batchTimerHistorico = setTimeout(async () => {
+        await salvarHistoricoBatch();
+    }, BATCH_HISTORICO_DELAY);
+}
+
+// Função para forçar salvamento imediato de todas as alterações pendentes
+async function salvarTodasAlteracoesPendentes() {
+    console.log('💾 Forçando salvamento imediato de todas as alterações pendentes...');
+    
+    // Cancelar todos os timers de debounce e salvar imediatamente
+    const timersAtivos = Object.keys(debounceTimers);
+    
+    if (timersAtivos.length === 0 && !temAlteracoesPendentes) {
+        console.log('ℹ️ Não há alterações pendentes para salvar');
+        mostrarIndicadorSalvamento('salvo');
+        return;
+    }
+    
+    mostrarIndicadorSalvamento('salvando');
+    
+    // Limpar todos os timers
+    for (const chave in debounceTimers) {
+        clearTimeout(debounceTimers[chave]);
+        delete debounceTimers[chave];
+    }
+    
+    try {
+        // Salvar dados do planejamento
+        const ano = new Date().getFullYear();
+        const chaveDoc = `${ano}_${departamentoSelecionado}_${filiaSelecionada}`;
+        const chaveCache = `${chaveDoc}`;
+        
+        await setDoc(doc(db, 'planejamento_preenchido', chaveDoc), {
+            ano: ano,
+            departamento: departamentoSelecionado,
+            filial: filiaSelecionada,
+            usuarioId,
+            dados: planejamentoData,
+            dataSalva: new Date(),
+            timestamp: new Date().getTime()
+        });
+        
+        // Atualizar cache
+        salvarNoCache(chaveCache, planejamentoData);
+        
+        // Salvar histórico em batch
+        if (historicoEmBatch.length > 0) {
+            await salvarHistoricoBatch();
+        }
+        
+        temAlteracoesPendentes = false;
+        console.log('✅ Todas as alterações foram salvas com sucesso!');
+        mostrarIndicadorSalvamento('salvo');
+        
+        // Remover bordas laranjas dos inputs
+        document.querySelectorAll('input[type="number"]').forEach(input => {
+            input.style.borderLeft = '';
+        });
+        
+    } catch (error) {
+        console.error('❌ Erro ao salvar alterações:', error);
+        mostrarIndicadorSalvamento('erro');
+    }
+}
+
+async function salvarHistoricoBatch() {
+    if (historicoEmBatch.length === 0) return;
+    
+    const itensParaSalvar = [...historicoEmBatch];
+    historicoEmBatch = []; // Limpar batch
+    
+    console.log(`💾 Salvando ${itensParaSalvar.length} itens de histórico em batch...`);
+    
+    try {
+        const ano = new Date().getFullYear();
+        
+        // Agrupar por documento (ano_departamento_filial)
+        const porDocumento = {};
+        
+        itensParaSalvar.forEach(item => {
+            const chaveDoc = `${ano}_${item.departamento}_${item.filial}`;
+            if (!porDocumento[chaveDoc]) {
+                porDocumento[chaveDoc] = [];
+            }
+            porDocumento[chaveDoc].push(item);
+        });
+        
+        // Salvar cada grupo
+        for (const chaveDoc in porDocumento) {
+            const itens = porDocumento[chaveDoc];
+            const historicoRef = collection(db, "planejamento_preenchido", chaveDoc, "historico");
+            
+            // Salvar todos os itens deste documento
+            for (const item of itens) {
+                await addDoc(historicoRef, item);
+            }
+            
+            console.log(`✅ ${itens.length} itens salvos em ${chaveDoc}`);
+        }
+        
+        console.log(`✅ Batch de histórico salvo com sucesso! Total: ${itensParaSalvar.length} itens`);
+    } catch (error) {
+        console.error('⚠️ Erro ao salvar batch de histórico:', error);
+        // Re-adicionar itens ao batch em caso de erro
+        historicoEmBatch.push(...itensParaSalvar);
+    }
+}
+
+// Salvar histórico pendente antes de sair
+window.addEventListener('beforeunload', () => {
+    if (historicoEmBatch.length > 0) {
+        salvarHistoricoBatch();
+    }
+});
 
 // ===== MOSTRAR TELA DE SELEÇÃO DE FILIAL =====
 // ===== MOSTRAR TELA DE SELEÇÃO DE DEPARTAMENTO =====
@@ -1274,43 +1542,62 @@ async function carregarPlanejamento() {
         // Modo GERAL na primeira tela - Consolidado de todos os departamentos e filiais
         if (departamentoSelecionado === 'GERAL' && filiaSelecionada === 'GERAL') {
             console.log('📊 Carregando modo GERAL TOTAL (departamentos e filiais selecionadas)...');
-            console.log('📋 Filiais selecionadas no dropdown:', filiaisSelecionadasGeral);
-            console.log('📂 Departamentos selecionados no dropdown:', departamentosSelecionadosGeral);
-            console.log('📋 Filiais disponíveis:', filiaisDisponiveis);
-            console.log('📂 Departamentos disponíveis:', departamentosDisponsiveis);
-            planejamentoData = {};
             
             // Usar filiais selecionadas, ou todas se nenhuma selecionada
             const filiaisParaCarregar = filiaisSelecionadasGeral.length > 0 ? filiaisSelecionadasGeral : filiaisDisponiveis;
             // Usar departamentos selecionados, ou todos se nenhum selecionado
             const deptosParaCarregar = departamentosSelecionadosGeral.length > 0 ? departamentosSelecionadosGeral : departamentosDisponsiveis;
+            
             console.log('🎯 Filiais que serão carregadas:', filiaisParaCarregar);
             console.log('🎯 Departamentos que serão carregados:', deptosParaCarregar);
             
-            // Carregar dados dos departamentos e filiais selecionadas
+            planejamentoData = {};
+            
+            // Criar array de Promises para carregar em paralelo
+            const promises = [];
+            
             for (const departamento of deptosParaCarregar) {
                 for (const filial of filiaisParaCarregar) {
                     const chaveDoc = `${ano}_${departamento}_${filial}`;
-                    const docRef = doc(db, 'planejamento_preenchido', chaveDoc);
-                    const docSnap = await getDoc(docRef);
+                    const chaveCache = `${chaveDoc}`;
                     
-                    if (docSnap.exists()) {
-                        const dados = docSnap.data().dados || {};
-                        console.log(`✅ Carregados dados de ${departamento}/${filial}:`, Object.keys(dados));
-                        
-                        // Mesclar dados com prefixo do departamento e filial
-                        Object.keys(dados).forEach(chave => {
+                    // Tentar obter do cache primeiro
+                    const dadosCache = obterDoCache(chaveCache);
+                    
+                    if (dadosCache) {
+                        // Usar dados do cache
+                        console.log(`📦 Usando cache para ${chaveDoc}`);
+                        Object.keys(dadosCache).forEach(chave => {
                             const novaChave = `${departamento}__${filial}__${chave}`;
-                            planejamentoData[novaChave] = dados[chave];
-                            console.log(`   └─ Salvando chave: ${novaChave}`);
+                            planejamentoData[novaChave] = dadosCache[chave];
                         });
                     } else {
-                        console.log(`ℹ️ Sem dados anteriores para ${departamento}/${filial}`);
+                        // Carregar do Firebase
+                        promises.push(
+                            getDoc(doc(db, 'planejamento_preenchido', chaveDoc))
+                                .then(docSnap => {
+                                    if (docSnap.exists()) {
+                                        const dados = docSnap.data().dados || {};
+                                        console.log(`✅ Carregados dados de ${departamento}/${filial}:`, Object.keys(dados).length, 'chaves');
+                                        
+                                        // Salvar no cache
+                                        salvarNoCache(chaveCache, dados);
+                                        
+                                        // Mesclar dados com prefixo
+                                        Object.keys(dados).forEach(chave => {
+                                            const novaChave = `${departamento}__${filial}__${chave}`;
+                                            planejamentoData[novaChave] = dados[chave];
+                                        });
+                                    }
+                                })
+                        );
                     }
                 }
             }
+            
+            // Aguardar todas as Promises
+            await Promise.all(promises);
             console.log('✅ Planejamento GERAL TOTAL carregado. Total de chaves:', Object.keys(planejamentoData).length);
-            console.log('📊 Amostra de chaves:', Object.keys(planejamentoData).slice(0, 5));
             return;
         }
 
@@ -1323,28 +1610,47 @@ async function carregarPlanejamento() {
             // Obter todos os subdepartamentos deste departamento
             const subdeps = ESTRUTURA_DEPARTAMENTOS[depPrincipal];
             if (subdeps) {
-                // Carregar dados de cada subdepartamento (Ex: "Vendas - Novos", "Vendas - Usados")
+                const promises = [];
+                
+                // Carregar dados de cada subdepartamento
                 for (const subdep of Object.keys(subdeps)) {
                     const depCompleto = `${depPrincipal} - ${subdep}`;
                     const chaveDoc = `${ano}_${depCompleto}_${filiaSelecionada}`;
-                    const docRef = doc(db, 'planejamento_preenchido', chaveDoc);
-                    const docSnap = await getDoc(docRef);
+                    const chaveCache = `${chaveDoc}`;
                     
-                    if (docSnap.exists()) {
-                        const dados = docSnap.data().dados || {};
-                        console.log(`✅ Carregados dados de ${depCompleto}:`, dados);
-                        
-                        // Mesclar com prefixo
-                        Object.keys(dados).forEach(chave => {
+                    // Tentar obter do cache
+                    const dadosCache = obterDoCache(chaveCache);
+                    
+                    if (dadosCache) {
+                        console.log(`📦 Usando cache para ${depCompleto}`);
+                        Object.keys(dadosCache).forEach(chave => {
                             const novaChave = `${subdep}__${chave}`;
-                            planejamentoData[novaChave] = dados[chave];
+                            planejamentoData[novaChave] = dadosCache[chave];
                         });
                     } else {
-                        console.log(`ℹ️ Sem dados anteriores para ${depCompleto}`);
+                        promises.push(
+                            getDoc(doc(db, 'planejamento_preenchido', chaveDoc))
+                                .then(docSnap => {
+                                    if (docSnap.exists()) {
+                                        const dados = docSnap.data().dados || {};
+                                        console.log(`✅ Carregados dados de ${depCompleto}:`, Object.keys(dados).length, 'chaves');
+                                        
+                                        // Salvar no cache
+                                        salvarNoCache(chaveCache, dados);
+                                        
+                                        Object.keys(dados).forEach(chave => {
+                                            const novaChave = `${subdep}__${chave}`;
+                                            planejamentoData[novaChave] = dados[chave];
+                                        });
+                                    }
+                                })
+                        );
                     }
                 }
+                
+                await Promise.all(promises);
             }
-            console.log(`✅ Planejamento GERAL de ${depPrincipal} carregado:`, planejamentoData);
+            console.log(`✅ Planejamento GERAL de ${depPrincipal} carregado:`, Object.keys(planejamentoData).length, 'chaves');
             return;
         }
 
@@ -1353,40 +1659,72 @@ async function carregarPlanejamento() {
             console.log('📊 Carregando modo GERAL (consolidado de todos departamentos nesta filial)...');
             planejamentoData = {};
             
+            const promises = [];
+            
             // Carregar dados de todos os departamentos autorizados para esta filial
             for (const departamento of departamentosDisponsiveis) {
                 const chaveDoc = `${ano}_${departamento}_${filiaSelecionada}`;
-                const docRef = doc(db, 'planejamento_preenchido', chaveDoc);
-                const docSnap = await getDoc(docRef);
+                const chaveCache = `${chaveDoc}`;
                 
-                if (docSnap.exists()) {
-                    const dados = docSnap.data().dados || {};
-                    console.log(`✅ Carregados dados de ${departamento}:`, dados);
-                    
-                    // Mesclar dados com prefixo do departamento
-                    Object.keys(dados).forEach(chave => {
+                // Tentar obter do cache
+                const dadosCache = obterDoCache(chaveCache);
+                
+                if (dadosCache) {
+                    console.log(`📦 Usando cache para ${chaveDoc}`);
+                    Object.keys(dadosCache).forEach(chave => {
                         const novaChave = `${departamento}__${chave}`;
-                        planejamentoData[novaChave] = dados[chave];
+                        planejamentoData[novaChave] = dadosCache[chave];
                     });
                 } else {
-                    console.log(`ℹ️ Sem dados anteriores para ${departamento}`);
+                    promises.push(
+                        getDoc(doc(db, 'planejamento_preenchido', chaveDoc))
+                            .then(docSnap => {
+                                if (docSnap.exists()) {
+                                    const dados = docSnap.data().dados || {};
+                                    console.log(`✅ Carregados dados de ${departamento}:`, Object.keys(dados).length, 'chaves');
+                                    
+                                    // Salvar no cache
+                                    salvarNoCache(chaveCache, dados);
+                                    
+                                    Object.keys(dados).forEach(chave => {
+                                        const novaChave = `${departamento}__${chave}`;
+                                        planejamentoData[novaChave] = dados[chave];
+                                    });
+                                }
+                            })
+                    );
                 }
             }
-            console.log('✅ Planejamento GERAL carregado:', planejamentoData);
+            
+            await Promise.all(promises);
+            console.log('✅ Planejamento GERAL carregado:', Object.keys(planejamentoData).length, 'chaves');
             return;
         }
 
         // Modo normal - Um departamento específico
         const chaveDoc = `${ano}_${departamentoSelecionado}_${filiaSelecionada}`;
-        const docRef = doc(db, 'planejamento_preenchido', chaveDoc);
-        const docSnap = await getDoc(docRef);
+        const chaveCache = `${chaveDoc}`;
         
-        if (docSnap.exists()) {
-            planejamentoData = docSnap.data().dados || {};
-            console.log('✅ Planejamento carregado:', planejamentoData);
+        // Tentar obter do cache
+        const dadosCache = obterDoCache(chaveCache);
+        
+        if (dadosCache) {
+            console.log(`📦 Usando cache para ${chaveDoc}`);
+            planejamentoData = dadosCache;
         } else {
-            console.log('ℹ️ Nenhum planejamento anterior encontrado para:', chaveDoc);
-            planejamentoData = {};
+            const docRef = doc(db, 'planejamento_preenchido', chaveDoc);
+            const docSnap = await getDoc(docRef);
+            
+            if (docSnap.exists()) {
+                planejamentoData = docSnap.data().dados || {};
+                console.log('✅ Planejamento carregado do Firebase:', Object.keys(planejamentoData).length, 'chaves');
+                
+                // Salvar no cache
+                salvarNoCache(chaveCache, planejamentoData);
+            } else {
+                console.log('ℹ️ Nenhum planejamento anterior encontrado para:', chaveDoc);
+                planejamentoData = {};
+            }
         }
     } catch (error) {
         console.error('❌ Erro ao carregar planejamento:', error);
@@ -1921,7 +2259,10 @@ window.atualizarValor = async function(input, chaveArmazenamento) {
     }
     
     planejamentoData[chaveArmazenamento][mesIdx] = novoValor;
-    console.log(`✏️ Valor atualizado: ${chaveArmazenamento}[Mês ${mesIdx + 1}] = ${novoValor}`);
+    console.log(`✏️ Valor atualizado localmente: ${chaveArmazenamento}[Mês ${mesIdx + 1}] = ${novoValor}`);
+    
+    // Marcar que há alterações pendentes
+    temAlteracoesPendentes = true;
     
     // Recalcular fórmulas que dependem deste valor
     calcularFormulas();
@@ -1929,51 +2270,100 @@ window.atualizarValor = async function(input, chaveArmazenamento) {
     // Atualizar campos na tela (SEM renderizar tabela toda)
     atualizarCamposFormula();
     
-    // Registrar no histórico
-    try {
-        const ano = new Date().getFullYear();
-        const meses = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
-        const historicoRef = collection(db, "planejamento_preenchido", `${ano}_${departamentoSelecionado}_${filiaSelecionada}`, "historico");
-        
-        const partes = chaveArmazenamento.split('_');
-        const grupo = partes[0];
-        const conta = partes[1];
-        
-        // Buscar nome do usuário
-        let nomeUsuario = auth.currentUser?.displayName || auth.currentUser?.email?.split('@')[0] || usuarioId;
-        
-        await addDoc(historicoRef, {
-            timestamp: new Date().getTime(),
-            usuarioId: usuarioId,
-            usuario: nomeUsuario,
-            grupo: grupo,
-            conta: conta,
-            mes: meses[mesIdx],
-            valorAnterior: valorAnterior,
-            novoValor: novoValor,
-            diferenca: novoValor - valorAnterior
-        });
-        
-        // Salvar no Firebase
-        const ano2 = new Date().getFullYear();
-        const chaveDoc = `${ano2}_${departamentoSelecionado}_${filiaSelecionada}`;
-        await setDoc(doc(db, 'planejamento_preenchido', chaveDoc), {
-            ano: ano2,
-            departamento: departamentoSelecionado,
-            filial: filiaSelecionada,
-            usuarioId,
-            dados: planejamentoData,
-            dataSalva: new Date(),
-            timestamp: new Date().getTime()
-        });
-        
-        // Mostrar toast de sucesso (silencioso - sem bloquear navegação)
-        mostrarToast('💾 Salvo', 'success');
-        
-    } catch (error) {
-        console.error('⚠️ Erro ao atualizar:', error);
-        mostrarToast('Erro ao salvar', 'error');
+    // Mostrar indicador de alterações pendentes
+    mostrarIndicadorSalvamento('pendente');
+    
+    // Preparar item de histórico para batch
+    const ano = new Date().getFullYear();
+    const meses = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+    const partes = chaveArmazenamento.split('_');
+    const grupo = partes[0];
+    const conta = partes[1];
+    let nomeUsuario = auth.currentUser?.displayName || auth.currentUser?.email?.split('@')[0] || usuarioId;
+    
+    const itemHistorico = {
+        timestamp: new Date().getTime(),
+        usuarioId: usuarioId,
+        usuario: nomeUsuario,
+        grupo: grupo,
+        conta: conta,
+        mes: meses[mesIdx],
+        valorAnterior: valorAnterior,
+        novoValor: novoValor,
+        diferenca: novoValor - valorAnterior,
+        departamento: departamentoSelecionado,
+        filial: filiaSelecionada
+    };
+    
+    // Adicionar ao batch de histórico
+    adicionarAoHistoricoBatch(itemHistorico);
+    
+    // DEBOUNCE: Cancelar timer anterior e criar novo
+    const chaveDebounce = `${chaveArmazenamento}_${mesIdx}`;
+    
+    if (debounceTimers[chaveDebounce]) {
+        clearTimeout(debounceTimers[chaveDebounce]);
     }
+    
+    // Mostrar indicador de que há alterações não salvas
+    input.style.borderLeft = '3px solid #f39c12';
+    
+    // Timer de 2 MINUTOS para save automático
+    debounceTimers[chaveDebounce] = setTimeout(async () => {
+        try {
+            console.log('⏰ 2 minutos de inatividade - salvando automaticamente...');
+            mostrarIndicadorSalvamento('salvando');
+            isSaving = true;
+            
+            // Salvar no Firebase
+            const ano2 = new Date().getFullYear();
+            const chaveDoc = `${ano2}_${departamentoSelecionado}_${filiaSelecionada}`;
+            const chaveCache = `${chaveDoc}`;
+            
+            await setDoc(doc(db, 'planejamento_preenchido', chaveDoc), {
+                ano: ano2,
+                departamento: departamentoSelecionado,
+                filial: filiaSelecionada,
+                usuarioId,
+                dados: planejamentoData,
+                dataSalva: new Date(),
+                timestamp: new Date().getTime()
+            });
+            
+            // Atualizar cache
+            salvarNoCache(chaveCache, planejamentoData);
+            
+            // Salvar histórico em batch
+            if (historicoEmBatch.length > 0) {
+                await salvarHistoricoBatch();
+            }
+            
+            temAlteracoesPendentes = false;
+            
+            // Remover indicador de edição
+            input.style.borderLeft = '3px solid #27ae60';
+            setTimeout(() => {
+                input.style.borderLeft = '';
+            }, 1000);
+            
+            // Limpar todas as bordas laranjas
+            document.querySelectorAll('input[type="number"]').forEach(inp => {
+                if (inp.style.borderLeft === '3px solid rgb(243, 156, 18)') {
+                    inp.style.borderLeft = '';
+                }
+            });
+            
+            console.log(`✅ Salvo no Firebase: ${chaveDoc}`);
+            mostrarIndicadorSalvamento('salvo');
+            isSaving = false;
+            
+        } catch (error) {
+            console.error('⚠️ Erro ao salvar:', error);
+            input.style.borderLeft = '3px solid #e74c3c';
+            mostrarIndicadorSalvamento('erro');
+            isSaving = false;
+        }
+    }, DEBOUNCE_DELAY);
     
     // NÃO renderizar tabela toda - permite navegação com TAB
     // renderTabela();
@@ -2005,7 +2395,8 @@ window.atualizarValorConsolidado = async function(input, chaveConsolidada, depar
         
         let nomeUsuario = auth.currentUser?.displayName || auth.currentUser?.email?.split('@')[0] || usuarioId;
         
-        await addDoc(historicoRef, {
+        // Adicionar ao batch de histórico em vez de salvar imediatamente
+        const itemHistorico = {
             timestamp: new Date().getTime(),
             usuarioId: usuarioId,
             usuario: nomeUsuario,
@@ -2015,37 +2406,71 @@ window.atualizarValorConsolidado = async function(input, chaveConsolidada, depar
             valorAnterior: valorAnterior,
             novoValor: novoValor,
             diferenca: novoValor - valorAnterior,
-            fonte: 'GERAL_CONSOLIDADO'
-        });
-        
-        // Salvar no documento específico do departamento
-        const chaveDoc = `${ano}_${departamento}_${filiaSelecionada}`;
-        const docRef = doc(db, 'planejamento_preenchido', chaveDoc);
-        const docSnap = await getDoc(docRef);
-        
-        let dadosDepartamento = docSnap.exists() ? (docSnap.data().dados || {}) : {};
-        
-        // Atualizar apenas a chave específica (removendo prefixo do departamento se houver)
-        dadosDepartamento[chaveArmazenamento] = dadosDepartamento[chaveArmazenamento] || {};
-        dadosDepartamento[chaveArmazenamento][mesIdx] = novoValor;
-        
-        // Salvar os dados do departamento específico
-        await setDoc(docRef, {
-            ano: ano,
+            fonte: 'GERAL_CONSOLIDADO',
             departamento: departamento,
-            filial: filiaSelecionada,
-            usuarioId,
-            dados: dadosDepartamento,
-            dataSalva: new Date(),
-            timestamp: new Date().getTime()
-        });
+            filial: filiaSelecionada
+        };
         
-        console.log(`✅ Salvo em ${departamento} via GERAL consolidado`);
-        mostrarToast('💾 Salvo', 'success');
+        adicionarAoHistoricoBatch(itemHistorico);
+        
+        // DEBOUNCE para salvar no Firebase
+        const chaveDebounce = `consolidado_${departamento}_${chaveArmazenamento}_${mesIdx}`;
+        
+        if (debounceTimers[chaveDebounce]) {
+            clearTimeout(debounceTimers[chaveDebounce]);
+        }
+        
+        // Indicador visual
+        input.style.borderLeft = '3px solid #f39c12';
+        
+        debounceTimers[chaveDebounce] = setTimeout(async () => {
+            try {
+                mostrarIndicadorSalvamento('salvando');
+                
+                // Salvar no documento específico do departamento
+                const chaveDoc = `${ano}_${departamento}_${filiaSelecionada}`;
+                const chaveCache = `${chaveDoc}`;
+                const docRef = doc(db, 'planejamento_preenchido', chaveDoc);
+                const docSnap = await getDoc(docRef);
+                
+                let dadosDepartamento = docSnap.exists() ? (docSnap.data().dados || {}) : {};
+                
+                // Atualizar apenas a chave específica
+                dadosDepartamento[chaveArmazenamento] = dadosDepartamento[chaveArmazenamento] || {};
+                dadosDepartamento[chaveArmazenamento][mesIdx] = novoValor;
+                
+                // Salvar os dados do departamento específico
+                await setDoc(docRef, {
+                    ano: ano,
+                    departamento: departamento,
+                    filial: filiaSelecionada,
+                    usuarioId,
+                    dados: dadosDepartamento,
+                    dataSalva: new Date(),
+                    timestamp: new Date().getTime()
+                });
+                
+                // Atualizar cache
+                salvarNoCache(chaveCache, dadosDepartamento);
+                
+                input.style.borderLeft = '3px solid #27ae60';
+                setTimeout(() => {
+                    input.style.borderLeft = '';
+                }, 1000);
+                
+                console.log(`✅ Salvo em ${departamento} via GERAL consolidado`);
+                mostrarIndicadorSalvamento('salvo');
+                
+            } catch (error) {
+                console.error('⚠️ Erro ao salvar:', error);
+                input.style.borderLeft = '3px solid #e74c3c';
+                mostrarIndicadorSalvamento('erro');
+            }
+        }, DEBOUNCE_DELAY);
         
     } catch (error) {
         console.error('⚠️ Erro ao atualizar valor consolidado:', error);
-        mostrarToast('Erro ao salvar', 'error');
+        mostrarIndicadorSalvamento('erro');
     }
     
     // NÃO renderizar tabela toda - permite navegação com TAB
@@ -2600,6 +3025,16 @@ function limparFormulario() {
 // ===== SALVAR PLANEJAMENTO =====
 async function salvarPlanejamento(e) {
     e.preventDefault();
+    
+    console.log('💾 Botão SALVAR clicado - forçando salvamento imediato...');
+    
+    // Forçar salvamento imediato de todas as alterações pendentes
+    await salvarTodasAlteracoesPendentes();
+}
+
+// Função antiga mantida para compatibilidade em modos GERAL
+async function salvarPlanejamentoGeral(e) {
+    e.preventDefault();
 
     try {
         const ano = new Date().getFullYear();
@@ -2710,6 +3145,47 @@ async function salvarPlanejamento(e) {
     }
 }
 
+// ===== LIMPAR TIMERS PENDENTES AO SAIR =====
+window.addEventListener('beforeunload', async (e) => {
+    // Se há dados pendentes para salvar, avisar usuário
+    if (Object.keys(debounceTimers).length > 0 || isSaving) {
+        e.preventDefault();
+        e.returnValue = 'Você tem alterações que ainda estão sendo salvas. Deseja realmente sair?';
+        
+        // Tentar salvar histórico pendente
+        if (historicoEmBatch.length > 0) {
+            await salvarHistoricoBatch();
+        }
+        
+        // Executar todos os saves pendentes imediatamente
+        for (const timer of Object.values(debounceTimers)) {
+            clearTimeout(timer);
+        }
+    }
+});
+
+// ===== SALVAR TUDO ANTES DE TROCAR DE PÁGINA =====
+async function salvarPendentes() {
+    console.log('💾 Salvando alterações pendentes...');
+    
+    // Limpar todos os timers e executar saves
+    for (const chave in debounceTimers) {
+        clearTimeout(debounceTimers[chave]);
+    }
+    debounceTimers = {};
+    
+    // Salvar histórico pendente
+    if (historicoEmBatch.length > 0) {
+        await salvarHistoricoBatch();
+    }
+    
+    console.log('✅ Todas as alterações pendentes foram salvas');
+}
+
+// Chamar antes de trocar de departamento/filial
+window.addEventListener('pagehide', salvarPendentes);
+
 // Exportar funções globais
 window.atualizarValor = window.atualizarValor;
 window.toggleGrupo = window.toggleGrupo;
+window.salvarPendentes = salvarPendentes;
