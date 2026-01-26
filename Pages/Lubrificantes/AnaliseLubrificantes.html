@@ -69,43 +69,49 @@
     .filters input::placeholder { color: #666; }
     .filters input:focus, .filters select:focus { border-color: #009bd6; outline: none; }
     .graficos-grid {
-      display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-      gap: 23px; margin: 21px 0 1px 0;
+      display: grid; 
+      grid-template-columns: repeat(2, 1fr);
+      gap: 30px; 
+      margin: 25px 0;
     }
     .grafico-card {
-      background: #fff;
-      padding: 13px 14px 0 16px;
-      border-radius: 12px;
-      box-shadow: 0 2px 8px #193b7c1a;
-      min-height: 340px; margin-bottom: 4px;
-      display:flex;flex-direction:column;align-items:center;position:relative;
+      background: linear-gradient(145deg, #ffffff, #f8f9fc);
+      padding: 24px 20px;
+      border-radius: 16px;
+      box-shadow: 0 4px 20px rgba(25, 59, 124, 0.12), 0 1px 3px rgba(0, 0, 0, 0.08);
+      min-height: 380px;
+      margin-bottom: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      position: relative;
+      border: 1px solid rgba(25, 59, 124, 0.08);
+      transition: all 0.3s ease;
+    }
+    .grafico-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 8px 30px rgba(25, 59, 124, 0.18), 0 2px 8px rgba(0, 0, 0, 0.12);
     }
     .grafico-card canvas {
       flex: 1;
       width: 100% !important;
-      height: 280px !important;
-      max-height: 280px;
+      height: 300px !important;
+      max-height: 300px;
     }
-    .grafico-card h4 { color: #193b7c; text-align:center; margin-bottom:13px; font-size:1em; font-weight:700; }
+    .grafico-card h4 { 
+      color: #193b7c; 
+      text-align: center; 
+      margin-bottom: 18px; 
+      font-size: 1.1em; 
+      font-weight: 700;
+      letter-spacing: -0.3px;
+    }
     .expand-btn {
       position:absolute; top:13px; right:15px; border:none;
       background:transparent; color:#193b7c; cursor:pointer; font-size:20px; z-index:3;
       transition: color .19s;
     }
     .expand-btn:hover { color:#5271ff; }
-    #modalPDF {
-      display: none;
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: rgba(25,59,124,0.35);
-      z-index: 99999;
-      align-items: center;
-      justify-content: center;
-    }
-    #modalPDF.show { display: flex; }
     .modal-overlay {
       display:none; position:fixed; top:0;left:0;right:0;bottom:0;
       background:rgba(25,59,124,0.35);
@@ -165,6 +171,117 @@
       .ranking-table-wrapper {padding:9px 2px;}
       .modal-content {padding:11px 3vw;}
     }
+    
+    /* Estilos para Análise de Estoque */
+    .badge-status {
+      display: inline-block;
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .badge-suficiente {
+      background: #d1f4e0;
+      color: #193b7c ;
+      border: 2px solid #2d5aa0 100%;
+      font-weight: 700;
+    }
+    .badge-falta {
+      background: #fee2e2;
+      color: #991b1b;
+      border: 2px solid #ef4444;
+      font-weight: 700;
+    }
+    .badge-sem-historico {
+      background: #f1f5f9;
+      color: #475569;
+      border: 2px solid #94a3b8;
+      font-weight: 600;
+    }
+    .tabela-analise-header {
+      background: linear-gradient(135deg, #193b7c 0%, #2d5aa0 100%);
+      padding: 16px 20px;
+      border-radius: 12px;
+      margin-bottom: 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 15px;
+    }
+    .info-box {
+      background: linear-gradient(135deg, #e8f0ff, #f0f7ff);
+      padding: 20px;
+      border-radius: 12px;
+      margin-bottom: 20px;
+      border-left: 4px solid #193b7c;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 20px;
+    }
+    .info-item {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+    .info-item-label {
+      font-size: 12px;
+      color: #666;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .info-item-value {
+      font-size: 24px;
+      color: #193b7c;
+      font-weight: 700;
+    }
+    .search-box {
+      padding: 10px 16px;
+      border: 2px solid #e0e6f0;
+      border-radius: 8px;
+      font-size: 14px;
+      width: 300px;
+      transition: all 0.3s;
+    }
+    .search-box:focus {
+      outline: none;
+      border-color: #193b7c;
+      box-shadow: 0 0 0 3px rgba(25, 59, 124, 0.1);
+    }
+    .produto-row {
+      transition: all 0.2s;
+    }
+    .produto-row:hover {
+      background: #f8f9fc !important;
+      transform: scale(1.01);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+    .vendas-historicas {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .vendas-ano {
+      padding: 4px 8px;
+      background: #e8f0fe;
+      border: 1px solid #4285f4;
+      border-radius: 6px;
+      font-size: 13px;
+      color: #1a73e8;
+      font-weight: 600;
+    }
+    .vendas-media {
+      padding: 6px 10px;
+      background: #193b7c;
+      color: white;
+      border-radius: 6px;
+      font-weight: 700;
+      font-size: 14px;
+      box-shadow: 0 2px 4px rgba(61, 52, 168, 0.3);
+    }
   </style>
 </head>
 <body>
@@ -199,9 +316,9 @@
       <div class="content-card-header">
         <h3>Análise Avançada</h3>
         <div class="header-actions">
-          <!-- Botão Gerar PDF -->
-          <button id="btn-gerar-pdf" class="btn-acao" title="Gerar PDF">
-            <i data-lucide="file-text"></i>
+          <!-- Botão Análise de Estoque -->
+          <button id="btn-analise-estoque" class="btn-acao" title="Análise de Estoque Atual">
+            <i data-lucide="bar-chart-3"></i>
           </button>
           <!-- Botão Estoque -->
           <button id="btn-estoque" class="btn-acao" title="Lançar Estoque (CSV)">
@@ -241,6 +358,8 @@
         </div>
         <!-- Input oculto para importação de estoque -->
         <input type="file" id="csv-estoque-file" accept=".csv" style="display:none;">
+        <!-- Input oculto para análise de estoque -->
+        <input type="file" id="csv-analise-estoque-file" accept=".csv" style="display:none;">
         <!-- FILTROS -->
         <div class="filters">
           <div>
@@ -282,53 +401,89 @@
             <h4>Participação de Vendas por Filial (%)</h4>
             <canvas id="graficoParticipacaoFiliais"></canvas>
           </div>
-           <div class="grafico-card" id="bloco-grafico-comparativo">
-             <button type="button" class="expand-btn" data-grafico="graficoComparativoMes"><i data-lucide="maximize"></i></button>
-             <h4>Comparativo Estoque x Vendas (Mês)</h4>
-             <canvas id="graficoComparativoMes"></canvas>
-           </div>
           <div class="grafico-card" id="bloco-grafico-distribuicao">
             <button type="button" class="expand-btn" data-grafico="graficoDistribuicao"><i data-lucide="maximize"></i></button>
             <h4>Distribuição por Tipo Produto</h4>
             <canvas id="graficoDistribuicao"></canvas>
           </div>
         </div>
+        
+        <!-- SEÇÃO DE ANÁLISE DE ESTOQUE -->
+        <div id="secao-analise-estoque" style="display:none; margin-top:30px;">
+          <div style="background:#fff; padding:24px; border-radius:16px; box-shadow:0 4px 20px rgba(25,59,124,0.12);">
+            <div class="tabela-analise-header">
+              <div style="display:flex; align-items:center; gap:12px;">
+                <i data-lucide="trending-up" style="width:28px;height:28px;color:white;"></i>
+                <div>
+                  <h3 style="color:white; margin:0; font-size:1.3em;">Análise Comparativa de Estoque</h3>
+                  <p style="color:#e8f0ff; margin:4px 0 0 0; font-size:0.9em;">Comparação com vendas de <span id="ano-comparacao">2024 e 2025</span></p>
+                </div>
+              </div>
+              <div style="display:flex; gap:10px; align-items:center;">
+                <input 
+                  type="text" 
+                  id="search-analise" 
+                  class="search-box" 
+                  placeholder="🔍 Buscar produto..."
+                  style="background:white;"
+                />
+                <button id="btn-fechar-analise" class="btn-acao" style="background:#dc3545; padding:10px 16px;" title="Fechar">
+                  <i data-lucide="x"></i>
+                </button>
+              </div>
+            </div>
+            
+            <div class="info-box" id="info-totalizadores">
+              <div class="info-item">
+                <span class="info-item-label">📦 Total de Produtos</span>
+                <span class="info-item-value" id="total-produtos">0</span>
+              </div>
+              <div class="info-item">
+                <span class="info-item-label">✅ Estoque Suficiente</span>
+                <span class="info-item-value" id="total-suficiente" style="color:#28a745;">0</span>
+              </div>
+              <div class="info-item">
+                <span class="info-item-label">⚠️ Estoque Insuficiente</span>
+                <span class="info-item-value" id="total-falta" style="color:#dc3545;">0</span>
+              </div>
+              <div class="info-item">
+                <span class="info-item-label">⚪ Sem Histórico</span>
+                <span class="info-item-value" id="total-sem-historico" style="color:#999;">0</span>
+              </div>
+            </div>
+            
+            <div style="max-height:600px; overflow-y:auto; border-radius:12px; border:1px solid #e0e6f0;">
+              <table id="tabela-analise-estoque" style="width:100%; border-collapse:collapse;">
+                <thead style="position:sticky; top:0; background:linear-gradient(135deg, #193b7c 0%, #2d5aa0 100%); color:#fff; z-index:10;">
+                  <tr>
+                    <th style="padding:16px 20px; text-align:left; font-weight:700; font-size:0.95em;">Produto</th>
+                    <th style="padding:16px 20px; text-align:center; font-weight:700; font-size:0.95em;">Estoque (L)</th>
+                    <th style="padding:16px 20px; text-align:center; font-weight:700; font-size:0.95em;">Estoque (Und)</th>
+                    <th style="padding:16px 20px; text-align:center; font-weight:700; font-size:0.95em;">Vendas Históricas</th>
+                    <th style="padding:16px 20px; text-align:center; font-weight:700; font-size:0.95em;">Estimativa</th>
+                    <th style="padding:16px 20px; text-align:center; font-weight:700; font-size:0.95em;">Status</th>
+                  </tr>
+                </thead>
+                <tbody id="corpo-tabela-analise">
+                  <tr>
+                    <td colspan="6" style="text-align:center; padding:60px; color:#999;">
+                      <i data-lucide="inbox" style="width:48px;height:48px;margin-bottom:10px;"></i><br>
+                      <strong>Nenhuma análise disponível</strong><br>
+                      <small>Importe um arquivo CSV de estoque para começar</small>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+        
         <!-- MODAL EXPAND -->
         <div class="modal-overlay" id="modalOverlay">
           <div class="modal-content">
             <button type="button" class="modal-close" id="modalClose" title="Fechar">&times;</button>
             <h4 id="modalTitle"></h4>
             <canvas id="modalGraph" class="modal-graph-canvas"></canvas>
-          </div>
-        </div>
-        <!-- MODAL PDF -->
-        <div id="modalPDF">
-          <div style="background:#fff; border-radius:18px; box-shadow:0 3px 32px #193b7c70; padding:26px 32px; max-width:500px; width:90vw; position:relative;">
-            <button type="button" id="modalPDFClose" title="Fechar" style="position:absolute; top:14px; right:17px; font-size:22px; color:#193b7c; background:none; border:none; cursor:pointer;">&times;</button>
-            <h4 style="margin-bottom:20px; color:#193b7c; font-size:1.3em;">Gerar Relatório PDF</h4>
-            <div style="text-align:left; padding:0 20px;">
-              <p style="margin-bottom:15px; color:#666;">Selecione as seções que deseja incluir:</p>
-              <label style="display:block; margin:10px 0; cursor:pointer; user-select:none;">
-                <input type="checkbox" id="pdf-kpis" checked style="margin-right:8px; cursor:pointer;">
-                KPIs e Indicadores
-              </label>
-              <label style="display:block; margin:10px 0; cursor:pointer; user-select:none;">
-                <input type="checkbox" id="pdf-graficos" checked style="margin-right:8px; cursor:pointer;">
-                Gráficos
-              </label>
-              <label style="display:block; margin:10px 0; cursor:pointer; user-select:none;">
-                <input type="checkbox" id="pdf-estoque" checked style="margin-right:8px; cursor:pointer;">
-                Dados de Estoque
-              </label>
-              <label style="display:block; margin:10px 0; cursor:pointer; user-select:none;">
-                <input type="checkbox" id="pdf-vendas" checked style="margin-right:8px; cursor:pointer;">
-                Dados de Vendas
-              </label>
-            </div>
-            <div style="margin-top:25px; display:flex; gap:10px; justify-content:center;">
-              <button id="btnConfirmarPDF" class="btn-acao" style="background:#193b7c; padding:10px 30px;">Gerar PDF</button>
-              <button id="btnCancelarPDF" class="btn-acao" style="background:#888; padding:10px 30px;">Cancelar</button>
-            </div>
           </div>
         </div>
       </div>
@@ -357,7 +512,7 @@
     const filiaisMeta = [
       { id: '2', nome: 'Campos Novos' },
       { id: '6', nome: 'Rio do Sul' },
-      { id: '1', nome: 'Lages' }
+      { id: '7', nome: 'Lages' }
     ];
     
     const METAS_MENSAIS_KEY = 'lubri_metas_mensais';
@@ -365,6 +520,8 @@
     // Cache local para metas
     let metasFixasCache = {};
     let metasMensaisCache = {};
+    
+    // ID da filial Lages corrigido para '7' (consistente com FILIAIS)
     
     // Firebase - Metas Fixas
     async function getMetasFirebase() {
@@ -510,6 +667,45 @@
       '76176251BRSP': { litros: 200, tipo: 'Transmissão' },
       'default': { litros: 1, tipo: 'Outros' }
     };
+
+    // ==== MAPEAMENTO DE CÓDIGOS EQUIVALENTES ====
+    // Produtos que mudaram de código ao longo do tempo
+    // Cada array contém códigos que representam o mesmo produto
+    const codigosEquivalentes = [
+      ['76176R61BR', 'NH410B'],     // Transmissão 20L - código novo e antigo
+      ['76176K13BR', 'NH410B4L'],   // Transmissão 4L - código novo e antigo
+      ['74514R61BR', 'NH330H'],     // Motor 20L - código novo e antigo
+      ['74514K13BR', 'NH330H4L'],   // Motor 4L - código novo e antigo
+      ['76486R61BR', 'NH668'],      // Hidráulico 20L - código novo e antigo
+      ['76486K13BR', 'NH6684L'],    // Hidráulico 4L - código novo e antigo
+      ['81153R61BR', 'NH410B*'],    // Transmissão 20L - código novo e antigo
+      ['71939R61BR', 'NH330G*'],    // 
+      ['81048R61BR', 'NH520A'],     // 
+      ['81050E19BR', 'NH520AL'],    //
+      ['76175R61BR', 'MAT3505'],    //
+      ['81053K13BR', 'NH410H4L'],   //
+      ['81053R61BR', 'NH410H'],     // 
+      ['81050E19BR', 'NH140BR'],    //
+      ['81232R41BR', 'MAT3555'],    //
+      ['77412K13BR', 'MAT3724'],    //
+      ['81048E19BR', 'NH520AL'],    //
+      ['77409E19BR', 'NH610A'],     //
+      ['81157R61BR', 'NH668*'],     //
+      
+      ];
+
+    // Mapa reverso para busca rápida: qualquer código -> array com todos equivalentes
+    const mapaEquivalentes = {};
+    codigosEquivalentes.forEach(grupo => {
+      grupo.forEach(codigo => {
+        mapaEquivalentes[codigo.toUpperCase()] = grupo.map(c => c.toUpperCase());
+      });
+    });
+
+    function obterCodigosEquivalentes(codigo) {
+      const codigoUpper = (codigo || '').toUpperCase();
+      return mapaEquivalentes[codigoUpper] || [codigoUpper];
+    }
 
     // Heurística de conversão para itens não mapeados: tenta extrair volume e tipo do texto
     function obterLitrosPorUnidade(codProduto, descricao='', grupo='') {
@@ -924,8 +1120,8 @@
                 quantConvertida: parseFloat(colunas[8]?.replace(',', '.')) || parseFloat(colunas[8]) || 0,
                 unidade: colunas[9] || ''
               };
-              // Calcular litros - FIX: usar conversoesInfo.litros ao invés de litrosPorUnidade
-              const conversoesInfo = conversaoLubrificantes[item.codProduto] || conversaoLubrificantes['default'];
+              // Calcular litros usando função de conversão unificada
+              const conversoesInfo = obterLitrosPorUnidade(item.codProduto, item.descricao, item.grupo);
               item.litros = conversoesInfo.litros;
               item.totalLitros = item.quantConvertida * item.litros;
               
@@ -1110,8 +1306,8 @@
       function labelToId(lbl){
         if (/campos/i.test(lbl)) return '2';
         if (/rio.*sul/i.test(lbl)) return '6';
-        if (/lages/i.test(lbl)) return '1';
-        return '1';
+        if (/lages/i.test(lbl)) return '7';
+        return '7';
       }
       
       function calcularMetaPeriodo(filialId) {
@@ -1335,33 +1531,51 @@
         }]
       };
 
-      // Gráfico Mensal e Distribuição continuam
-      // GRÁFICO MENSAL: Sempre mostra ano inteiro (ou até mês atual), ignorando filtros de data
-      let mensalMapAnual = {};
-      const agora = new Date();
-      const anoAtual = agora.getFullYear();
-      const mesAtual = agora.getMonth() + 1;
+      // Gráfico Mensal - Evolução de vendas no período filtrado
+      let mensalMap = {};
+      // Usar as variáveis dataInicio e dataFim já declaradas acima
       
-      // Usar dados completos, não filtrados
-      dadosCompletos.forEach(d => {
+      console.log('[DEBUG Mensal] Data Início:', dataInicio, 'Data Fim:', dataFim);
+      console.log('[DEBUG Mensal] Filtrados length:', filtrados.length);
+      
+      // Usar dados filtrados
+      filtrados.forEach(d => {
         const dataConverted = ddmmaaaaToYyyymmdd(d.data);
         if (!dataConverted) return;
-        const [ano, mes] = dataConverted.split('-');
-        if (parseInt(ano) === anoAtual && parseInt(mes) <= mesAtual) {
-          const mesKey = `${ano}-${mes}`;
-          mensalMapAnual[mesKey] = (mensalMapAnual[mesKey] || 0) + d.totalLitros;
-        }
+        const mesKey = dataConverted.slice(0, 7); // YYYY-MM
+        mensalMap[mesKey] = (mensalMap[mesKey] || 0) + d.totalLitros;
       });
       
+      console.log('[DEBUG Mensal] MensalMap:', mensalMap);
+      
+      // Gerar lista de meses no intervalo do filtro
       let mesesOrdenados = [];
-      for (let m = 1; m <= mesAtual; m++) {
-        const mesKey = `${anoAtual}-${String(m).padStart(2, '0')}`;
-        mesesOrdenados.push(mesKey);
+      if (dataInicio && dataFim) {
+        const [anoIni, mesIni] = dataInicio.split('-').map(Number);
+        const [anoFim, mesFim] = dataFim.split('-').map(Number);
+        
+        let dataAtual = new Date(anoIni, mesIni - 1, 1);
+        const dataLimite = new Date(anoFim, mesFim - 1, 1);
+        
+        while (dataAtual <= dataLimite) {
+          const ano = dataAtual.getFullYear();
+          const mes = String(dataAtual.getMonth() + 1).padStart(2, '0');
+          mesesOrdenados.push(`${ano}-${mes}`);
+          dataAtual.setMonth(dataAtual.getMonth() + 1);
+        }
+      } else {
+        // Se não houver filtro, usar todos os meses com dados
+        mesesOrdenados = Object.keys(mensalMap).sort();
       }
+      
+      console.log('[DEBUG Mensal] Meses Ordenados:', mesesOrdenados);
       
       // Calcular cores baseadas na variação (verde subiu, vermelho desceu)
       let coresPontos = [];
-      let valoresMensais = mesesOrdenados.map(m => mensalMapAnual[m] || 0);
+      let valoresMensais = mesesOrdenados.map(m => mensalMap[m] || 0);
+      
+      console.log('[DEBUG Mensal] Valores Mensais:', valoresMensais);
+      
       for (let i = 0; i < valoresMensais.length; i++) {
         if (i === 0) {
           coresPontos.push('#888'); // Primeiro mês cinza
@@ -1397,11 +1611,11 @@
             tooltip: {
               callbacks: {
                 label: function(ctx) {
-                  return 'Litros: ' + ctx.parsed.toLocaleString();
+                  return 'Litros: ' + (ctx.parsed.y || ctx.parsed).toLocaleString();
                 },
                 afterLabel: function(ctx) {
                   if (ctx.dataIndex > 0) {
-                    const atual = ctx.parsed;
+                    const atual = ctx.parsed.y || ctx.parsed;
                     const anterior = ctx.dataset.data[ctx.dataIndex - 1];
                     const variacao = atual - anterior;
                     const variacaoPct = anterior > 0 ? ((variacao / anterior) * 100).toFixed(1) : '0.0';
@@ -1527,70 +1741,313 @@
           }
         }]
       };
-
-      // Gráfico Comparativo Estoque x Vendas (Mês)
-      let mesFiltro = document.getElementById('data-fim').value || '';
-      let mesSelecionado = mesFiltro ? mesFiltro.slice(0,7) : (mesesOrdenados[mesesOrdenados.length-1]||'');
       
-      // Calcular vendas do período FILTRADO (respeita data-inicio e data-fim)
-      let vendasLitrosMes = filtrados.reduce((a,b)=>a + (b.totalLitros||0), 0);
-      let vendasUnidadesMes = filtrados.reduce((a,b)=>a + (b.quantNF||0), 0);
-      
-      const estoqueMes = estoqueMensal[mesSelecionado] || { litrosTotal: 0, litrosFleetpro: 0, porFilial: {} };
-      const filialFiltro = document.getElementById('filtro-filial').value || '';
-      const labelMes = mesSelecionado ? formatarMes(mesSelecionado) : 'Período';
-      const litrosEstoqueTotal = filialFiltro ? (estoqueMes.porFilial?.[filialFiltro]?.litrosTotal || 0) : (estoqueMes.litrosTotal || 0);
-      const litrosEstoqueFleet = filialFiltro ? (estoqueMes.porFilial?.[filialFiltro]?.litrosFleetpro || 0) : (estoqueMes.litrosFleetpro || 0);
-
-      chartsOpts['graficoComparativoMes'] = {
-        type: 'bar',
-        data: {
-          labels: [labelMes],
-          datasets: [
-            { label: 'Estoque Ambra (L)', data: [litrosEstoqueTotal], backgroundColor: '#f9a825', borderRadius: 6, barPercentage: 0.6, categoryPercentage: 0.6 },
-            { label: 'Estoque Fleetpro (L)', data: [litrosEstoqueFleet], backgroundColor: '#28a745', borderRadius: 6, barPercentage: 0.6, categoryPercentage: 0.6 },
-            { label: 'Vendas (L)', data: [vendasLitrosMes], backgroundColor: '#193b7c', borderRadius: 6, barPercentage: 0.6, categoryPercentage: 0.6 },
-            { label: 'Vendas (Unid)', data: [vendasUnidadesMes], backgroundColor: '#ff497a', borderRadius: 6, barPercentage: 0.6, categoryPercentage: 0.6 }
-          ]
-        },
-        options: {
-          devicePixelRatio: window.devicePixelRatio || 2,
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            legend: { position: 'top' },
-            tooltip: { callbacks: { label: ctx => {
-              const suffix = ctx.datasetIndex === 3 ? ' unid' : 'L';
-              return `${ctx.dataset.label}: ${ctx.parsed.y.toLocaleString()}${suffix}`;
-            }}}
-          },
-          scales: {
-            y: { beginAtZero: true, ticks: { callback: v => v.toLocaleString() } }
-          },
-          layout: { padding: { top: 30 } }
-        },
-        plugins: [{
-          id: 'barLabelsComparativo',
-          afterDatasetsDraw: function(chart) {
-            const ctx = chart.ctx;
-            chart.data.datasets.forEach(function(ds, dsi){
-              const meta = chart.getDatasetMeta(dsi);
-              if (!meta.hidden) {
-                meta.data.forEach(function(bar, idx){
-                  const val = ds.data[idx]||0; if (val<=0) return;
-                  ctx.save();
-                  ctx.fillStyle = ['#a67c00','#1f7a3b','#0f2a5c','#cc3a60'][dsi] || '#333';
-                  ctx.font = 'bold 13px Arial';
-                  ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
-                  ctx.fillText(val.toLocaleString(), bar.x, bar.y - 5);
-                  ctx.restore();
-                });
-              }
-            })
-          }
-        }]
-      };
       for (const id of Object.keys(chartsOpts)) atualizarGrafico(id, chartsOpts[id]);
+    }
+
+    // ==== ANÁLISE DE ESTOQUE COMPARATIVA ====
+    async function processarAnaliseEstoque(file) {
+      Swal.fire({title:'Processando...', text:'Analisando estoque...', allowOutsideClick:false, didOpen:()=>Swal.showLoading()});
+      
+      const reader = new FileReader();
+      reader.onload = async function(e) {
+        try {
+          const csvData = e.target.result;
+          const linhas = csvData.split('\n').filter(linha => linha.trim() !== '');
+          
+          if (linhas.length < 2) {
+            Swal.fire('Erro!', 'Arquivo CSV vazio ou inválido.', 'error');
+            return;
+          }
+          
+          // Pegar próximo mês para análise (mês seguinte ao atual)
+          const hoje = new Date();
+          const proximoMes = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 1); // Primeiro dia do próximo mês
+          const mesAnalise = proximoMes.getMonth() + 1;
+          const anoAnalise = proximoMes.getFullYear();
+          
+          // Calcular os 2 anos anteriores dinamicamente
+          const anoUmAnoAtras = anoAnalise - 1;
+          const anoDoisAnosAtras = anoAnalise - 2;
+          
+          // Atualizar texto informativo
+          const meses = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+          document.getElementById('ano-comparacao').textContent = `${anoDoisAnosAtras} e ${anoUmAnoAtras} (Análise para ${meses[mesAnalise - 1]}/${anoAnalise})`;
+          
+          // Processar estoque atual
+          const estoqueAtual = [];
+          for (let i = 1; i < linhas.length; i++) {
+            const linha = linhas[i].trim();
+            if (!linha || linha.startsWith('TOTAL')) continue;
+            
+            const colunas = linha.split(';');
+            if (colunas.length < 13) continue;
+            
+            const filial = colunas[0]?.trim();
+            const codProduto = colunas[2]?.trim().replace(/[="()]/g, '');
+            const descricao = colunas[3]?.trim();
+            const grupo = colunas[4]?.trim();
+            const descGrupo = colunas[5]?.trim();
+            const fiscal = parseFloat(colunas[11]?.trim().replace(',', '.')) || 0;
+            
+            if (!codProduto || fiscal === 0 || !FILIAIS.includes(filial)) continue;
+            
+            // Calcular litros
+            const conversoesInfo = obterLitrosPorUnidade(codProduto, descricao, descGrupo);
+            const litrosPorUnidade = conversoesInfo.litros;
+            const totalLitros = fiscal * litrosPorUnidade;
+            
+            estoqueAtual.push({
+              codProduto,
+              descricao,
+              filial,
+              unidades: fiscal,
+              litrosPorUnidade,
+              totalLitros
+            });
+          }
+          
+          // Buscar vendas de 2 anos atrás E 1 ano atrás no mês de análise (próximo mês)
+          const mesKey2AnosAtras = `${anoDoisAnosAtras}-${String(mesAnalise).padStart(2, '0')}`;
+          const mesKey1AnoAtras = `${anoUmAnoAtras}-${String(mesAnalise).padStart(2, '0')}`;
+          const db = getFirestore(getApp());
+          const q = query(
+            collection(db, "relatorioLubrificantes"),
+            where("filial", "in", FILIAIS)
+          );
+          const snap = await getDocs(q);
+          
+          // Buscar vendas e consolidar por códigos equivalentes
+          const vendas2AnosAtras = {};
+          const vendas1AnoAtras = {};
+          snap.forEach(doc => {
+            const d = doc.data();
+            const dataConverted = ddmmaaaaToYyyymmdd(d.data);
+            if (!dataConverted) return;
+            const mesAno = dataConverted.slice(0, 7);
+            const cod = d.codProduto || '';
+            
+            // Vendas de 2 anos atrás
+            if (mesAno === mesKey2AnosAtras) {
+              if (!vendas2AnosAtras[cod]) {
+                vendas2AnosAtras[cod] = { litros: 0, unidades: 0 };
+              }
+              vendas2AnosAtras[cod].litros += (d.totalLitros || 0);
+              vendas2AnosAtras[cod].unidades += (d.quantNF || 0);
+            }
+            
+            // Vendas de 1 ano atrás
+            if (mesAno === mesKey1AnoAtras) {
+              if (!vendas1AnoAtras[cod]) {
+                vendas1AnoAtras[cod] = { litros: 0, unidades: 0 };
+              }
+              vendas1AnoAtras[cod].litros += (d.totalLitros || 0);
+              vendas1AnoAtras[cod].unidades += (d.quantNF || 0);
+            }
+          });
+          
+          // Consolidar vendas de códigos equivalentes
+          // Para cada código no estoque, somar vendas de todos seus equivalentes
+          function obterVendasConsolidadas(codigo, vendasMap) {
+            const equivalentes = obterCodigosEquivalentes(codigo);
+            let totalLitros = 0;
+            let totalUnidades = 0;
+            
+            equivalentes.forEach(codEquiv => {
+              if (vendasMap[codEquiv]) {
+                totalLitros += vendasMap[codEquiv].litros;
+                totalUnidades += vendasMap[codEquiv].unidades;
+              }
+            });
+            
+            return { litros: totalLitros, unidades: totalUnidades };
+          }
+          
+          // Montar tabela de análise
+          const tbody = document.getElementById('corpo-tabela-analise');
+          tbody.innerHTML = '';
+          
+          // Agrupar estoque por produto
+          const estoquePorProduto = {};
+          estoqueAtual.forEach(item => {
+            if (!estoquePorProduto[item.codProduto]) {
+              estoquePorProduto[item.codProduto] = {
+                descricao: item.descricao,
+                litros: 0,
+                unidades: 0,
+                litrosPorUnidade: item.litrosPorUnidade
+              };
+            }
+            estoquePorProduto[item.codProduto].litros += item.totalLitros;
+            estoquePorProduto[item.codProduto].unidades += item.unidades;
+          });
+          
+          // Criar linhas da tabela
+          const produtos = Object.keys(estoquePorProduto);
+          let totalLinhas = 0;
+          let totalSuficiente = 0;
+          let totalFalta = 0;
+          let totalSemHistorico = 0;
+          
+          // Preparar array com dados para ordenação
+          const produtosComStatus = produtos.map(cod => {
+            const estoque = estoquePorProduto[cod];
+            // Buscar vendas consolidadas considerando códigos equivalentes
+            const vendas2Anos = obterVendasConsolidadas(cod, vendas2AnosAtras);
+            const vendas1Ano = obterVendasConsolidadas(cod, vendas1AnoAtras);
+            
+            // Calcular média de vendas dos 2 anos
+            const mediaLitros = (vendas2Anos.litros + vendas1Ano.litros) / 2;
+            const mediaUnidades = (vendas2Anos.unidades + vendas1Ano.unidades) / 2;
+            
+            // Calcular estimativa (média × 1.2 para margem de segurança)
+            const estimativaLitros = Math.ceil(mediaLitros * 1.2);
+            const diferencaLitros = estoque.litros - estimativaLitros;
+            
+            // Determinar status e prioridade
+            let status, badgeClass, iconeStatus, prioridade;
+            if (vendas2Anos.litros === 0 && vendas1Ano.litros === 0) {
+              status = 'Sem histórico';
+              badgeClass = 'badge-sem-historico';
+              iconeStatus = '⚪';
+              prioridade = 3; // Por último
+            } else if (diferencaLitros >= 0) {
+              status = `✓ Suficiente (+${Math.round(diferencaLitros)}L)`;
+              badgeClass = 'badge-suficiente';
+              iconeStatus = '✓';
+              prioridade = 2; // Por segundo
+            } else {
+              status = `⚠ Falta ${Math.abs(Math.round(diferencaLitros))}L`;
+              badgeClass = 'badge-falta';
+              iconeStatus = '⚠';
+              prioridade = 1; // Por primeiro
+            }
+            
+            return {
+              cod,
+              estoque,
+              vendas2Anos,
+              vendas1Ano,
+              mediaLitros,
+              estimativaLitros,
+              status,
+              badgeClass,
+              iconeStatus,
+              prioridade,
+              diferencaLitros: Math.abs(diferencaLitros)
+            };
+          });
+          
+          // Ordenar: primeiro por prioridade (falta=1, suficiente=2, sem histórico=3),
+          // depois por diferença (maior falta primeiro, maior suficiente primeiro)
+          produtosComStatus.sort((a, b) => {
+            if (a.prioridade !== b.prioridade) {
+              return a.prioridade - b.prioridade;
+            }
+            // Dentro do mesmo status, ordenar por diferença (maior diferença primeiro)
+            return b.diferencaLitros - a.diferencaLitros;
+          });
+          
+          // Criar linhas
+          produtosComStatus.forEach((produto, index) => {
+            const { cod, estoque, vendas2Anos, vendas1Ano, mediaLitros, estimativaLitros, status, badgeClass } = produto;
+            
+            // Contar por status
+            if (produto.prioridade === 1) totalFalta++;
+            else if (produto.prioridade === 2) totalSuficiente++;
+            else totalSemHistorico++;
+            
+            const bgColor = index % 2 === 0 ? '#ffffff' : '#f8f9fc';
+            
+            const tr = document.createElement('tr');
+            tr.className = 'produto-row';
+            tr.style.background = bgColor;
+            tr.style.borderBottom = '1px solid #e8ecf3';
+            tr.dataset.codigo = cod.toLowerCase();
+            tr.dataset.descricao = estoque.descricao.toLowerCase();
+            tr.innerHTML = `
+              <td style="padding:16px 20px;">
+                <div style="display:flex; flex-direction:column; gap:4px;">
+                  <strong style="color:#fff; font-size:14px; font-weight:700;">${cod}</strong>
+                  <small style="color:#666; font-size:12px;">${estoque.descricao}</small>
+                </div>
+              </td>
+              <td style="padding:16px 20px; text-align:center;">
+                <strong style="color:#fff; font-size:17px; font-weight:700;">${Math.round(estoque.litros)}L</strong>
+              </td>
+              <td style="padding:16px 20px; text-align:center;">
+                <span style="color:#fff; font-size:15px; font-weight:600;">${Math.round(estoque.unidades)}</span>
+              </td>
+              <td style="padding:16px 20px; text-align:center;">
+                <div class="vendas-historicas">
+                  <span class="vendas-ano">${Math.round(vendas2Anos.litros)}L (${anoDoisAnosAtras})</span>
+                  <span class="vendas-ano">${Math.round(vendas1Ano.litros)}L (${anoUmAnoAtras})</span>
+                  <span class="vendas-media">Média: ${Math.round(mediaLitros)}L</span>
+                </div>
+              </td>
+              <td style="padding:16px 20px; text-align:center;">
+                <strong style="color:#ffd700; font-size:17px; font-weight:700;">${estimativaLitros}L</strong>
+              </td>
+              <td style="padding:16px 20px; text-align:center;">
+                <span class="badge-status ${badgeClass}">${status}</span>
+              </td>
+            `;
+            tbody.appendChild(tr);
+            totalLinhas++;
+          });
+          
+          // Atualizar totalizadores
+          document.getElementById('total-produtos').textContent = totalLinhas;
+          document.getElementById('total-suficiente').textContent = totalSuficiente;
+          document.getElementById('total-falta').textContent = totalFalta;
+          document.getElementById('total-sem-historico').textContent = totalSemHistorico;
+          
+          if (totalLinhas === 0) {
+            tbody.innerHTML = '<tr><td colspan=\"6\" style=\"text-align:center; padding:40px; color:#999;\">Nenhum produto encontrado para análise</td></tr>';
+          }
+          
+          // Implementar busca
+          const searchInput = document.getElementById('search-analise');
+          searchInput.addEventListener('input', function() {
+            const termo = this.value.toLowerCase();
+            const linhas = tbody.querySelectorAll('.produto-row');
+            
+            linhas.forEach(linha => {
+              const codigo = linha.dataset.codigo;
+              const descricao = linha.dataset.descricao;
+              
+              if (codigo.includes(termo) || descricao.includes(termo)) {
+                linha.style.display = '';
+              } else {
+                linha.style.display = 'none';
+              }
+            });
+          });
+          
+          // Exibir seção
+          document.getElementById('secao-analise-estoque').style.display = 'block';
+          lucide.createIcons();
+          
+          Swal.fire({
+            icon: 'success',
+            title: 'Análise Concluída!',
+            text: `${totalLinhas} produtos analisados`,
+            timer: 2000,
+            showConfirmButton: false
+          });
+          
+        } catch (error) {
+          console.error('Erro ao processar análise:', error);
+          Swal.fire('Erro!', 'Falha ao processar análise: ' + error.message, 'error');
+        }
+      };
+      
+      reader.onerror = function(error) {
+        console.error('Erro ao ler arquivo:', error);
+        Swal.fire('Erro!', 'Falha ao ler o arquivo CSV.', 'error');
+      };
+      
+      reader.readAsText(file, 'UTF-8');
     }
 
     function atualizarGrafico(id, config) {
@@ -1811,6 +2268,29 @@
         }
       });
 
+      // Botão Análise de Estoque
+      document.getElementById('btn-analise-estoque').addEventListener('click', () => {
+        document.getElementById('csv-analise-estoque-file').click();
+      });
+      
+      // Fechar análise de estoque
+      document.getElementById('btn-fechar-analise').addEventListener('click', () => {
+        document.getElementById('secao-analise-estoque').style.display = 'none';
+      });
+      
+      // Upload CSV Análise de Estoque
+      document.getElementById('csv-analise-estoque-file').addEventListener('change', (e) => {
+        if (e.target.files.length) {
+          const file = e.target.files[0];
+          if (file.name.toLowerCase().endsWith('.csv')) {
+            processarAnaliseEstoque(file);
+          } else {
+            Swal.fire('Erro!', 'Por favor, selecione um arquivo CSV.', 'error');
+          }
+          e.target.value = '';
+        }
+      });
+      
       // Botão Importar CSV Vendas
       document.getElementById('btn-importar').addEventListener('click', () => {
         const upload = document.getElementById('upload-container');
@@ -1886,187 +2366,6 @@
     await getMetasMensaisFirebase();
     
     setDatasPadrao(); await carregarDados(); await carregarEstoqueMensal(); analisarDashboard();
-    
-    // Modal PDF
-    const modalPDF = document.getElementById('modalPDF');
-    document.getElementById('btn-gerar-pdf').addEventListener('click', () => {
-      modalPDF.classList.add('show');
-    });
-    document.getElementById('modalPDFClose').addEventListener('click', () => {
-      modalPDF.classList.remove('show');
-    });
-    document.getElementById('btnCancelarPDF').addEventListener('click', () => {
-      modalPDF.classList.remove('show');
-    });
-    // Impede o modal de fechar ao clicar dentro dele
-    modalPDF.addEventListener('click', (e) => {
-      if (e.target === modalPDF) {
-        modalPDF.classList.remove('show');
-      }
-    });
-    document.getElementById('btnConfirmarPDF').addEventListener('click', async () => {
-      const opcoes = {
-        kpis: document.getElementById('pdf-kpis').checked,
-        graficos: document.getElementById('pdf-graficos').checked,
-        estoque: document.getElementById('pdf-estoque').checked,
-        vendas: document.getElementById('pdf-vendas').checked
-      };
-      modalPDF.classList.remove('show');
-      await gerarPDF(opcoes);
-    });
-    
-    async function gerarPDF(opcoes) {
-      Swal.fire({title:'Gerando PDF...',text:'Aguarde enquanto montamos seu relatório.',allowOutsideClick:false,didOpen:()=>Swal.showLoading()});
-      
-      try {
-        // Aguardar um pouco para garantir que os gráficos estejam renderizados
-        await new Promise(resolve => setTimeout(resolve, 500));
-        
-        // Importar jsPDF
-        const { jsPDF } = window.jspdf;
-        
-        if (!jsPDF) {
-          throw new Error('Biblioteca jsPDF não carregada');
-        }
-        
-        const pdf = new jsPDF('p', 'mm', 'a4');
-        let yPos = 20;
-        
-        // Cabeçalho com linha decorativa
-        pdf.setFillColor(25, 59, 124);
-        pdf.rect(0, 0, 210, 35, 'F');
-        
-        pdf.setFontSize(20);
-        pdf.setTextColor(255, 255, 255);
-        pdf.text('Relatório de Análise - Lubrificantes', 105, 15, { align: 'center' });
-        
-        // Período e Filial
-        pdf.setFontSize(10);
-        const dataInicio = document.getElementById('data-inicio')?.value || 'Não definido';
-        const dataFim = document.getElementById('data-fim')?.value || 'Não definido';
-        const filialSelecionada = document.getElementById('filtro-filial')?.value || '';
-        const filialTexto = filialSelecionada ? (filialSelecionada === '2' ? 'Campos Novos' : filialSelecionada === '6' ? 'Rio do Sul' : 'Lages') : 'Todas as Filiais';
-        pdf.text(`Período: ${dataInicio} a ${dataFim}`, 105, 23, { align: 'center' });
-        pdf.text(`Filial: ${filialTexto}`, 105, 29, { align: 'center' });
-        
-        yPos = 45;
-        
-        // KPIs em cards
-        if (opcoes.kpis) {
-          pdf.setFontSize(14);
-          pdf.setTextColor(25, 59, 124);
-          pdf.text('Indicadores Gerais', 15, yPos);
-          yPos += 8;
-          
-          const kpiData = [
-            { label: 'Total Vendas', valor: document.getElementById('kpi-total-vendas')?.textContent || '0', cor: [255, 73, 122] },
-            { label: 'Total Litros', valor: document.getElementById('kpi-total-litros')?.textContent || '0', cor: [249, 168, 37] },
-            { label: 'Maior Filial', valor: document.getElementById('kpi-maior-filial')?.textContent || 'N/A', cor: [40, 167, 69] }
-          ];
-          
-          let xPos = 15;
-          kpiData.forEach(kpi => {
-            // Card do KPI
-            pdf.setFillColor(kpi.cor[0], kpi.cor[1], kpi.cor[2]);
-            pdf.rect(xPos, yPos, 60, 18, 'F');
-            
-            pdf.setFontSize(16);
-            pdf.setTextColor(255, 255, 255);
-            pdf.text(kpi.valor, xPos + 30, yPos + 8, { align: 'center' });
-            
-            pdf.setFontSize(9);
-            pdf.text(kpi.label, xPos + 30, yPos + 14, { align: 'center' });
-            
-            xPos += 65;
-          });
-          
-          yPos += 25;
-        }
-        
-        // Gráficos - capturar como exibidos no HTML usando html2canvas (2 colunas)
-        if (opcoes.graficos) {
-          const blocos = [
-            { selector: '#bloco-grafico-filiais', titulo: 'Vendas por Filial' },
-            { selector: '#bloco-grafico-mensal', titulo: 'Evolução Mensal' },
-            { selector: '#bloco-grafico-participacao', titulo: 'Participação por Filial' },
-            { selector: '#bloco-grafico-comparativo', titulo: 'Comparativo Estoque x Vendas' },
-            { selector: '#bloco-grafico-distribuicao', titulo: 'Distribuição por Tipo' }
-          ];
-          
-          const columnWidth = 95; // mm
-          const columnGap = 5; // mm
-          const rowHeight = 60; // mm
-          let col = 0;
-          
-          for (const bloco of blocos) {
-            const el = document.querySelector(bloco.selector) || document.getElementById(bloco.selector.replace('#',''));
-            if (!el) continue;
-            try {
-              // Nova página quando não couber mais
-              if (yPos + rowHeight > 285) {
-                pdf.addPage();
-                yPos = 20;
-              }
-              
-              // Capturar bloco com estilos atuais
-              const canvasEl = await html2canvas(el, {
-                backgroundColor: '#FFFFFF',
-                scale: 2,
-                useCORS: true,
-                logging: false,
-                windowWidth: el.scrollWidth,
-                windowHeight: el.scrollHeight
-              });
-              const imgData = canvasEl.toDataURL('image/png');
-              
-              // Posição em colunas
-              const x = 15 + col * (columnWidth + columnGap);
-              const targetH = rowHeight;
-              const targetW = columnWidth;
-              
-              // Título
-              pdf.setFontSize(9);
-              pdf.setTextColor(25, 59, 124);
-              pdf.text(bloco.titulo, x, yPos);
-              
-              // Imagem do bloco
-              pdf.addImage(imgData, 'PNG', x, yPos + 4, targetW, targetH - 8);
-              
-              col += 1;
-              if (col > 1) { // 2 colunas
-                col = 0;
-                yPos += rowHeight;
-              }
-            } catch(e) {
-              console.error('Erro ao capturar bloco', bloco.selector, e);
-            }
-          }
-          // Se última linha ocupou apenas 1 coluna, avançar a posição para próxima linha
-          if (col === 1) {
-            yPos += rowHeight;
-            col = 0;
-          }
-        }
-        
-        // Rodapé
-        const totalPages = pdf.internal.getNumberOfPages();
-        for (let i = 1; i <= totalPages; i++) {
-          pdf.setPage(i);
-          pdf.setFontSize(8);
-          pdf.setTextColor(150);
-          pdf.text(`Página ${i} de ${totalPages}`, 105, 290, { align: 'center' });
-          pdf.text(`Gerado em: ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR')}`, 105, 285, { align: 'center' });
-        }
-        
-        // Salvar PDF
-        const dataAtual = new Date().toISOString().split('T')[0];
-        pdf.save(`relatorio-lubrificantes-${dataAtual}.pdf`);
-        Swal.fire('Sucesso!','PDF gerado com sucesso!','success');
-      } catch (e) {
-        console.error('Erro ao gerar PDF:', e);
-        Swal.fire('Erro','Falha ao gerar PDF: '+e.message,'error');
-      }
-    }
 
     // ========== METAS FIREBASE - Funções e Modal ==========
     // Criar botão de metas e modal
@@ -2254,7 +2553,7 @@
           tr.onmouseout = () => { tr.style.background = idx % 2 === 0 ? '#f8f9fc' : '#fff'; };
           const tdMes = document.createElement('td');
           tdMes.textContent = nomeMes;
-          tdMes.style.cssText = 'padding:12px 16px;border:none;border-bottom:1px solid #e8ecf3;font-weight:600;color:#fff;font-size:0.95em;';
+          tdMes.style.cssText = 'padding:12px 16px;border:none;border-bottom:1px solid #e8ecf3;font-weight:600;color:#193b7c;font-size:0.95em;';
           tr.appendChild(tdMes);
           filiaisMeta.forEach(f => {
             const td = document.createElement('td');
@@ -2403,8 +2702,6 @@
     ensureMetasUI();
     ensureMetaOnFiliais();
   </script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script type="module" src="/assets/js/firebase-config.js"></script>
   <script type="module" src="/assets/js/auth.js"></script>
   <script src="/assets/js/main.js"></script>
