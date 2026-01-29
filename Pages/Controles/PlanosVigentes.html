@@ -46,11 +46,8 @@
     .status-concluido { background-color: #193b7c; color: white; }
     
     tr.linha-alerta td {
-        animation: pulsarAlerta 1.2s ease-in-out infinite alternate;
-    }
-    @keyframes pulsarAlerta {
-      from { background-color: #950000; }
-      to { background-color: #c67903; }
+        background-color: #c67903;
+        color: white;
     }
     /* Estilo para a área de filtros */
     .filters {
@@ -100,6 +97,15 @@
         </div>
       </div>
       <div class="content-card-body">
+        <!-- CARD EXPLICATIVO DOS ÍCONES -->
+        <div style="background-color: #f0f4f8; border-left: 4px solid #2563eb; padding: 12px 15px; margin-bottom: 15px; border-radius: 6px;">
+          <p style="margin: 0; font-size: 14px; color: #1f2937;"><strong>📋 Legenda de Alertas:</strong></p>
+          <p style="margin: 5px 0 0 0; font-size: 13px; color: #4b5563;">
+            <span style="margin-right: 15px;">⚠️ <strong>Alerta de Horas:</strong> Avisa quando faltam 60 horas para a manutenção</span><br/>
+            <span>📅 <strong>Alerta de Tempo:</strong> Última manutenção há mais de 4 meses</span>
+          </p>
+        </div>
+
         <!-- ÁREA DE FILTROS ATUALIZADA -->
         <div class="filters">
           <input id="filtro-cliente" type="text" placeholder="Buscar por cliente..." />
@@ -111,9 +117,11 @@
             <option value="lages">Lages</option>
           </select>
           <select id="filtro-status">
-            <option value="">Todos os status</option>
+            <option value="Em andamento com alerta" selected>Em andamento com alerta</option>
+            <option value="Em andamento sem alerta">Em andamento sem alerta</option>
+            <option value="Em andamento">Todos em andamento</option>
             <option value="Concluído">Concluído</option>
-            <option value="Em andamento">Em andamento</option>
+            <option value="">Todos os status</option>
           </select>
           <input id="filtro-periodo" placeholder="Filtrar por período" />
         </div>
@@ -226,7 +234,8 @@
     const clienteFiltro = document.getElementById("filtro-cliente").value.toLowerCase();
     const chassiFiltro = document.getElementById("filtro-chassi").value.toLowerCase();
     const filialFiltro = document.getElementById("filtro-filial").value.toLowerCase();
-    const statusFiltro = document.getElementById("filtro-status").value;
+    let statusFiltro = document.getElementById("filtro-status").value;
+    
     const instance = document.getElementById("filtro-periodo")._flatpickr;
     const selectedDates = instance ? instance.selectedDates : [];
 
@@ -242,11 +251,26 @@
       d.statusChecklist = totalChecklist > 0 && preenchidos === totalChecklist ? "Concluído" : "Em andamento";
       
       const dentroDoPeriodo = !dataInicio || (d.dataInicioContrato >= dataInicio && d.dataInicioContrato <= dataFim);
+      const temAlerta = alertaPorData(d) || alertaDoItem(d);
+      
+      // Validação do status com tratamento de alerta
+      let statusValido = true;
+      
+      if (statusFiltro === "Em andamento com alerta") {
+        statusValido = d.statusChecklist === "Em andamento" && temAlerta;
+      } else if (statusFiltro === "Em andamento sem alerta") {
+        statusValido = d.statusChecklist === "Em andamento" && !temAlerta;
+      } else if (statusFiltro === "Em andamento") {
+        statusValido = d.statusChecklist === "Em andamento";
+      } else if (statusFiltro === "Concluído") {
+        statusValido = d.statusChecklist === "Concluído";
+      }
+      // Se statusFiltro === "", mostra todos os status
       
       return (d.nomeCliente || "").toLowerCase().includes(clienteFiltro) &&
         (d.chassi || "").toLowerCase().includes(chassiFiltro) &&
         (filialFiltro === "" || (d.filial || "").toLowerCase() === filialFiltro) &&
-        (statusFiltro === "" || d.statusChecklist === statusFiltro) &&
+        statusValido &&
         dentroDoPeriodo;
     });
 
@@ -347,7 +371,6 @@
           const button = event.target.closest('button.btn-delete');
           if (button) apagarPlano(button.dataset.id);
       });
-      setInterval(carregarDados, 60000); // Auto-refresh
   }
 
   async function apagarPlano(id) {
