@@ -3,9 +3,13 @@ import { db, auth, onAuthStateChanged, signOut, doc, getDoc, setDoc, deleteDoc, 
 
 // --- MAPA DE PERMISSÕES ---
 const menuPermissions = {
+    // --- CHECKLIST ---
+    'checklist-inicio': ['admin', 'diretoria', 'pecas', 'servicos'],
+    
     // --- ADMIN ---
     'admin-CadastroGestores': ['admin'],
     'admin-CadastroTecnicos': ['admin'],
+    'admin-UsuariosOnline': ['admin'],
 
     // --- DIRETORIA ---
     'dash-geral': ['admin', 'diretoria'],
@@ -22,7 +26,11 @@ const menuPermissions = {
     'ctrl-ContagemDiaria': ['admin', 'diretoria', 'pecas'],
     'ctrl-PedidosPecas': ['admin', 'diretoria', 'pecas'],
     'ctrl-PedidosPrim': ['admin', 'diretoria', 'pecas'],
-    'ctrl-ControleFerramentas': ['admin', 'diretoria', 'pecas'],
+    'menu-ferramentas': ['admin', 'diretoria', 'pecas', 'comercial', 'servicos'],
+    'ctrl-ControleAlocacao': ['admin', 'diretoria', 'pecas', 'comercial', 'servicos'],
+    'ctrl-ControleEstoque': ['admin', 'diretoria', 'pecas', 'comercial', 'servicos'],
+    'ctrl-ControleGrupos': ['admin', 'diretoria', 'pecas'],
+    'ctrl-ControleHistorico': ['admin', 'diretoria', 'pecas', 'comercial', 'servicos'],
     'ctrl-Prim': ['admin', 'diretoria', 'pecas'],
 
     // --- SERVICOS ---
@@ -33,6 +41,17 @@ const menuPermissions = {
     'ctrl-MaquinaParada': ['admin', 'diretoria', 'servicos'],
     'ctrl-Tempario': ['admin', 'diretoria', 'servicos', 'pecas'],
     'ctrl-Telemetria': ['admin', 'diretoria', 'servicos'],
+    
+    // --- MENUS (Grupos de submenu) ---
+    'menu-controles': ['admin', 'diretoria', 'pecas', 'comercial', 'servicos'],
+    'menu-checklist': ['admin', 'diretoria', 'pecas', 'servicos'],
+    'menu-tempario': ['admin', 'diretoria', 'servicos', 'pecas'],
+    'menu-telemetria': ['admin', 'diretoria', 'servicos'],
+    'menu-planejamento': ['admin', 'diretoria'],
+    'menu-suporte': ['admin', 'diretoria', 'comercial', 'pecas', 'servicos'],
+    'menu-lubrificantes': ['admin', 'diretoria', 'pecas'],
+    'menu-cadastros': ['admin'],
+    'menu-dashboards': ['admin', 'diretoria', 'comercial', 'pecas', 'servicos'],
     
     // --- LUBRIFICANTES ---
     'lubri-AnaliseLubrificantes': ['admin', 'diretoria', 'pecas'],
@@ -65,7 +84,10 @@ const pagePermissions = {
     '/Pages/Controles/PedidosPecas.html': ['admin', 'diretoria', 'pecas'],
     '/Pages/Controles/PedidosPrim.html': ['admin', 'diretoria', 'pecas'],
     '/Pages/Controles/prim.html': ['admin', 'diretoria', 'pecas'],
-    '/Pages/Controles/ControleFerramentas.html': ['admin', 'diretoria', 'pecas'],
+    '/Pages/Ferramentas/ControleFerramentas-Alocacao.html': ['admin', 'diretoria', 'pecas', 'comercial', 'servicos'],
+    '/Pages/Ferramentas/ControleFerramentas-Estoque.html': ['admin', 'diretoria', 'pecas', 'comercial', 'servicos'],
+    '/Pages/Ferramentas/ControleFerramentas-Grupos.html': ['admin', 'diretoria', 'pecas'],
+    '/Pages/Ferramentas/ControleFerramentas-Historico.html': ['admin', 'diretoria', 'pecas', 'comercial', 'servicos'],
     '/Pages/Controles/PlanosVigentes.html': ['admin', 'diretoria', 'servicos'],
     '/Pages/Controles/MaquinasParadas.html': ['admin', 'diretoria', 'servicos'],
     '/Pages/Controles/Telemetria.html': ['admin', 'diretoria', 'servicos'],
@@ -77,6 +99,7 @@ const pagePermissions = {
     '/Pages/PlanejamentoAnual/GerenciarPermissoes.html': ['admin', 'diretoria'],
     '/Pages/Cadastros/CadastroGestores.html': ['admin'],
     '/Pages/Cadastros/CadastroTecnicos.html': ['admin'],
+    '/Pages/Cadastros/UsuariosOnline.html': ['admin'],
     '/Pages/Suporte/SolicitacaoSuporte.html': ['admin', 'diretoria', 'comercial', 'pecas', 'servicos'],
     '/Pages/Suporte/MinhasSolicitacoes.html': ['admin', 'diretoria', 'comercial', 'pecas', 'servicos'],
     '/Pages/Suporte/GerenciarSolicitacoes.html': ['admin']
@@ -131,7 +154,10 @@ function checkPageAccess(userGroup, permissoesIndividuais) {
                 '/Pages/Controles/PedidosPecas.html': 'ctrl-PedidosPecas',
                 '/Pages/Controles/PedidosPrim.html': 'ctrl-PedidosPrim',
                 '/Pages/Controles/prim.html': 'ctrl-Prim',
-                '/Pages/Controles/ControleFerramentas.html': 'ctrl-ControleFerramentas',
+                '/Pages/Ferramentas/ControleFerramentas-Alocacao.html': 'ctrl-ControleAlocacao',
+                '/Pages/Ferramentas/ControleFerramentas-Estoque.html': 'ctrl-ControleEstoque',
+                '/Pages/Ferramentas/ControleFerramentas-Grupos.html': 'ctrl-ControleGrupos',
+                '/Pages/Ferramentas/ControleFerramentas-Historico.html': 'ctrl-ControleHistorico',
                 '/Pages/Controles/PlanosVigentes.html': 'ctrl-PlanosVigentes',
                 '/Pages/Controles/MaquinasParadas.html': 'ctrl-MaquinaParada',
                 '/Pages/Controles/Telemetria.html': 'ctrl-Telemetria',
@@ -143,6 +169,7 @@ function checkPageAccess(userGroup, permissoesIndividuais) {
                 '/Pages/PlanejamentoAnual/GerenciarPermissoes.html': 'plan-Permissoes',
                 '/Pages/Cadastros/CadastroGestores.html': 'admin-CadastroGestores',
                 '/Pages/Cadastros/CadastroTecnicos.html': 'admin-CadastroTecnicos',
+                '/Pages/Cadastros/UsuariosOnline.html': 'admin-UsuariosOnline',
                 '/Pages/Suporte/SolicitacaoSuporte.html': 'suporte-SolicitacaoSuporte',
                 '/Pages/Suporte/MinhasSolicitacoes.html': 'suporte-MinhasSolicitacoes',
                 '/Pages/Suporte/GerenciarSolicitacoes.html': 'suporte-GerenciarSolicitacoes'
@@ -164,17 +191,40 @@ function checkPageAccess(userGroup, permissoesIndividuais) {
 }
 
 // Função que verifica se o usuário tem acesso a um item de menu
+// --- MAPA DE QUAIS ITENS PERTENCEM A CADA MENU ---
+const menuItems = {
+    'menu-ferramentas': ['ctrl-ControleAlocacao', 'ctrl-ControleEstoque', 'ctrl-ControleGrupos', 'ctrl-ControleHistorico'],
+    'menu-checklist': ['checklist-inicio'],
+    'menu-controles': ['ctrl-PlanosVigentes', 'ctrl-OportunidadeFabrica', 'ctrl-MaquinaParada', 'ctrl-Kit50', 'ctrl-ContagemDiaria', 'ctrl-PedidosPecas', 'ctrl-PedidosPrim', 'ctrl-Prim'],
+    'menu-tempario': ['ctrl-Tempario'],
+    'menu-telemetria': ['ctrl-Telemetria'],
+    'menu-planejamento': ['plan-Preencher', 'plan-Gerenciar', 'plan-Permissoes'],
+    'menu-suporte': ['suporte-SolicitacaoSuporte', 'suporte-MinhasSolicitacoes', 'suporte-GerenciarSolicitacoes'],
+    'menu-lubrificantes': ['lubri-AnaliseLubrificantes'],
+    'menu-cadastros': ['admin-CadastroGestores', 'admin-CadastroTecnicos', 'admin-UsuariosOnline'],
+    'menu-dashboards': ['dash-geral', 'dash-AnalisarParadas', 'dash-comercial', 'dash-Seguro', 'dash-Consorcio', 'dash-pecas', 'dash-servicos', 'dash-PLM', 'dash-planos-manutencao']
+};
+
 function hasPermission(menuItemId, userGroup, permissoesIndividuais) {
     const allowedGroups = menuPermissions[menuItemId];
     
     // Verifica se o grupo principal tem acesso
-    if (userGroup !== 'nenhum' && allowedGroups.includes(userGroup)) {
+    if (userGroup !== 'nenhum' && allowedGroups && allowedGroups.includes(userGroup)) {
         return true;
     }
     
     // Verifica se tem permissão individual específica
     if (permissoesIndividuais.includes(menuItemId)) {
         return true;
+    }
+
+    // Para menus (menu-*), verifica se tem permissão em ALGUM dos itens dentro
+    if (menuItemId.startsWith('menu-') && menuItems[menuItemId]) {
+        for (const itemId of menuItems[menuItemId]) {
+            if (hasPermission(itemId, userGroup, permissoesIndividuais)) {
+                return true;
+            }
+        }
     }
     
     return false;
