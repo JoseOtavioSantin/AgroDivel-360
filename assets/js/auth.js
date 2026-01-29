@@ -1,5 +1,5 @@
 // Importa tudo que precisamos do nosso arquivo de configuração
-import { db, auth, onAuthStateChanged, signOut, doc, getDoc } from './firebase-config.js';
+import { db, auth, onAuthStateChanged, signOut, doc, getDoc, setDoc, deleteDoc, serverTimestamp } from './firebase-config.js';
 
 // --- MAPA DE PERMISSÕES ---
 const menuPermissions = {
@@ -212,6 +212,9 @@ onAuthStateChanged(auth, async (user) => {
             // Salvar filiais no localStorage para uso em dashboards
             localStorage.setItem('gestorFilial', JSON.stringify(filiaisGestor));
             
+            // Registrar usuário como online
+            await registrarUsuarioOnline(user.uid, userName, filiaisGestor[0] || "N/A");
+            
             console.log("Grupo do usuário:", userGroup);
             console.log("Nome do usuário:", userName);
             console.log("Permissões individuais:", permissoesIndividuais);
@@ -273,15 +276,68 @@ function applyMenuPermissions(userGroup, permissoesIndividuais = []) {
 // Lógica do botão de Logout
 const logoutButton = document.getElementById('logout-button');
 if (logoutButton) {
-    logoutButton.addEventListener('click', () => {
-        signOut(auth).then(() => {
+    logoutButton.addEventListener('click', async () => {
+        try {
+            // Remover usuário de online antes de fazer logout
+            const currentUser = auth.currentUser;
+            if (currentUser) {
+                await removerUsuarioOnline(currentUser.uid);
+            }
+            
+            await signOut(auth);
             console.log('Logout bem-sucedido.');
             window.location.href = '/Pages/Login.html';
-        }).catch((error) => {
+        } catch (error) {
             console.error('Erro ao fazer logout:', error);
-        });
+        }
     });
 }
+
+// Função para registrar usuário como online
+async function registrarUsuarioOnline(uid, nome, filial) {
+    try {
+        if (!uid) return;
+        const usuarioRef = doc(db, "usuariosOnline", uid);
+        await setDoc(usuarioRef, {
+            uid,
+            nome,
+            filial,
+            loginTime: serverTimestamp(),
+            lastActivity: serverTimestamp()
+        }, { merge: true });
+        console.log("Usuário registrado como online:", nome);
+    } catch (error) {
+        console.error("Erro ao registrar usuário online:", error);
+    }
+}
+
+// Função para remover usuário de online
+async function removerUsuarioOnline(uid) {
+    try {
+        if (!uid) return;
+        const usuarioRef = doc(db, "usuariosOnline", uid);
+        await deleteDoc(usuarioRef);
+        console.log("Usuário removido de online");
+    } catch (error) {
+        console.error("Erro ao remover usuário online:", error);
+    }
+}
+
+// Atualizar última atividade ao clicar em qualquer lugar
+document.addEventListener('click', async () => {
+    try {
+        const currentUser = auth.currentUser;
+        if (currentUser) {
+            const usuarioRef = doc(db, "usuariosOnline", currentUser.uid);
+            await setDoc(usuarioRef, {
+                lastActivity: serverTimestamp()
+            }, { merge: true });
+        }
+    } catch (error) {
+        // Silenciar erros de atualização
+    }
+});
+
 
 
 
