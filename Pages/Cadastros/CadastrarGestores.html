@@ -50,10 +50,10 @@
         }
 
         .permissions-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-            gap: 10px;
-            max-height: 400px;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            max-height: 500px;
             overflow-y: auto;
             padding: 10px;
             border: 1px solid #ddd;
@@ -94,17 +94,20 @@
         }
 
         .select-all-btn {
-            background: var(--primary-color);
+            background: #2c5aa0;
             color: white;
             border: none;
-            padding: 5px 10px;
-            border-radius: 3px;
+            padding: 8px 15px;
+            border-radius: 4px;
             cursor: pointer;
-            font-size: 12px;
+            font-size: 13px;
+            font-weight: 600;
+            transition: all 0.3s;
         }
 
         .select-all-btn:hover {
-            background: var(--primary-dark);
+            background: #1e4073;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
         }
     </style>
 </head>
@@ -251,7 +254,10 @@
             'ctrl-ContagemDiaria': ['admin', 'diretoria', 'pecas'],
             'ctrl-PedidosPecas': ['admin', 'diretoria', 'pecas'],
             'ctrl-PedidosPrim': ['admin', 'diretoria', 'pecas'],
-            'ctrl-ControleFerramentas': ['admin', 'diretoria', 'pecas'],
+            'ctrl-ControleAlocacao': ['admin', 'diretoria', 'pecas', 'comercial', 'servicos'],
+            'ctrl-ControleEstoque': ['admin', 'diretoria', 'pecas', 'comercial', 'servicos'],
+            'ctrl-ControleGrupos': ['admin', 'diretoria', 'pecas'],
+            'ctrl-ControleHistorico': ['admin', 'diretoria', 'pecas', 'comercial', 'servicos'],
             'ctrl-Prim': ['admin', 'diretoria', 'pecas'],
 
             // --- SERVICOS ---
@@ -293,7 +299,10 @@
             'ctrl-ContagemDiaria': 'Contagem Diária',
             'ctrl-PedidosPecas': 'Pedidos de Peças',
             'ctrl-PedidosPrim': 'Pedidos de Prim',
-            'ctrl-ControleFerramentas': 'Controle de Ferramentas',
+            'ctrl-ControleAlocacao': 'Ferramentas - Alocações',
+            'ctrl-ControleEstoque': 'Ferramentas - Estoque',
+            'ctrl-ControleGrupos': 'Ferramentas - Grupos',
+            'ctrl-ControleHistorico': 'Ferramentas - Histórico',
             'dash-servicos': 'Dashboard Serviços',
             'dash-PLM': 'Dashboard PLM',
             'dash-planos-manutencao': 'Planos de Manutenção',
@@ -334,11 +343,12 @@
         function loadPermissionCheckboxes() {
             permissionsGrid.innerHTML = '';
             
-            // Agrupar permissões por categoria
+            // Agrupar permissões por categoria e subcategoria
             const categories = {
-                'Administrativo': [],
+                'Cadastros': [],
                 'Dashboards': [],
                 'Controles': [],
+                'Ferramentas': [],
                 'Planejamento': [],
                 'Lubrificantes': [],
                 'Suporte': []
@@ -348,11 +358,13 @@
                 const permissionName = permissionNames[permissionId] || permissionId;
                 
                 let category = 'Controles';
-                if (permissionId.startsWith('admin-')) category = 'Administrativo';
+                if (permissionId.startsWith('admin-')) category = 'Cadastros';
                 else if (permissionId.startsWith('dash-')) category = 'Dashboards';
                 else if (permissionId.startsWith('plan-')) category = 'Planejamento';
                 else if (permissionId.startsWith('lubri-')) category = 'Lubrificantes';
                 else if (permissionId.startsWith('suporte-')) category = 'Suporte';
+                else if (permissionId.startsWith('ctrl-Controle')) category = 'Ferramentas';
+                else if (permissionId.startsWith('ctrl-')) category = 'Controles';
                 
                 categories[category].push({ id: permissionId, name: permissionName });
             }
@@ -363,14 +375,16 @@
                 
                 const categoryDiv = document.createElement('div');
                 categoryDiv.className = 'permission-category';
-                categoryDiv.innerHTML = `<h4>${categoryName}</h4>`;
+                categoryDiv.innerHTML = `<h4 style="border-bottom: 2px solid #ddd; padding-bottom: 8px; margin-bottom: 12px; font-weight: 700; color: #333;">${categoryName}</h4>`;
                 
+                // Renderizar cada permissão com seu nome
                 permissions.forEach(permission => {
                     const permissionItem = document.createElement('div');
                     permissionItem.className = 'permission-item';
+                    permissionItem.style.marginBottom = '8px';
                     permissionItem.innerHTML = `
                         <input type="checkbox" id="perm-${permission.id}" name="permissoes" value="${permission.id}">
-                        <label for="perm-${permission.id}">${permission.name}</label>
+                        <label for="perm-${permission.id}" style="margin-left: 6px;">${permission.name}</label>
                     `;
                     categoryDiv.appendChild(permissionItem);
                 });

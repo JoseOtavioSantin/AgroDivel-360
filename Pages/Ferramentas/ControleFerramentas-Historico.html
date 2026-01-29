@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Controle de Ferramentas - Histórico</title>
+    <link rel="icon" type="image/png" href="/assets/images/iconeaba.png">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#2c2f3f" />
+
+    <!-- LIBS EXTERNAS -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <!-- CSS -->
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <link rel="stylesheet" href="/assets/css/style.css">
+    <link rel="stylesheet" href="/assets/css/Pages/Dashboard/Principal.css">
+    <link rel="stylesheet" href="/assets/css/Pages/Controles/ControleFerramentas.css">
+
+    <!-- ========== CSS PARA OS MODAIS ========== -->
+    <style>
+        .error-container { padding: 20px; background-color: #ffdddd; border: 1px solid #ff0000; color: #D8000C; border-radius: 8px; margin: 20px; }
+    </style>
+</head>
+<body>
+
+    <nav id="sidebar-placeholder"></nav>
+
+    <section class="home">
+        <div class="text">
+            <h1>Controle de Ferramentas - Histórico</h1>
+            <p id="dynamic-title">Histórico de movimentações de ferramentas</p>
+        </div>
+        
+        <!-- ABA HISTÓRICO -->
+        <div class="tab-content active">
+            <div class="content-card">
+                <div class="content-card-header">
+                    <h3>Histórico de Movimentações</h3>
+                </div>
+                <div class="content-card-body">
+                    <div class="filters">
+                        <select id="filtro-hist-filial">
+                            <option value="">Todas as Filiais</option>
+                            <option value="Campos Novos">Campos Novos</option>
+                            <option value="Rio do Sul">Rio do Sul</option>
+                            <option value="Lages">Lages</option>
+                        </select>
+                        <input id="filtro-hist-ferramenta" type="text" placeholder="Buscar por ferramenta..." />
+                        <input id="filtro-hist-funcionario" type="text" placeholder="Buscar por funcionário..." />
+                        <select id="filtro-hist-tipo">
+                            <option value="">Todos os Tipos</option>
+                            <option value="criacao">Criação</option>
+                            <option value="edicao">Edição</option>
+                            <option value="alocacao">Alocação</option>
+                            <option value="devolucao">Devolução</option>
+                        </select>
+                    </div>
+                    <div id="lista-historico"></div>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <div class="toast-container" id="toast-container"></div>
+
+    <!-- SCRIPT COMPLETO -->
+    <script type="module">
+        import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js";
+        import { getFirestore, collection, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
+        import { getAuth } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-auth.js";
+        import { garantirAutenticacao } from '/assets/js/auth-guard.js';
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDcjPa9jXsCCu6lNc1fjVg4Bzz1toKWAGY",
+            authDomain: "agro-divel.firebaseapp.com",
+            projectId: "agro-divel",
+            storageBucket: "agro-divel.appspot.com",
+            messagingSenderId: "583977436505",
+            appId: "1:583977436505:web:3754ec029aebb3d9d67848"
+        };
+
+        let app, db, auth;
+        let todoHistorico = [];
+
+        async function iniciarPagina() {
+            try {
+                if (!getApps().length) { 
+                    app = initializeApp(firebaseConfig); 
+                } else { 
+                    app = getApp(); 
+                }
+                db = getFirestore(app);
+                auth = getAuth(app);
+                await garantirAutenticacao(auth);
+                carregarDados();
+                configurarEventListeners();
+                lucide.createIcons();
+            } catch (error) {
+                console.error("Falha na inicialização:", error);
+                const homeSection = document.querySelector('.home');
+                if (homeSection) {
+                    homeSection.innerHTML = `<div class="error-container"><h1>Erro</h1><p>Não foi possível carregar os dados.</p></div>`;
+                }
+            }
+        }
+
+        // FUNÇÃO PARA RENDERIZAR HISTÓRICO
+        function renderizarHistorico(historico) {
+            const container = document.getElementById('lista-historico');
+            container.innerHTML = '';
+            if (historico.length === 0) {
+                container.innerHTML = '<p style="text-align: center; color: #ccc;">Nenhum registro encontrado.</p>';
+                return;
+            }
+            historico.forEach(h => {
+                const div = document.createElement('div');
+                div.className = `log-entry ${h.tipo}`;
+                let titulo = '', detalhes = '', icone = 'help-circle';
+                switch (h.tipo) {
+                    case 'criacao': 
+                        titulo = `Ferramenta Criada: ${h.ferramentaDescricao}`; 
+                        detalhes = `Código: ${h.ferramentaCodigo} | Filial: ${h.filial}`; 
+                        icone = 'plus-circle'; 
+                        break;
+                    case 'edicao': 
+                        titulo = `Ferramenta Editada: ${h.ferramentaDescricao}`; 
+                        detalhes = `Código: ${h.ferramentaCodigo} | Filial: ${h.filial}${h.detalhes.alteracoes ? ` | Alterações: ${h.detalhes.alteracoes}` : ''}`; 
+                        icone = 'edit-3'; 
+                        break;
+                    case 'alocacao': 
+                        titulo = `Ferramenta Alocada: ${h.ferramentaDescricao}`; 
+                        detalhes = `Para: ${h.detalhes.funcionario} | Código: ${h.ferramentaCodigo} | Filial: ${h.filial}`; 
+                        icone = 'arrow-right-circle'; 
+                        break;
+                    case 'devolucao': 
+                        titulo = `Ferramenta Devolvida: ${h.ferramentaDescricao}`; 
+                        detalhes = `Por: ${h.detalhes.funcionario} | Código: ${h.ferramentaCodigo} | Filial: ${h.filial}`; 
+                        icone = 'arrow-left-circle'; 
+                        break;
+                }
+                div.innerHTML = `
+                    <div class="log-entry-icon"><i data-lucide="${icone}"></i></div>
+                    <div class="log-entry-content">
+                        <div class="log-entry-header">${titulo}</div>
+                        <div class="log-entry-details">${detalhes}</div>
+                    </div>
+                    <div class="log-entry-timestamp">${formatarDataHora(h.timestamp)}</div>
+                `;
+                container.appendChild(div);
+            });
+            lucide.createIcons();
+        }
+
+        // FUNÇÃO PARA FILTRAR HISTÓRICO
+        function aplicarFiltrosHistorico() {
+            const f = document.getElementById('filtro-hist-filial').value;
+            const d = document.getElementById('filtro-hist-ferramenta').value.toLowerCase();
+            const u = document.getElementById('filtro-hist-funcionario').value.toLowerCase();
+            const t = document.getElementById('filtro-hist-tipo').value;
+            
+            const filtrado = todoHistorico.filter(h => 
+                (!f || h.filial === f) && 
+                (!d || h.ferramentaDescricao.toLowerCase().includes(d) || h.ferramentaCodigo.toLowerCase().includes(d)) && 
+                (!u || (h.detalhes.funcionario && h.detalhes.funcionario.toLowerCase().includes(u))) && 
+                (!t || h.tipo === t)
+            );
+            renderizarHistorico(filtrado);
+        }
+
+        // FUNÇÃO PARA CARREGAR DADOS (apenas histórico)
+        async function carregarDados() {
+            try {
+                // Carregar histórico
+                const qHistorico = query(collection(db, 'historico'), orderBy('timestamp', 'desc'));
+                const snapshotHistorico = await getDocs(qHistorico);
+                todoHistorico = snapshotHistorico.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+                aplicarFiltrosHistorico();
+            } catch (error) {
+                console.error('Erro ao carregar dados:', error);
+            }
+        }
+
+        // FUNÇÃO PARA CONFIGURAR EVENT LISTENERS
+        function configurarEventListeners() {
+            // Filtros
+            document.querySelectorAll('#filtro-hist-filial, #filtro-hist-ferramenta, #filtro-hist-funcionario, #filtro-hist-tipo').forEach(el => {
+                el.addEventListener('input', aplicarFiltrosHistorico);
+                el.addEventListener('change', aplicarFiltrosHistorico);
+            });
+
+            // Auto-refresh a cada 120 segundos
+            setInterval(carregarDados, 120000);
+        }
+
+        // FUNÇÕES UTILITÁRIAS
+        function showToast(message, type = 'info') {
+            const c = document.getElementById('toast-container');
+            if (!c) return;
+            const t = document.createElement('div');
+            t.className = `toast ${type}`;
+            t.textContent = message;
+            c.appendChild(t);
+            setTimeout(() => t.classList.add('show'), 100);
+            setTimeout(() => {
+                t.classList.remove('show');
+                setTimeout(() => c.removeChild(t), 300);
+            }, 3000);
+        }
+
+        function formatarDataHora(timestamp) {
+            if (!timestamp) return 'Data inválida';
+            const data = timestamp.seconds ? new Date(timestamp.seconds * 1000) : new Date(timestamp);
+            return data.toLocaleString('pt-BR');
+        }
+
+        // INICIALIZAÇÃO
+        document.addEventListener('DOMContentLoaded', iniciarPagina);
+    </script>
+
+    <!-- Scripts Globais -->
+    <script type="module" src="/assets/js/auth.js"></script>
+    <script src="/assets/js/main.js"></script> 
+    <script src="/assets/js/components/Sidebar.js"></script>
+</body>
+</html>
