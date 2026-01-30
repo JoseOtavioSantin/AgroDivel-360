@@ -280,10 +280,11 @@ async function salvarAlocacao(event) {
             await addDoc(collection(db, "historico"), historico);
         }
         await Swal.fire('Sucesso!', 'Ferramenta alocada com sucesso!', 'success');
-        window.location.href = '/Pages/Controles/ControleFerramentas.html';
+        window.location.href = '/Pages/Ferramentas/ControleFerramentas-Alocacao.html';
     } catch (error) {
         Swal.fire('Erro!', `Falha ao salvar a alocação: ${error.message}`, 'error');
     }
 }
 
 document.addEventListener('DOMContentLoaded', iniciarPagina);
+
