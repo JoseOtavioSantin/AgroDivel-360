@@ -1,6 +1,12 @@
 // Importa tudo que precisamos do nosso arquivo de configuração
 import { db, auth, onAuthStateChanged, signOut, doc, getDoc, setDoc, deleteDoc, serverTimestamp } from './firebase-config.js';
 
+// ============ CARREGA O TRACKER GLOBAL ============
+// Isso garante que o sistema de tracking está disponível em todas as páginas
+const trackerScript = document.createElement('script');
+trackerScript.src = '/assets/js/firebase-tracker-global.js';
+document.head.appendChild(trackerScript);
+
 // --- MAPA DE PERMISSÕES ---
 const menuPermissions = {
     // --- CHECKLIST ---
@@ -25,13 +31,11 @@ const menuPermissions = {
     'ctrl-Kit50': ['admin', 'diretoria', 'pecas'],
     'ctrl-ContagemDiaria': ['admin', 'diretoria', 'pecas'],
     'ctrl-PedidosPecas': ['admin', 'diretoria', 'pecas'],
-    'ctrl-PedidosPrim': ['admin', 'diretoria', 'pecas'],
     'menu-ferramentas': ['admin', 'diretoria', 'pecas', 'comercial', 'servicos'],
     'ctrl-ControleAlocacao': ['admin', 'diretoria', 'pecas', 'comercial', 'servicos'],
     'ctrl-ControleEstoque': ['admin', 'diretoria', 'pecas', 'comercial', 'servicos'],
     'ctrl-ControleGrupos': ['admin', 'diretoria', 'pecas'],
     'ctrl-ControleHistorico': ['admin', 'diretoria', 'pecas', 'comercial', 'servicos'],
-    'ctrl-Prim': ['admin', 'diretoria', 'pecas'],
 
     // --- SERVICOS ---
     'dash-servicos': ['admin', 'diretoria', 'servicos'],
@@ -44,6 +48,7 @@ const menuPermissions = {
     
     // --- MENUS (Grupos de submenu) ---
     'menu-controles': ['admin', 'diretoria', 'pecas', 'comercial', 'servicos'],
+    'menu-planos': ['admin', 'diretoria', 'servicos'],
     'menu-checklist': ['admin', 'diretoria', 'pecas', 'servicos'],
     'menu-tempario': ['admin', 'diretoria', 'servicos', 'pecas'],
     'menu-telemetria': ['admin', 'diretoria', 'servicos'],
@@ -61,6 +66,12 @@ const menuPermissions = {
     'plan-Preencher': ['admin', 'diretoria'],
     'plan-Gerenciar': ['admin', 'diretoria'],
     'plan-Permissoes': ['admin', 'diretoria'],
+
+    // --- PLANO DE AÇÃO ---
+    'menu-plano-acao': ['admin', 'diretoria', 'comercial', 'pecas', 'servicos'],
+    'acao-Gerenciar': ['admin', 'diretoria', 'comercial', 'pecas', 'servicos'],
+    'acao-Novo': ['admin', 'diretoria', 'comercial', 'pecas', 'servicos'],
+    'acao-KPIs': ['admin', 'diretoria'],
 
     // --- SUPORTE ---
     'suporte-SolicitacaoSuporte': ['admin', 'diretoria', 'comercial', 'pecas', 'servicos'],
@@ -82,8 +93,6 @@ const pagePermissions = {
     '/Pages/Controles/Kits50Horas.html': ['admin', 'diretoria', 'pecas'],
     '/Pages/Controles/ContagemDiaria.html': ['admin', 'diretoria', 'pecas'],
     '/Pages/Controles/PedidosPecas.html': ['admin', 'diretoria', 'pecas'],
-    '/Pages/Controles/PedidosPrim.html': ['admin', 'diretoria', 'pecas'],
-    '/Pages/Controles/prim.html': ['admin', 'diretoria', 'pecas'],
     '/Pages/Ferramentas/ControleFerramentas-Alocacao.html': ['admin', 'diretoria', 'pecas', 'comercial', 'servicos'],
     '/Pages/Ferramentas/ControleFerramentas-Estoque.html': ['admin', 'diretoria', 'pecas', 'comercial', 'servicos'],
     '/Pages/Ferramentas/ControleFerramentas-Grupos.html': ['admin', 'diretoria', 'pecas'],
@@ -97,6 +106,10 @@ const pagePermissions = {
     '/Pages/PlanejamentoAnual/PreencherPlanejamento.html': ['admin', 'diretoria'],
     '/Pages/PlanejamentoAnual/GerenciaPlanejamento.html': ['admin', 'diretoria'],
     '/Pages/PlanejamentoAnual/GerenciarPermissoes.html': ['admin', 'diretoria'],
+    '/Pages/PlanodeAcao/form_KPIs.html': ['admin', 'diretoria'],
+    '/Pages/PlanodeAcao/GerenciarPlanosAcao.html': ['admin', 'diretoria', 'comercial', 'pecas', 'servicos'],
+    '/Pages/PlanodeAcao/form_PlanoAcao.html': ['admin', 'diretoria', 'comercial', 'pecas', 'servicos'],
+    '/Pages/PlanodeAcao/DetalhesPlanoAcao.html': ['admin', 'diretoria', 'comercial', 'pecas', 'servicos'],
     '/Pages/Cadastros/CadastroGestores.html': ['admin'],
     '/Pages/Cadastros/CadastroTecnicos.html': ['admin'],
     '/Pages/Cadastros/UsuariosOnline.html': ['admin'],
@@ -152,8 +165,6 @@ function checkPageAccess(userGroup, permissoesIndividuais) {
                 '/Pages/Controles/Kits50Horas.html': 'ctrl-Kit50',
                 '/Pages/Controles/ContagemDiaria.html': 'ctrl-ContagemDiaria',
                 '/Pages/Controles/PedidosPecas.html': 'ctrl-PedidosPecas',
-                '/Pages/Controles/PedidosPrim.html': 'ctrl-PedidosPrim',
-                '/Pages/Controles/prim.html': 'ctrl-Prim',
                 '/Pages/Ferramentas/ControleFerramentas-Alocacao.html': 'ctrl-ControleAlocacao',
                 '/Pages/Ferramentas/ControleFerramentas-Estoque.html': 'ctrl-ControleEstoque',
                 '/Pages/Ferramentas/ControleFerramentas-Grupos.html': 'ctrl-ControleGrupos',
@@ -167,6 +178,10 @@ function checkPageAccess(userGroup, permissoesIndividuais) {
                 '/Pages/PlanejamentoAnual/PreencherPlanejamento.html': 'plan-Preencher',
                 '/Pages/PlanejamentoAnual/GerenciaPlanejamento.html': 'plan-Gerenciar',
                 '/Pages/PlanejamentoAnual/GerenciarPermissoes.html': 'plan-Permissoes',
+                '/Pages/PlanodeAcao/form_KPIs.html': 'acao-KPIs',
+                '/Pages/PlanodeAcao/GerenciarPlanosAcao.html': 'acao-Gerenciar',
+                '/Pages/PlanodeAcao/form_PlanoAcao.html': 'acao-Novo',
+                '/Pages/PlanodeAcao/DetalhesPlanoAcao.html': 'acao-Gerenciar',
                 '/Pages/Cadastros/CadastroGestores.html': 'admin-CadastroGestores',
                 '/Pages/Cadastros/CadastroTecnicos.html': 'admin-CadastroTecnicos',
                 '/Pages/Cadastros/UsuariosOnline.html': 'admin-UsuariosOnline',
@@ -195,10 +210,12 @@ function checkPageAccess(userGroup, permissoesIndividuais) {
 const menuItems = {
     'menu-ferramentas': ['ctrl-ControleAlocacao', 'ctrl-ControleEstoque', 'ctrl-ControleGrupos', 'ctrl-ControleHistorico'],
     'menu-checklist': ['checklist-inicio'],
-    'menu-controles': ['ctrl-PlanosVigentes', 'ctrl-OportunidadeFabrica', 'ctrl-MaquinaParada', 'ctrl-Kit50', 'ctrl-ContagemDiaria', 'ctrl-PedidosPecas', 'ctrl-PedidosPrim', 'ctrl-Prim'],
+    'menu-controles': ['ctrl-MaquinaParada', 'ctrl-Kit50', 'ctrl-ContagemDiaria', 'ctrl-PedidosPecas'],
+    'menu-planos': ['ctrl-PlanosVigentes', 'ctrl-OportunidadeFabrica'],
     'menu-tempario': ['ctrl-Tempario'],
     'menu-telemetria': ['ctrl-Telemetria'],
     'menu-planejamento': ['plan-Preencher', 'plan-Gerenciar', 'plan-Permissoes'],
+    'menu-plano-acao': ['acao-Gerenciar', 'acao-Novo', 'acao-KPIs'],
     'menu-suporte': ['suporte-SolicitacaoSuporte', 'suporte-MinhasSolicitacoes', 'suporte-GerenciarSolicitacoes'],
     'menu-lubrificantes': ['lubri-AnaliseLubrificantes'],
     'menu-cadastros': ['admin-CadastroGestores', 'admin-CadastroTecnicos', 'admin-UsuariosOnline'],
@@ -249,9 +266,15 @@ onAuthStateChanged(auth, async (user) => {
 
             const userNameElement = document.getElementById('user-name');
 
+            // determinar nome consistente do app (prioriza nome no doc, depois displayName/email)
+            const appUserName = userName || (user.displayName || (user.email && user.email.split('@')[0])) || 'Usuário';
+
             if (userNameElement) {
-                userNameElement.textContent = userName || 'Usuário';
+                userNameElement.textContent = appUserName;
             }
+
+            // persistir localmente para que outros formularios (ex: Plano de Ação) mostrem corretamente o criador
+            try { localStorage.setItem('userName', appUserName); } catch (err) { /* silencioso */ }
 
             if (!userGroup) {
                 console.error("Campo 'grupo' não encontrado para o usuário no Firestore!");
@@ -263,10 +286,10 @@ onAuthStateChanged(auth, async (user) => {
             localStorage.setItem('gestorFilial', JSON.stringify(filiaisGestor));
             
             // Registrar usuário como online
-            await registrarUsuarioOnline(user.uid, userName, filiaisGestor[0] || "N/A");
+            await registrarUsuarioOnline(user.uid, appUserName, filiaisGestor[0] || "N/A");
             
             console.log("Grupo do usuário:", userGroup);
-            console.log("Nome do usuário:", userName);
+            console.log("Nome do usuário:", appUserName);
             console.log("Permissões individuais:", permissoesIndividuais);
             console.log("Filiais do gestor:", filiaisGestor);
 
@@ -281,11 +304,13 @@ onAuthStateChanged(auth, async (user) => {
         } else {
             console.error("Documento do usuário não encontrado no Firestore!");
             alert("Seu usuário não foi encontrado na base de dados. Redirecionando para o login.");
+            try { localStorage.removeItem('userName'); localStorage.removeItem('gestorFilial'); } catch (err) { /* silencioso */ }
             window.location.href = '/Pages/Login.html';
         }
 
     } else {
         console.log("Nenhum usuário logado. Redirecionando para a página de login.");
+        try { localStorage.removeItem('userName'); localStorage.removeItem('gestorFilial'); } catch (err) { /* silencioso */ }
         window.location.href = '/Pages/Login/Login.html';
     }
 });
@@ -335,6 +360,7 @@ if (logoutButton) {
             }
             
             await signOut(auth);
+            try { localStorage.removeItem('userName'); localStorage.removeItem('gestorFilial'); } catch (err) { /* silencioso */ }
             console.log('Logout bem-sucedido.');
             window.location.href = '/Pages/Login.html';
         } catch (error) {
