@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="utf-8">
+    <title>Gerenciar Planos de Ação - Agro Divel 360</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="icon" type="image/png" href="/assets/images/iconeaba.png">
+
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <link rel="stylesheet" href="/assets/css/style.css">
+    <link rel="stylesheet" href="/assets/css/Pages/Formularios/style-forms.css">
+    <style>
+        /* ========== GRID DE CARDS ========== */
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+            gap: 24px;
+            margin-top: 24px;
+        }
+        @media (max-width: 600px) {
+            .cards-grid { grid-template-columns: 1fr; gap: 16px; }
+        }
+
+        /* ========== CARD PRINCIPAL ========== */
+        .plan-card {
+            background: #ffffff;
+            border-radius: 20px;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            border: 1px solid #e5e7eb;
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .plan-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
+            border-color: #3b82f6;
+        }
+
+        /* ========== HEADER DO CARD ========== */
+        .plan-card__header {
+            padding: 20px 20px 16px;
+            background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%);
+            border-bottom: 1px solid #f1f5f9;
+            position: relative;
+        }
+        .plan-card__badges {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+        .plan-card__badge {
+            padding: 5px 12px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-radius: 6px;
+        }
+        .badge-status {
+            background: #f1f5f9;
+            color: #475569;
+        }
+        .badge-status[data-status="Concluído"] { background: #dcfce7; color: #166534; }
+        .badge-status[data-status="Em Andamento"] { background: #dbeafe; color: #1e40af; }
+        .badge-status[data-status="Atrasado"] { background: #fee2e2; color: #b91c1c; }
+        .badge-status[data-status="Não Iniciado"] { background: #f3f4f6; color: #6b7280; }
+        .badge-status[data-status="Cancelado"] { background: #fef3c7; color: #92400e; }
+
+        .badge-priority { border-radius: 6px; }
+        .badge-priority-baixo { background: #f0fdf4; color: #166534; }
+        .badge-priority-médio { background: #fef9c3; color: #854d0e; }
+        .badge-priority-alto { background: #ffedd5; color: #c2410c; }
+        .badge-priority-crítico { background: #fee2e2; color: #b91c1c; }
+
+        .plan-card__title {
+            font-size: 18px;
+            font-weight: 700;
+            color: #111827;
+            margin: 0;
+            line-height: 1.4;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        /* ========== CORPO DO CARD ========== */
+        .plan-card__body {
+            padding: 16px 20px;
+            flex: 1;
+        }
+        .plan-card__description {
+            color: #6b7280;
+            font-size: 14px;
+            line-height: 1.6;
+            margin-bottom: 16px;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        .plan-card__meta {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+        .meta-item {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+        .meta-item__label {
+            font-size: 11px;
+            color: #9ca3af;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 600;
+        }
+        .meta-item__value {
+            font-size: 14px;
+            color: #111827;
+            font-weight: 600;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* ========== PROGRESSO ========== */
+        .plan-card__progress {
+            padding: 0 20px 16px;
+        }
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        .progress-label {
+            font-size: 12px;
+            color: #6b7280;
+            font-weight: 500;
+        }
+        .progress-value {
+            font-size: 14px;
+            font-weight: 700;
+            color: #111827;
+        }
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #f1f5f9;
+            border-radius: 999px;
+            overflow: hidden;
+        }
+        .progress-bar__fill {
+            height: 100%;
+            border-radius: 999px;
+            transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+            background: linear-gradient(90deg, #3b82f6, #8b5cf6);
+        }
+        .progress-bar__fill[data-status="Concluído"] { background: linear-gradient(90deg, #22c55e, #10b981); }
+        .progress-bar__fill[data-status="Atrasado"] { background: linear-gradient(90deg, #ef4444, #f97316); }
+
+        /* ========== FOOTER DO CARD ========== */
+        .plan-card__footer {
+            padding: 16px 20px;
+            background: #fafbfc;
+            border-top: 1px solid #f1f5f9;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .plan-card__footer-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+        }
+        .plan-card__dates {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 13px;
+            color: #6b7280;
+        }
+        .plan-card__dates i {
+            width: 16px;
+            height: 16px;
+            color: #9ca3af;
+        }
+        .plan-card__dates.is-late {
+            color: #dc2626;
+            font-weight: 600;
+        }
+        .plan-card__dates.is-late i {
+            color: #dc2626;
+        }
+        .late-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            background: #fef2f2;
+            color: #dc2626;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 700;
+            border: 1px solid #fecaca;
+        }
+        .late-badge i {
+            width: 14px;
+            height: 14px;
+        }
+        .late-alert {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: linear-gradient(135deg, #fef2f2 0%, #fff5f5 100%);
+            color: #dc2626;
+            padding: 10px 14px;
+            border-radius: 10px;
+            font-size: 13px;
+            font-weight: 500;
+            border: 1px solid #fecaca;
+            width: 100%;
+        }
+        .late-alert i {
+            width: 18px;
+            height: 18px;
+            flex-shrink: 0;
+        }
+        .late-alert strong {
+            font-weight: 700;
+        }
+        @keyframes pulse-late {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+            height: 14px;
+        }
+
+
+        @keyframes pulse-late {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        .plan-card__actions {
+            display: flex;
+            gap: 8px;
+        }
+        .btn-action {
+            width: 36px;
+            height: 36px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 10px;
+            background: #ffffff;
+            border: 1px solid #e5e7eb;
+            color: #6b7280;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .btn-action:hover {
+            background: #f1f5f9;
+            color: #3b82f6;
+            border-color: #3b82f6;
+            transform: translateY(-2px);
+        }
+        .btn-action.btn-delete:hover {
+            background: #fef2f2;
+            color: #ef4444;
+            border-color: #ef4444;
+        }
+        .btn-action i {
+            width: 18px;
+            height: 18px;
+        }
+
+        /* ========== ANIMAÇÃO DE ENTRADA ========== */
+        .card-enter { 
+            opacity: 0; 
+            transform: translateY(20px); 
+        }
+        .card-enter.card-enter--visible { 
+            opacity: 1; 
+            transform: translateY(0); 
+            transition: opacity 0.4s ease, transform 0.5s cubic-bezier(0.4, 0, 0.2, 1); 
+        }
+
+        /* ========== FILTROS ========== */
+        .filters { 
+            display: flex; 
+            gap: 12px; 
+            align-items: center; 
+            flex-wrap: wrap; 
+            background: #ffffff; 
+            padding: 16px; 
+            border-radius: 16px; 
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04); 
+            border: 1px solid #e5e7eb; 
+        }
+        .filters input[type="search"], .filters select { 
+            background: #f8fafc; 
+            border: 1px solid #e5e7eb; 
+            padding: 12px 16px; 
+            border-radius: 10px; 
+            min-width: 220px; 
+            color: #111827; 
+            font-weight: 500; 
+            transition: all 0.2s ease;
+        }
+        .filters input[type="search"]:focus, .filters select:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+        .filters input[type="search"]::placeholder { 
+            color: #9ca3af; 
+            font-weight: 400; 
+        }
+
+        /* ========== EMPTY STATE ========== */
+        .empty-cards { 
+            text-align: center; 
+            padding: 60px 20px; 
+            color: #6b7280; 
+            background: #ffffff; 
+            border-radius: 16px; 
+            border: 2px dashed #e5e7eb; 
+        }
+        .empty-cards i { 
+            font-size: 48px; 
+            color: #d1d5db; 
+            margin-bottom: 16px; 
+        }
+        .empty-cards p { 
+            font-size: 16px; 
+            margin-bottom: 20px; 
+        }
+
+        /* ========== RESPONSIVO ========== */
+        @media (max-width: 520px) {
+            .plan-card__header { padding: 16px; }
+            .plan-card__body { padding: 12px 16px; }
+            .plan-card__footer { padding: 12px 16px; }
+            .plan-card__progress { padding: 0 16px 12px; }
+            .plan-card__meta { grid-template-columns: 1fr; }
+            .plan-card__title { font-size: 16px; }
+        }
+        </style>
+</head>
+<body>
+    <nav id="sidebar-placeholder"></nav>
+
+    <section class="home">
+        <div class="text">
+            <h1>Gerenciar Planos de Ação</h1>
+            <p>Visualize e administre os planos de ação cadastrados.</p>
+        </div>
+
+        <div class="content-card">
+            <div class="content-card-body">
+                <div style="display:flex; justify-content:space-between; gap:16px; align-items:center; flex-wrap:wrap;">
+                    <div class="filters" aria-hidden="false">
+                        <input id="search-plano" type="search" placeholder="Pesquisar por nome, responsável ou KPI">
+
+                        <select id="filter-status" aria-label="Filtrar por status">
+                            <option value="">Todos os status</option>
+                            <option value="Não Iniciado">Não Iniciado</option>
+                            <option value="Em Andamento">Em Andamento</option>
+                            <option value="Atrasado">Atrasado</option>
+                            <option value="Concluído">Concluído</option>
+                            <option value="Cancelado">Cancelado</option>
+                        </select>
+
+                        <select id="filter-priority" aria-label="Filtrar por prioridade">
+                            <option value="">Todas prioridades</option>
+                            <option value="Baixo">Baixa</option>
+                            <option value="Médio">Média</option>
+                            <option value="Alto">Alta</option>
+                            <option value="Crítico">Crítico</option>
+                        </select>
+                    </div>
+
+                    <div style="display:flex; gap:12px; align-items:center;">
+                        <a class="btn-secondary" href="/Pages/PlanodeAcao/form_PlanoAcao.html"><i data-lucide="plus-circle"></i></a>
+                        <button id="btn-refresh" class="btn-action" title="Atualizar lista"><i data-lucide="refresh-cw"></i></button>
+                    </div>
+                </div>
+
+                <div id="planos-container" style="margin-top:18px;">
+                    <div id="emptyMessage" class="empty-cards" style="display:none;">
+                        <i class='bx bx-inbox' style="font-size:36px; display:block; margin-bottom:12px;"></i>
+                        <p>Nenhum plano de ação cadastrado.</p>
+                        <a href="/Pages/PlanodeAcao/form_PlanoAcao.html" class="btn-primary">Criar novo plano</a>
+                    </div>
+
+                    <div id="planos-cards" class="cards-grid" role="list" aria-live="polite"></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <script type="module">
+        import { db, auth } from '/assets/js/firebase-config.js';
+        import { collection, getDocs, query, orderBy, deleteDoc, doc } from 'https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js';
+        import { garantirAutenticacao } from '/assets/js/auth-guard.js';
+
+        const container = document.getElementById('planos-cards');
+        const empty = document.getElementById('emptyMessage');
+        const searchEl = document.getElementById('search-plano');
+        const filterStatus = document.getElementById('filter-status');
+        const filterPriority = document.getElementById('filter-priority');
+        const btnRefresh = document.getElementById('btn-refresh');
+
+        let planos = [];
+        let currentUserId = null;
+
+        function fmtDate(d) {
+            if (!d) return '-';
+            try { const dateObj = d.toDate ? d.toDate() : new Date(d); return dateObj.toLocaleDateString('pt-BR'); } catch (e) { return '-'; }
+        }
+
+        // avatar removido: iniciais não são mais usadas
+
+        // calcula progresso (%) com base em whenInicio/whenFim (0-100). se inválido retorna null
+        function calcProgressPercent(start, end) {
+            if (!start || !end) return null;
+            const s = start.toDate ? start.toDate() : new Date(start);
+            const e = end.toDate ? end.toDate() : new Date(end);
+            if (isNaN(s) || isNaN(e) || e <= s) return null;
+            const now = new Date();
+            if (now <= s) return 0;
+            if (now >= e) return 100;
+            return Math.round(((now - s) / (e - s)) * 100);
+        }
+
+        function priorityToColor(prio) {
+            if (!prio) return 'badge-priority-baixo';
+            const p = prio.toString().toLowerCase();
+            if (p.includes('crít')) return 'badge-priority-crítico';
+            if (p.includes('alto')) return 'badge-priority-alto';
+            if (p.includes('méd')) return 'badge-priority-médio';
+            return 'badge-priority-baixo';
+        }
+
+        // Calcula se está atrasado e quantos dias
+        function calcLateDays(endDate, status) {
+            // Se já está concluído ou cancelado, não está atrasado
+            if (status === 'Concluído' || status === 'Cancelado') return null;
+            
+            if (!endDate) return null;
+            
+            try {
+                const end = endDate.toDate ? endDate.toDate() : new Date(endDate);
+                const now = new Date();
+                
+                // Zera as horas para comparar apenas datas
+                end.setHours(0, 0, 0, 0);
+                now.setHours(0, 0, 0, 0);
+                
+                if (now > end) {
+                    const diffTime = now - end;
+                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                    return diffDays;
+                }
+            } catch (e) {
+                return null;
+            }
+            return null;
+        }
+
+        function renderCards(list) {
+            container.innerHTML = '';
+            if (!Array.isArray(list) || list.length === 0) {
+                empty.style.display = 'block';
+                return;
+            }
+            empty.style.display = 'none';
+
+            list.forEach((p, idx) => {
+                const el = document.createElement('article');
+                el.className = 'plan-card';
+                el.setAttribute('role','listitem');
+
+                // Usar o progresso salvo no Firebase (igual à página de detalhes)
+                const progress = p.progresso !== undefined ? p.progresso : 0;
+                const prioClass = priorityToColor(p.prioridade);
+                const status = p.status || 'Não Iniciado';
+                const lateDays = calcLateDays(p.whenFim, status);
+                const isLate = lateDays !== null && lateDays > 0;
+
+                el.innerHTML = `
+                    <div class="plan-card__header">
+                        <div class="plan-card__badges">
+                            <span class="plan-card__badge badge-status" data-status="${status}">${status}</span>
+                            <span class="plan-card__badge ${prioClass}">${p.prioridade || 'Baixo'}</span>
+                        </div>
+                        <h3 class="plan-card__title">${p.nome || 'Sem título'}</h3>
+                    </div>
+
+                    <div class="plan-card__body">
+                        <p class="plan-card__description">${p.what || 'Sem descrição disponível'}</p>
+                        <div class="plan-card__meta">
+                            <div class="meta-item">
+                                <span class="meta-item__label">Responsável</span>
+                                <span class="meta-item__value">${p.responsavel || '-'}</span>
+                            </div>
+                            <div class="meta-item">
+                                <span class="meta-item__label">Meta/KPI</span>
+                                <span class="meta-item__value">${p.meta || '-'}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="plan-card__progress">
+                        <div class="progress-header">
+                            <span class="progress-label">Progresso</span>
+                            <span class="progress-value">${progress}%</span>
+                        </div>
+                        <div class="progress-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${progress}">
+                            <div class="progress-bar__fill" data-status="${status}" style="width: ${progress}%"></div>
+                        </div>
+                    </div>
+
+                    <div class="plan-card__footer">
+                        <div class="plan-card__footer-row">
+                            <div class="plan-card__dates ${isLate ? 'is-late' : ''}">
+                                <i data-lucide="${isLate ? 'alert-circle' : 'calendar'}"></i>
+                                <span>${fmtDate(p.whenInicio)} → ${fmtDate(p.whenFim)}</span>
+                            </div>
+                            <div class="plan-card__actions">
+                                <button type="button" class="btn-action" data-id="${p.id}" data-action="view" title="Ver detalhes"><i data-lucide="eye"></i></button>
+                                ${p.criadoPor === currentUserId ? `<button type="button" class="btn-action" data-id="${p.id}" data-action="edit" title="Editar"><i data-lucide="edit-2"></i></button>` : ''}
+                                ${p.criadoPor === currentUserId ? `<button type="button" class="btn-action btn-delete" data-id="${p.id}" data-action="delete" title="Excluir"><i data-lucide="trash-2"></i></button>` : ''}
+                            </div>
+                        </div>
+                        ${isLate ? `<div class="late-alert">
+                            <i data-lucide="alert-triangle"></i>
+                            <span><strong>${lateDays} dia${lateDays > 1 ? 's' : ''}</strong> de atraso</span>
+                        </div>` : ''}
+                    </div>
+                `; 
+
+                // inserir com animação em stagger (melhora percepção)
+                el.classList.add('card-enter');
+                container.appendChild(el);
+                requestAnimationFrame(() => setTimeout(() => el.classList.add('card-enter--visible'), idx * 70));
+            });
+
+            // garantir que os ícones lucide sejam convertidos para SVG após injeção dinâmica
+            try { lucide.createIcons(); } catch (e) { /* silencioso */ }
+
+            // small runtime fixes: normalizar título (remover quebras inesperadas) e garantir reflow
+            container.querySelectorAll('.plan-card__title').forEach(t => {
+                // remover quebras HTML acidentais e trims excessivos
+                const txt = (t.textContent || '').replace(/\s+/g, ' ').trim();
+                t.textContent = txt;
+            });
+            // força repaint para evitar estilos antigos em cache visual
+            void container.offsetHeight;
+        }
+
+        async function carregarPlanos() {
+            try {
+                const q = query(collection(db, 'planos-acao'), orderBy('dataCriacao', 'desc'));
+                const snap = await getDocs(q);
+                planos = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+
+                // enriquecer com nome do KPI (se disponível em documento) e normalizar campos usados no novo layout
+                planos.forEach(pl => {
+                    if (pl.kpiId && !pl.kpiNome) pl.kpiNome = pl.kpiNome || '';
+                    // campo curto de descrição usado como subtitle (fallbacks)
+                    pl.descricao = pl.descricao || (pl.what ? (String(pl.what).slice(0,80) + (pl.what.length>80? '…':'')) : '');
+                    // tags: permitir array ou derivar de status/prioridade
+                    if (!pl.tags) pl.tags = [];
+                    if (pl.status && !pl.tags.includes(pl.status)) pl.tags.unshift(pl.status);
+                });
+
+                renderCards(planos);
+            } catch (err) {
+                console.error('Erro ao carregar planos:', err);
+                Swal.fire('Erro', 'Falha ao carregar planos de ação', 'error');
+            }
+        }
+
+        function applyFilters() {
+            const q = searchEl.value.trim().toLowerCase();
+            const status = filterStatus.value;
+            const prio = filterPriority.value;
+
+            let filtered = planos.filter(p => {
+                if (status && p.status !== status) return false;
+                if (prio && p.prioridade !== prio) return false;
+                if (!q) return true;
+                return (p.nome || '').toLowerCase().includes(q) || (p.responsavel || '').toLowerCase().includes(q) || (p.kpiNome || '').toLowerCase().includes(q);
+            });
+            renderCards(filtered);
+        }
+
+        container.addEventListener('click', async (ev) => {
+            const btn = ev.target.closest('button[data-action]');
+            if (!btn) return;
+            const id = btn.dataset.id;
+            const action = btn.dataset.action;
+
+            if (action === 'view') {
+                // Redirecionar para página de detalhes
+                sessionStorage.setItem('viewPlanoId', id);
+                location.href = '/Pages/PlanodeAcao/DetalhesPlanoAcao.html';
+            }
+
+            if (action === 'edit') {
+                // Verificar se o usuário é o criador do plano
+                const plano = planos.find(x => x.id === id);
+                if (!plano || plano.criadoPor !== currentUserId) {
+                    Swal.fire('Acesso negado', 'Você só pode editar planos criados por você.', 'warning');
+                    return;
+                }
+                // navegar para o formulário e instruir para abrir o plano em edição
+                try { sessionStorage.setItem('planToEditId', id); } catch (e) { /* silencioso */ }
+                location.href = '/Pages/PlanodeAcao/form_PlanoAcao.html';
+            }
+
+            if (action === 'delete') {
+                // Verificar se o usuário é o criador do plano
+                const plano = planos.find(x => x.id === id);
+                if (!plano || plano.criadoPor !== currentUserId) {
+                    Swal.fire('Acesso negado', 'Você só pode excluir planos criados por você.', 'warning');
+                    return;
+                }
+                const res = await Swal.fire({
+                    title: 'Deletar plano?',
+                    text: 'A remoção é irreversível.',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: 'Sim, deletar'
+                });
+                if (res.isConfirmed) {
+                    try {
+                        await deleteDoc(doc(db, 'planos-acao', id));
+                        Swal.fire('Deletado', 'Plano removido com sucesso', 'success');
+                        await carregarPlanos();
+                    } catch (err) {
+                        console.error(err);
+                        Swal.fire('Erro', 'Falha ao deletar plano', 'error');
+                    }
+                }
+            }
+        });
+
+        // eventos de filtro
+        [searchEl, filterStatus, filterPriority].forEach(el => el.addEventListener('input', () => applyFilters()));
+        btnRefresh.addEventListener('click', () => carregarPlanos());
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            try {
+                await garantirAutenticacao(auth);
+                currentUserId = auth.currentUser?.uid || null;
+                await carregarPlanos();
+                lucide.createIcons();
+            } catch (err) {
+                console.error(err);
+            }
+        });
+    </script>
+
+    <script type="module" src="/assets/js/auth.js"></script>
+    <script src="/assets/js/main.js"></script>
+    <script src="/assets/js/components/Sidebar.js"></script>
+</body>
+</html>

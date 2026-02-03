@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gerenciar Gestores - Agro Divel 360</title>
+    <title>Gerenciar Usuários - Agro Divel 360</title>
     <link rel="icon" type="image/png" href="/assets/images/iconeaba.png">
     
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
@@ -125,13 +125,13 @@
 
     <section class="home">
         <div class="text">
-            <h1>Gerenciar Gestores</h1>
-            <p>Adicione, edite ou remova gestores do sistema.</p>
+            <h1>Gerenciar Usuários</h1>
+            <p>Adicione, edite ou remova usuários do sistema.</p>
         </div>
 
         <div class="content-card">
             <div class="content-card-header">
-                <h2 id="form-title">Novo Gestor</h2>
+                <h2 id="form-title">Novo Usuários</h2>
             </div>
             <div class="content-card-body">
                 <form id="form-cadastro-gestor" class="form-layout">
@@ -143,7 +143,7 @@
                     </div>
 
                     <div class="form-group">
-                        <label for="nome-gestor">Nome do Gestor</label>
+                        <label for="nome-gestor">Nome do Usuários</label>
                         <input type="text" id="nome-gestor" placeholder="Ex: João da Silva" required>
                     </div>
                     
@@ -202,7 +202,7 @@
 
         <div class="content-card technician-list-container">
             <div class="content-card-header">
-                <h2>Gestores Cadastrados</h2>
+                <h2>Usuários Cadastrados</h2>
             </div>
             <div class="content-card-body">
                 <table class="technician-table">
@@ -219,8 +219,8 @@
                     <tbody id="gestor-table-body">
                     </tbody>
                 </table>
-                <div id="loading-message">Carregando gestores...</div>
-                <div id="empty-message" style="display: none;">Nenhum gestor cadastrado.</div>
+                <div id="loading-message">Carregando Usuários...</div>
+                <div id="empty-message" style="display: none;">Nenhum Usuários cadastrado.</div>
             </div>
         </div>
     </section>
@@ -253,12 +253,11 @@
             'ctrl-Kit50': ['admin', 'diretoria', 'pecas'],
             'ctrl-ContagemDiaria': ['admin', 'diretoria', 'pecas'],
             'ctrl-PedidosPecas': ['admin', 'diretoria', 'pecas'],
-            'ctrl-PedidosPrim': ['admin', 'diretoria', 'pecas'],
+            'ctrl-E-commerce': ['admin', 'diretoria', 'servicos'],
             'ctrl-ControleAlocacao': ['admin', 'diretoria', 'pecas', 'comercial', 'servicos'],
             'ctrl-ControleEstoque': ['admin', 'diretoria', 'pecas', 'comercial', 'servicos'],
             'ctrl-ControleGrupos': ['admin', 'diretoria', 'pecas'],
             'ctrl-ControleHistorico': ['admin', 'diretoria', 'pecas', 'comercial', 'servicos'],
-            'ctrl-Prim': ['admin', 'diretoria', 'pecas'],
 
             // --- SERVICOS ---
             'dash-servicos': ['admin', 'diretoria', 'servicos'],
@@ -278,6 +277,11 @@
             'plan-Permissoes': ['admin', 'diretoria'],
             'plan-Preencher': ['admin', 'diretoria'],
 
+            // --- PLANO DE AÇÃO ---
+            'acao-Gerenciar': ['admin', 'diretoria', 'comercial', 'pecas', 'servicos'],
+            'acao-Novo': ['admin', 'diretoria', 'comercial', 'pecas', 'servicos'],
+            'acao-KPIs': ['admin', 'diretoria'],
+
             // --- SUPORTE ---
             'suporte-SolicitacaoSuporte': ['admin', 'diretoria', 'comercial', 'pecas', 'servicos'],
             'suporte-MinhasSolicitacoes': ['admin', 'diretoria', 'comercial', 'pecas', 'servicos'],
@@ -286,7 +290,7 @@
 
         // --- NOMES AMIGÁVEIS PARA AS PERMISSÕES ---
         const permissionNames = {
-                        'checklist-inicio': 'Checklist',
+            'checklist-inicio': 'Checklist',
             'admin-CadastroGestores': 'Cadastro de Gestores',
             'admin-CadastroTecnicos': 'Cadastro de Técnicos',
             'dash-geral': 'Dashboard Geral',
@@ -298,7 +302,6 @@
             'ctrl-Kit50': 'Controle Kit 50 Horas',
             'ctrl-ContagemDiaria': 'Contagem Diária',
             'ctrl-PedidosPecas': 'Pedidos de Peças',
-            'ctrl-PedidosPrim': 'Pedidos de Prim',
             'ctrl-ControleAlocacao': 'Ferramentas - Alocações',
             'ctrl-ControleEstoque': 'Ferramentas - Estoque',
             'ctrl-ControleGrupos': 'Ferramentas - Grupos',
@@ -308,14 +311,17 @@
             'dash-planos-manutencao': 'Planos de Manutenção',
             'ctrl-PlanosVigentes': 'Planos Vigentes',
             'ctrl-OportunidadeFabrica': 'Oportunidade da Fábrica',
+            'ctrl-E-commerce': 'E-commerce',
             'ctrl-MaquinaParada': 'Máquina Parada',
             'ctrl-Tempario': 'Tempario',
             'ctrl-Telemetria': 'Telemetria',
-            'ctrl-Prim': 'Controle Prim',
             'lubri-AnaliseLubrificantes': 'Análise de Lubrificantes',
             'plan-Gerenciar': 'Gerenciar Planejamento',
             'plan-Permissoes': 'Gerenciar Permissões de Planejamento',
             'plan-Preencher': 'Preencher Planejamento',
+            'acao-Gerenciar': 'Gerenciar Planos de Ação',
+            'acao-Novo': 'Novo Plano de Ação',
+            'acao-KPIs': 'Cadastrar KPIs',
             'suporte-SolicitacaoSuporte': 'Nova Solicitação de Suporte',
             'suporte-MinhasSolicitacoes': 'Minhas Solicitações',
             'suporte-GerenciarSolicitacoes': 'Gerenciar Solicitações'
@@ -350,6 +356,7 @@
                 'Controles': [],
                 'Ferramentas': [],
                 'Planejamento': [],
+                'Plano de Ação': [],
                 'Lubrificantes': [],
                 'Suporte': []
             };
@@ -361,6 +368,7 @@
                 if (permissionId.startsWith('admin-')) category = 'Cadastros';
                 else if (permissionId.startsWith('dash-')) category = 'Dashboards';
                 else if (permissionId.startsWith('plan-')) category = 'Planejamento';
+                else if (permissionId.startsWith('acao-')) category = 'Plano de Ação';
                 else if (permissionId.startsWith('lubri-')) category = 'Lubrificantes';
                 else if (permissionId.startsWith('suporte-')) category = 'Suporte';
                 else if (permissionId.startsWith('ctrl-Controle')) category = 'Ferramentas';

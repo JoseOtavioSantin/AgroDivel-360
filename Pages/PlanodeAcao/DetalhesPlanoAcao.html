@@ -1,0 +1,1959 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="utf-8">
+    <title>Detalhes do Plano de Ação - Agro Divel 360</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="icon" type="image/png" href="/assets/images/iconeaba.png">
+
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <link rel="stylesheet" href="/assets/css/style.css">
+    <link rel="stylesheet" href="/assets/css/Pages/Formularios/style-forms.css">
+    <style>
+        /* ========== LAYOUT PRINCIPAL ========== */
+        .detalhes-container {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+            margin-top: 24px;
+        }
+
+        /* ========== CARD BASE ========== */
+        .detail-card {
+            background: #ffffff;
+            border-radius: 16px;
+            border: 1px solid #e5e7eb;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+            overflow: hidden;
+        }
+        .detail-card__header {
+            padding: 20px 24px;
+            background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%);
+            border-bottom: 1px solid #f1f5f9;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .detail-card__header:hover {
+            background: #f1f5f9;
+        }
+        .detail-card__header.no-collapse {
+            cursor: default;
+        }
+        .detail-card__header.no-collapse:hover {
+            background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%);
+        }
+        .detail-card__title {
+            font-size: 16px;
+            font-weight: 700;
+            color: #1e293b;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .detail-card__title i {
+            width: 20px;
+            height: 20px;
+            color: #3b82f6;
+        }
+        .detail-card__toggle {
+            width: 24px;
+            height: 24px;
+            color: #64748b;
+            transition: transform 0.3s;
+        }
+        .detail-card__toggle.collapsed {
+            transform: rotate(-90deg);
+        }
+        .detail-card__body {
+            padding: 24px;
+            transition: all 0.3s ease;
+        }
+        .detail-card__body.collapsed {
+            display: none;
+        }
+
+        /* ========== HEADER DO PLANO ========== */
+        .plano-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+        .plano-header__info h1 {
+            font-size: 28px;
+            font-weight: 800;
+            color: #1e293b;
+            margin: 0 0 12px 0;
+        }
+        .plano-header__badges {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+        }
+        .badge i { width: 14px; height: 14px; }
+        .badge-status[data-status="Não Iniciado"] { background: #f1f5f9; color: #64748b; }
+        .badge-status[data-status="Em Andamento"] { background: #dbeafe; color: #1d4ed8; }
+        .badge-status[data-status="Atrasado"] { background: #fee2e2; color: #dc2626; }
+        .badge-status[data-status="Concluído"] { background: #dcfce7; color: #16a34a; }
+        .badge-status[data-status="Cancelado"] { background: #fef3c7; color: #d97706; }
+        .badge-priority-crítico { background: #fee2e2; color: #dc2626; }
+        .badge-priority-alto { background: #ffedd5; color: #ea580c; }
+        .badge-priority-médio { background: #fef9c3; color: #ca8a04; }
+        .badge-priority-baixo { background: #dcfce7; color: #16a34a; }
+        .plano-header__actions {
+            display: flex;
+            gap: 10px;
+        }
+        .btn-back {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 20px;
+            background: #f1f5f9;
+            color: #475569;
+            border-radius: 10px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+        .btn-back:hover { background: #e2e8f0; }
+        .btn-back i { width: 18px; height: 18px; }
+
+        /* ========== INFO DO CRIADOR ========== */
+        .criador-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-top: 16px;
+            padding: 12px 16px;
+            background: #f8fafc;
+            border-radius: 10px;
+        }
+        .criador-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 700;
+            font-size: 14px;
+        }
+        .criador-details {
+            flex: 1;
+        }
+        .criador-details__name {
+            font-weight: 600;
+            color: #1e293b;
+            font-size: 14px;
+        }
+        .criador-details__date {
+            font-size: 12px;
+            color: #64748b;
+        }
+
+        /* ========== META/KPI ========== */
+        .meta-kpi {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 16px;
+            background: linear-gradient(135deg, #fef3c7 0%, #fef9c3 100%);
+            border-radius: 12px;
+            margin-bottom: 20px;
+        }
+        .meta-kpi i {
+            width: 24px;
+            height: 24px;
+            color: #ca8a04;
+        }
+        .meta-kpi__content {
+            flex: 1;
+        }
+        .meta-kpi__label {
+            font-size: 11px;
+            color: #92400e;
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+        .meta-kpi__desc {
+            font-size: 13px;
+            font-weight: 600;
+            color: #92400e;
+            margin-bottom: 4px;
+        }
+        .meta-kpi__value {
+            font-size: 16px;
+            font-weight: 700;
+            color: #78350f;
+        }
+
+        /* ========== VISUALIZAÇÃO APENAS ========== */
+        .view-only-notice {
+            background: #f0f9ff;
+            border: 1px solid #bae6fd;
+            border-radius: 10px;
+            padding: 14px 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        .view-only-notice i {
+            width: 20px;
+            height: 20px;
+            color: #0284c7;
+        }
+        .view-only-notice p {
+            margin: 0;
+            font-size: 13px;
+            color: #0369a1;
+        }
+
+        /* ========== SEÇÃO 5W2H ========== */
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+        }
+        @media (max-width: 768px) {
+            .info-grid { grid-template-columns: 1fr; }
+        }
+        .info-item {
+            padding: 16px;
+            background: #f8fafc;
+            border-radius: 12px;
+            border-left: 4px solid #3b82f6;
+        }
+        .info-item.full-width {
+            grid-column: 1 / -1;
+        }
+        .info-item__label {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #64748b;
+            margin-bottom: 6px;
+        }
+        .info-item__value {
+            font-size: 14px;
+            color: #1e293b;
+            line-height: 1.6;
+        }
+
+        /* ========== PROGRESSO ========== */
+        .progress-section {
+            margin-bottom: 24px;
+        }
+        .progress-big {
+            position: relative;
+            height: 24px;
+            background: #e2e8f0;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        .progress-big__fill {
+            height: 100%;
+            background: linear-gradient(90deg, #3b82f6 0%, #1d4ed8 100%);
+            border-radius: 12px;
+            transition: width 0.5s ease;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding-right: 12px;
+        }
+        .progress-big__fill[data-status="Concluído"] {
+            background: linear-gradient(90deg, #22c55e 0%, #16a34a 100%);
+        }
+        .progress-big__fill[data-status="Atrasado"] {
+            background: linear-gradient(90deg, #ef4444 0%, #dc2626 100%);
+        }
+        .progress-big__text {
+            font-size: 12px;
+            font-weight: 700;
+            color: white;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+        }
+        .progress-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+        .progress-label span {
+            font-size: 14px;
+            color: #64748b;
+        }
+        .progress-label strong {
+            font-size: 20px;
+            color: #1e293b;
+        }
+
+        /* ========== DATES INFO ========== */
+        .dates-row {
+            display: flex;
+            gap: 16px;
+            margin-top: 16px;
+        }
+        .date-box {
+            flex: 1;
+            padding: 14px;
+            background: #f8fafc;
+            border-radius: 10px;
+            text-align: center;
+        }
+        .date-box__label {
+            font-size: 11px;
+            color: #64748b;
+            text-transform: uppercase;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+        .date-box__value {
+            font-size: 16px;
+            font-weight: 700;
+            color: #1e293b;
+        }
+        .date-box.late {
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+        }
+        .date-box.late .date-box__value {
+            color: #dc2626;
+        }
+
+        /* ========== CONTROLE DE PROGRESSO COM STEPS ========== */
+        .progress-control {
+            margin-top: 20px;
+            padding: 20px;
+            background: #f0f9ff;
+            border-radius: 12px;
+            border: 1px dashed #3b82f6;
+        }
+        .progress-control__title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .progress-control__title i {
+            width: 18px;
+            height: 18px;
+            color: #3b82f6;
+        }
+
+        /* Steps Progress Bar */
+        .progress-steps {
+            position: relative;
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 24px;
+        }
+        .progress-steps__track {
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 6px;
+            background: #e2e8f0;
+            border-radius: 3px;
+            transform: translateY(-50%);
+            z-index: 1;
+        }
+        .progress-steps__fill {
+            position: absolute;
+            top: 50%;
+            left: 0;
+            height: 6px;
+            background: linear-gradient(90deg, #3b82f6 0%, #1d4ed8 100%);
+            border-radius: 3px;
+            transform: translateY(-50%);
+            z-index: 2;
+            transition: width 0.3s ease;
+        }
+        .progress-step {
+            position: relative;
+            z-index: 3;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            cursor: pointer;
+        }
+        .progress-step__dot {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: #e2e8f0;
+            border: 4px solid white;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+        }
+        .progress-step__dot i {
+            width: 14px;
+            height: 14px;
+            color: white;
+            display: none;
+        }
+        .progress-step.active .progress-step__dot {
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+            transform: scale(1.1);
+        }
+        .progress-step.active .progress-step__dot i {
+            display: block;
+        }
+        .progress-step.completed .progress-step__dot {
+            background: #22c55e;
+        }
+        .progress-step.completed .progress-step__dot i {
+            display: block;
+        }
+        .progress-step__label {
+            margin-top: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            color: #94a3b8;
+            transition: color 0.3s;
+        }
+        .progress-step.active .progress-step__label,
+        .progress-step.completed .progress-step__label {
+            color: #1e293b;
+        }
+        .progress-step:hover .progress-step__dot {
+            transform: scale(1.15);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        }
+
+        .progress-status {
+            margin-top: 16px;
+        }
+        .progress-status label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: #475569;
+            margin-bottom: 8px;
+        }
+        .progress-status select {
+            width: 100%;
+            padding: 10px 14px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 14px;
+            background: white;
+        }
+        .btn-save-progress {
+            margin-top: 16px;
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.2s;
+        }
+        .btn-save-progress:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+        }
+        .btn-save-progress i { width: 18px; height: 18px; }
+
+        /* ========== GRID 2 COLUNAS PARA EVIDÊNCIAS E HISTÓRICO ========== */
+        .bottom-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+        }
+        @media (max-width: 900px) {
+            .bottom-grid { grid-template-columns: 1fr; }
+        }
+
+        /* ========== EVIDÊNCIAS ========== */
+        .evidencias-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            gap: 12px;
+        }
+        .evidencia-item {
+            position: relative;
+            aspect-ratio: 1;
+            border-radius: 12px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .evidencia-item:hover {
+            transform: scale(1.02);
+        }
+        .evidencia-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .evidencia-item__overlay {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(to top, rgba(0,0,0,0.7) 0%, transparent 50%);
+            display: flex;
+            align-items: flex-end;
+            padding: 10px;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+        .evidencia-item:hover .evidencia-item__overlay {
+            opacity: 1;
+        }
+        .evidencia-item__date {
+            color: white;
+            font-size: 11px;
+        }
+        .evidencia-file {
+            background: #f1f5f9;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 16px;
+        }
+        .evidencia-file i {
+            width: 28px;
+            height: 28px;
+            color: #64748b;
+        }
+        .evidencia-file span {
+            font-size: 10px;
+            color: #64748b;
+            text-align: center;
+            word-break: break-word;
+        }
+
+        /* ========== UPLOAD DE EVIDÊNCIA ========== */
+        .upload-area {
+            margin-top: 16px;
+            padding: 24px 20px;
+            border: 2px dashed #cbd5e1;
+            border-radius: 12px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .upload-area:hover {
+            border-color: #3b82f6;
+            background: #f0f9ff;
+        }
+        .upload-area i {
+            width: 32px;
+            height: 32px;
+            color: #94a3b8;
+            margin-bottom: 8px;
+        }
+        .upload-area p {
+            color: #64748b;
+            font-size: 13px;
+            margin: 0;
+        }
+        .upload-area span {
+            color: #3b82f6;
+            font-weight: 600;
+        }
+        #file-input {
+            display: none;
+        }
+
+        /* ========== TIMELINE DE ATUALIZAÇÕES ========== */
+        .timeline {
+            position: relative;
+            padding-left: 24px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 8px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: #e2e8f0;
+        }
+        .timeline-item {
+            position: relative;
+            padding-bottom: 20px;
+        }
+        .timeline-item:last-child {
+            padding-bottom: 0;
+        }
+        .timeline-item__dot {
+            position: absolute;
+            left: -20px;
+            top: 4px;
+            width: 12px;
+            height: 12px;
+            background: #3b82f6;
+            border-radius: 50%;
+            border: 3px solid white;
+            box-shadow: 0 0 0 2px #3b82f6;
+        }
+        .timeline-item__dot.evidencia {
+            background: #22c55e;
+            box-shadow: 0 0 0 2px #22c55e;
+        }
+        .timeline-item__date {
+            font-size: 11px;
+            color: #64748b;
+            margin-bottom: 4px;
+        }
+        .timeline-item__content {
+            background: #f8fafc;
+            padding: 12px 14px;
+            border-radius: 10px;
+        }
+        .timeline-item__title {
+            font-weight: 600;
+            color: #1e293b;
+            font-size: 13px;
+            margin-bottom: 4px;
+        }
+        .timeline-item__desc {
+            font-size: 12px;
+            color: #64748b;
+            line-height: 1.5;
+        }
+        .timeline-item__user {
+            font-size: 11px;
+            color: #94a3b8;
+            margin-top: 6px;
+            font-style: italic;
+        }
+        .timeline-item__progress {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: #dbeafe;
+            color: #1d4ed8;
+            padding: 3px 8px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 600;
+            margin-top: 6px;
+        }
+
+        /* ========== ADICIONAR ATUALIZAÇÃO ========== */
+        .add-update {
+            margin-top: 16px;
+            padding: 16px;
+            background: #f8fafc;
+            border-radius: 12px;
+        }
+        .add-update__title {
+            font-size: 13px;
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .add-update__title i {
+            width: 16px;
+            height: 16px;
+            color: #3b82f6;
+        }
+        .add-update textarea {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 13px;
+            resize: vertical;
+            min-height: 60px;
+            font-family: inherit;
+        }
+        .add-update textarea:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+        .btn-add-update {
+            margin-top: 10px;
+            padding: 8px 16px;
+            background: #1e293b;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s;
+        }
+        .btn-add-update:hover {
+            background: #334155;
+        }
+        .btn-add-update i { width: 14px; height: 14px; }
+
+        /* ========== EMPTY STATE ========== */
+        .empty-state {
+            text-align: center;
+            padding: 30px 20px;
+            color: #94a3b8;
+        }
+        .empty-state i {
+            width: 40px;
+            height: 40px;
+            margin-bottom: 10px;
+            opacity: 0.5;
+        }
+        .empty-state p {
+            margin: 0;
+            font-size: 13px;
+        }
+
+        /* ========== LOADING ========== */
+        .loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 60px;
+        }
+        .loading i {
+            width: 32px;
+            height: 32px;
+            color: #3b82f6;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        /* ========== MODAL LIGHTBOX ========== */
+        .lightbox {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.95);
+            z-index: 9999;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 60px 20px 20px;
+        }
+        .lightbox.active {
+            display: flex;
+        }
+        .lightbox__content {
+            position: relative;
+            max-width: 70vw;
+            max-height: 70vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .lightbox__image {
+            max-width: 100%;
+            max-height: 55vh;
+            border-radius: 8px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+            object-fit: contain;
+        }
+        .lightbox__close {
+            position: fixed;
+            top: 16px;
+            right: 16px;
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            color: white;
+            cursor: pointer;
+            padding: 10px;
+            border-radius: 8px;
+            transition: all 0.2s;
+        }
+        .lightbox__close:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: scale(1.1);
+        }
+        .lightbox__close i {
+            width: 24px;
+            height: 24px;
+        }
+        .lightbox__info {
+            color: white;
+            text-align: center;
+            margin-top: 16px;
+            font-size: 13px;
+        }
+        .lightbox__info strong {
+            font-size: 14px;
+        }
+        .lightbox__nav {
+            position: fixed;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            color: white;
+            padding: 12px;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: background 0.2s;
+        }
+        .lightbox__nav:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+        .lightbox__nav i {
+            width: 24px;
+            height: 24px;
+        }
+        .lightbox__nav--prev {
+            left: 20px;
+        }
+        .lightbox__nav--next {
+            right: 20px;
+        }
+        .lightbox__actions {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+        .lightbox__btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 10px 18px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+        .lightbox__btn i {
+            width: 16px;
+            height: 16px;
+        }
+        .lightbox__btn--download {
+            background: #22c55e;
+            color: white;
+        }
+        .lightbox__btn--download:hover {
+            background: #16a34a;
+            transform: translateY(-2px);
+        }
+        .lightbox__btn--open {
+            background: #3b82f6;
+            color: white;
+        }
+        .lightbox__btn--open:hover {
+            background: #2563eb;
+            transform: translateY(-2px);
+        }
+        .lightbox__btn--delete {
+            background: #ef4444;
+            color: white;
+        }
+        .lightbox__btn--delete:hover {
+            background: #dc2626;
+        }
+
+        /* ========== EVIDÊNCIA COM BOTÃO DELETE ========== */
+        .evidencia-item__actions {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            display: flex;
+            gap: 6px;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+        .evidencia-item:hover .evidencia-item__actions {
+            opacity: 1;
+        }
+        .evidencia-btn {
+            width: 28px;
+            height: 28px;
+            border-radius: 6px;
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .evidencia-btn i {
+            width: 14px;
+            height: 14px;
+        }
+        .evidencia-btn--view {
+            background: rgba(255, 255, 255, 0.9);
+            color: #3b82f6;
+        }
+        .evidencia-btn--view:hover {
+            background: white;
+            transform: scale(1.1);
+        }
+        .evidencia-btn--delete {
+            background: rgba(239, 68, 68, 0.9);
+            color: white;
+        }
+        .evidencia-btn--delete:hover {
+            background: #ef4444;
+            transform: scale(1.1);
+        }
+    </style>
+</head>
+<body>
+    <nav id="sidebar-placeholder"></nav>
+
+    <section class="home">
+        <div class="text">
+            <div class="plano-header">
+                <div class="plano-header__info">
+                    <h1 id="plano-nome">Carregando...</h1>
+                    <div class="plano-header__badges">
+                        <span class="badge badge-status" id="plano-status" data-status="">-</span>
+                        <span class="badge" id="plano-prioridade">-</span>
+                    </div>
+                    <div class="criador-info" id="criador-info" style="display: none;">
+                        <div class="criador-avatar" id="criador-avatar">??</div>
+                        <div class="criador-details">
+                            <div class="criador-details__name" id="criador-nome">-</div>
+                            <div class="criador-details__date" id="criador-data">Criado em -</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="plano-header__actions">
+                    <a href="/Pages/PlanodeAcao/GerenciarPlanosAcao.html" class="btn-back">
+                        <i data-lucide="arrow-left"></i>
+                        Voltar
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="content-card">
+            <div class="content-card-body">
+                <div id="loading" class="loading">
+                    <i data-lucide="loader-2"></i>
+                </div>
+
+                <div id="content" style="display: none;">
+                    <div class="detalhes-container">
+                        <!-- Meta/KPI -->
+                        <div class="meta-kpi" id="meta-section">
+                            <i data-lucide="target"></i>
+                            <div class="meta-kpi__content">
+                                <div class="meta-kpi__label">Meta / KPI</div>
+                                <div class="meta-kpi__desc" id="plano-kpi-desc">-</div>
+                                <div class="meta-kpi__value" id="plano-meta">-</div>
+                            </div>
+                        </div>
+
+                        <!-- Aviso de apenas visualização -->
+                        <div class="view-only-notice" id="view-only-notice" style="display: none;">
+                            <i data-lucide="eye"></i>
+                            <p>Você está visualizando este plano. Apenas o criador pode editar o progresso e adicionar evidências.</p>
+                        </div>
+
+                        <!-- 5W2H - COM EXPANDIR/MINIMIZAR -->
+                        <div class="detail-card">
+                            <div class="detail-card__header" id="toggle-5w2h">
+                                <div class="detail-card__title">
+                                    <i data-lucide="clipboard-list"></i>
+                                    Detalhes do Planejamento (5W2H)
+                                </div>
+                                <i data-lucide="chevron-down" class="detail-card__toggle" id="toggle-icon-5w2h"></i>
+                            </div>
+                            <div class="detail-card__body" id="body-5w2h">
+                                <div class="info-grid">
+                                    <div class="info-item full-width">
+                                        <div class="info-item__label">O Quê? (What)</div>
+                                        <div class="info-item__value" id="plano-what">-</div>
+                                    </div>
+                                    <div class="info-item full-width">
+                                        <div class="info-item__label">Por Quê? (Why)</div>
+                                        <div class="info-item__value" id="plano-why">-</div>
+                                    </div>
+                                    <div class="info-item">
+                                        <div class="info-item__label">Onde? (Where)</div>
+                                        <div class="info-item__value" id="plano-where">-</div>
+                                    </div>
+                                    <div class="info-item">
+                                        <div class="info-item__label">Responsável</div>
+                                        <div class="info-item__value" id="plano-responsavel">-</div>
+                                    </div>
+                                    <div class="info-item full-width">
+                                        <div class="info-item__label">Como? (How)</div>
+                                        <div class="info-item__value" id="plano-how">-</div>
+                                    </div>
+                                    <div class="info-item">
+                                        <div class="info-item__label">Quanto? (How Much)</div>
+                                        <div class="info-item__value" id="plano-howmuch">-</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Progresso -->
+                        <div class="detail-card">
+                            <div class="detail-card__header no-collapse">
+                                <div class="detail-card__title">
+                                    <i data-lucide="trending-up"></i>
+                                    Progresso do Plano
+                                </div>
+                            </div>
+                            <div class="detail-card__body">
+                                <div class="progress-section">
+                                    <div class="progress-label">
+                                        <span>Andamento</span>
+                                        <strong id="progress-value">0%</strong>
+                                    </div>
+                                    <div class="progress-big">
+                                        <div class="progress-big__fill" id="progress-fill" style="width: 0%;">
+                                            <span class="progress-big__text" id="progress-text"></span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="dates-row">
+                                    <div class="date-box">
+                                        <div class="date-box__label">Início</div>
+                                        <div class="date-box__value" id="data-inicio">-</div>
+                                    </div>
+                                    <div class="date-box" id="data-fim-box">
+                                        <div class="date-box__label">Término</div>
+                                        <div class="date-box__value" id="data-fim">-</div>
+                                    </div>
+                                </div>
+
+                                <!-- Controles do criador com STEPS -->
+                                <div class="progress-control" id="progress-control" style="display: none;">
+                                    <div class="progress-control__title">
+                                        <i data-lucide="sliders"></i>
+                                        Atualizar Progresso
+                                    </div>
+                                    
+                                    <!-- Barra com pontos de 0, 25, 50, 75, 100 -->
+                                    <div class="progress-steps">
+                                        <div class="progress-steps__track"></div>
+                                        <div class="progress-steps__fill" id="steps-fill" style="width: 0%;"></div>
+                                        
+                                        <div class="progress-step" data-value="0">
+                                            <div class="progress-step__dot"><i data-lucide="check"></i></div>
+                                            <span class="progress-step__label">0%</span>
+                                        </div>
+                                        <div class="progress-step" data-value="25">
+                                            <div class="progress-step__dot"><i data-lucide="check"></i></div>
+                                            <span class="progress-step__label">25%</span>
+                                        </div>
+                                        <div class="progress-step" data-value="50">
+                                            <div class="progress-step__dot"><i data-lucide="check"></i></div>
+                                            <span class="progress-step__label">50%</span>
+                                        </div>
+                                        <div class="progress-step" data-value="75">
+                                            <div class="progress-step__dot"><i data-lucide="check"></i></div>
+                                            <span class="progress-step__label">75%</span>
+                                        </div>
+                                        <div class="progress-step" data-value="100">
+                                            <div class="progress-step__dot"><i data-lucide="check"></i></div>
+                                            <span class="progress-step__label">100%</span>
+                                        </div>
+                                    </div>
+
+                                    <input type="hidden" id="progress-slider" value="0">
+
+                                    <div class="progress-status">
+                                        <label>Status do Plano</label>
+                                        <select id="status-select">
+                                            <option value="Não Iniciado">Não Iniciado</option>
+                                            <option value="Em Andamento">Em Andamento</option>
+                                            <option value="Atrasado">Atrasado</option>
+                                            <option value="Concluído">Concluído</option>
+                                            <option value="Cancelado">Cancelado</option>
+                                        </select>
+                                    </div>
+                                    <button class="btn-save-progress" id="btn-save-progress">
+                                        <i data-lucide="save"></i>
+                                        Salvar Progresso
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- GRID: Evidências e Histórico lado a lado embaixo -->
+                        <div class="bottom-grid">
+                            <!-- Evidências -->
+                            <div class="detail-card">
+                                <div class="detail-card__header no-collapse">
+                                    <div class="detail-card__title">
+                                        <i data-lucide="image"></i>
+                                        Evidências
+                                    </div>
+                                    <span class="badge" id="evidencias-count" style="background: #e2e8f0; color: #475569;">0</span>
+                                </div>
+                                <div class="detail-card__body">
+                                    <div id="evidencias-grid" class="evidencias-grid">
+                                        <div class="empty-state" style="grid-column: 1/-1;">
+                                            <i data-lucide="image-off"></i>
+                                            <p>Nenhuma evidência adicionada</p>
+                                        </div>
+                                    </div>
+
+                                    <!-- Upload (apenas criador) -->
+                                    <div id="upload-section" style="display: none;">
+                                        <div class="upload-area" id="upload-area">
+                                            <i data-lucide="upload-cloud"></i>
+                                            <p>Clique para <span>adicionar evidência</span></p>
+                                        </div>
+                                        <input type="file" id="file-input" accept="image/*,.pdf,.doc,.docx" multiple>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Timeline de Atualizações -->
+                            <div class="detail-card">
+                                <div class="detail-card__header no-collapse">
+                                    <div class="detail-card__title">
+                                        <i data-lucide="history"></i>
+                                        Histórico de Atualizações
+                                    </div>
+                                </div>
+                                <div class="detail-card__body">
+                                    <div id="timeline" class="timeline">
+                                        <div class="empty-state">
+                                            <i data-lucide="clock"></i>
+                                            <p>Nenhuma atualização registrada</p>
+                                        </div>
+                                    </div>
+
+                                    <!-- Adicionar atualização (apenas criador) -->
+                                    <div id="add-update-section" style="display: none;">
+                                        <div class="add-update">
+                                            <div class="add-update__title">
+                                                <i data-lucide="message-square-plus"></i>
+                                                Adicionar Atualização
+                                            </div>
+                                            <textarea id="update-text" placeholder="Descreva o andamento, observações ou novidades..."></textarea>
+                                            <button class="btn-add-update" id="btn-add-update">
+                                                <i data-lucide="plus"></i>
+                                                Adicionar
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Modal Lightbox para visualizar evidências -->
+    <div class="lightbox" id="lightbox">
+        <button class="lightbox__close" id="lightbox-close">
+            <i data-lucide="x"></i>
+        </button>
+        <button class="lightbox__nav lightbox__nav--prev" id="lightbox-prev">
+            <i data-lucide="chevron-left"></i>
+        </button>
+        <div class="lightbox__content">
+            <img src="" alt="" class="lightbox__image" id="lightbox-image">
+            <div class="lightbox__info">
+                <strong id="lightbox-nome">-</strong><br>
+                <span id="lightbox-data">-</span> • <span id="lightbox-usuario">-</span>
+            </div>
+            <div class="lightbox__actions" id="lightbox-actions">
+                <a href="" target="_blank" class="lightbox__btn lightbox__btn--open" id="lightbox-open">
+                    <i data-lucide="external-link"></i>
+                    Abrir
+                </a>
+                <button class="lightbox__btn lightbox__btn--download" id="lightbox-download">
+                    <i data-lucide="download"></i>
+                    Baixar
+                </button>
+                <button class="lightbox__btn lightbox__btn--delete" id="lightbox-delete" style="display: none;">
+                    <i data-lucide="trash-2"></i>
+                    Excluir
+                </button>
+            </div>
+        </div>
+        <button class="lightbox__nav lightbox__nav--next" id="lightbox-next">
+            <i data-lucide="chevron-right"></i>
+        </button>
+    </div>
+
+    <script type="module">
+        import { db, auth, storage } from '/assets/js/firebase-config.js';
+        import { doc, getDoc, updateDoc, collection, addDoc, query, orderBy, getDocs, deleteDoc, Timestamp } from 'https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js';
+        import { ref, uploadBytes, getDownloadURL, deleteObject } from 'https://www.gstatic.com/firebasejs/9.22.1/firebase-storage.js';
+        import { garantirAutenticacao } from '/assets/js/auth-guard.js';
+
+        let planoId = null;
+        let planoData = null;
+        let currentUserId = null;
+        let isOwner = false;
+        let selectedProgress = 0;
+        let evidenciasList = []; // Lista de evidências para navegação no lightbox
+        let currentEvidenciaIndex = 0;
+
+        // Elementos
+        const loadingEl = document.getElementById('loading');
+        const contentEl = document.getElementById('content');
+
+        function fmtDate(d) {
+            if (!d) return '-';
+            try {
+                const dateObj = d.toDate ? d.toDate() : new Date(d);
+                return dateObj.toLocaleDateString('pt-BR');
+            } catch (e) { return '-'; }
+        }
+
+        function fmtDateTime(d) {
+            if (!d) return '-';
+            try {
+                const dateObj = d.toDate ? d.toDate() : new Date(d);
+                return dateObj.toLocaleDateString('pt-BR') + ' às ' + dateObj.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+            } catch (e) { return '-'; }
+        }
+
+        function getInitials(name) {
+            if (!name) return '??';
+            const parts = name.trim().split(' ');
+            if (parts.length >= 2) {
+                return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+            }
+            return name.substring(0, 2).toUpperCase();
+        }
+
+        function priorityToClass(prio) {
+            if (!prio) return 'badge-priority-baixo';
+            const p = prio.toString().toLowerCase();
+            if (p.includes('crít')) return 'badge-priority-crítico';
+            if (p.includes('alto')) return 'badge-priority-alto';
+            if (p.includes('méd')) return 'badge-priority-médio';
+            return 'badge-priority-baixo';
+        }
+
+        function isLate(endDate, status) {
+            if (status === 'Concluído' || status === 'Cancelado') return false;
+            if (!endDate) return false;
+            try {
+                const end = endDate.toDate ? endDate.toDate() : new Date(endDate);
+                const now = new Date();
+                end.setHours(0, 0, 0, 0);
+                now.setHours(0, 0, 0, 0);
+                return now > end;
+            } catch (e) { return false; }
+        }
+
+        // Toggle expandir/minimizar 5W2H
+        document.getElementById('toggle-5w2h').addEventListener('click', () => {
+            const body = document.getElementById('body-5w2h');
+            const icon = document.getElementById('toggle-icon-5w2h');
+            body.classList.toggle('collapsed');
+            icon.classList.toggle('collapsed');
+        });
+
+        // Sistema de Steps para progresso
+        function updateProgressSteps(value, autoUpdateStatus = true) {
+            selectedProgress = value;
+            document.getElementById('progress-slider').value = value;
+            
+            const steps = document.querySelectorAll('.progress-step');
+            const fillEl = document.getElementById('steps-fill');
+            
+            // Calcular largura do fill (0 = 0%, 25 = 25%, 50 = 50%, 75 = 75%, 100 = 100%)
+            fillEl.style.width = value + '%';
+            
+            steps.forEach(step => {
+                const stepValue = parseInt(step.dataset.value);
+                step.classList.remove('active', 'completed');
+                
+                if (stepValue < value) {
+                    step.classList.add('completed');
+                } else if (stepValue === value) {
+                    step.classList.add('active');
+                }
+            });
+
+            // Atualizar status automaticamente baseado no progresso
+            if (autoUpdateStatus) {
+                const statusSelect = document.getElementById('status-select');
+                if (value === 100) {
+                    statusSelect.value = 'Concluído';
+                } else if (value > 0) {
+                    statusSelect.value = 'Em Andamento';
+                } else {
+                    statusSelect.value = 'Não Iniciado';
+                }
+            }
+        }
+
+        // Click nos steps
+        document.querySelectorAll('.progress-step').forEach(step => {
+            step.addEventListener('click', () => {
+                const value = parseInt(step.dataset.value);
+                updateProgressSteps(value, true);
+            });
+        });
+
+        async function loadPlano() {
+            planoId = sessionStorage.getItem('viewPlanoId') || new URLSearchParams(location.search).get('id');
+            
+            if (!planoId) {
+                Swal.fire('Erro', 'ID do plano não informado', 'error');
+                location.href = '/Pages/PlanodeAcao/GerenciarPlanosAcao.html';
+                return;
+            }
+
+            try {
+                const snap = await getDoc(doc(db, 'planos-acao', planoId));
+                if (!snap.exists()) {
+                    Swal.fire('Erro', 'Plano não encontrado', 'error');
+                    location.href = '/Pages/PlanodeAcao/GerenciarPlanosAcao.html';
+                    return;
+                }
+
+                planoData = { id: snap.id, ...snap.data() };
+                isOwner = planoData.criadoPor === currentUserId;
+
+                renderPlano();
+                await loadAtualizacoes();
+                await loadEvidencias();
+
+                loadingEl.style.display = 'none';
+                contentEl.style.display = 'block';
+                lucide.createIcons();
+
+            } catch (err) {
+                console.error('Erro ao carregar plano:', err);
+                Swal.fire('Erro', 'Falha ao carregar plano', 'error');
+            }
+        }
+
+        function renderPlano() {
+            // Header
+            document.getElementById('plano-nome').textContent = planoData.nome || 'Sem título';
+            
+            const statusEl = document.getElementById('plano-status');
+            statusEl.textContent = planoData.status || 'Não Iniciado';
+            statusEl.setAttribute('data-status', planoData.status || 'Não Iniciado');
+
+            const prioEl = document.getElementById('plano-prioridade');
+            prioEl.textContent = planoData.prioridade || 'Baixo';
+            prioEl.className = 'badge ' + priorityToClass(planoData.prioridade);
+
+            // Criador
+            if (planoData.criadoPorNome || planoData.criadoPor) {
+                document.getElementById('criador-info').style.display = 'flex';
+                document.getElementById('criador-nome').textContent = planoData.criadoPorNome || 'Usuário';
+                document.getElementById('criador-avatar').textContent = getInitials(planoData.criadoPorNome);
+                document.getElementById('criador-data').textContent = 'Criado em ' + fmtDate(planoData.dataCriacao);
+            }
+
+            // Meta / KPI
+            document.getElementById('plano-kpi-desc').textContent = planoData.kpiNome || 'KPI não informado';
+            document.getElementById('plano-meta').textContent = planoData.meta || '-';
+
+            // Progresso
+            const progress = planoData.progresso || 0;
+            document.getElementById('progress-value').textContent = progress + '%';
+            document.getElementById('progress-fill').style.width = progress + '%';
+            document.getElementById('progress-fill').setAttribute('data-status', planoData.status || '');
+            if (progress > 15) {
+                document.getElementById('progress-text').textContent = progress + '%';
+            }
+
+            // Datas
+            document.getElementById('data-inicio').textContent = fmtDate(planoData.whenInicio);
+            document.getElementById('data-fim').textContent = fmtDate(planoData.whenFim);
+            
+            if (isLate(planoData.whenFim, planoData.status)) {
+                document.getElementById('data-fim-box').classList.add('late');
+            }
+
+            // 5W2H
+            document.getElementById('plano-what').textContent = planoData.what || '-';
+            document.getElementById('plano-why').textContent = planoData.why || '-';
+            document.getElementById('plano-where').textContent = planoData.where || '-';
+            document.getElementById('plano-responsavel').textContent = planoData.responsavel || '-';
+            document.getElementById('plano-how').textContent = planoData.how || '-';
+            document.getElementById('plano-howmuch').textContent = planoData.howMuch || '-';
+
+            // Controles do criador
+            if (isOwner) {
+                document.getElementById('progress-control').style.display = 'block';
+                document.getElementById('upload-section').style.display = 'block';
+                document.getElementById('add-update-section').style.display = 'block';
+
+                // Ajustar progresso para o step mais próximo (sem alterar status automaticamente no load)
+                const closestStep = [0, 25, 50, 75, 100].reduce((prev, curr) => 
+                    Math.abs(curr - progress) < Math.abs(prev - progress) ? curr : prev
+                );
+                updateProgressSteps(closestStep, false);
+                document.getElementById('status-select').value = planoData.status || 'Não Iniciado';
+            } else {
+                document.getElementById('view-only-notice').style.display = 'flex';
+            }
+        }
+
+        async function loadAtualizacoes() {
+            try {
+                const q = query(
+                    collection(db, 'planos-acao', planoId, 'atualizacoes'),
+                    orderBy('data', 'desc')
+                );
+                const snap = await getDocs(q);
+                
+                const timelineEl = document.getElementById('timeline');
+                
+                if (snap.empty) {
+                    timelineEl.innerHTML = `
+                        <div class="empty-state">
+                            <i data-lucide="clock"></i>
+                            <p>Nenhuma atualização registrada</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                timelineEl.innerHTML = '';
+                snap.forEach(docSnap => {
+                    const at = docSnap.data();
+                    const isEvidencia = at.tipo === 'evidencia';
+                    
+                    timelineEl.innerHTML += `
+                        <div class="timeline-item">
+                            <div class="timeline-item__dot ${isEvidencia ? 'evidencia' : ''}"></div>
+                            <div class="timeline-item__date">${fmtDateTime(at.data)}</div>
+                            <div class="timeline-item__content">
+                                <div class="timeline-item__title">${at.titulo || 'Atualização'}</div>
+                                <div class="timeline-item__desc">${at.descricao || ''}</div>
+                                ${at.progresso !== undefined ? `<div class="timeline-item__progress"><i data-lucide="trending-up"></i> ${at.progresso}%</div>` : ''}
+                                <div class="timeline-item__user">por ${at.usuario || 'Usuário'}</div>
+                            </div>
+                        </div>
+                    `;
+                });
+
+            } catch (err) {
+                console.error('Erro ao carregar atualizações:', err);
+            }
+        }
+
+        async function loadEvidencias() {
+            try {
+                const q = query(
+                    collection(db, 'planos-acao', planoId, 'evidencias'),
+                    orderBy('data', 'desc')
+                );
+                const snap = await getDocs(q);
+                
+                const gridEl = document.getElementById('evidencias-grid');
+                document.getElementById('evidencias-count').textContent = snap.size;
+                
+                // Armazenar lista para navegação no lightbox
+                evidenciasList = [];
+                snap.forEach(docSnap => {
+                    evidenciasList.push({ id: docSnap.id, ...docSnap.data() });
+                });
+                
+                if (snap.empty) {
+                    gridEl.innerHTML = `
+                        <div class="empty-state" style="grid-column: 1/-1;">
+                            <i data-lucide="image-off"></i>
+                            <p>Nenhuma evidência adicionada</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                gridEl.innerHTML = '';
+                evidenciasList.forEach((ev, index) => {
+                    const isImage = ev.tipo?.startsWith('image/');
+                    const deleteBtn = isOwner ? `<button class="evidencia-btn evidencia-btn--delete" onclick="event.stopPropagation(); deleteEvidencia('${ev.id}', '${ev.url}')" title="Excluir"><i data-lucide="trash-2"></i></button>` : '';
+                    
+                    if (isImage) {
+                        gridEl.innerHTML += `
+                            <div class="evidencia-item" onclick="openLightbox(${index})">
+                                <img src="${ev.url}" alt="${ev.nome || 'Evidência'}">
+                                <div class="evidencia-item__actions">
+                                    <button class="evidencia-btn evidencia-btn--view" onclick="event.stopPropagation(); openLightbox(${index})" title="Visualizar"><i data-lucide="maximize-2"></i></button>
+                                    ${deleteBtn}
+                                </div>
+                                <div class="evidencia-item__overlay">
+                                    <span class="evidencia-item__date">${fmtDate(ev.data)}</span>
+                                </div>
+                            </div>
+                        `;
+                    } else {
+                        gridEl.innerHTML += `
+                            <div class="evidencia-item evidencia-file" onclick="window.open('${ev.url}', '_blank')">
+                                <i data-lucide="file-text"></i>
+                                <span>${ev.nome || 'Arquivo'}</span>
+                                ${isOwner ? `<div class="evidencia-item__actions" style="opacity:1;"><button class="evidencia-btn evidencia-btn--delete" onclick="event.stopPropagation(); deleteEvidencia('${ev.id}', '${ev.url}')" title="Excluir"><i data-lucide="trash-2"></i></button></div>` : ''}
+                            </div>
+                        `;
+                    }
+                });
+
+            } catch (err) {
+                console.error('Erro ao carregar evidências:', err);
+            }
+        }
+
+        // ==================== LIGHTBOX ====================
+        function openLightbox(index) {
+            if (!evidenciasList[index]) return;
+            
+            currentEvidenciaIndex = index;
+            const ev = evidenciasList[index];
+            
+            const lightbox = document.getElementById('lightbox');
+            const img = document.getElementById('lightbox-image');
+            const nome = document.getElementById('lightbox-nome');
+            const data = document.getElementById('lightbox-data');
+            const usuario = document.getElementById('lightbox-usuario');
+            const openBtn = document.getElementById('lightbox-open');
+            const downloadBtn = document.getElementById('lightbox-download');
+            const deleteBtn = document.getElementById('lightbox-delete');
+            
+            img.src = ev.url;
+            img.alt = ev.nome || 'Evidência';
+            nome.textContent = ev.nome || 'Evidência';
+            data.textContent = fmtDate(ev.data);
+            usuario.textContent = ev.usuario || '-';
+            openBtn.href = ev.url;
+            
+            // Configurar download direto
+            downloadBtn.onclick = () => downloadFile(ev.url, ev.nome || 'evidencia');
+            
+            // Mostrar botão de deletar apenas para o dono
+            deleteBtn.style.display = isOwner ? 'inline-flex' : 'none';
+            deleteBtn.onclick = () => deleteEvidenciaFromLightbox(ev.id, ev.url);
+            
+            // Atualizar navegação
+            updateLightboxNav();
+            
+            lightbox.classList.add('active');
+            document.body.style.overflow = 'hidden';
+            lucide.createIcons();
+        }
+
+        function closeLightbox() {
+            const lightbox = document.getElementById('lightbox');
+            lightbox.classList.remove('active');
+            document.body.style.overflow = '';
+        }
+
+        function updateLightboxNav() {
+            document.getElementById('lightbox-prev').style.visibility = currentEvidenciaIndex > 0 ? 'visible' : 'hidden';
+            document.getElementById('lightbox-next').style.visibility = currentEvidenciaIndex < evidenciasList.length - 1 ? 'visible' : 'hidden';
+        }
+
+        function navigateLightbox(direction) {
+            const newIndex = currentEvidenciaIndex + direction;
+            if (newIndex >= 0 && newIndex < evidenciasList.length) {
+                openLightbox(newIndex);
+            }
+        }
+
+        // Função para download direto sem sair da página
+        async function downloadFile(url, filename) {
+            try {
+                const downloadBtn = document.getElementById('lightbox-download');
+                const originalHtml = downloadBtn.innerHTML;
+                downloadBtn.innerHTML = '<i data-lucide="loader-2"></i> Baixando...';
+                downloadBtn.disabled = true;
+                lucide.createIcons();
+
+                const response = await fetch(url);
+                const blob = await response.blob();
+                const blobUrl = window.URL.createObjectURL(blob);
+                
+                const link = document.createElement('a');
+                link.href = blobUrl;
+                link.download = filename;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                window.URL.revokeObjectURL(blobUrl);
+
+                downloadBtn.innerHTML = originalHtml;
+                downloadBtn.disabled = false;
+                lucide.createIcons();
+            } catch (err) {
+                console.error('Erro ao baixar:', err);
+                Swal.fire('Erro', 'Falha ao baixar o arquivo', 'error');
+            }
+        }
+
+        // Eventos do lightbox
+        document.getElementById('lightbox-close').addEventListener('click', closeLightbox);
+        document.getElementById('lightbox-prev').addEventListener('click', () => navigateLightbox(-1));
+        document.getElementById('lightbox-next').addEventListener('click', () => navigateLightbox(1));
+        document.getElementById('lightbox').addEventListener('click', (e) => {
+            if (e.target.id === 'lightbox') closeLightbox();
+        });
+        document.addEventListener('keydown', (e) => {
+            const lightbox = document.getElementById('lightbox');
+            if (!lightbox.classList.contains('active')) return;
+            
+            if (e.key === 'Escape') closeLightbox();
+            if (e.key === 'ArrowLeft') navigateLightbox(-1);
+            if (e.key === 'ArrowRight') navigateLightbox(1);
+        });
+
+        // ==================== DELETAR EVIDÊNCIA ====================
+        async function deleteEvidenciaFromLightbox(docId, fileUrl) {
+            closeLightbox();
+            await deleteEvidencia(docId, fileUrl);
+        }
+
+        window.deleteEvidencia = async function(docId, fileUrl) {
+            if (!isOwner) {
+                Swal.fire('Erro', 'Apenas o criador pode excluir evidências', 'error');
+                return;
+            }
+
+            const result = await Swal.fire({
+                title: 'Excluir evidência?',
+                text: 'Esta ação não pode ser desfeita.',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#ef4444',
+                confirmButtonText: 'Sim, excluir',
+                cancelButtonText: 'Cancelar'
+            });
+
+            if (!result.isConfirmed) return;
+
+            try {
+                Swal.fire({
+                    title: 'Excluindo...',
+                    text: 'Aguarde',
+                    allowOutsideClick: false,
+                    didOpen: () => Swal.showLoading()
+                });
+
+                // Deletar do Storage
+                try {
+                    const storageRef = ref(storage, fileUrl);
+                    await deleteObject(storageRef);
+                } catch (storageErr) {
+                    console.warn('Erro ao deletar do storage:', storageErr);
+                    // Continua mesmo se falhar no storage
+                }
+
+                // Deletar do Firestore
+                await deleteDoc(doc(db, 'planos-acao', planoId, 'evidencias', docId));
+
+                // Adicionar na timeline
+                await addDoc(collection(db, 'planos-acao', planoId, 'atualizacoes'), {
+                    tipo: 'nota',
+                    titulo: 'Evidência removida',
+                    descricao: 'Uma evidência foi excluída do plano',
+                    usuario: getUserName(),
+                    data: Timestamp.now()
+                });
+
+                // Recarregar
+                await loadEvidencias();
+                await loadAtualizacoes();
+                lucide.createIcons();
+
+                Swal.fire('Excluído!', 'Evidência removida com sucesso', 'success');
+
+            } catch (err) {
+                console.error('Erro ao excluir evidência:', err);
+                Swal.fire('Erro', 'Falha ao excluir evidência: ' + err.message, 'error');
+            }
+        };
+
+        // Expor openLightbox globalmente
+        window.openLightbox = openLightbox;
+
+        function getUserName() {
+            const el = document.getElementById('user-name');
+            return el?.textContent?.trim() || auth.currentUser?.displayName || 'Usuário';
+        }
+
+        // Salvar progresso
+        document.getElementById('btn-save-progress').addEventListener('click', async () => {
+            if (!isOwner) return;
+
+            const btn = document.getElementById('btn-save-progress');
+            const originalHtml = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<i data-lucide="loader-2" class="spin"></i> Salvando...';
+
+            try {
+                const novoProgresso = selectedProgress;
+                const novoStatus = document.getElementById('status-select').value;
+
+                // Atualizar plano
+                await updateDoc(doc(db, 'planos-acao', planoId), {
+                    progresso: novoProgresso,
+                    status: novoStatus,
+                    dataAtualizacao: new Date()
+                });
+
+                // Adicionar na timeline
+                await addDoc(collection(db, 'planos-acao', planoId, 'atualizacoes'), {
+                    tipo: 'progresso',
+                    titulo: 'Progresso atualizado',
+                    descricao: `Status alterado para "${novoStatus}"`,
+                    progresso: novoProgresso,
+                    usuario: getUserName(),
+                    data: Timestamp.now()
+                });
+
+                planoData.progresso = novoProgresso;
+                planoData.status = novoStatus;
+                renderPlano();
+                await loadAtualizacoes();
+                lucide.createIcons();
+
+                Swal.fire('Sucesso!', 'Progresso atualizado com sucesso', 'success');
+
+            } catch (err) {
+                console.error('Erro ao salvar progresso:', err);
+                Swal.fire('Erro', 'Falha ao salvar progresso', 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = originalHtml;
+                lucide.createIcons();
+            }
+        });
+
+        // Adicionar atualização
+        document.getElementById('btn-add-update').addEventListener('click', async () => {
+            if (!isOwner) return;
+
+            const textarea = document.getElementById('update-text');
+            const texto = textarea.value.trim();
+
+            if (!texto) {
+                Swal.fire('Atenção', 'Digite uma descrição para a atualização', 'warning');
+                return;
+            }
+
+            const btn = document.getElementById('btn-add-update');
+            btn.disabled = true;
+
+            try {
+                await addDoc(collection(db, 'planos-acao', planoId, 'atualizacoes'), {
+                    tipo: 'nota',
+                    titulo: 'Nova atualização',
+                    descricao: texto,
+                    usuario: getUserName(),
+                    data: Timestamp.now()
+                });
+
+                textarea.value = '';
+                await loadAtualizacoes();
+                lucide.createIcons();
+
+                Swal.fire('Sucesso!', 'Atualização adicionada', 'success');
+
+            } catch (err) {
+                console.error('Erro ao adicionar atualização:', err);
+                Swal.fire('Erro', 'Falha ao adicionar atualização', 'error');
+            } finally {
+                btn.disabled = false;
+            }
+        });
+
+        // Upload de evidência
+        const uploadArea = document.getElementById('upload-area');
+        const fileInput = document.getElementById('file-input');
+        let nomeEvidenciaAtual = ''; // Armazena o nome digitado
+
+        // Clicar na área de upload -> primeiro pede o nome
+        uploadArea?.addEventListener('click', async () => {
+            const { value: nome, isConfirmed } = await Swal.fire({
+                title: 'Nome da Evidência',
+                input: 'text',
+                inputPlaceholder: 'Ex: Show Tech 2024, Foto da peça...',
+                inputAttributes: {
+                    autocapitalize: 'off'
+                },
+                showCancelButton: true,
+                confirmButtonText: 'Escolher Arquivo',
+                cancelButtonText: 'Cancelar',
+                confirmButtonColor: '#3b82f6',
+                inputValidator: (value) => {
+                    // Nome é opcional, não precisa validar
+                    return null;
+                }
+            });
+
+            if (isConfirmed) {
+                nomeEvidenciaAtual = nome?.trim() || '';
+                fileInput.click();
+            }
+        });
+        
+        uploadArea?.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.style.borderColor = '#3b82f6';
+            uploadArea.style.background = '#f0f9ff';
+        });
+
+        uploadArea?.addEventListener('dragleave', () => {
+            uploadArea.style.borderColor = '#cbd5e1';
+            uploadArea.style.background = '';
+        });
+
+        uploadArea?.addEventListener('drop', async (e) => {
+            e.preventDefault();
+            uploadArea.style.borderColor = '#cbd5e1';
+            uploadArea.style.background = '';
+            
+            if (e.dataTransfer.files.length) {
+                // Para drag and drop, também pede o nome primeiro
+                const { value: nome, isConfirmed } = await Swal.fire({
+                    title: 'Nome da Evidência',
+                    input: 'text',
+                    inputPlaceholder: 'Ex: Show Tech 2024, Foto da peça...',
+                    showCancelButton: true,
+                    confirmButtonText: 'Enviar',
+                    cancelButtonText: 'Cancelar',
+                    confirmButtonColor: '#3b82f6'
+                });
+
+                if (isConfirmed) {
+                    nomeEvidenciaAtual = nome?.trim() || '';
+                    handleFiles(e.dataTransfer.files);
+                }
+            }
+        });
+
+        fileInput?.addEventListener('change', () => {
+            if (fileInput.files.length) {
+                handleFiles(fileInput.files);
+            }
+        });
+
+        async function handleFiles(files) {
+            if (!isOwner || !storage) {
+                Swal.fire('Erro', 'Upload não disponível', 'error');
+                return;
+            }
+
+            // Usar o nome que foi digitado no popup
+            const nomePersonalizado = nomeEvidenciaAtual;
+
+            const loadingSwal = Swal.fire({
+                title: 'Enviando...',
+                text: 'Aguarde o upload dos arquivos',
+                allowOutsideClick: false,
+                didOpen: () => Swal.showLoading()
+            });
+
+            try {
+                for (const file of files) {
+                    const fileName = `${Date.now()}_${file.name}`;
+                    const storageRef = ref(storage, `planos-acao/${planoId}/evidencias/${fileName}`);
+                    
+                    await uploadBytes(storageRef, file);
+                    const url = await getDownloadURL(storageRef);
+
+                    // Nome a exibir: usa o personalizado se tiver, senão usa o nome do arquivo
+                    const nomeExibicao = nomePersonalizado || file.name;
+
+                    // Salvar referência no Firestore
+                    await addDoc(collection(db, 'planos-acao', planoId, 'evidencias'), {
+                        nome: nomeExibicao,
+                        nomeArquivo: file.name,
+                        descricao: nomePersonalizado,
+                        url: url,
+                        tipo: file.type,
+                        tamanho: file.size,
+                        data: Timestamp.now(),
+                        usuario: getUserName()
+                    });
+
+                    // Adicionar na timeline com o nome personalizado
+                    await addDoc(collection(db, 'planos-acao', planoId, 'atualizacoes'), {
+                        tipo: 'evidencia',
+                        titulo: nomePersonalizado ? nomePersonalizado : 'Nova evidência adicionada',
+                        descricao: `Arquivo: ${file.name}`,
+                        usuario: getUserName(),
+                        data: Timestamp.now()
+                    });
+                }
+
+                // Limpar o nome após o upload
+                nomeEvidenciaAtual = '';
+
+                await loadEvidencias();
+                await loadAtualizacoes();
+                lucide.createIcons();
+
+                Swal.fire('Sucesso!', 'Evidência(s) enviada(s) com sucesso', 'success');
+
+            } catch (err) {
+                console.error('Erro ao fazer upload:', err);
+                Swal.fire('Erro', 'Falha ao enviar evidência: ' + err.message, 'error');
+            }
+
+            fileInput.value = '';
+        }
+
+        // Inicialização
+        document.addEventListener('DOMContentLoaded', async () => {
+            try {
+                await garantirAutenticacao(auth);
+                currentUserId = auth.currentUser?.uid || null;
+                await loadPlano();
+            } catch (err) {
+                console.error(err);
+                Swal.fire('Erro', 'Falha ao inicializar página', 'error');
+            }
+        });
+    </script>
+
+    <script type="module" src="/assets/js/auth.js"></script>
+    <script src="/assets/js/main.js"></script>
+    <script src="/assets/js/components/Sidebar.js"></script>
+</body>
+</html>

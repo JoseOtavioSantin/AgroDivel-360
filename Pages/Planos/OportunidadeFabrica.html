@@ -1,0 +1,956 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="theme-color" content="#2c2f3f" />
+  <title>Oportunidades da Fábrica</title>
+  <link rel="icon" type="image/png" href="/assets/images/iconeaba.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- LIBS EXTERNAS -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/pt.js"></script>
+
+  <!-- CSS -->
+  <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+  <link rel="stylesheet" href="/assets/css/style.css">
+  <link rel="stylesheet" href="/assets/css/Pages/Dashboard/Principal.css">
+
+  <style>
+    .content-card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .header-actions {
+        display: flex;
+        gap: 10px;
+    }
+    /* Estilos dos botões de ação na tabela */
+    .btn-acao {
+        display: inline-flex; 
+        align-items: center; 
+        justify-content: center;
+        background-color: #193b7c; 
+        color: white; 
+        border: none;
+        border-radius: 6px; 
+        padding: 6px; 
+        cursor: pointer;
+        transition: background-color 0.2s ease; 
+        text-decoration: none;
+        margin: 0 2px;
+        width: 32px;
+        height: 32px;
+        flex-shrink: 0;
+    }
+    .btn-acao:hover { background-color: #132a5a; }
+    .btn-acao i { width: 18px; height: 18px; pointer-events: none; }
+    .btn-acao svg { width: 18px; height: 18px; pointer-events: none; }
+    .btn-whatsapp {
+        background-color: #25D366 !important;
+    }
+    .btn-whatsapp:hover {
+        background-color: #1da851 !important;
+    }
+    
+    /* Estilos específicos da página */
+    .status-pendente { background-color: #c67903; color: white; }
+    .status-realizado { background-color: #193b7c; color: white; }
+    
+    tr.linha-alerta td {
+        animation: pulsarAlerta 1.2s ease-in-out infinite alternate;
+    }
+    @keyframes pulsarAlerta {
+      from { background-color: #950000; }
+      to { background-color: #c67903; }
+    }
+    /* Estilo para a área de filtros */
+    .filters {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 15px;
+        margin-bottom: 20px;
+    }
+    .filters input, .filters select {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #ccc;
+        border-radius: 6px;
+    }
+    /* Campo WhatsApp editável na tabela */
+    .whatsapp-input {
+        width: 100%;
+        padding: 5px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        font-size: 14px;
+    }
+    .whatsapp-input:focus {
+        outline: none;
+        border-color: #193b7c;
+    }
+    /* Largura das colunas */
+    table th:nth-child(1) { width: 10%; } /* Revenda */
+    table th:nth-child(2) { width: 10%; } /* Cliente */
+    table th:nth-child(3) { width: 10%; } /* WhatsApp */
+    table th:nth-child(4) { width: 3%; }  /* Eula */
+    table th:nth-child(5) { width: 8%; } /* Chassi */
+    table th:nth-child(6) { width: 3%; } /* Modelo */
+    table th:nth-child(7) { width: 3%; }  /* Horímetro */
+    table th:nth-child(8) { width: 3%; }  /* Revisão */
+    table th:nth-child(9) { width: 12%; } /* Ações */
+    /* Botões e select de decisão */
+    .decisao-container {
+        display: inline-flex;
+        gap: 4px;
+        align-items: center;
+        justify-content: flex-start;
+        flex-wrap: nowrap;
+    }
+    .btn-decisao {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border: none;
+        border-radius: 6px;
+        padding: 6px;
+        cursor: pointer;
+        transition: background-color 0.2s ease;
+        width: 32px;
+        height: 32px;
+        flex-shrink: 0;
+    }
+    .btn-decisao i {
+        width: 18px;
+        height: 18px;
+        pointer-events: none;
+    }
+    .btn-vendeu {
+        background-color: #047857;
+        color: white;
+    }
+    .btn-vendeu:hover {
+        background-color: #065f46;
+    }
+    .btn-nao-vendeu {
+        background-color: #dc2626;
+        color: white;
+    }
+    .btn-nao-vendeu:hover {
+        background-color: #b91c1c;
+    }
+    .motivo-select {
+        width: 100%;
+        padding: 6px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        font-size: 12px;
+    }
+    .status-badge {
+        padding: 6px 10px;
+        border-radius: 4px;
+        font-size: 12px;
+        font-weight: 500;
+        text-align: center;
+        cursor: pointer;
+    }
+    .badge-venda { background-color: #047857; color: white; }
+    .badge-nao-interesse { background-color: #dc2626; color: white; }
+    .badge-preco { background-color: #dc2626; color: white; }
+    .badge-analisando { background-color: #f59e0b; color: white; }
+    .badge-outros { background-color: #dc2626; color: white; }
+  </style>
+</head>
+<body>
+
+  <nav id="sidebar-placeholder"></nav>
+
+  <!-- Conteúdo Principal da Página -->
+  <section class="home">
+    <div class="text">
+      <h1>Dashboard - Oportunidades da Fábrica</h1>
+      <p id="dynamic-title">Carregando...</p>
+    </div>
+
+    <!-- CARDS DE RESUMO -->
+    <div class="dashboard-cards">
+      <div class="dashboard-card blue-card"><h2 id="total-equipamentos">0</h2><p><i data-lucide="truck"></i> Total de Equipamentos</p></div>
+      <div class="dashboard-card orange-card"><h2 id="revisoes-pendentes">0</h2><p><i data-lucide="alert-circle"></i> Revisões Pendentes</p></div>
+      <div class="dashboard-card green-card"><h2 id="revisoes-realizadas">0</h2><p><i data-lucide="check-circle"></i> Realizadas</p></div>
+      <div class="dashboard-card purple-card"><h2 id="promocoes-enviadas">0</h2><p><i data-lucide="mail"></i> Promoções Enviadas</p></div>
+    </div>
+
+    <!-- CONTAINER PRINCIPAL DO DASHBOARD -->
+    <div class="content-card">
+      <div class="content-card-header">
+        <h3>Acompanhamento de Revisões</h3>
+        <div class="header-actions">
+           <button id="btn-exportar" class="btn-acao" title="Exportar para Excel"><i data-lucide="download"></i></button>
+           <button id="btn-importar" class="btn-acao" title="Importar Dados">
+                <input type="file" id="arquivo-importar" accept=".xlsx" style="display:none;">
+                <i data-lucide="upload"></i>
+           </button>
+        </div>
+      </div>
+      <div class="content-card-body">
+        <!-- ÁREA DE FILTROS -->
+        <div class="filters">
+          <input id="filtro-revenda" type="text" placeholder="Buscar por revenda..." />
+          <input id="filtro-cliente" type="text" placeholder="Buscar por cliente..." />
+          <input id="filtro-whatsapp" type="text" placeholder="Buscar por WhatsApp..." />
+          <input id="filtro-eula" type="text" placeholder="Buscar por Eula..." />
+          <input id="filtro-chassi" type="text" placeholder="Buscar por chassi..." />
+          <input id="filtro-modelo" type="text" placeholder="Buscar por modelo..." />
+          <select id="filtro-status">
+            <option value="">Todos os status</option>
+            <option value="Pendente">Pendente</option>
+            <option value="Realizado">Realizado</option>
+          </select>
+        </div>
+
+        <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th>Revenda</th>
+                  <th>Cliente</th>
+                  <th>WhatsApp</th>
+                  <th>Eula</th>
+                  <th>Chassi</th>
+                  <th>Modelo</th>
+                  <th>Horímetro</th>
+                  <th>Revisão</th>
+                  <th>Ações</th>
+                </tr>
+              </thead>
+              <tbody id="painel-detalhes"></tbody>
+            </table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- MODAL PARA ENVIAR PROMOÇÃO -->
+  <div id="popupPromocao" class="modal-overlay">
+    <div class="modal-container" style="max-width: 500px;">
+      <div class="modal-header">
+        <h3>Enviar Promoção de Revisão</h3>
+        <button class="modal-close-btn" onclick="fecharPopupPromocao()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="docIdPromocao">
+        <div class="form-group">
+          <label for="nomeClientePromocao">Cliente</label>
+          <input type="text" id="nomeClientePromocao" readonly>
+        </div>
+        <div class="form-group">
+          <label for="mensagemPromocao">Mensagem</label>
+          <textarea id="mensagemPromocao" rows="5" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px;"></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="modal-btn btn-cancel" onclick="fecharPopupPromocao()">Cancelar</button>
+        <button class="modal-btn btn-save" onclick="enviarPromocao()">Enviar</button>
+      </div>
+    </div>
+  </div>
+
+<script type="module">
+  import { garantirAutenticacao } from '/assets/js/auth-guard.js';
+  import { getApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import { getFirestore, collection, getDocs, doc, updateDoc, deleteDoc, addDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+  const tipoChecklist = "controleRevisao";
+  let db;
+  let userData;
+  let dadosTotais = [];
+  let podeEditar = false;
+  let podeApagar = false;
+
+  async function iniciarPagina() {
+    try {
+      userData = await garantirAutenticacao();
+      const app = getApp();
+      db = getFirestore(app);
+
+      if (!userData.filial || userData.filial.length === 0) {
+        document.body.innerHTML = `<div class="error-container">Acesso negado. Nenhuma filial associada.</div>`;
+        return;
+      }
+
+      if (userData.grupo) {
+          podeEditar = userData.grupo.includes("admin") || userData.grupo.includes("servicos");
+          podeApagar = userData.grupo.includes("admin");
+      }
+      
+      // Se não tem grupo mas tem permissão individual para esta página, libera edição
+      if (!podeEditar && userData.permissoes && userData.permissoes.includes("ctrl-ControleRevisao")) {
+          podeEditar = true;
+      }
+      
+      configurarPermissoesVisuais();
+      document.getElementById("dynamic-title").textContent = `Filiais: ${userData.filial.join(", ")}`;
+      
+      await carregarDados();
+      configurarListeners();
+
+    } catch (error) {
+      console.error("Falha na inicialização da página:", error);
+      document.body.innerHTML = `<div class="error-container">Ocorreu um erro ao carregar a página.</div>`;
+    }
+  }
+
+  function configurarPermissoesVisuais() {
+    document.getElementById('btn-importar').style.display = podeEditar ? 'flex' : 'none';
+  }
+
+  async function carregarDados() {
+    const querySnapshot = await getDocs(collection(db, tipoChecklist));
+    dadosTotais = [];
+
+    querySnapshot.forEach(docItem => {
+      const dados = docItem.data();
+      dadosTotais.push({ id: docItem.id, ...dados });
+    });
+    aplicarFiltros();
+  }
+
+  function aplicarFiltros() {
+    const revendaFiltro = document.getElementById("filtro-revenda").value.toLowerCase();
+    const clienteFiltro = document.getElementById("filtro-cliente").value.toLowerCase();
+    const whatsappFiltro = document.getElementById("filtro-whatsapp").value.toLowerCase();
+    const eulaFiltro = document.getElementById("filtro-eula").value.toLowerCase();
+    const chassiFiltro = document.getElementById("filtro-chassi").value.toLowerCase();
+    const modeloFiltro = document.getElementById("filtro-modelo").value.toLowerCase();
+    const statusFiltro = document.getElementById("filtro-status").value;
+
+    const filtrados = dadosTotais.filter(d => {
+      return (d.revenda || "").toLowerCase().includes(revendaFiltro) &&
+        (d.cliente || "").toLowerCase().includes(clienteFiltro) &&
+        (d.whatsapp || "").toLowerCase().includes(whatsappFiltro) &&
+        (d.eula || "").toLowerCase().includes(eulaFiltro) &&
+        (d.chassi || "").toLowerCase().includes(chassiFiltro) &&
+        (d.modelo || "").toLowerCase().includes(modeloFiltro) &&
+        (statusFiltro === "" || (d.status || "Pendente") === statusFiltro);
+    });
+
+    atualizarCards(filtrados);
+    renderizarTabela(filtrados);
+  }
+
+  function atualizarCards(dados) {
+    const total = dados.length;
+    const realizadas = dados.filter(d => d.status === "Realizado").length;
+    const pendentes = total - realizadas;
+    const promocoesEnviadas = dados.filter(d => d.promocaoEnviada).length;
+
+    document.getElementById("total-equipamentos").textContent = total;
+    document.getElementById("revisoes-realizadas").textContent = realizadas;
+    document.getElementById("revisoes-pendentes").textContent = pendentes;
+    document.getElementById("promocoes-enviadas").textContent = promocoesEnviadas;
+  }
+
+  function renderizarTabela(dados) {
+    dados.sort((a, b) => {
+      const statusOrderA = a.status === 'Realizado' ? 1 : 0;
+      const statusOrderB = b.status === 'Realizado' ? 1 : 0;
+      if (statusOrderA !== statusOrderB) return statusOrderA - statusOrderB;
+      return (a.cliente || "").localeCompare(b.cliente || "");
+    });
+    
+    const painel = document.getElementById("painel-detalhes");
+    painel.innerHTML = dados.length === 0 ? '<tr><td colspan="9" style="text-align: center; padding: 20px;">Nenhuma revisão encontrada com os filtros aplicados.</td></tr>' : '';
+
+    dados.forEach(d => {
+      const statusClass = d.status === "Realizado" ? "status-realizado" : "status-pendente";
+      
+      const horimetroExibir = d.horimetro ? Math.floor(parseFloat(d.horimetro)) : '-';
+      const decisaoAtual = d.decisao || 'pendente';
+      
+      let decisaoHTML = '';
+      if (decisaoAtual === 'pendente') {
+          decisaoHTML = `
+              <div class="decisao-container">
+                  <button class="btn-decisao btn-vendeu" onclick="marcarVendeu('${d.id}')" title="Vendeu"><i data-lucide="check"></i></button>
+                  <button class="btn-decisao btn-nao-vendeu" onclick="abrirMotivos('${d.id}')" title="Não Vendeu"><i data-lucide="x"></i></button>
+              </div>
+          `;
+      } else if (decisaoAtual === 'venda') {
+          decisaoHTML = `<div class="status-badge badge-venda" onclick="resetarDecisao('${d.id}')">✓ Venda Realizada</div>`;
+      } else {
+          const labels = {
+              'nao-interesse': 'Não teve interesse',
+              'preco': 'Preço alto',
+              'analisando': 'Analisando proposta',
+              'outros': 'Outros motivos'
+          };
+          const classes = {
+              'nao-interesse': 'badge-nao-interesse',
+              'preco': 'badge-preco',
+              'analisando': 'badge-analisando',
+              'outros': 'badge-outros'
+          };
+          decisaoHTML = `<div class="status-badge ${classes[decisaoAtual]}" onclick="resetarDecisao('${d.id}')" title="Clique para alterar">✗ ${labels[decisaoAtual]}</div>`;
+      }
+      
+      const acoesHTML = `<div class="acoes-cell" style="display: flex; gap: 4px; align-items: center; justify-content: center;">
+          ${decisaoHTML}
+          <button class="btn-acao btn-whatsapp" onclick="enviarWhatsApp('${d.id}')" title="Enviar Promoção via WhatsApp">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>
+          </button>
+          ${podeEditar ? `<button class="btn-acao btn-edit" data-id="${d.id}" title="Editar"><i data-lucide="pencil"></i></button>` : ''}
+          ${podeApagar ? `<button class="btn-acao btn-delete" data-id="${d.id}" title="Apagar"><i data-lucide="trash-2"></i></button>` : ''}
+      </div>`;
+
+      painel.innerHTML += `
+        <tr class="${statusClass}" data-id="${d.id}">
+          <td>${d.revenda || "-"}</td>
+          <td>${d.cliente || "-"}</td>
+          <td><input type="text" class="whatsapp-input" value="${d.whatsapp || ''}" placeholder="Adicionar WhatsApp" data-id="${d.id}" onblur="salvarWhatsApp('${d.id}', this.value)"></td>
+          <td>${d.eula || "-"}</td>
+          <td>${d.chassi || "-"}</td>
+          <td>${d.modelo || "-"}</td>
+          <td>${horimetroExibir}</td>
+          <td>${d.revisao || "-"}</td>
+          <td>${acoesHTML}</td>
+        </tr>`;
+    });
+    lucide.createIcons();
+  }
+
+  function configurarListeners() {
+      lucide.createIcons();
+      document.getElementById("filtro-revenda").addEventListener("input", aplicarFiltros);
+      document.getElementById("filtro-cliente").addEventListener("input", aplicarFiltros);
+      document.getElementById("filtro-whatsapp").addEventListener("input", aplicarFiltros);
+      document.getElementById("filtro-eula").addEventListener("input", aplicarFiltros);
+      document.getElementById("filtro-chassi").addEventListener("input", aplicarFiltros);
+      document.getElementById("filtro-modelo").addEventListener("input", aplicarFiltros);
+      document.getElementById("filtro-status").addEventListener("change", aplicarFiltros);
+      document.getElementById("btn-exportar").addEventListener("click", exportarParaExcel);
+      document.getElementById("btn-importar").addEventListener("click", () => document.getElementById("arquivo-importar").click());
+      document.getElementById("arquivo-importar").addEventListener("change", importarDados);
+      
+      document.getElementById("painel-detalhes").addEventListener('click', (event) => {
+          const btnDelete = event.target.closest('button.btn-delete');
+          const btnEdit = event.target.closest('button.btn-edit');
+          
+          if (btnDelete) apagarRevisao(btnDelete.dataset.id);
+          if (btnEdit) editarRevisao(btnEdit.dataset.id);
+      });
+      
+      setInterval(carregarDados, 60000); // Auto-refresh
+  }
+
+  function editarRevisao(id) {
+      const revisao = dadosTotais.find(r => r.id === id);
+      if (!revisao) return;
+      
+      Swal.fire({
+          title: 'Editar Revisão',
+          html: `
+              <input id="swal-revenda" class="swal2-input" placeholder="Revenda" value="${revisao.revenda || ''}">
+              <input id="swal-cliente" class="swal2-input" placeholder="Cliente" value="${revisao.cliente || ''}">
+              <input id="swal-whatsapp" class="swal2-input" placeholder="WhatsApp" value="${revisao.whatsapp || ''}">
+              <input id="swal-eula" class="swal2-input" placeholder="Eula" value="${revisao.eula || ''}">
+              <input id="swal-chassi" class="swal2-input" placeholder="Chassi" value="${revisao.chassi || ''}">
+              <input id="swal-modelo" class="swal2-input" placeholder="Modelo" value="${revisao.modelo || ''}">
+              <input id="swal-horimetro" class="swal2-input" placeholder="Horímetro" value="${revisao.horimetro || ''}">
+              <input id="swal-revisao" class="swal2-input" placeholder="Revisão" value="${revisao.revisao || ''}">
+              <select id="swal-status" class="swal2-input">
+                  <option value="Pendente" ${revisao.status === 'Pendente' ? 'selected' : ''}>Pendente</option>
+                  <option value="Realizado" ${revisao.status === 'Realizado' ? 'selected' : ''}>Realizado</option>
+              </select>
+          `,
+          focusConfirm: false,
+          showCancelButton: true,
+          confirmButtonText: 'Salvar',
+          cancelButtonText: 'Cancelar',
+          preConfirm: () => {
+              return {
+                  revenda: document.getElementById('swal-revenda').value,
+                  cliente: document.getElementById('swal-cliente').value,
+                  whatsapp: document.getElementById('swal-whatsapp').value,
+                  eula: document.getElementById('swal-eula').value,
+                  chassi: document.getElementById('swal-chassi').value,
+                  modelo: document.getElementById('swal-modelo').value,
+                  horimetro: document.getElementById('swal-horimetro').value,
+                  revisao: document.getElementById('swal-revisao').value,
+                  status: document.getElementById('swal-status').value
+              };
+          }
+      }).then(async (result) => {
+          if (result.isConfirmed) {
+              try {
+                  await updateDoc(doc(db, tipoChecklist, id), result.value);
+                  Swal.fire('Sucesso!', 'Revisão atualizada com sucesso.', 'success');
+                  carregarDados();
+              } catch (error) {
+                  Swal.fire('Erro!', 'Falha ao atualizar revisão.', 'error');
+              }
+          }
+      });
+  }
+
+  async function apagarRevisao(id) {
+      const revisao = dadosTotais.find(r => r.id === id);
+      const result = await Swal.fire({
+          title: 'Tem certeza?', 
+          text: `Deseja apagar a revisão do cliente "${revisao.cliente}" (chassi: ${revisao.chassi})?`,
+          icon: 'warning', 
+          showCancelButton: true, 
+          confirmButtonText: 'Sim, apagar!', 
+          cancelButtonText: 'Cancelar'
+      });
+      if (result.isConfirmed) {
+          try {
+              await deleteDoc(doc(db, tipoChecklist, id));
+              Swal.fire('Apagado!', 'Revisão apagada com sucesso.', 'success');
+              carregarDados();
+          } catch (error) {
+              Swal.fire('Erro!', 'Falha ao apagar a revisão.', 'error');
+          }
+      }
+  }
+
+  function exportarParaExcel() {
+      const headers = ["Revenda", "Cliente", "WhatsApp", "Eula", "Chassi", "Modelo", "Horímetro", "Revisão", "Decisão", "Status"];
+      const linhas = dadosTotais.map(d => [
+        d.revenda, d.cliente, d.whatsapp, d.eula, d.chassi, d.modelo, d.horimetro, d.revisao, d.decisao || 'pendente', d.status || 'Pendente'
+      ]);
+      const planilha = XLSX.utils.aoa_to_sheet([headers, ...linhas]);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, planilha, "ControleRevisao");
+      XLSX.writeFile(wb, "controle_revisao.xlsx");
+  }
+
+  function calcularProximaRevisao(horimetro) {
+      const horas = parseFloat(horimetro) || 0;
+      
+      // Se for menor que 200 horas, só considera 50 horas
+      if (horas < 200) {
+          if (horas < 50) {
+              return "50";
+          } else {
+              return "300"; // Entre 50 e 200, próxima é 300
+          }
+      }
+      
+      // Para 200 horas ou mais, usa o sistema completo
+      const revisoes = [300, 600, 900, 1200];
+      
+      for (let revisao of revisoes) {
+          if (horas < revisao) {
+              return revisao.toString();
+          }
+      }
+      
+      // Se passou de 1200, retorna a próxima em incrementos de 300
+      return (Math.ceil(horas / 300) * 300).toString();
+  }
+
+  async function importarDados(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      
+      Swal.fire({ 
+          title: 'Importando...', 
+          text: 'Aguarde...', 
+          allowOutsideClick: false, 
+          didOpen: () => Swal.showLoading() 
+      });
+      
+      const reader = new FileReader();
+      reader.onload = async (event) => {
+        try {
+          const data = new Uint8Array(event.target.result);
+          const workbook = XLSX.read(data, { type: "array" });
+          const sheet = workbook.Sheets[workbook.SheetNames[0]];
+          const registros = XLSX.utils.sheet_to_json(sheet);
+          
+          let importados = 0;
+          let registrosRevisao = []; // Registros que precisam revisão
+          const registrosPorCliente = new Map(); // Para deduplicação
+          
+          for (const linha of registros) {
+            const revenda = String(linha["Revenda"] || "").trim();
+            const cliente = String(linha["Cliente"] || "").trim();
+            const clienteLower = cliente.toLowerCase();
+            
+            // Verifica se deve ser filtrado - apenas pela coluna Cliente
+            const deveSerFiltrado = 
+              clienteLower.startsWith("agro divel") ||
+              clienteLower.includes("default company") ||
+              clienteLower.includes("inventario loja") ||
+              clienteLower.includes("inventário loja");
+            
+            const horimetro = String(linha["Horimetro"] || linha["Horímetro"] || "").trim();
+            const horimetroNum = parseFloat(horimetro.replace(",", ".")) || 0;
+            const horimetroArredondado = Math.floor(horimetroNum).toString();
+            
+            const registro = {
+              revenda: revenda,
+              cliente: cliente,
+              whatsapp: String(linha["WhatsApp"] || linha["Whatsapp"] || linha["Telefone"] || "").trim(),
+              eula: String(linha["Eula"] || "").trim(),
+              chassi: String(linha["Chassi"] || "").trim(),
+              modelo: String(linha["Modelo"] || "").trim(),
+              horimetro: horimetroArredondado,
+              horimetroNum: Math.floor(horimetroNum),
+              revisao: calcularProximaRevisao(horimetroNum)
+            };
+            
+            if (!registro.chassi) continue; // Pula se não tiver chassi
+            
+            if (deveSerFiltrado) {
+              // Adiciona aos registros que precisam revisão
+              registrosRevisao.push(registro);
+            } else {
+              // Deduplicação: mantém apenas o registro com maior horímetro por cliente
+              const chaveCliente = cliente.toLowerCase();
+              const registroExistente = registrosPorCliente.get(chaveCliente);
+              
+              if (!registroExistente || horimetroNum > registroExistente.horimetroNum) {
+                registrosPorCliente.set(chaveCliente, registro);
+              }
+            }
+          }
+          
+          // Importa os registros deduplic ados
+          for (const registro of registrosPorCliente.values()) {
+            await addDoc(collection(db, tipoChecklist), {
+              revenda: registro.revenda,
+              cliente: registro.cliente,
+              whatsapp: registro.whatsapp,
+              eula: registro.eula,
+              chassi: registro.chassi,
+              modelo: registro.modelo,
+              horimetro: registro.horimetro,
+              revisao: registro.revisao,
+              status: 'Pendente',
+              promocaoEnviada: false
+            });
+            importados++;
+          }
+          
+          // Gera Excel com registros que precisam revisão
+          if (registrosRevisao.length > 0) {
+            const headersRevisao = ["Revenda", "Cliente", "WhatsApp", "Eula", "Chassi", "Modelo", "Horímetro", "Revisão"];
+            const linhasRevisao = registrosRevisao.map(r => [
+              r.revenda, r.cliente, r.whatsapp, r.eula, r.chassi, r.modelo, r.horimetro, r.revisao
+            ]);
+            const planilhaRevisao = XLSX.utils.aoa_to_sheet([headersRevisao, ...linhasRevisao]);
+            const wbRevisao = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wbRevisao, planilhaRevisao, "Registros_Revisao");
+            XLSX.writeFile(wbRevisao, "registros_para_revisar.xlsx");
+          }
+          
+          Swal.fire({
+            icon: 'success',
+            title: 'Importação concluída!',
+            html: `
+              <p><strong>${importados}</strong> registros importados com sucesso.</p>
+              ${registrosRevisao.length > 0 ? `<p><strong>${registrosRevisao.length}</strong> registros filtrados e exportados para revisão.</p>` : ''}
+            `
+          });
+          
+          carregarDados();
+          e.target.value = ''; // Limpa o input para permitir reimportar o mesmo arquivo
+        } catch (err) { 
+          Swal.fire('Erro!', `Ocorreu um erro na importação: ${err.message}`, 'error'); 
+        }
+      };
+      reader.readAsArrayBuffer(file);
+  }
+
+  // --- Função para enviar WhatsApp ---
+  window.enviarWhatsApp = async (id) => {
+      const revisao = dadosTotais.find(r => r.id === id);
+      if (!revisao) return;
+      
+      // Pergunta para quem enviar
+      const resultado = await Swal.fire({
+          title: 'Enviar WhatsApp',
+          text: 'Para quem deseja enviar a mensagem?',
+          icon: 'question',
+          showDenyButton: true,
+          showCancelButton: true,
+          confirmButtonText: 'Cliente',
+          denyButtonText: 'Coordenador de Serviço',
+          cancelButtonText: 'Cancelar',
+          confirmButtonColor: '#25D366',
+          denyButtonColor: '#193b7c',
+      });
+      
+      // Se cancelou, retorna
+      if (resultado.dismiss) return;
+      
+      let numeroLimpo = '';
+      let ehCoordenador = false;
+      
+      if (resultado.isConfirmed) {
+          // Enviar para o CLIENTE
+          // Verifica se tem WhatsApp cadastrado
+          if (!revisao.whatsapp || revisao.whatsapp.trim() === '') {
+              Swal.fire('Atenção', 'Este cliente não possui WhatsApp cadastrado. Por favor, adicione o número antes de enviar a promoção.', 'warning');
+              return;
+          }
+          
+          // Remove caracteres especiais do número, deixando apenas dígitos
+          numeroLimpo = revisao.whatsapp.replace(/\D/g, '');
+          
+          // Adiciona código do Brasil se não tiver
+          if (!numeroLimpo.startsWith('55')) {
+              numeroLimpo = '55' + numeroLimpo;
+          }
+      } else if (resultado.isDenied) {
+          // Enviar para o COORDENADOR DE SERVIÇO
+          ehCoordenador = true;
+          
+          // Pede o número do coordenador
+          const { value: numeroCoordenador } = await Swal.fire({
+              title: 'Número do Coordenador de Serviço',
+              input: 'text',
+              inputLabel: 'Digite o número do WhatsApp',
+              inputPlaceholder: '(XX) XXXXX-XXXX',
+              showCancelButton: true,
+              confirmButtonText: 'Enviar',
+              cancelButtonText: 'Cancelar',
+              inputValidator: (value) => {
+                  if (!value) {
+                      return 'Você precisa digitar um número!';
+                  }
+              }
+          });
+          
+          if (!numeroCoordenador) return;
+          
+          // Remove caracteres especiais do número, deixando apenas dígitos
+          numeroLimpo = numeroCoordenador.replace(/\D/g, '');
+          
+          // Adiciona código do Brasil se não tiver
+          if (!numeroLimpo.startsWith('55')) {
+              numeroLimpo = '55' + numeroLimpo;
+          }
+      }
+      
+      // Mapeia o vendedor baseado na revenda
+      let vendedor = '';
+      const revenda = (revisao.revenda || '').toUpperCase();
+      if (revenda.includes('CAMPOS NOVOS')) {
+          vendedor = 'Alessandro';
+      } else if (revenda.includes('RIO DO SUL')) {
+          vendedor = 'Diego';
+      } else if (revenda.includes('LAGES')) {
+          vendedor = 'Douglas';
+      } else {
+          vendedor = 'equipe';
+      }
+      
+      // Verifica se tem telemetria (Eula = Aceito)
+      const temTelemetria = (revisao.eula || '').toLowerCase() === 'aceito';
+      const horimetroFormatado = Math.floor(parseFloat(revisao.horimetro) || 0);
+      
+      let mensagem = '';
+      
+      // Se for para o coordenador, mensagem simples e formal
+      if (ehCoordenador) {
+          mensagem = `Olá,%0A%0A`;
+          mensagem += `Segue informação do equipamento que está próximo da revisão:%0A%0A`;
+          mensagem += `*Cliente:* ${revisao.cliente || '-'}%0A`;
+          mensagem += `*Chassi:* ${revisao.chassi || '-'}%0A`;
+          mensagem += `*Modelo:* ${revisao.modelo || '-'}%0A`;
+          mensagem += `*Horímetro Atual:* ${horimetroFormatado} horas%0A`;
+          mensagem += `*Revisão:* ${revisao.revisao || '-'} horas%0A%0A`;
+          mensagem += `Att.`;
+      } else {
+          // Mensagem padrão para o cliente
+          mensagem = `Bom dia, ${revisao.cliente || 'Cliente'}! Tudo certo por aí?%0A%0A`;
+          mensagem += `Aqui é o ${vendedor}, da ${revisao.revenda || 'Agro Divel'} – Concessionária New Holland.%0A%0A`;
+          
+          if (temTelemetria) {
+              mensagem += `Tô entrando em contato porque identificamos que seu equipamento ${revisao.modelo || ''}, com horímetro ${horimetroFormatado}, está próximo da revisão de ${revisao.revisao || ''} horas.%0A%0A`;
+              mensagem += `Como você já é nosso cliente, conseguimos antecipar uma condição especial, válida tanto para essa revisão quanto para contratar um plano de manutenção para outro equipamento da sua frota.%0A%0A`;
+              mensagem += `* Preço fixo, mesmo que as peças e mão de obra subam até lá%0A`;
+              mensagem += `* Parcelamento sem juros%0A`;
+              mensagem += `* Redução real no custo total da manutenção, com a máquina sempre pronta pra trabalhar%0A%0A`;
+              mensagem += `E como seu trator tem telemetria, essa condição personalizada já está liberada pra você.%0A%0A`;
+          } else {
+              mensagem += `Tô entrando em contato porque identificamos que seu equipamento ${revisao.modelo || ''} está próximo da revisão de ${revisao.revisao || ''} horas.%0A%0A`;
+              mensagem += `Conseguimos antecipar uma condição especial, válida tanto para essa revisão quanto para outro equipamento da sua frota.%0A%0A`;
+              mensagem += `* Preço fixo, mesmo que as peças e mão de obra subam até lá%0A`;
+              mensagem += `* Parcelamento sem juros%0A`;
+              mensagem += `* Redução no custo de manutenção, com o equipamento pronto pra operar%0A%0A`;
+          }
+          
+          mensagem += `Quer que eu te mande agora a simulação com os valores e tudo que tá incluso?%0A`;
+          mensagem += `É sem compromisso — só pra você analisar com calma.`;
+      }
+      
+      // Monta a URL do WhatsApp
+      const urlWhatsApp = `https://wa.me/${numeroLimpo}?text=${mensagem}`;
+      
+      // Abre o WhatsApp em nova aba
+      window.open(urlWhatsApp, '_blank');
+      
+      // Registra o envio no banco
+      try {
+          await updateDoc(doc(db, tipoChecklist, id), { 
+              promocaoEnviada: true,
+              dataEnvioPromocao: new Date().toISOString()
+          });
+          
+          // Atualiza localmente
+          revisao.promocaoEnviada = true;
+          
+          // Recarrega os cards
+          const filtrados = dadosTotais.filter(d => {
+              return true; // Aplicar filtros se necessário
+          });
+          atualizarCards(filtrados);
+          
+          Swal.fire({ 
+              toast: true, 
+              position: 'top-end', 
+              icon: 'success', 
+              title: 'WhatsApp aberto!', 
+              showConfirmButton: false, 
+              timer: 2000 
+          });
+      } catch (error) {
+          console.error('Erro ao registrar envio:', error);
+      }
+  };
+
+  window.fecharPopupPromocao = () => {
+      document.getElementById('popupPromocao').classList.remove('visible');
+  };
+
+  window.salvarWhatsApp = async (id, whatsapp) => {
+      try {
+          await updateDoc(doc(db, tipoChecklist, id), { whatsapp: whatsapp.trim() });
+          // Atualiza localmente
+          const revisao = dadosTotais.find(r => r.id === id);
+          if (revisao) revisao.whatsapp = whatsapp.trim();
+      } catch (error) {
+          console.error('Erro ao salvar WhatsApp:', error);
+          Swal.fire({ toast: true, position: 'top-end', icon: 'error', title: 'Erro ao salvar WhatsApp', showConfirmButton: false, timer: 2000 });
+      }
+  };
+
+  window.marcarVendeu = async (id) => {
+      const revisao = dadosTotais.find(r => r.id === id);
+      if (!revisao) return;
+      
+      try {
+          // Marca como venda no banco
+          await updateDoc(doc(db, tipoChecklist, id), { decisao: 'venda' });
+          
+          // Prepara os dados para enviar ao formulário (horímetro arredondado)
+          const params = new URLSearchParams({
+              origem: 'oportunidades',
+              nomeCliente: revisao.cliente || '',
+              chassi: revisao.chassi || '',
+              modelo: revisao.modelo || '',
+              horasIniciais: Math.round(parseFloat(revisao.horimetro) || 0),
+              filial: revisao.revenda || '',
+              whatsapp: revisao.whatsapp || '',
+              eula: revisao.eula || ''
+          });
+          
+          // Redireciona para o formulário de planos vigentes
+          window.location.href = `/Pages/Formularios/form-planosvigentes.html?${params.toString()}`;
+          
+      } catch (error) {
+          console.error('Erro ao marcar venda:', error);
+          Swal.fire({ toast: true, position: 'top-end', icon: 'error', title: 'Erro ao salvar', showConfirmButton: false, timer: 2000 });
+      }
+  };
+
+  window.abrirMotivos = async (id) => {
+      const result = await Swal.fire({
+          title: 'Motivo da não venda',
+          html: `
+              <select id="motivo-select" class="swal2-input" style="width: 80%;">
+                  <option value="">Selecione o motivo...</option>
+                  <option value="nao-interesse">Não teve interesse</option>
+                  <option value="preco">Preço alto</option>
+                  <option value="analisando">Analisando proposta</option>
+                  <option value="outros">Outros motivos</option>
+              </select>
+          `,
+          showCancelButton: true,
+          confirmButtonText: 'Salvar',
+          cancelButtonText: 'Cancelar',
+          preConfirm: () => {
+              const motivo = document.getElementById('motivo-select').value;
+              if (!motivo) {
+                  Swal.showValidationMessage('Por favor, selecione um motivo');
+              }
+              return motivo;
+          }
+      });
+      
+      if (result.isConfirmed && result.value) {
+          try {
+              await updateDoc(doc(db, tipoChecklist, id), { decisao: result.value });
+              const revisao = dadosTotais.find(r => r.id === id);
+              if (revisao) revisao.decisao = result.value;
+              
+              Swal.fire({ 
+                  toast: true, 
+                  position: 'top-end', 
+                  icon: 'info', 
+                  title: 'Motivo registrado', 
+                  showConfirmButton: false, 
+                  timer: 2000 
+              });
+              
+              aplicarFiltros(); // Recarrega a tabela
+          } catch (error) {
+              console.error('Erro ao salvar motivo:', error);
+              Swal.fire({ toast: true, position: 'top-end', icon: 'error', title: 'Erro ao salvar', showConfirmButton: false, timer: 2000 });
+          }
+      }
+  };
+
+  window.resetarDecisao = async (id) => {
+      const result = await Swal.fire({
+          title: 'Alterar decisão?',
+          text: 'Deseja resetar e escolher novamente?',
+          icon: 'question',
+          showCancelButton: true,
+          confirmButtonText: 'Sim, alterar',
+          cancelButtonText: 'Cancelar'
+      });
+      
+      if (result.isConfirmed) {
+          try {
+              await updateDoc(doc(db, tipoChecklist, id), { decisao: 'pendente' });
+              const revisao = dadosTotais.find(r => r.id === id);
+              if (revisao) revisao.decisao = 'pendente';
+              
+              aplicarFiltros(); // Recarrega a tabela
+          } catch (error) {
+              console.error('Erro ao resetar decisão:', error);
+              Swal.fire({ toast: true, position: 'top-end', icon: 'error', title: 'Erro ao resetar', showConfirmButton: false, timer: 2000 });
+          }
+      }
+  };
+
+  iniciarPagina();
+</script>
+
+<!-- Scripts Globais -->
+<script type="module" src="/assets/js/firebase-config.js"></script>
+<script type="module" src="/assets/js/auth.js"></script>
+<script src="/assets/js/main.js"></script> 
+<script src="/assets/js/components/Sidebar.js"></script>
+
+</body>
+</html>
