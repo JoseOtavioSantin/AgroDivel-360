@@ -356,8 +356,8 @@
           <i data-lucide="loader-2" class="spin"></i>
           <span>Processando arquivo...</span>
         </div>
-        <!-- Input oculto para importação de estoque -->
-        <input type="file" id="csv-estoque-file" accept=".csv" style="display:none;">
+        <!-- Input oculto para importação de estoque (múltiplos arquivos) -->
+        <input type="file" id="csv-estoque-file" accept=".csv" style="display:none;" multiple>
         <!-- Input oculto para análise de estoque -->
         <input type="file" id="csv-analise-estoque-file" accept=".csv" style="display:none;">
         <!-- FILTROS -->
@@ -405,6 +405,11 @@
             <button type="button" class="expand-btn" data-grafico="graficoDistribuicao"><i data-lucide="maximize"></i></button>
             <h4>Distribuição por Tipo Produto</h4>
             <canvas id="graficoDistribuicao"></canvas>
+          </div>
+          <div class="grafico-card" id="bloco-grafico-original-fleetpro" style="grid-column: span 2;">
+            <button type="button" class="expand-btn" data-grafico="graficoOriginalFleetpro"><i data-lucide="maximize"></i></button>
+            <h4>📦 Estoque Mensal: Genuíno | FleetPro </h4>
+            <canvas id="graficoOriginalFleetpro"></canvas>
           </div>
         </div>
         
@@ -752,7 +757,7 @@
     let dadosEstoque = [];
 
     /**
-     * Processa arquivo CSV de estoque
+     * Processa múltiplos arquivos CSV de estoque (um por filial)
      * Formato esperado (separado por ponto-e-vírgula):
      * - Coluna 0: Filial (2, 6 ou 7)
      * - Coluna 2: Código do Produto
@@ -764,175 +769,203 @@
      * - Coluna 12: Valor do Estoque
      * Mínimo de 13 colunas por linha
      */
-    async function processarCSVEstoque(file) {
-      const reader = new FileReader();
-      reader.onload = async function(e) {
+    async function processarCSVEstoque(files) {
+      // Converter FileList para Array
+      const arquivos = Array.from(files);
+      
+      if (arquivos.length === 0) {
+        Swal.fire('Erro!', 'Nenhum arquivo selecionado.', 'error');
+        return;
+      }
+      
+      // Mostrar loading
+      Swal.fire({
+        title: 'Processando Estoque...',
+        html: `<p>Consolidando <strong>${arquivos.length}</strong> arquivo(s)</p><p>Aguarde...</p>`,
+        allowOutsideClick: false,
+        didOpen: () => Swal.showLoading()
+      });
+      
+      // Detectar automaticamente o mês atual
+      const hoje = new Date();
+      const mesRef = `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}`;
+      const mesesNomes = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+      const nomeMesAtual = mesesNomes[hoje.getMonth()];
+      
+      console.log(`[Estoque] Lançando estoque para: ${nomeMesAtual}/${hoje.getFullYear()} (${mesRef})`);
+      console.log(`[Estoque] Processando ${arquivos.length} arquivo(s): ${arquivos.map(f => f.name).join(', ')}`);
+      
+      // Acumuladores consolidados das 3 filiais
+      let litrosTotal = 0;
+      let litrosFleetpro = 0;
+      let litrosOriginal = 0;
+      const porFilial = { 
+        '2': { litrosTotal: 0, litrosFleetpro: 0, litrosOriginal: 0 }, 
+        '6': { litrosTotal: 0, litrosFleetpro: 0, litrosOriginal: 0 }, 
+        '7': { litrosTotal: 0, litrosFleetpro: 0, litrosOriginal: 0 } 
+      };
+      
+      let linhasProcessadasTotal = 0;
+      let linhasInvalidasTotal = 0;
+      const filiaisProcessadas = new Set();
+      
+      // Processar cada arquivo
+      for (const file of arquivos) {
         try {
-          const csvData = e.target.result;
+          const csvData = await lerArquivoCSV(file);
+          const resultado = processarConteudoCSVEstoque(csvData, porFilial);
           
-          // Validar se o CSV não está vazio
-          if (!csvData || csvData.trim().length === 0) {
-            Swal.fire('Erro!', 'O arquivo CSV está vazio.', 'error');
-            return;
-          }
+          linhasProcessadasTotal += resultado.linhasProcessadas;
+          linhasInvalidasTotal += resultado.linhasInvalidas;
+          resultado.filiaisEncontradas.forEach(f => filiaisProcessadas.add(f));
           
-          const linhas = csvData.split('\n').filter(linha => linha.trim() !== '');
-          
-          // Validar se há linhas suficientes
-          if (linhas.length < 2) {
-            Swal.fire('Erro!', 'O arquivo CSV deve conter pelo menos um cabeçalho e uma linha de dados.', 'error');
-            return;
-          }
-          
-            // Perguntar a data de referência (AAAA-MM-DD)
-          const { value: mesRef } = await Swal.fire({
-            title: 'Mês de referência',
-            input: 'text',
-            inputLabel: 'Informe o mês (AAAA-MM) do estoque',
-            inputPlaceholder: '2025-11',
-            inputAttributes: { 'aria-label': 'AAAA-MM' },
-            showCancelButton: true,
-            confirmButtonText: 'Confirmar',
-            cancelButtonText: 'Cancelar',
-            preConfirm: (val)=>{
-              if (!/^\d{4}-\d{2}$/.test(val||'')) {
-                Swal.showValidationMessage('Formato inválido. Use AAAA-MM');
-              }
-            }
-          });
-            if (!mesRef) return;
-            const { value: dataRef } = await Swal.fire({
-              title: 'Data de referência',
-              input: 'date',
-              inputLabel: 'Informe a data (AAAA-MM-DD) do estoque',
-              inputPlaceholder: '2025-11-01',
-              inputAttributes: { 'aria-label': 'AAAA-MM-DD' },
-              showCancelButton: true,
-              confirmButtonText: 'Confirmar',
-              cancelButtonText: 'Cancelar',
-              preConfirm: (val)=>{
-                if (!/^\d{4}-\d{2}-\d{2}$/.test(val||'')) {
-                  Swal.showValidationMessage('Formato inválido. Use AAAA-MM-DD');
-                }
-              }
-            });
-            if (!dataRef) return;
-
-          // Acumuladores por mês e por filial (apenas litros)
-          let litrosTotal = 0; // total consolidado
-          let litrosFleetpro = 0; // total consolidado Fleetpro
-          const porFilial = { '2': { litrosTotal: 0, litrosFleetpro: 0 }, '6': { litrosTotal: 0, litrosFleetpro: 0 }, '7': { litrosTotal: 0, litrosFleetpro: 0 } };
-          
-          let linhasProcessadas = 0;
-          let linhasInvalidas = 0;
-          
-          // Pular primeira linha (cabeçalho)
-          for (let i = 1; i < linhas.length; i++) {
-            const linha = linhas[i].trim();
-            if (!linha || linha.startsWith('TOTAL')) continue;
-            
-            const colunas = linha.split(';');
-            
-            // Validar número de colunas
-            if (colunas.length < 13) {
-              linhasInvalidas++;
-              console.warn(`Linha ${i + 1} ignorada: número insuficiente de colunas (${colunas.length} de 13 esperadas)`);
-              continue;
-            }
-            
-            const filial = colunas[0]?.trim();
-            const codProduto = colunas[2]?.trim();
-            const descricao = colunas[3]?.trim();
-            const grupo = colunas[4]?.trim();
-            const descGrupo = colunas[5]?.trim();
-            const prateleira1 = colunas[6]?.trim();
-            const fiscal = parseInt(colunas[11]?.trim()) || 0;
-            const estoqueValor = parseFloat(colunas[12]?.trim().replace(',', '.')) || 0;
-            
-            // Validar dados essenciais
-            if (!codProduto || fiscal === 0) {
-              linhasInvalidas++;
-              continue;
-            }
-            if (!FILIAIS.includes(filial)) {
-              linhasInvalidas++;
-              continue;
-            }
-            
-            linhasProcessadas++;
-            
-            // Calcular litros usando o mapa + heurística (igual ao relatório de análise)
-            const conversoesInfo = obterLitrosPorUnidade(codProduto, descricao, descGrupo);
-            const litrosPorUnidade = conversoesInfo.litros;
-            const totalLitros = fiscal * litrosPorUnidade;
-            // Considera "óleo" se o grupo/descrição mencionar lubrificante/óleo
-            const ehOleo = /(oleo|óleo|lubrificante|oil)/i.test(`${descricao} ${descGrupo}`) && !/(graxa|grease)/i.test(`${descricao} ${descGrupo}`);
-            if (ehOleo) {
-              litrosTotal += totalLitros;
-              porFilial[filial].litrosTotal += totalLitros;
-            }
-            if (/fleetpro/i.test(descricao) || /fleetpro/i.test(descGrupo)) {
-              litrosFleetpro += totalLitros;
-              porFilial[filial].litrosFleetpro += totalLitros;
-            }
-          }
-          
-          // Log de processamento
-          console.log(`CSV Estoque: ${linhasProcessadas} linhas processadas, ${linhasInvalidas} linhas inválidas`);
-          
-          if (litrosTotal === 0 && litrosFleetpro === 0) {
-            let mensagem = 'Nenhum dado válido encontrado no CSV de estoque.';
-            if (linhasInvalidas > 0) {
-              mensagem += ` ${linhasInvalidas} linha(s) foram ignoradas por estarem incompletas ou inválidas.`;
-            }
-            Swal.fire('Aviso!', mensagem, 'warning');
-            return;
-          }
-
-          // Salvar agregado mensal (um documento por mês)
-          await setDoc(doc(getFirestore(getApp()), 'estoqueMensalLubrificantes', mesRef), {
-            mes: mesRef,
-            litrosTotal,
-            litrosFleetpro,
-            porFilial,
-            atualizadoEm: Timestamp.now()
-          }, { merge: true });
-
-          // Recarregar mapa local
-          await carregarEstoqueMensal();
-          // Atualiza gráficos para refletir comparativo
-          analisarDashboard();
-          
-          Swal.fire({
-            toast: true,
-            position: 'top-end',
-            icon: 'success',
-            title: `Estoque mensal salvo! (${mesRef})`,
-            html: `${linhasProcessadas} linhas processadas com sucesso.`,
-            showConfirmButton: false,
-            timer: 3000
-          });
+          console.log(`[Estoque] Arquivo ${file.name}: ${resultado.linhasProcessadas} linhas processadas`);
         } catch (error) {
-          console.error('Erro ao processar CSV estoque:', error);
-          let mensagemErro = 'Falha ao processar o arquivo CSV de estoque.';
-          if (error.message) {
-            mensagemErro += ' Detalhes: ' + error.message;
-          }
-          Swal.fire('Erro!', mensagemErro, 'error');
+          console.error(`[Estoque] Erro ao processar ${file.name}:`, error);
         }
-      };
-      reader.onerror = function(error) {
-        console.error('Erro ao ler arquivo CSV estoque:', error);
-        Swal.fire('Erro!', 'Falha ao ler o arquivo CSV de estoque. Verifique se o arquivo está corrompido.', 'error');
-      };
-      // Tentar UTF-8 primeiro, com fallback para ISO-8859-1 se necessário
+      }
+      
+      // Somar totais consolidados
+      FILIAIS.forEach(f => {
+        litrosTotal += porFilial[f].litrosTotal;
+        litrosFleetpro += porFilial[f].litrosFleetpro;
+        litrosOriginal += porFilial[f].litrosOriginal;
+      });
+      
+      if (litrosTotal === 0 && litrosFleetpro === 0 && litrosOriginal === 0) {
+        Swal.fire('Aviso!', 'Nenhum dado válido encontrado nos arquivos CSV de estoque.', 'warning');
+        return;
+      }
+      
+      // Salvar no Firebase
       try {
-        reader.readAsText(file, 'UTF-8');
-      } catch (e) {
-        console.warn('Falha ao ler como UTF-8, tentando ISO-8859-1');
-        reader.readAsText(file, 'ISO-8859-1');
+        await setDoc(doc(getFirestore(getApp()), 'estoqueMensalLubrificantes', mesRef), {
+          mes: mesRef,
+          litrosTotal,
+          litrosFleetpro,
+          litrosOriginal,
+          porFilial,
+          atualizadoEm: Timestamp.now()
+        }, { merge: true });
+        
+        console.log(`[Estoque] Consolidado salvo: Total=${litrosTotal}L, Original(301)=${litrosOriginal}L, FleetPro(303)=${litrosFleetpro}L`);
+        
+        // Recarregar e atualizar
+        await carregarEstoqueMensal();
+        analisarDashboard();
+        
+        // Mostrar sucesso
+        const filiaisNomes = Array.from(filiaisProcessadas).map(f => NOMES_FILIAIS[f] || f).join(', ');
+        
+        Swal.fire({
+          icon: 'success',
+          title: `Estoque ${nomeMesAtual}/${hoje.getFullYear()} Salvo!`,
+          html: `
+            <div style="text-align:left; margin-top:10px;">
+              <p><strong>📁 Arquivos processados:</strong> ${arquivos.length}</p>
+              <p><strong>🏢 Filiais:</strong> ${filiaisNomes || 'Nenhuma identificada'}</p>
+              <hr style="margin:10px 0;">
+              <p><strong>Total Geral:</strong> ${litrosTotal.toLocaleString()}L</p>
+              <p><strong>Original (301):</strong> ${litrosOriginal.toLocaleString()}L</p>
+              <p><strong>FleetPro (303):</strong> ${litrosFleetpro.toLocaleString()}L</p>
+              <hr style="margin:10px 0;">
+              <small>${linhasProcessadasTotal} linhas processadas</small>
+            </div>
+          `,
+          confirmButtonColor: '#193b7c'
+        });
+      } catch (error) {
+        console.error('Erro ao salvar estoque:', error);
+        Swal.fire('Erro!', 'Falha ao salvar no Firebase: ' + error.message, 'error');
       }
     }
+    
+    // Função auxiliar para ler arquivo como texto
+    function lerArquivoCSV(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (e) => resolve(e.target.result);
+        reader.onerror = (e) => reject(e);
+        reader.readAsText(file, 'UTF-8');
+      });
+    }
+    
+    // Função para processar conteúdo de um CSV de estoque
+    function processarConteudoCSVEstoque(csvData, porFilial) {
+      const resultado = {
+        linhasProcessadas: 0,
+        linhasInvalidas: 0,
+        filiaisEncontradas: new Set()
+      };
+      
+      if (!csvData || csvData.trim().length === 0) {
+        return resultado;
+      }
+      
+      const linhas = csvData.split('\n').filter(linha => linha.trim() !== '');
+      
+      if (linhas.length < 2) {
+        return resultado;
+      }
+      
+      // Pular primeira linha (cabeçalho)
+      for (let i = 1; i < linhas.length; i++) {
+        const linha = linhas[i].trim();
+        if (!linha || linha.startsWith('TOTAL')) continue;
+        
+        const colunas = linha.split(';');
+        
+        if (colunas.length < 13) {
+          resultado.linhasInvalidas++;
+          continue;
+        }
+        
+        const filial = colunas[0]?.trim();
+        const codProduto = colunas[2]?.trim();
+        const descricao = colunas[3]?.trim();
+        const grupo = colunas[4]?.trim();
+        const descGrupo = colunas[5]?.trim();
+        const fiscal = parseInt(colunas[11]?.trim()) || 0;
+        
+        if (!codProduto || fiscal === 0) {
+          resultado.linhasInvalidas++;
+          continue;
+        }
+        if (!FILIAIS.includes(filial)) {
+          resultado.linhasInvalidas++;
+          continue;
+        }
+        
+        resultado.linhasProcessadas++;
+        resultado.filiaisEncontradas.add(filial);
+        
+        // Calcular litros
+        const conversoesInfo = obterLitrosPorUnidade(codProduto, descricao, descGrupo);
+        const litrosPorUnidade = conversoesInfo.litros;
+        const totalLitros = fiscal * litrosPorUnidade;
+        
+        // Considera "óleo" se mencionar lubrificante/óleo
+        const ehOleo = /(oleo|óleo|lubrificante|oil)/i.test(`${descricao} ${descGrupo}`) && !/(graxa|grease)/i.test(`${descricao} ${descGrupo}`);
+        if (ehOleo) {
+          porFilial[filial].litrosTotal += totalLitros;
+        }
+        
+        // Detectar FleetPro (grupo 303) ou Original (grupo 301)
+        const grupoNum = grupo ? grupo.trim() : '';
+        const ehFleetpro = grupoNum === '303' || /fleetpro/i.test(descricao) || /fleetpro/i.test(descGrupo);
+        const ehOriginal = grupoNum === '301' || (!ehFleetpro && /original|óleo lubrificante/i.test(descGrupo));
+        
+        if (ehFleetpro) {
+          porFilial[filial].litrosFleetpro += totalLitros;
+        }
+        if (ehOriginal) {
+          porFilial[filial].litrosOriginal += totalLitros;
+        }
+      }
+      
+      return resultado;
+    }
+    
     async function carregarEstoqueMensal() {
       try {
         const app = getApp();
@@ -944,10 +977,12 @@
           estoqueMensal[d.mes] = {
             litrosTotal: Number(d.litrosTotal)||0,
             litrosFleetpro: Number(d.litrosFleetpro)||0,
+            litrosOriginal: Number(d.litrosOriginal)||0,
             porFilial: d.porFilial || {},
             updatedAt: d.atualizadoEm
           };
         });
+        console.log('[Estoque] Estoque mensal carregado:', Object.keys(estoqueMensal).length, 'meses');
       } catch (e) {
         console.error('Erro ao carregar estoque mensal:', e);
       }
@@ -1768,6 +1803,109 @@
         }]
       };
       
+      // Gráfico de Estoque: Original (301) vs FleetPro (303)
+      const mesesEstoque = Object.keys(estoqueMensal).sort();
+      const labelsEstoque = mesesEstoque.map(m => formatarMes(m));
+      const dadosOriginal = mesesEstoque.map(m => estoqueMensal[m].litrosOriginal || 0);
+      const dadosFleetpro = mesesEstoque.map(m => estoqueMensal[m].litrosFleetpro || 0);
+      const dadosTotal = mesesEstoque.map(m => estoqueMensal[m].litrosTotal || 0);
+      
+      chartsOpts['graficoOriginalFleetpro'] = {
+        type: 'bar',
+        data: {
+          labels: labelsEstoque.length > 0 ? labelsEstoque : ['Sem dados'],
+          datasets: [
+            {
+              label: 'Original (301)',
+              data: dadosOriginal.length > 0 ? dadosOriginal : [0],
+              backgroundColor: '#193b7c',
+              borderRadius: 6,
+              barPercentage: 0.7,
+              categoryPercentage: 0.75
+            },
+            {
+              label: 'FleetPro (303)',
+              data: dadosFleetpro.length > 0 ? dadosFleetpro : [0],
+              backgroundColor: '#28a745',
+              borderRadius: 6,
+              barPercentage: 0.7,
+              categoryPercentage: 0.75
+            },
+            {
+              label: 'Total Estoque',
+              data: dadosTotal.length > 0 ? dadosTotal : [0],
+              backgroundColor: '#f9a825',
+              borderRadius: 6,
+              barPercentage: 0.7,
+              categoryPercentage: 0.75
+            }
+          ]
+        },
+        options: {
+          devicePixelRatio: window.devicePixelRatio || 2,
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { position: 'top' },
+            tooltip: {
+              callbacks: {
+                label: ctx => `${ctx.dataset.label}: ${ctx.parsed.y.toLocaleString()}L`
+              }
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: {
+                callback: function(value) {
+                  return value.toLocaleString() + 'L';
+                }
+              }
+            }
+          },
+          layout: {
+            padding: {
+              top: 30
+            }
+          }
+        },
+        plugins: [{
+          id: 'estoqueBarLabels',
+          afterDatasetsDraw: function(chart) {
+            const ctx = chart.ctx;
+            chart.data.datasets.forEach(function(dataset, datasetIndex) {
+              const meta = chart.getDatasetMeta(datasetIndex);
+              if (!meta.hidden) {
+                meta.data.forEach(function(bar, index) {
+                  const value = dataset.data[index];
+                  if (value > 0) {
+                    ctx.save();
+                    ctx.fillStyle = '#333';
+                    ctx.font = 'bold 11px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'bottom';
+                    const x = bar.x;
+                    const y = bar.y - 5;
+                    ctx.fillText(value.toLocaleString(), x, y);
+                    ctx.restore();
+                  }
+                });
+              }
+            });
+          }
+        }]
+      };
+      
+      // Se não houver dados de estoque, mostrar mensagem no gráfico
+      if (mesesEstoque.length === 0) {
+        chartsOpts['graficoOriginalFleetpro'].options.plugins.title = {
+          display: true,
+          text: 'Importe um CSV de estoque para visualizar os dados',
+          color: '#999',
+          font: { size: 14 }
+        };
+      }
+      
       for (const id of Object.keys(chartsOpts)) atualizarGrafico(id, chartsOpts[id]);
     }
 
@@ -2389,17 +2527,43 @@
 
       // Botão Estoque: abrir seletor de arquivo diretamente
       document.getElementById('btn-estoque').addEventListener('click', () => {
-        document.getElementById('csv-estoque-file').click();
+        // Mostrar instrução antes de abrir seletor
+        Swal.fire({
+          title: '📦 Lançar Estoque Mensal',
+          html: `
+            <div style="text-align:left;">
+              <p>Selecione os <strong>3 arquivos CSV</strong> de estoque:</p>
+              <ul style="margin:10px 0; padding-left:20px;">
+                <li>Campos Novos</li>
+                <li>Rio do Sul</li>
+                <li>Lages</li>
+              </ul>
+              <p><small>💡 Dica: Segure <strong>Ctrl</strong> para selecionar múltiplos arquivos</small></p>
+            </div>
+          `,
+          icon: 'info',
+          showCancelButton: true,
+          confirmButtonText: 'Selecionar Arquivos',
+          cancelButtonText: 'Cancelar',
+          confirmButtonColor: '#193b7c'
+        }).then((result) => {
+          if (result.isConfirmed) {
+            document.getElementById('csv-estoque-file').click();
+          }
+        });
       });
 
-      // Upload CSV Estoque
+      // Upload CSV Estoque (múltiplos arquivos)
       document.getElementById('csv-estoque-file').addEventListener('change', (e) => {
-        if (e.target.files.length) {
-          const file = e.target.files[0];
-          if (file.name.toLowerCase().endsWith('.csv')) {
-            processarCSVEstoque(file);
+        if (e.target.files.length > 0) {
+          // Verificar se todos são CSV
+          const arquivos = Array.from(e.target.files);
+          const todosCSV = arquivos.every(f => f.name.toLowerCase().endsWith('.csv'));
+          
+          if (todosCSV) {
+            processarCSVEstoque(e.target.files);
           } else {
-            Swal.fire('Erro!', 'Por favor, selecione um arquivo CSV.', 'error');
+            Swal.fire('Erro!', 'Por favor, selecione apenas arquivos CSV.', 'error');
           }
           e.target.value = ''; // Limpar input
         }
