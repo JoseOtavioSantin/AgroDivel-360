@@ -770,11 +770,11 @@
           
           // Mensagem padrão para o cliente
           mensagem = `${saudacao}, ${revisao.cliente || 'Cliente'}! Tudo bem?%0A%0A`;
-          mensagem += `Aqui é o ${vendedor}, Agro Divel – Concessionária New Holland.%0A%0A`;
-          mensagem += `Entramos em contato porque nossa *Central de Inteligência* identificou que seu ${revisao.modelo || 'equipamento'} está com *${horimetroFormatado} horas de serviço* e vamos garantir a próxima revisão de ${revisao.revisao || ''} horas com uma condição especial bem atrativa.%0A%0A`;
+          mensagem += `Aqui é o ${vendedor}, da Agro Divel – Concessionária New Holland.%0A%0A`;
+          mensagem += `Entramos em contato porque nossa *Central de Inteligência* identificou que seu ${revisao.modelo || 'equipamento'} está com *${horimetroFormatado} horas de serviço* e vamos aproveitar e garantir a próxima revisão de ${revisao.revisao || ''} horas com uma condição especial bem atrativa.%0A%0A`;
           
           if (temTelemetria) {
-              mensagem += `Temos uma proposta especial que garante tanto essa revisão quanto a próxima de forma econômica:%0A%0A`;
+              mensagem += `Temos uma proposta especial com as melhores condições do mercado:%0A%0A`;
           } else {
               mensagem += `Temos uma proposta especial com as melhores condições do mercado:%0A%0A`;
           }
