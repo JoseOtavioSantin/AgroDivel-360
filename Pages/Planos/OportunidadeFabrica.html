@@ -739,8 +739,18 @@
           }
       }
       
-      // Usa o nome do usuário autenticado como vendedor
-      let vendedor = (userData && userData.nome) ? userData.nome : 'equipe';
+      // Mapeia o vendedor baseado na revenda
+      let vendedor = '';
+      const revenda = (revisao.revenda || '').toUpperCase();
+      if (revenda.includes('CAMPOS NOVOS')) {
+          vendedor = 'Alessandro';
+      } else if (revenda.includes('RIO DO SUL')) {
+          vendedor = 'Diego';
+      } else if (revenda.includes('LAGES')) {
+          vendedor = 'Douglas';
+      } else {
+          vendedor = 'equipe';
+      }
       
       // Verifica se tem telemetria (Eula = Aceito)
       const temTelemetria = (revisao.eula || '').toLowerCase() === 'aceito';
@@ -759,32 +769,27 @@
           mensagem += `*Revisão:* ${revisao.revisao || '-'} horas%0A%0A`;
           mensagem += `Att.`;
       } else {
-          // Define saudação conforme hora do dia
-          const hora = new Date().getHours();
-          let saudacao = 'Bom dia';
-          if (hora >= 12 && hora < 18) {
-              saudacao = 'Boa tarde';
-          } else if (hora >= 18 || hora < 6) {
-              saudacao = 'Boa noite';
-          }
-          
           // Mensagem padrão para o cliente
-          mensagem = `${saudacao}, ${revisao.cliente || 'Cliente'}! Tudo bem?%0A%0A`;
+          mensagem = `Bom dia, ${revisao.cliente || 'Cliente'}! Tudo certo por aí?%0A%0A`;
           mensagem += `Aqui é o ${vendedor}, da ${revisao.revenda || 'Agro Divel'} – Concessionária New Holland.%0A%0A`;
-          mensagem += `Entramos em contato porque nossa *Central de Inteligência* identificou que seu ${revisao.modelo || 'equipamento'} está com *${horimetroFormatado} horas de serviço* e vamos garantir a próxima revisão de ${revisao.revisao || ''} horas com uma condição especial bem atrativa.%0A%0A`;
           
           if (temTelemetria) {
-              mensagem += `Temos uma proposta especial que garante tanto essa revisão quanto a próxima de forma econômica:%0A%0A`;
+              mensagem += `Tô entrando em contato porque identificamos que seu equipamento ${revisao.modelo || ''}, com horímetro ${horimetroFormatado}, está próximo da revisão de ${revisao.revisao || ''} horas.%0A%0A`;
+              mensagem += `Como você já é nosso cliente, conseguimos antecipar uma condição especial, válida tanto para essa revisão quanto para contratar um plano de manutenção para outro equipamento da sua frota.%0A%0A`;
+              mensagem += `* Preço fixo, mesmo que as peças e mão de obra subam até lá%0A`;
+              mensagem += `* Parcelamento sem juros%0A`;
+              mensagem += `* Redução real no custo total da manutenção, com a máquina sempre pronta pra trabalhar%0A%0A`;
+              mensagem += `E como seu trator tem telemetria, essa condição personalizada já está liberada pra você.%0A%0A`;
           } else {
-              mensagem += `Temos uma proposta especial com as melhores condições do mercado:%0A%0A`;
+              mensagem += `Tô entrando em contato porque identificamos que seu equipamento ${revisao.modelo || ''} está próximo da revisão de ${revisao.revisao || ''} horas.%0A%0A`;
+              mensagem += `Conseguimos antecipar uma condição especial, válida tanto para essa revisão quanto para outro equipamento da sua frota.%0A%0A`;
+              mensagem += `* Preço fixo, mesmo que as peças e mão de obra subam até lá%0A`;
+              mensagem += `* Parcelamento sem juros%0A`;
+              mensagem += `* Redução no custo de manutenção, com o equipamento pronto pra operar%0A%0A`;
           }
           
-          mensagem += `✓ *Preço Fixo* — Sem variação, mesmo que peças e mão de obra subam%0A`;
-          mensagem += `✓ *Parcelamento* — Até *12 vezes sem juros* para facilitar seu fluxo de caixa%0A`;
-          mensagem += `✓ *Equipamento Sempre Pronto* — Sua máquina volta em perfeito funcionamento e pronta pra trabalhar%0A%0A`;
-          
-          mensagem += `Quer que eu te envie agora a simulação com os valores e todas as informações da revisão? É super rápido, sem nenhum compromisso!`;
-      }
+          mensagem += `Quer que eu te mande agora a simulação com os valores e tudo que tá incluso?%0A`;
+          mensagem += `É sem compromisso — só pra você analisar com calma.`;
       }
       
       // Monta a URL do WhatsApp
