@@ -13,6 +13,122 @@
     <link rel="stylesheet" href="/assets/css/style.css">
     <link rel="stylesheet" href="/assets/css/Pages/Formularios/style-forms.css">
     <style>
+        /* ========== NOTIFICATION SYSTEM ========== */
+        .notification-container {
+            position: fixed;
+            top: 24px;
+            right: 24px;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            pointer-events: none;
+            max-width: 380px;
+            width: 100%;
+        }
+        .notification-card {
+            display: flex;
+            align-items: flex-start;
+            background: #ffffff;
+            border-radius: 16px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.12), 0 2px 10px rgba(0, 0, 0, 0.08);
+            overflow: hidden;
+            animation: notif-slideIn 0.4s cubic-bezier(0.21, 1.02, 0.73, 1);
+            pointer-events: auto;
+            position: relative;
+            border: 1px solid rgba(0, 0, 0, 0.05);
+        }
+        .notification-body {
+            display: flex;
+            align-items: flex-start;
+            gap: 14px;
+            padding: 16px 16px 16px 20px;
+            flex: 1;
+        }
+        .notification-icon-wrapper {
+            width: 42px;
+            height: 42px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            background: #fef2f2;
+        }
+        .notification-card.sucesso .notification-icon-wrapper { background: #f0fdf4; }
+        .notification-card.aviso .notification-icon-wrapper { background: #fffbeb; }
+        .notification-card.info .notification-icon-wrapper { background: #eff6ff; }
+        .notification-icon-wrapper svg { width: 22px; height: 22px; }
+        .notification-card .icon-erro { color: #ef4444; }
+        .notification-card .icon-sucesso { color: #22c55e; }
+        .notification-card .icon-aviso { color: #f59e0b; }
+        .notification-card .icon-info { color: #3b82f6; }
+        .notification-text { flex: 1; min-width: 0; }
+        .notification-title {
+            font-weight: 600;
+            font-size: 14px;
+            color: #1f2937;
+            margin-bottom: 4px;
+            line-height: 1.4;
+        }
+        .notification-message {
+            font-size: 13px;
+            color: #6b7280;
+            line-height: 1.5;
+            word-wrap: break-word;
+        }
+        .notification-close-btn {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            width: 28px;
+            height: 28px;
+            border-radius: 8px;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #9ca3af;
+            transition: all 0.2s ease;
+        }
+        .notification-close-btn:hover { background: #f3f4f6; color: #374151; }
+        .notification-close-btn svg { width: 16px; height: 16px; }
+        .notification-progress {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: #f3f4f6;
+        }
+        .notification-progress-bar {
+            height: 100%;
+            background: #ef4444;
+            animation: notif-shrink linear forwards;
+            transform-origin: left;
+        }
+        .notification-card.sucesso .notification-progress-bar { background: #22c55e; }
+        .notification-card.aviso .notification-progress-bar { background: #f59e0b; }
+        .notification-card.info .notification-progress-bar { background: #3b82f6; }
+        @keyframes notif-slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        @keyframes notif-slideOut {
+            from { transform: translateX(0); opacity: 1; }
+            to { transform: translateX(100%); opacity: 0; }
+        }
+        @keyframes notif-shrink {
+            from { width: 100%; }
+            to { width: 0%; }
+        }
+        .notification-card.removing { animation: notif-slideOut 0.3s ease-in forwards; }
+        @media (max-width: 480px) {
+            .notification-container { top: 16px; right: 16px; left: 16px; max-width: none; }
+        }
+
         /* ========== LAYOUT PRINCIPAL ========== */
         .detalhes-container {
             display: flex;
@@ -207,6 +323,94 @@
             color: #78350f;
         }
 
+        /* ========== ALERTA DE ATRASO ========== */
+        .late-banner {
+            background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+            border: 1px solid #fecaca;
+            border-radius: 12px;
+            padding: 16px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            margin-bottom: 20px;
+            animation: pulse-banner 2s ease-in-out infinite;
+        }
+        @keyframes pulse-banner {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.2); }
+            50% { box-shadow: 0 0 0 8px rgba(239, 68, 68, 0); }
+        }
+        .late-banner__content {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            flex: 1;
+        }
+        .late-banner__icon {
+            width: 44px;
+            height: 44px;
+            background: #fee2e2;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        .late-banner__icon i {
+            width: 24px;
+            height: 24px;
+            color: #dc2626;
+        }
+        .late-banner__text {
+            flex: 1;
+        }
+        .late-banner__title {
+            font-size: 15px;
+            font-weight: 700;
+            color: #991b1b;
+            margin-bottom: 2px;
+        }
+        .late-banner__desc {
+            font-size: 13px;
+            color: #b91c1c;
+        }
+        .late-banner__desc strong {
+            font-weight: 700;
+        }
+        .btn-prorrogar {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 20px;
+            background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+        .btn-prorrogar:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(220, 38, 38, 0.4);
+        }
+        .btn-prorrogar i {
+            width: 16px;
+            height: 16px;
+        }
+        @media (max-width: 600px) {
+            .late-banner {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .btn-prorrogar {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+
         /* ========== VISUALIZAÇÃO APENAS ========== */
         .view-only-notice {
             background: #f0f9ff;
@@ -260,6 +464,193 @@
             color: #1e293b;
             line-height: 1.6;
         }
+
+        /* ========== PDCA SECTION ========== */
+        .pdca-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 16px;
+        }
+        .pdca-item {
+            padding: 20px;
+            background: #f8fafc;
+            border-radius: 12px;
+            border-left: 4px solid #3b82f6;
+            transition: all 0.3s ease;
+        }
+        .pdca-item.pdca-plan { border-left-color: #8b5cf6; }
+        .pdca-item.pdca-do { border-left-color: #3b82f6; }
+        .pdca-item.pdca-check { border-left-color: #f59e0b; }
+        .pdca-item.pdca-act { border-left-color: #22c55e; }
+        .pdca-item.filled {
+            background: #f0fdf4;
+        }
+        .pdca-item.pdca-locked {
+            opacity: 0.5;
+            position: relative;
+        }
+        .pdca-item.pdca-locked::after {
+            content: '🔒 Preencha a etapa anterior primeiro';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(100, 116, 139, 0.95);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 500;
+            white-space: nowrap;
+            z-index: 10;
+            pointer-events: none;
+        }
+        .pdca-disabled {
+            pointer-events: none;
+        }
+        .pdca-disabled input,
+        .pdca-disabled textarea,
+        .pdca-disabled select {
+            background: #f1f5f9 !important;
+            cursor: not-allowed;
+        }
+        .pdca-item__header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: pointer;
+            padding: 4px;
+            margin: -4px;
+            border-radius: 8px;
+            transition: background 0.2s;
+        }
+        .pdca-item__header:hover {
+            background: rgba(0, 0, 0, 0.03);
+        }
+        .pdca-item__content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease, margin 0.3s ease, opacity 0.3s ease;
+            opacity: 0;
+            margin-top: 0;
+        }
+        .pdca-item.expanded .pdca-item__content {
+            max-height: 800px;
+            opacity: 1;
+            margin-top: 16px;
+        }
+        .pdca-item__toggle {
+            width: 20px;
+            height: 20px;
+            color: #64748b;
+            transition: transform 0.3s ease;
+            margin-left: 8px;
+        }
+        .pdca-item.expanded .pdca-item__toggle {
+            transform: rotate(180deg);
+        }
+        .pdca-item__title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .pdca-item__icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 700;
+            font-size: 14px;
+        }
+        .pdca-plan .pdca-item__icon { background: linear-gradient(135deg, #8b5cf6, #7c3aed); }
+        .pdca-do .pdca-item__icon { background: linear-gradient(135deg, #3b82f6, #2563eb); }
+        .pdca-check .pdca-item__icon { background: linear-gradient(135deg, #f59e0b, #d97706); }
+        .pdca-act .pdca-item__icon { background: linear-gradient(135deg, #22c55e, #16a34a); }
+        .pdca-item__label {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #64748b;
+        }
+        .pdca-item__name {
+            font-size: 15px;
+            font-weight: 600;
+            color: #1e293b;
+        }
+        .pdca-item__badge {
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 700;
+        }
+        .pdca-item__badge.pending {
+            background: #f1f5f9;
+            color: #64748b;
+        }
+        .pdca-item__badge.completed {
+            background: #dcfce7;
+            color: #16a34a;
+        }
+        .pdca-item__content {
+            margin-top: 8px;
+        }
+        .pdca-item__value {
+            font-size: 14px;
+            color: #475569;
+            line-height: 1.6;
+            white-space: pre-wrap;
+        }
+        .pdca-item__value.empty {
+            color: #94a3b8;
+            font-style: italic;
+        }
+        .pdca-item textarea {
+            width: 100%;
+            padding: 12px 14px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 14px;
+            resize: vertical;
+            min-height: 80px;
+            font-family: inherit;
+            transition: all 0.2s;
+        }
+        .pdca-item textarea:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+        .btn-save-pdca {
+            margin-top: 16px;
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.2s;
+        }
+        .btn-save-pdca:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(139, 92, 246, 0.4);
+        }
+        .btn-save-pdca:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .btn-save-pdca i { width: 18px; height: 18px; }
 
         /* ========== PROGRESSO ========== */
         .progress-section {
@@ -985,6 +1376,23 @@
                             </div>
                         </div>
 
+                        <!-- Banner de Atraso -->
+                        <div class="late-banner" id="late-banner" style="display: none;">
+                            <div class="late-banner__content">
+                                <div class="late-banner__icon">
+                                    <i data-lucide="alert-triangle"></i>
+                                </div>
+                                <div class="late-banner__text">
+                                    <div class="late-banner__title">Plano Atrasado!</div>
+                                    <div class="late-banner__desc">Este plano está com <strong id="late-days">0 dias</strong> de atraso. Precisa de mais tempo?</div>
+                                </div>
+                            </div>
+                            <button class="btn-prorrogar" id="btn-prorrogar">
+                                <i data-lucide="calendar-plus"></i>
+                                Prorrogar Prazo
+                            </button>
+                        </div>
+
                         <!-- Aviso de apenas visualização -->
                         <div class="view-only-notice" id="view-only-notice" style="display: none;">
                             <i data-lucide="eye"></i>
@@ -1030,6 +1438,156 @@
                             </div>
                         </div>
 
+                        <!-- PDCA - COM EXPANDIR/MINIMIZAR -->
+                        <div class="detail-card">
+                            <div class="detail-card__header" id="toggle-pdca">
+                                <div class="detail-card__title">
+                                    <i data-lucide="refresh-cw"></i>
+                                    Ciclo PDCA
+                                </div>
+                                <i data-lucide="chevron-down" class="detail-card__toggle" id="toggle-icon-pdca"></i>
+                            </div>
+                            <div class="detail-card__body" id="body-pdca">
+                                <div class="pdca-grid">
+                                    <!-- PLAN -->
+                                    <div class="pdca-item pdca-plan expanded" data-step="plan">
+                                        <div class="pdca-item__header">
+                                            <div class="pdca-item__title">
+                                                <div class="pdca-item__icon">P</div>
+                                                <div>
+                                                    <div class="pdca-item__label">25%</div>
+                                                    <div class="pdca-item__name">Plan (Planejar)</div>
+                                                </div>
+                                            </div>
+                                            <div style="display: flex; align-items: center; gap: 8px;">
+                                                <span class="pdca-item__badge pending" id="badge-plan">Pendente</span>
+                                                <i data-lucide="chevron-down" class="pdca-item__toggle"></i>
+                                            </div>
+                                        </div>
+                                        <div class="pdca-item__content">
+                                            <div class="pdca-item__value empty" id="view-plan">Não preenchido</div>
+                                            <textarea id="input-plan" placeholder="Defina os objetivos e metas, identifique problemas, analise causas e estabeleça o plano de ação..." style="display: none;"></textarea>
+                                        </div>
+                                    </div>
+
+                                    <!-- DO -->
+                                    <div class="pdca-item pdca-do" data-step="do">
+                                        <div class="pdca-item__header">
+                                            <div class="pdca-item__title">
+                                                <div class="pdca-item__icon">D</div>
+                                                <div>
+                                                    <div class="pdca-item__label">50%</div>
+                                                    <div class="pdca-item__name">Do (Executar)</div>
+                                                </div>
+                                            </div>
+                                            <div style="display: flex; align-items: center; gap: 8px;">
+                                                <span class="pdca-item__badge pending" id="badge-do">Pendente</span>
+                                                <i data-lucide="chevron-down" class="pdca-item__toggle"></i>
+                                            </div>
+                                        </div>
+                                        <div class="pdca-item__content">
+                                            <div class="pdca-item__value empty" id="view-do">Não preenchido</div>
+                                            <div id="input-do-wrapper" style="display: none;">
+                                                <div style="margin-bottom: 16px;">
+                                                    <label style="display: block; margin-bottom: 6px; font-weight: 500; color: #334155; font-size: 14px;">Data Real de Início</label>
+                                                    <input type="date" id="input-do-data" style="width: 100%; padding: 10px 12px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 14px; font-family: inherit;">
+                                                </div>
+                                                <div>
+                                                    <label style="display: block; margin-bottom: 6px; font-weight: 500; color: #334155; font-size: 14px;">Descrição da Execução</label>
+                                                    <textarea id="input-do" placeholder="Descreva as ações executadas, treinamentos realizados, implementações feitas..."></textarea>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- CHECK -->
+                                    <div class="pdca-item pdca-check" data-step="check">
+                                        <div class="pdca-item__header">
+                                            <div class="pdca-item__title">
+                                                <div class="pdca-item__icon">C</div>
+                                                <div>
+                                                    <div class="pdca-item__label">75%</div>
+                                                    <div class="pdca-item__name">Check (Verificar)</div>
+                                                </div>
+                                            </div>
+                                            <div style="display: flex; align-items: center; gap: 8px;">
+                                                <span class="pdca-item__badge pending" id="badge-check">Pendente</span>
+                                                <i data-lucide="chevron-down" class="pdca-item__toggle"></i>
+                                            </div>
+                                        </div>
+                                        <div class="pdca-item__content">
+                                            <div class="pdca-item__value empty" id="view-check">Não preenchido</div>
+                                            <div id="input-check-wrapper" style="display: none;">
+                                                <div style="margin-bottom: 16px;">
+                                                    <label style="display: block; margin-bottom: 6px; font-weight: 500; color: #334155; font-size: 14px;">Resultados Obtidos</label>
+                                                    <textarea id="input-check" placeholder="Descreva os resultados..."></textarea>
+                                                </div>
+                                                <div>
+                                                    <label style="display: block; margin-bottom: 6px; font-weight: 500; color: #334155; font-size: 14px;">Análise dos Indicadores</label>
+                                                    <textarea id="input-check-analise" placeholder="Analise os indicadores..."></textarea>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- ACT -->
+                                    <div class="pdca-item pdca-act" data-step="act">
+                                        <div class="pdca-item__header">
+                                            <div class="pdca-item__title">
+                                                <div class="pdca-item__icon">A</div>
+                                                <div>
+                                                    <div class="pdca-item__label">100%</div>
+                                                    <div class="pdca-item__name">Act (Agir)</div>
+                                                </div>
+                                            </div>
+                                            <div style="display: flex; align-items: center; gap: 8px;">
+                                                <span class="pdca-item__badge pending" id="badge-act">Pendente</span>
+                                                <i data-lucide="chevron-down" class="pdca-item__toggle"></i>
+                                            </div>
+                                        </div>
+                                        <div class="pdca-item__content">
+                                            <div class="pdca-item__value empty" id="view-act">Não preenchido</div>
+                                            <div id="input-act-wrapper" style="display: none;">
+                                                <div style="margin-bottom: 16px;">
+                                                    <label style="display: block; margin-bottom: 6px; font-weight: 500; color: #334155; font-size: 14px;">Decisão</label>
+                                                    <select id="input-act-decisao" style="width: 100%; padding: 10px 12px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 14px; font-family: inherit; background: white;">
+                                                        <option value="">Selecione a decisão</option>
+                                                        <option value="Padronizar">Padronizar</option>
+                                                        <option value="Corrigir">Corrigir</option>
+                                                        <option value="Novo Ciclo">Iniciar Novo Ciclo</option>
+                                                        <option value="Encerrar">Encerrar</option>
+                                                    </select>
+                                                </div>
+                                                <div style="margin-bottom: 16px;">
+                                                    <label style="display: block; margin-bottom: 6px; font-weight: 500; color: #334155; font-size: 14px;">Descrição da Ação</label>
+                                                    <textarea id="input-act" placeholder="Descreva a ação tomada..."></textarea>
+                                                </div>
+                                                <div style="margin-bottom: 16px;">
+                                                    <label style="display: block; margin-bottom: 6px; font-weight: 500; color: #334155; font-size: 14px;">Data Real de Conclusão</label>
+                                                    <input type="date" id="input-act-data" style="width: 100%; padding: 10px 12px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 14px; font-family: inherit;">
+                                                </div>
+                                                <div>
+                                                    <label style="display: block; margin-bottom: 6px; font-weight: 500; color: #334155; font-size: 14px;">Status Final</label>
+                                                    <select id="input-act-status" style="width: 100%; padding: 10px 12px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 14px; font-family: inherit; background: white;">
+                                                        <option value="">Selecione o status</option>
+                                                        <option value="Em Andamento">Em Andamento</option>
+                                                        <option value="Concluído">Concluído</option>
+                                                        <option value="Cancelado">Cancelado</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Botão salvar PDCA (apenas para o criador) -->
+                                <button class="btn-save-pdca" id="btn-save-pdca" style="display: none;">
+                                    <i data-lucide="save"></i>
+                                    Salvar PDCA
+                                </button>
+                            </div>
+                        </div>
+
                         <!-- Progresso -->
                         <div class="detail-card">
                             <div class="detail-card__header no-collapse">
@@ -1062,57 +1620,6 @@
                                     </div>
                                 </div>
 
-                                <!-- Controles do criador com STEPS -->
-                                <div class="progress-control" id="progress-control" style="display: none;">
-                                    <div class="progress-control__title">
-                                        <i data-lucide="sliders"></i>
-                                        Atualizar Progresso
-                                    </div>
-                                    
-                                    <!-- Barra com pontos de 0, 25, 50, 75, 100 -->
-                                    <div class="progress-steps">
-                                        <div class="progress-steps__track"></div>
-                                        <div class="progress-steps__fill" id="steps-fill" style="width: 0%;"></div>
-                                        
-                                        <div class="progress-step" data-value="0">
-                                            <div class="progress-step__dot"><i data-lucide="check"></i></div>
-                                            <span class="progress-step__label">0%</span>
-                                        </div>
-                                        <div class="progress-step" data-value="25">
-                                            <div class="progress-step__dot"><i data-lucide="check"></i></div>
-                                            <span class="progress-step__label">25%</span>
-                                        </div>
-                                        <div class="progress-step" data-value="50">
-                                            <div class="progress-step__dot"><i data-lucide="check"></i></div>
-                                            <span class="progress-step__label">50%</span>
-                                        </div>
-                                        <div class="progress-step" data-value="75">
-                                            <div class="progress-step__dot"><i data-lucide="check"></i></div>
-                                            <span class="progress-step__label">75%</span>
-                                        </div>
-                                        <div class="progress-step" data-value="100">
-                                            <div class="progress-step__dot"><i data-lucide="check"></i></div>
-                                            <span class="progress-step__label">100%</span>
-                                        </div>
-                                    </div>
-
-                                    <input type="hidden" id="progress-slider" value="0">
-
-                                    <div class="progress-status">
-                                        <label>Status do Plano</label>
-                                        <select id="status-select">
-                                            <option value="Não Iniciado">Não Iniciado</option>
-                                            <option value="Em Andamento">Em Andamento</option>
-                                            <option value="Atrasado">Atrasado</option>
-                                            <option value="Concluído">Concluído</option>
-                                            <option value="Cancelado">Cancelado</option>
-                                        </select>
-                                    </div>
-                                    <button class="btn-save-progress" id="btn-save-progress">
-                                        <i data-lucide="save"></i>
-                                        Salvar Progresso
-                                    </button>
-                                </div>
                             </div>
                         </div>
 
@@ -1225,12 +1732,12 @@
         import { doc, getDoc, updateDoc, collection, addDoc, query, orderBy, getDocs, deleteDoc, Timestamp } from 'https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js';
         import { ref, uploadBytes, getDownloadURL, deleteObject } from 'https://www.gstatic.com/firebasejs/9.22.1/firebase-storage.js';
         import { garantirAutenticacao } from '/assets/js/auth-guard.js';
+        import { notificacao } from '/assets/js/notification-system.js';
 
         let planoId = null;
         let planoData = null;
         let currentUserId = null;
         let isOwner = false;
-        let selectedProgress = 0;
         let evidenciasList = []; // Lista de evidências para navegação no lightbox
         let currentEvidenciaIndex = 0;
 
@@ -1284,6 +1791,23 @@
             } catch (e) { return false; }
         }
 
+        function calcLateDays(endDate, status) {
+            if (status === 'Concluído' || status === 'Cancelado') return null;
+            if (!endDate) return null;
+            try {
+                const end = endDate.toDate ? endDate.toDate() : new Date(endDate);
+                const now = new Date();
+                end.setHours(0, 0, 0, 0);
+                now.setHours(0, 0, 0, 0);
+                if (now > end) {
+                    const diffTime = now - end;
+                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                    return diffDays;
+                }
+            } catch (e) { return null; }
+            return null;
+        }
+
         // Toggle expandir/minimizar 5W2H
         document.getElementById('toggle-5w2h').addEventListener('click', () => {
             const body = document.getElementById('body-5w2h');
@@ -1292,46 +1816,32 @@
             icon.classList.toggle('collapsed');
         });
 
-        // Sistema de Steps para progresso
-        function updateProgressSteps(value, autoUpdateStatus = true) {
-            selectedProgress = value;
-            document.getElementById('progress-slider').value = value;
-            
-            const steps = document.querySelectorAll('.progress-step');
-            const fillEl = document.getElementById('steps-fill');
-            
-            // Calcular largura do fill (0 = 0%, 25 = 25%, 50 = 50%, 75 = 75%, 100 = 100%)
-            fillEl.style.width = value + '%';
-            
-            steps.forEach(step => {
-                const stepValue = parseInt(step.dataset.value);
-                step.classList.remove('active', 'completed');
+        // Toggle expandir/minimizar PDCA
+        document.getElementById('toggle-pdca').addEventListener('click', () => {
+            const body = document.getElementById('body-pdca');
+            const icon = document.getElementById('toggle-icon-pdca');
+            body.classList.toggle('collapsed');
+            icon.classList.toggle('collapsed');
+        });
+
+        // Toggle expandir/minimizar cada item PDCA individualmente
+        document.querySelectorAll('.pdca-item__header').forEach(header => {
+            header.addEventListener('click', (e) => {
+                const item = header.closest('.pdca-item');
+                const step = item.dataset.step;
+                // Não expandir se estiver bloqueado
+                if (item.classList.contains('pdca-locked')) return;
                 
-                if (stepValue < value) {
-                    step.classList.add('completed');
-                } else if (stepValue === value) {
-                    step.classList.add('active');
+                const wasExpanded = item.classList.contains('expanded');
+                item.classList.toggle('expanded');
+                
+                // Se for owner e está expandindo, mostrar inputs
+                if (isOwner && !wasExpanded && step !== 'plan') {
+                    const wrapper = document.getElementById(`input-${step}-wrapper`);
+                    const view = document.getElementById(`view-${step}`);
+                    if (wrapper) wrapper.style.display = 'block';
+                    if (view) view.style.display = 'none';
                 }
-            });
-
-            // Atualizar status automaticamente baseado no progresso
-            if (autoUpdateStatus) {
-                const statusSelect = document.getElementById('status-select');
-                if (value === 100) {
-                    statusSelect.value = 'Concluído';
-                } else if (value > 0) {
-                    statusSelect.value = 'Em Andamento';
-                } else {
-                    statusSelect.value = 'Não Iniciado';
-                }
-            }
-        }
-
-        // Click nos steps
-        document.querySelectorAll('.progress-step').forEach(step => {
-            step.addEventListener('click', () => {
-                const value = parseInt(step.dataset.value);
-                updateProgressSteps(value, true);
             });
         });
 
@@ -1339,7 +1849,7 @@
             planoId = sessionStorage.getItem('viewPlanoId') || new URLSearchParams(location.search).get('id');
             
             if (!planoId) {
-                Swal.fire('Erro', 'ID do plano não informado', 'error');
+                notificacao.erro('Erro', 'ID do plano não informado');
                 location.href = '/Pages/PlanodeAcao/GerenciarPlanosAcao.html';
                 return;
             }
@@ -1347,7 +1857,7 @@
             try {
                 const snap = await getDoc(doc(db, 'planos-acao', planoId));
                 if (!snap.exists()) {
-                    Swal.fire('Erro', 'Plano não encontrado', 'error');
+                    notificacao.erro('Erro', 'Plano não encontrado');
                     location.href = '/Pages/PlanodeAcao/GerenciarPlanosAcao.html';
                     return;
                 }
@@ -1365,7 +1875,7 @@
 
             } catch (err) {
                 console.error('Erro ao carregar plano:', err);
-                Swal.fire('Erro', 'Falha ao carregar plano', 'error');
+                notificacao.erro('Erro', 'Falha ao carregar plano');
             }
         }
 
@@ -1406,8 +1916,15 @@
             document.getElementById('data-inicio').textContent = fmtDate(planoData.whenInicio);
             document.getElementById('data-fim').textContent = fmtDate(planoData.whenFim);
             
-            if (isLate(planoData.whenFim, planoData.status)) {
+            // Verificar atraso e mostrar banner
+            const lateDays = calcLateDays(planoData.whenFim, planoData.status);
+            if (lateDays && lateDays > 0) {
                 document.getElementById('data-fim-box').classList.add('late');
+                document.getElementById('late-banner').style.display = 'flex';
+                document.getElementById('late-days').textContent = lateDays + ' dia' + (lateDays > 1 ? 's' : '');
+            } else {
+                document.getElementById('late-banner').style.display = 'none';
+                document.getElementById('data-fim-box').classList.remove('late');
             }
 
             // 5W2H
@@ -1418,22 +1935,374 @@
             document.getElementById('plano-how').textContent = planoData.how || '-';
             document.getElementById('plano-howmuch').textContent = planoData.howMuch || '-';
 
+            // PDCA
+            renderPDCA();
+
             // Controles do criador
             if (isOwner) {
-                document.getElementById('progress-control').style.display = 'block';
                 document.getElementById('upload-section').style.display = 'block';
                 document.getElementById('add-update-section').style.display = 'block';
 
-                // Ajustar progresso para o step mais próximo (sem alterar status automaticamente no load)
-                const closestStep = [0, 25, 50, 75, 100].reduce((prev, curr) => 
-                    Math.abs(curr - progress) < Math.abs(prev - progress) ? curr : prev
-                );
-                updateProgressSteps(closestStep, false);
-                document.getElementById('status-select').value = planoData.status || 'Não Iniciado';
+                // Mostrar botão salvar PDCA
+                document.getElementById('btn-save-pdca').style.display = 'flex';
+                
+                // Para itens já preenchidos, expandir e mostrar os campos
+                const pdca = planoData.pdca || {};
+                ['do', 'check', 'act'].forEach(step => {
+                    const item = document.querySelector(`.pdca-item[data-step="${step}"]`);
+                    const wrapper = document.getElementById(`input-${step}-wrapper`);
+                    const view = document.getElementById(`view-${step}`);
+                    
+                    // Se já tem valor preenchido, expandir automaticamente
+                    if (pdca[step]) {
+                        item.classList.add('expanded');
+                        wrapper.style.display = 'block';
+                        view.style.display = 'none';
+                    }
+                });
+                
+                // Plan fica apenas visualização (preenchido pelo 5W2H) e expandido
+                document.getElementById('input-plan').style.display = 'none';
+                document.getElementById('view-plan').style.display = 'block';
+                document.querySelector('.pdca-item[data-step="plan"]').classList.add('expanded');
+                
+                // Aplicar sequência de habilitação (só pode preencher se anterior preenchido)
+                updatePDCASequence();
             } else {
                 document.getElementById('view-only-notice').style.display = 'flex';
+                
+                // Para não-owners, expandir itens que têm dados preenchidos para visualização
+                const pdca = planoData.pdca || {};
+                ['plan', 'do', 'check', 'act'].forEach(step => {
+                    const item = document.querySelector(`.pdca-item[data-step="${step}"]`);
+                    const view = document.getElementById(`view-${step}`);
+                    const wrapper = document.getElementById(`input-${step}-wrapper`);
+                    
+                    // Plan sempre expandido (vem do 5W2H)
+                    if (step === 'plan' || pdca[step]) {
+                        item.classList.add('expanded');
+                        view.style.display = 'block';
+                        if (wrapper) wrapper.style.display = 'none';
+                    }
+                });
             }
         }
+
+        // ==================== PDCA FUNCTIONS ====================
+        function has5W2HData() {
+            // Verifica se há dados do 5W2H preenchidos
+            return !!(planoData.what || planoData.why || planoData.where || planoData.responsavel || planoData.how || planoData.howMuch);
+        }
+
+        function renderPDCA() {
+            const pdca = planoData.pdca || {};
+            const steps = ['plan', 'do', 'check', 'act'];
+            
+            // O Plan vem do 5W2H automaticamente
+            const has5W2H = has5W2HData();
+            
+            steps.forEach(step => {
+                let value = pdca[step] || '';
+                let displayValue = value;
+                
+                // Para o Plan, mostrar mensagem que está preenchido pelo 5W2H
+                if (step === 'plan' && !value && has5W2H) {
+                    value = 'filled_by_5w2h'; // marcador interno
+                    displayValue = 'Preenchido pelo planejamento 5W2H acima';
+                }
+                
+                // Para o DO, mostrar data + descrição
+                if (step === 'do' && value) {
+                    let doDisplay = '';
+                    if (pdca.doData) {
+                        const dataFormatada = new Date(pdca.doData + 'T00:00:00').toLocaleDateString('pt-BR');
+                        doDisplay += `<strong>Data de Início:</strong> ${dataFormatada}<br><br>`;
+                    }
+                    doDisplay += value;
+                    displayValue = doDisplay;
+                }
+                
+                // Para o CHECK, mostrar resultados + análise
+                if (step === 'check' && value) {
+                    let checkDisplay = `<strong>Resultados Obtidos:</strong><br>${value}`;
+                    if (pdca.checkAnalise) {
+                        checkDisplay += `<br><br><strong>Análise dos Indicadores:</strong><br>${pdca.checkAnalise}`;
+                    }
+                    displayValue = checkDisplay;
+                }
+                
+                // Para o ACT, mostrar decisão + ação + data + status
+                if (step === 'act' && value) {
+                    let actDisplay = '';
+                    if (pdca.actDecisao) {
+                        actDisplay += `<strong>Decisão:</strong> ${pdca.actDecisao}<br><br>`;
+                    }
+                    actDisplay += `<strong>Descrição da Ação:</strong><br>${value}`;
+                    if (pdca.actData) {
+                        const dataFormatada = new Date(pdca.actData + 'T00:00:00').toLocaleDateString('pt-BR');
+                        actDisplay += `<br><br><strong>Data de Conclusão:</strong> ${dataFormatada}`;
+                    }
+                    if (pdca.actStatus) {
+                        actDisplay += `<br><br><strong>Status Final:</strong> ${pdca.actStatus}`;
+                    }
+                    displayValue = actDisplay;
+                }
+                
+                const viewEl = document.getElementById(`view-${step}`);
+                const inputEl = document.getElementById(`input-${step}`);
+                const badgeEl = document.getElementById(`badge-${step}`);
+                const itemEl = document.querySelector(`.pdca-item[data-step="${step}"]`);
+                
+                if (value) {
+                    if (step === 'do' || step === 'check' || step === 'act') {
+                        viewEl.innerHTML = displayValue;
+                    } else {
+                        viewEl.textContent = displayValue;
+                    }
+                    viewEl.classList.remove('empty');
+                    badgeEl.textContent = 'Preenchido';
+                    badgeEl.classList.remove('pending');
+                    badgeEl.classList.add('completed');
+                    itemEl.classList.add('filled');
+                } else {
+                    viewEl.textContent = 'Não preenchido';
+                    viewEl.classList.add('empty');
+                    badgeEl.textContent = 'Pendente';
+                    badgeEl.classList.remove('completed');
+                    badgeEl.classList.add('pending');
+                    itemEl.classList.remove('filled');
+                }
+                
+                // Preencher inputs com dados salvos
+                if (step !== 'plan' || pdca[step]) {
+                    inputEl.value = pdca[step] || '';
+                }
+                
+                // Preencher campos extras do DO
+                if (step === 'do' && pdca.doData) {
+                    document.getElementById('input-do-data').value = pdca.doData;
+                }
+                
+                // Preencher campos extras do CHECK
+                if (step === 'check') {
+                    document.getElementById('input-check-analise').value = pdca.checkAnalise || '';
+                }
+                
+                // Preencher campos extras do ACT
+                if (step === 'act') {
+                    document.getElementById('input-act-decisao').value = pdca.actDecisao || '';
+                    document.getElementById('input-act-data').value = pdca.actData || '';
+                    document.getElementById('input-act-status').value = pdca.actStatus || '';
+                }
+            });
+
+            updatePDCAProgress();
+            if (isOwner) updatePDCASequence();
+        }
+
+        // Controla habilitação sequencial: só pode preencher o próximo se o anterior estiver preenchido
+        function updatePDCASequence() {
+            const pdca = planoData.pdca || {};
+            const has5W2H = has5W2HData();
+            
+            // Verificar valores atuais dos inputs
+            const planFilled = has5W2H;
+            const doFilled = document.getElementById('input-do').value.trim() !== '';
+            const checkFilled = document.getElementById('input-check').value.trim() !== '';
+            
+            // Wrappers
+            const doWrapper = document.getElementById('input-do-wrapper');
+            const checkWrapper = document.getElementById('input-check-wrapper');
+            const actWrapper = document.getElementById('input-act-wrapper');
+            
+            // Items para estilo visual
+            const doItem = document.querySelector('.pdca-item[data-step="do"]');
+            const checkItem = document.querySelector('.pdca-item[data-step="check"]');
+            const actItem = document.querySelector('.pdca-item[data-step="act"]');
+            
+            // DO: habilitado se Plan estiver preenchido
+            if (planFilled) {
+                doWrapper.classList.remove('pdca-disabled');
+                doItem.classList.remove('pdca-locked');
+                enablePDCAInputs(doWrapper);
+            } else {
+                doWrapper.classList.add('pdca-disabled');
+                doItem.classList.add('pdca-locked');
+                disablePDCAInputs(doWrapper);
+            }
+            
+            // CHECK: habilitado se Do estiver preenchido
+            if (doFilled) {
+                checkWrapper.classList.remove('pdca-disabled');
+                checkItem.classList.remove('pdca-locked');
+                enablePDCAInputs(checkWrapper);
+            } else {
+                checkWrapper.classList.add('pdca-disabled');
+                checkItem.classList.add('pdca-locked');
+                disablePDCAInputs(checkWrapper);
+            }
+            
+            // ACT: habilitado se Check estiver preenchido
+            if (checkFilled) {
+                actWrapper.classList.remove('pdca-disabled');
+                actItem.classList.remove('pdca-locked');
+                enablePDCAInputs(actWrapper);
+            } else {
+                actWrapper.classList.add('pdca-disabled');
+                actItem.classList.add('pdca-locked');
+                disablePDCAInputs(actWrapper);
+            }
+        }
+        
+        function disablePDCAInputs(wrapper) {
+            wrapper.querySelectorAll('input, textarea, select').forEach(el => {
+                el.disabled = true;
+            });
+        }
+        
+        function enablePDCAInputs(wrapper) {
+            wrapper.querySelectorAll('input, textarea, select').forEach(el => {
+                el.disabled = false;
+            });
+        }
+
+        function updatePDCAProgress() {
+            const pdca = planoData.pdca || {};
+            let progress = 0;
+            
+            // Plan vem do 5W2H automaticamente
+            const has5W2H = has5W2HData();
+            
+            // Plan sempre vem do 5W2H (não é editável)
+            let planValue = has5W2H ? 'filled_by_5w2h' : '';
+            
+            const doValue = isOwner ? document.getElementById('input-do').value.trim() : (pdca.do || '').trim();
+            const checkValue = isOwner ? document.getElementById('input-check').value.trim() : (pdca.check || '').trim();
+            const actValue = isOwner ? document.getElementById('input-act').value.trim() : (pdca.act || '').trim();
+            
+            // Calcular progresso baseado no PDCA
+            // Plan = 25%, Do = 50%, Check = 75%, Act = 100%
+            if (planValue) progress = 25;
+            if (planValue && doValue) progress = 50;
+            if (planValue && doValue && checkValue) progress = 75;
+            if (planValue && doValue && checkValue && actValue) progress = 100;
+
+            // Atualizar badges em tempo real se for owner
+            const steps = ['plan', 'do', 'check', 'act'];
+            const values = [planValue, doValue, checkValue, actValue];
+            
+            if (isOwner) {
+                steps.forEach((step, index) => {
+                    const badgeEl = document.getElementById(`badge-${step}`);
+                    const itemEl = document.querySelector(`.pdca-item[data-step="${step}"]`);
+                    
+                    if (values[index]) {
+                        badgeEl.textContent = 'Preenchido';
+                        badgeEl.classList.remove('pending');
+                        badgeEl.classList.add('completed');
+                        itemEl.classList.add('filled');
+                    } else {
+                        badgeEl.textContent = 'Pendente';
+                        badgeEl.classList.remove('completed');
+                        badgeEl.classList.add('pending');
+                        itemEl.classList.remove('filled');
+                    }
+                });
+            }
+            
+            return progress;
+        }
+
+        // Função para atualizar progresso e sequência
+        function onPDCAInput() {
+            updatePDCAProgress();
+            updatePDCASequence();
+        }
+
+        // Atualizar progresso e sequência em tempo real enquanto digita
+        ['do', 'check', 'act'].forEach(step => {
+            document.getElementById(`input-${step}`).addEventListener('input', onPDCAInput);
+        });
+        // Campos extras também atualizam
+        document.getElementById('input-do-data').addEventListener('change', onPDCAInput);
+        document.getElementById('input-check-analise').addEventListener('input', onPDCAInput);
+        document.getElementById('input-act-decisao').addEventListener('change', onPDCAInput);
+        document.getElementById('input-act-data').addEventListener('change', onPDCAInput);
+        document.getElementById('input-act-status').addEventListener('change', onPDCAInput);
+
+        // Salvar PDCA
+        document.getElementById('btn-save-pdca').addEventListener('click', async () => {
+            if (!isOwner) return;
+
+            const btn = document.getElementById('btn-save-pdca');
+            const originalHtml = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<i data-lucide="loader-2" class="spin"></i> Salvando...';
+
+            try {
+                const pdcaData = {
+                    plan: document.getElementById('input-plan').value.trim(),
+                    do: document.getElementById('input-do').value.trim(),
+                    doData: document.getElementById('input-do-data').value || null,
+                    check: document.getElementById('input-check').value.trim(),
+                    checkAnalise: document.getElementById('input-check-analise').value.trim(),
+                    act: document.getElementById('input-act').value.trim(),
+                    actDecisao: document.getElementById('input-act-decisao').value || null,
+                    actData: document.getElementById('input-act-data').value || null,
+                    actStatus: document.getElementById('input-act-status').value || null
+                };
+
+                const pdcaProgress = updatePDCAProgress();
+
+                // Determinar status baseado no progresso PDCA ou status final do Act
+                let novoStatus = planoData.status;
+                if (pdcaData.actStatus) {
+                    novoStatus = pdcaData.actStatus;
+                } else if (pdcaProgress === 100) {
+                    novoStatus = 'Concluído';
+                } else if (pdcaProgress > 0) {
+                    novoStatus = 'Em Andamento';
+                }
+
+                // Atualizar plano com PDCA e progresso
+                await updateDoc(doc(db, 'planos-acao', planoId), {
+                    pdca: pdcaData,
+                    progresso: pdcaProgress,
+                    status: novoStatus,
+                    dataAtualizacao: new Date()
+                });
+
+                // Adicionar na timeline
+                await addDoc(collection(db, 'planos-acao', planoId, 'atualizacoes'), {
+                    tipo: 'progresso',
+                    titulo: 'PDCA atualizado',
+                    descricao: `Progresso do ciclo PDCA: ${pdcaProgress}%`,
+                    progresso: pdcaProgress,
+                    usuario: getUserName(),
+                    data: Timestamp.now()
+                });
+
+                // Atualizar dados locais
+                planoData.pdca = pdcaData;
+                planoData.progresso = pdcaProgress;
+                planoData.status = novoStatus;
+
+                // Re-renderizar
+                renderPlano();
+                await loadAtualizacoes();
+                lucide.createIcons();
+
+                notificacao.sucesso('Sucesso!', 'PDCA salvo com sucesso');
+
+            } catch (err) {
+                console.error('Erro ao salvar PDCA:', err);
+                notificacao.erro('Erro', 'Falha ao salvar PDCA');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = originalHtml;
+                lucide.createIcons();
+            }
+        });
 
         async function loadAtualizacoes() {
             try {
@@ -1622,7 +2491,7 @@
                 lucide.createIcons();
             } catch (err) {
                 console.error('Erro ao baixar:', err);
-                Swal.fire('Erro', 'Falha ao baixar o arquivo', 'error');
+                notificacao.erro('Erro', 'Falha ao baixar o arquivo');
             }
         }
 
@@ -1650,7 +2519,7 @@
 
         window.deleteEvidencia = async function(docId, fileUrl) {
             if (!isOwner) {
-                Swal.fire('Erro', 'Apenas o criador pode excluir evidências', 'error');
+                notificacao.erro('Erro', 'Apenas o criador pode excluir evidências');
                 return;
             }
 
@@ -1700,11 +2569,11 @@
                 await loadAtualizacoes();
                 lucide.createIcons();
 
-                Swal.fire('Excluído!', 'Evidência removida com sucesso', 'success');
+                notificacao.sucesso('Excluído!', 'Evidência removida com sucesso');
 
             } catch (err) {
                 console.error('Erro ao excluir evidência:', err);
-                Swal.fire('Erro', 'Falha ao excluir evidência: ' + err.message, 'error');
+                notificacao.erro('Erro', 'Falha ao excluir evidência: ' + err.message);
             }
         };
 
@@ -1712,57 +2581,20 @@
         window.openLightbox = openLightbox;
 
         function getUserName() {
-            const el = document.getElementById('user-name');
-            return el?.textContent?.trim() || auth.currentUser?.displayName || 'Usuário';
+            // 1) prioridade para valor fornecido pelo app (localStorage)
+            const fromStorage = localStorage.getItem('userName');
+            if (fromStorage && fromStorage.trim()) return fromStorage.trim();
+
+            // 2) tentar ler diretamente do DOM (Menu.html -> #user-name)
+            const menuEl = document.getElementById('user-name');
+            if (menuEl && menuEl.textContent && menuEl.textContent.trim()) return menuEl.textContent.trim();
+
+            // 3) fallback para auth.currentUser (displayName ou email prefix)
+            const u = auth.currentUser;
+            if (u) return u.displayName || (u.email && u.email.split('@')[0]) || 'Usuário';
+
+            return 'Usuário';
         }
-
-        // Salvar progresso
-        document.getElementById('btn-save-progress').addEventListener('click', async () => {
-            if (!isOwner) return;
-
-            const btn = document.getElementById('btn-save-progress');
-            const originalHtml = btn.innerHTML;
-            btn.disabled = true;
-            btn.innerHTML = '<i data-lucide="loader-2" class="spin"></i> Salvando...';
-
-            try {
-                const novoProgresso = selectedProgress;
-                const novoStatus = document.getElementById('status-select').value;
-
-                // Atualizar plano
-                await updateDoc(doc(db, 'planos-acao', planoId), {
-                    progresso: novoProgresso,
-                    status: novoStatus,
-                    dataAtualizacao: new Date()
-                });
-
-                // Adicionar na timeline
-                await addDoc(collection(db, 'planos-acao', planoId, 'atualizacoes'), {
-                    tipo: 'progresso',
-                    titulo: 'Progresso atualizado',
-                    descricao: `Status alterado para "${novoStatus}"`,
-                    progresso: novoProgresso,
-                    usuario: getUserName(),
-                    data: Timestamp.now()
-                });
-
-                planoData.progresso = novoProgresso;
-                planoData.status = novoStatus;
-                renderPlano();
-                await loadAtualizacoes();
-                lucide.createIcons();
-
-                Swal.fire('Sucesso!', 'Progresso atualizado com sucesso', 'success');
-
-            } catch (err) {
-                console.error('Erro ao salvar progresso:', err);
-                Swal.fire('Erro', 'Falha ao salvar progresso', 'error');
-            } finally {
-                btn.disabled = false;
-                btn.innerHTML = originalHtml;
-                lucide.createIcons();
-            }
-        });
 
         // Adicionar atualização
         document.getElementById('btn-add-update').addEventListener('click', async () => {
@@ -1772,7 +2604,7 @@
             const texto = textarea.value.trim();
 
             if (!texto) {
-                Swal.fire('Atenção', 'Digite uma descrição para a atualização', 'warning');
+                notificacao.aviso('Atenção', 'Digite uma descrição para a atualização');
                 return;
             }
 
@@ -1792,13 +2624,127 @@
                 await loadAtualizacoes();
                 lucide.createIcons();
 
-                Swal.fire('Sucesso!', 'Atualização adicionada', 'success');
+                notificacao.sucesso('Sucesso!', 'Atualização adicionada');
 
             } catch (err) {
                 console.error('Erro ao adicionar atualização:', err);
-                Swal.fire('Erro', 'Falha ao adicionar atualização', 'error');
+                notificacao.erro('Erro', 'Falha ao adicionar atualização');
             } finally {
                 btn.disabled = false;
+            }
+        });
+
+        // Prorrogar prazo
+        document.getElementById('btn-prorrogar')?.addEventListener('click', async () => {
+            if (!isOwner) return;
+
+            const dataAtual = planoData.whenFim?.toDate?.() || new Date(planoData.whenFim);
+            const dataFormatada = dataAtual.toISOString().split('T')[0];
+
+            const diasAtraso = calcLateDays(planoData.whenFim, planoData.status) || 0;
+
+            const { value: novaData, isConfirmed } = await Swal.fire({
+                title: '<i data-lucide="calendar-clock" style="width:28px;height:28px;color:#f59e0b;vertical-align:middle;margin-right:8px;"></i> Prorrogar Prazo',
+                html: `
+                    <div style="text-align: left; padding: 8px 0;">
+                        <div style="display: flex; gap: 16px; margin-bottom: 20px;">
+                            <div style="flex: 1; background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); padding: 16px; border-radius: 12px; border: 1px solid #f59e0b;">
+                                <div style="font-size: 12px; color: #92400e; font-weight: 500; margin-bottom: 4px;">Data Atual</div>
+                                <div style="font-size: 18px; font-weight: 700; color: #78350f;">${dataAtual.toLocaleDateString('pt-BR')}</div>
+                            </div>
+                            <div style="flex: 1; background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%); padding: 16px; border-radius: 12px; border: 1px solid #ef4444;">
+                                <div style="font-size: 12px; color: #991b1b; font-weight: 500; margin-bottom: 4px;">Dias em Atraso</div>
+                                <div style="font-size: 18px; font-weight: 700; color: #7f1d1d;">${diasAtraso} dia${diasAtraso !== 1 ? 's' : ''}</div>
+                            </div>
+                        </div>
+                        
+                        <div style="margin-bottom: 20px;">
+                            <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #1e293b; font-size: 14px;">
+                                <i data-lucide="calendar" style="width:16px;height:16px;vertical-align:middle;margin-right:6px;"></i>
+                                Nova data de conclusão
+                            </label>
+                            <input type="date" id="swal-nova-data" min="${new Date().toISOString().split('T')[0]}" 
+                                style="width: 100%; padding: 14px 16px; border: 2px solid #e2e8f0; border-radius: 10px; font-size: 16px; transition: all 0.2s; box-sizing: border-box;"
+                                onfocus="this.style.borderColor='#f59e0b'; this.style.boxShadow='0 0 0 3px rgba(245,158,11,0.15)';"
+                                onblur="this.style.borderColor='#e2e8f0'; this.style.boxShadow='none';">
+                        </div>
+                        
+                        <div>
+                            <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #1e293b; font-size: 14px;">
+                                <i data-lucide="message-square" style="width:16px;height:16px;vertical-align:middle;margin-right:6px;"></i>
+                                Motivo da prorrogação
+                            </label>
+                            <textarea id="swal-motivo" placeholder="Descreva o motivo da prorrogação..." 
+                                style="width: 100%; padding: 14px 16px; border: 2px solid #e2e8f0; border-radius: 10px; font-size: 14px; min-height: 100px; resize: vertical; font-family: inherit; transition: all 0.2s; box-sizing: border-box;"
+                                onfocus="this.style.borderColor='#f59e0b'; this.style.boxShadow='0 0 0 3px rgba(245,158,11,0.15)';"
+                                onblur="this.style.borderColor='#e2e8f0'; this.style.boxShadow='none';"></textarea>
+                        </div>
+                    </div>
+                `,
+                width: 520,
+                showCancelButton: true,
+                confirmButtonText: '<i data-lucide="check" style="width:16px;height:16px;margin-right:6px;"></i> Confirmar Prorrogação',
+                cancelButtonText: 'Cancelar',
+                confirmButtonColor: '#f59e0b',
+                cancelButtonColor: '#64748b',
+                focusConfirm: false,
+                didOpen: () => {
+                    lucide.createIcons();
+                },
+                preConfirm: () => {
+                    const data = document.getElementById('swal-nova-data').value;
+                    const motivo = document.getElementById('swal-motivo').value.trim();
+                    
+                    if (!data) {
+                        Swal.showValidationMessage('Selecione uma nova data');
+                        return false;
+                    }
+                    
+                    if (!motivo) {
+                        Swal.showValidationMessage('Informe o motivo da prorrogação');
+                        return false;
+                    }
+                    
+                    return { data, motivo };
+                }
+            });
+
+            if (isConfirmed && novaData) {
+                try {
+                    const novaDataObj = new Date(novaData.data + 'T23:59:59');
+                    const diasProrrogados = calcLateDays(planoData.whenFim, planoData.status) || 0;
+                    
+                    // Atualizar a data no documento principal
+                    await updateDoc(doc(db, 'planos-acao', planoId), {
+                        whenFim: Timestamp.fromDate(novaDataObj)
+                    });
+
+                    // Registrar prorrogação no histórico
+                    await addDoc(collection(db, 'planos-acao', planoId, 'atualizacoes'), {
+                        tipo: 'prorrogacao',
+                        titulo: 'Prazo prorrogado',
+                        descricao: `Prazo prorrogado de ${dataAtual.toLocaleDateString('pt-BR')} para ${novaDataObj.toLocaleDateString('pt-BR')}. Estava ${diasProrrogados} dia(s) em atraso. Motivo: ${novaData.motivo}`,
+                        usuario: getUserName(),
+                        data: Timestamp.now(),
+                        dataAnterior: dataAtual.toISOString(),
+                        novaData: novaDataObj.toISOString(),
+                        diasAtraso: diasProrrogados
+                    });
+
+                    // Atualizar dados locais
+                    planoData.whenFim = Timestamp.fromDate(novaDataObj);
+
+                    // Re-renderizar
+                    renderPlano();
+                    await loadAtualizacoes();
+                    lucide.createIcons();
+
+                    notificacao.sucesso('Prazo Prorrogado!', `Nova data: ${novaDataObj.toLocaleDateString('pt-BR')}`);
+
+                } catch (err) {
+                    console.error('Erro ao prorrogar prazo:', err);
+                    notificacao.erro('Erro', 'Falha ao prorrogar prazo');
+                }
             }
         });
 
@@ -1875,7 +2821,7 @@
 
         async function handleFiles(files) {
             if (!isOwner || !storage) {
-                Swal.fire('Erro', 'Upload não disponível', 'error');
+                notificacao.erro('Erro', 'Upload não disponível');
                 return;
             }
 
@@ -1929,11 +2875,11 @@
                 await loadAtualizacoes();
                 lucide.createIcons();
 
-                Swal.fire('Sucesso!', 'Evidência(s) enviada(s) com sucesso', 'success');
+                notificacao.sucesso('Sucesso!', 'Evidência(s) enviada(s) com sucesso');
 
             } catch (err) {
                 console.error('Erro ao fazer upload:', err);
-                Swal.fire('Erro', 'Falha ao enviar evidência: ' + err.message, 'error');
+                notificacao.erro('Erro', 'Falha ao enviar evidência: ' + err.message);
             }
 
             fileInput.value = '';
@@ -1947,7 +2893,7 @@
                 await loadPlano();
             } catch (err) {
                 console.error(err);
-                Swal.fire('Erro', 'Falha ao inicializar página', 'error');
+                notificacao.erro('Erro', 'Falha ao inicializar página');
             }
         });
     </script>

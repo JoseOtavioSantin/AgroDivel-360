@@ -13,6 +13,122 @@
     <link rel="stylesheet" href="/assets/css/style.css">
     <link rel="stylesheet" href="/assets/css/Pages/Formularios/style-forms.css">
     <style>
+        /* ========== NOTIFICATION SYSTEM ========== */
+        .notification-container {
+            position: fixed;
+            top: 24px;
+            right: 24px;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            pointer-events: none;
+            max-width: 380px;
+            width: 100%;
+        }
+        .notification-card {
+            display: flex;
+            align-items: flex-start;
+            background: #ffffff;
+            border-radius: 16px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.12), 0 2px 10px rgba(0, 0, 0, 0.08);
+            overflow: hidden;
+            animation: slideIn 0.4s cubic-bezier(0.21, 1.02, 0.73, 1);
+            pointer-events: auto;
+            position: relative;
+            border: 1px solid rgba(0, 0, 0, 0.05);
+        }
+        .notification-body {
+            display: flex;
+            align-items: flex-start;
+            gap: 14px;
+            padding: 16px 16px 16px 20px;
+            flex: 1;
+        }
+        .notification-icon-wrapper {
+            width: 42px;
+            height: 42px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            background: #fef2f2;
+        }
+        .notification-card.sucesso .notification-icon-wrapper { background: #f0fdf4; }
+        .notification-card.aviso .notification-icon-wrapper { background: #fffbeb; }
+        .notification-card.info .notification-icon-wrapper { background: #eff6ff; }
+        .notification-icon-wrapper svg { width: 22px; height: 22px; }
+        .notification-card .icon-erro { color: #ef4444; }
+        .notification-card .icon-sucesso { color: #22c55e; }
+        .notification-card .icon-aviso { color: #f59e0b; }
+        .notification-card .icon-info { color: #3b82f6; }
+        .notification-text { flex: 1; min-width: 0; }
+        .notification-title {
+            font-weight: 600;
+            font-size: 14px;
+            color: #1f2937;
+            margin-bottom: 4px;
+            line-height: 1.4;
+        }
+        .notification-message {
+            font-size: 13px;
+            color: #6b7280;
+            line-height: 1.5;
+            word-wrap: break-word;
+        }
+        .notification-close-btn {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            width: 28px;
+            height: 28px;
+            border-radius: 8px;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #9ca3af;
+            transition: all 0.2s ease;
+        }
+        .notification-close-btn:hover { background: #f3f4f6; color: #374151; }
+        .notification-close-btn svg { width: 16px; height: 16px; }
+        .notification-progress {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: #f3f4f6;
+        }
+        .notification-progress-bar {
+            height: 100%;
+            background: #ef4444;
+            animation: shrink linear forwards;
+            transform-origin: left;
+        }
+        .notification-card.sucesso .notification-progress-bar { background: #22c55e; }
+        .notification-card.aviso .notification-progress-bar { background: #f59e0b; }
+        .notification-card.info .notification-progress-bar { background: #3b82f6; }
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        @keyframes slideOut {
+            from { transform: translateX(0); opacity: 1; }
+            to { transform: translateX(100%); opacity: 0; }
+        }
+        @keyframes shrink {
+            from { width: 100%; }
+            to { width: 0%; }
+        }
+        .notification-card.removing { animation: slideOut 0.3s ease-in forwards; }
+        @media (max-width: 480px) {
+            .notification-container { top: 16px; right: 16px; left: 16px; max-width: none; }
+        }
+
         /* ========== GRID DE CARDS ========== */
         .cards-grid {
             display: grid;
@@ -412,6 +528,7 @@
         import { db, auth } from '/assets/js/firebase-config.js';
         import { collection, getDocs, query, orderBy, deleteDoc, doc } from 'https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js';
         import { garantirAutenticacao } from '/assets/js/auth-guard.js';
+        import { notificacao } from '/assets/js/notification-system.js';
 
         const container = document.getElementById('planos-cards');
         const empty = document.getElementById('emptyMessage');
@@ -587,7 +704,7 @@
                 renderCards(planos);
             } catch (err) {
                 console.error('Erro ao carregar planos:', err);
-                Swal.fire('Erro', 'Falha ao carregar planos de ação', 'error');
+                notificacao.erro('Erro', 'Falha ao carregar planos de ação');
             }
         }
 
@@ -621,7 +738,7 @@
                 // Verificar se o usuário é o criador do plano
                 const plano = planos.find(x => x.id === id);
                 if (!plano || plano.criadoPor !== currentUserId) {
-                    Swal.fire('Acesso negado', 'Você só pode editar planos criados por você.', 'warning');
+                    notificacao.aviso('Acesso negado', 'Você só pode editar planos criados por você.');
                     return;
                 }
                 // navegar para o formulário e instruir para abrir o plano em edição
@@ -633,7 +750,7 @@
                 // Verificar se o usuário é o criador do plano
                 const plano = planos.find(x => x.id === id);
                 if (!plano || plano.criadoPor !== currentUserId) {
-                    Swal.fire('Acesso negado', 'Você só pode excluir planos criados por você.', 'warning');
+                    notificacao.aviso('Acesso negado', 'Você só pode excluir planos criados por você.');
                     return;
                 }
                 const res = await Swal.fire({
@@ -646,11 +763,11 @@
                 if (res.isConfirmed) {
                     try {
                         await deleteDoc(doc(db, 'planos-acao', id));
-                        Swal.fire('Deletado', 'Plano removido com sucesso', 'success');
+                        notificacao.sucesso('Deletado', 'Plano removido com sucesso');
                         await carregarPlanos();
                     } catch (err) {
                         console.error(err);
-                        Swal.fire('Erro', 'Falha ao deletar plano', 'error');
+                        notificacao.erro('Erro', 'Falha ao deletar plano');
                     }
                 }
             }
