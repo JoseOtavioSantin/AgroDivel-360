@@ -1,10 +1,10 @@
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap' );
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
 
 * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
-    font-family: 'Poppins', sans-serif;
+    font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
 }
 
 :root {
@@ -181,7 +181,7 @@ body {
 
 /* 2. Regra que MOSTRA o submenu quando o PAI (.submenu-parent) tem a classe .open */
 .nav-link.submenu-parent.open .submenu {
-    max-height: 500px; /* Altura suficiente para todos os itens */
+    max-height: 800px; /* Altura aumentada para suportar submenus aninhados */
     padding-top: 5px;
     padding-bottom: 5px;
 }
@@ -245,6 +245,19 @@ body {
 /* ==================================================================== */
 /* <<< FIM DA SEÇÃO DO SUBMENU >>> */
 /* ==================================================================== */
+
+/* Suporte para submenus aninhados */
+.submenu .submenu-parent > a {
+    padding-left: 10px;
+    font-size: 14px;
+}
+
+.submenu .submenu {
+    padding-left: 15px;
+    background: rgba(0, 0, 0, 0.25); /* Fundo um pouco mais escuro para submenus aninhados */
+    margin-top: 3px;
+    margin-bottom: 3px;
+}
 
 .menu-bar {
     height: calc(100% - 70px);

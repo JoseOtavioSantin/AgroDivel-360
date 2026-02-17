@@ -52,12 +52,16 @@ function inicializarInterface() {
 
                 const isOpen = parent.classList.contains("open");
 
-                // Fecha todos os OUTROS submenus para manter a interface limpa
-                submenuParents.forEach(p => {
-                    if (p !== parent) {
-                        p.classList.remove("open");
-                    }
-                });
+                // Fecha apenas os OUTROS submenus no mesmo nível (irmãos), não os filhos
+                const parentLevel = parent.parentElement;
+                if (parentLevel) {
+                    const siblings = Array.from(parentLevel.querySelectorAll(':scope > .submenu-parent'));
+                    siblings.forEach(sibling => {
+                        if (sibling !== parent) {
+                            sibling.classList.remove("open");
+                        }
+                    });
+                }
 
                 // Abre ou fecha o submenu que foi clicado.
                 // A classe 'open' é adicionada/removida APENAS no elemento pai (o <li>).
