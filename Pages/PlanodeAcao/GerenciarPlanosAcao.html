@@ -1,0 +1,905 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="utf-8">
+    <title>Gerenciar Planos de Ação - Agro Divel 360</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="icon" type="image/png" href="/assets/images/iconeaba.png">
+
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <link rel="stylesheet" href="/assets/css/style.css">
+    <link rel="stylesheet" href="/assets/css/Pages/Formularios/style-forms.css">
+    <style>
+        /* ========== NOTIFICATION SYSTEM ========== */
+        .notification-container {
+            position: fixed;
+            top: 24px;
+            right: 24px;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            pointer-events: none;
+            max-width: 380px;
+            width: 100%;
+        }
+        .notification-card {
+            display: flex;
+            align-items: flex-start;
+            background: #ffffff;
+            border-radius: 16px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.12), 0 2px 10px rgba(0, 0, 0, 0.08);
+            overflow: hidden;
+            animation: slideIn 0.4s cubic-bezier(0.21, 1.02, 0.73, 1);
+            pointer-events: auto;
+            position: relative;
+            border: 1px solid rgba(0, 0, 0, 0.05);
+        }
+        .notification-body {
+            display: flex;
+            align-items: flex-start;
+            gap: 14px;
+            padding: 16px 16px 16px 20px;
+            flex: 1;
+        }
+        .notification-icon-wrapper {
+            width: 42px;
+            height: 42px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            background: #fef2f2;
+        }
+        .notification-card.sucesso .notification-icon-wrapper { background: #f0fdf4; }
+        .notification-card.aviso .notification-icon-wrapper { background: #fffbeb; }
+        .notification-card.info .notification-icon-wrapper { background: #eff6ff; }
+        .notification-icon-wrapper svg { width: 22px; height: 22px; }
+        .notification-card .icon-erro { color: #ef4444; }
+        .notification-card .icon-sucesso { color: #22c55e; }
+        .notification-card .icon-aviso { color: #f59e0b; }
+        .notification-card .icon-info { color: #3b82f6; }
+        .notification-text { flex: 1; min-width: 0; }
+        .notification-title {
+            font-weight: 600;
+            font-size: 14px;
+            color: #1f2937;
+            margin-bottom: 4px;
+            line-height: 1.4;
+        }
+        .notification-message {
+            font-size: 13px;
+            color: #6b7280;
+            line-height: 1.5;
+            word-wrap: break-word;
+        }
+        .notification-close-btn {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            width: 28px;
+            height: 28px;
+            border-radius: 8px;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #9ca3af;
+            transition: all 0.2s ease;
+        }
+        .notification-close-btn:hover { background: #f3f4f6; color: #374151; }
+        .notification-close-btn svg { width: 16px; height: 16px; }
+        .notification-progress {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: #f3f4f6;
+        }
+        .notification-progress-bar {
+            height: 100%;
+            background: #ef4444;
+            animation: shrink linear forwards;
+            transform-origin: left;
+        }
+        .notification-card.sucesso .notification-progress-bar { background: #22c55e; }
+        .notification-card.aviso .notification-progress-bar { background: #f59e0b; }
+        .notification-card.info .notification-progress-bar { background: #3b82f6; }
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        @keyframes slideOut {
+            from { transform: translateX(0); opacity: 1; }
+            to { transform: translateX(100%); opacity: 0; }
+        }
+        @keyframes shrink {
+            from { width: 100%; }
+            to { width: 0%; }
+        }
+        .notification-card.removing { animation: slideOut 0.3s ease-in forwards; }
+        @media (max-width: 480px) {
+            .notification-container { top: 16px; right: 16px; left: 16px; max-width: none; }
+        }
+
+        /* ========== GRID DE CARDS ========== */
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+            gap: 24px;
+            margin-top: 24px;
+        }
+        @media (max-width: 600px) {
+            .cards-grid { grid-template-columns: 1fr; gap: 16px; }
+        }
+
+        /* ========== CARD PRINCIPAL ========== */
+        .plan-card {
+            background: #ffffff;
+            border-radius: 20px;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            border: 1px solid #e5e7eb;
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .plan-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
+            border-color: #3b82f6;
+        }
+
+        /* ========== HEADER DO CARD ========== */
+        .plan-card__header {
+            padding: 20px 20px 16px;
+            background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%);
+            border-bottom: 1px solid #f1f5f9;
+            position: relative;
+        }
+        .plan-card__badges {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+        }
+        .plan-card__badge {
+            padding: 5px 12px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-radius: 6px;
+        }
+        .badge-status {
+            background: #f1f5f9;
+            color: #475569;
+        }
+        .badge-status[data-status="Concluído"] { background: #dcfce7; color: #166534; }
+        .badge-status[data-status="Em Andamento"] { background: #dbeafe; color: #1e40af; }
+        .badge-status[data-status="Atrasado"] { background: #fee2e2; color: #b91c1c; }
+        .badge-status[data-status="Não Iniciado"] { background: #f3f4f6; color: #6b7280; }
+        .badge-status[data-status="Cancelado"] { background: #fef3c7; color: #92400e; }
+
+        .badge-priority { border-radius: 6px; }
+        .badge-priority-baixo { background: #f0fdf4; color: #166534; }
+        .badge-priority-médio { background: #fef9c3; color: #854d0e; }
+        .badge-priority-alto { background: #ffedd5; color: #c2410c; }
+        .badge-priority-crítico { background: #fee2e2; color: #b91c1c; }
+
+        .plan-card__title {
+            font-size: 18px;
+            font-weight: 700;
+            color: #111827;
+            margin: 0;
+            line-height: 1.4;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        /* ========== CORPO DO CARD ========== */
+        .plan-card__body {
+            padding: 16px 20px;
+            flex: 1;
+        }
+        .plan-card__description {
+            color: #6b7280;
+            font-size: 14px;
+            line-height: 1.6;
+            margin-bottom: 16px;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        .plan-card__meta {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+        .meta-item {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+        .meta-item__label {
+            font-size: 11px;
+            color: #9ca3af;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 600;
+        }
+        .meta-item__value {
+            font-size: 14px;
+            color: #111827;
+            font-weight: 600;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* ========== PROGRESSO ========== */
+        .plan-card__progress {
+            padding: 0 20px 16px;
+        }
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        .progress-label {
+            font-size: 12px;
+            color: #6b7280;
+            font-weight: 500;
+        }
+        .progress-value {
+            font-size: 14px;
+            font-weight: 700;
+            color: #111827;
+        }
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #f1f5f9;
+            border-radius: 999px;
+            overflow: hidden;
+        }
+        .progress-bar__fill {
+            height: 100%;
+            border-radius: 999px;
+            transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+            background: linear-gradient(90deg, #3b82f6, #8b5cf6);
+        }
+        .progress-bar__fill[data-status="Concluído"] { background: linear-gradient(90deg, #22c55e, #10b981); }
+        .progress-bar__fill[data-status="Atrasado"] { background: linear-gradient(90deg, #ef4444, #f97316); }
+
+        /* ========== FOOTER DO CARD ========== */
+        .plan-card__footer {
+            padding: 16px 20px;
+            background: #fafbfc;
+            border-top: 1px solid #f1f5f9;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .plan-card__footer-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .plan-card__dates {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 13px;
+            color: #6b7280;
+        }
+        .plan-card__dates i {
+            width: 16px;
+            height: 16px;
+            color: #9ca3af;
+        }
+        .plan-card__dates.is-late {
+            color: #dc2626;
+            font-weight: 600;
+        }
+        .plan-card__dates.is-late i {
+            color: #dc2626;
+        }
+        .late-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            background: #fef2f2;
+            color: #dc2626;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 700;
+            border: 1px solid #fecaca;
+        }
+        .late-badge i {
+            width: 14px;
+            height: 14px;
+        }
+        .late-alert {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: linear-gradient(135deg, #fef2f2 0%, #fff5f5 100%);
+            color: #dc2626;
+            padding: 10px 14px;
+            border-radius: 10px;
+            font-size: 13px;
+            font-weight: 500;
+            border: 1px solid #fecaca;
+            width: 100%;
+        }
+        .late-alert i {
+            width: 18px;
+            height: 18px;
+            flex-shrink: 0;
+        }
+        .late-alert strong {
+            font-weight: 700;
+        }
+        
+        /* Animação corrigida - removida duplicação */
+        @keyframes pulse-late {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        .plan-card__actions {
+            display: flex;
+            gap: 8px;
+        }
+        .btn-action {
+            width: 36px;
+            height: 36px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 10px;
+            background: #ffffff;
+            border: 1px solid #e5e7eb;
+            color: #6b7280;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .btn-action:hover {
+            background: #f1f5f9;
+            color: #3b82f6;
+            border-color: #3b82f6;
+            transform: translateY(-2px);
+        }
+        .btn-action.btn-delete:hover {
+            background: #fef2f2;
+            color: #ef4444;
+            border-color: #ef4444;
+        }
+        .btn-action i {
+            width: 18px;
+            height: 18px;
+        }
+
+        /* ========== ANIMAÇÃO DE ENTRADA ========== */
+        .card-enter { 
+            opacity: 0; 
+            transform: translateY(20px); 
+        }
+        .card-enter.card-enter--visible { 
+            opacity: 1; 
+            transform: translateY(0); 
+            transition: opacity 0.4s ease, transform 0.5s cubic-bezier(0.4, 0, 0.2, 1); 
+        }
+
+        /* ========== FILTROS ========== */
+        .filters { 
+            display: flex; 
+            gap: 12px; 
+            align-items: center; 
+            flex-wrap: wrap; 
+            background: #ffffff; 
+            padding: 16px; 
+            border-radius: 16px; 
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04); 
+            border: 1px solid #e5e7eb; 
+        }
+        .filters input[type="search"], .filters select { 
+            background: #f8fafc; 
+            border: 1px solid #e5e7eb; 
+            padding: 12px 16px; 
+            border-radius: 10px; 
+            min-width: 220px; 
+            color: #111827; 
+            font-weight: 500; 
+            transition: all 0.2s ease;
+        }
+        .filters input[type="search"]:focus, .filters select:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+        .filters input[type="search"]::placeholder { 
+            color: #9ca3af; 
+            font-weight: 400; 
+        }
+
+        /* ========== EMPTY STATE ========== */
+        .empty-cards { 
+            text-align: center; 
+            padding: 60px 20px; 
+            color: #6b7280; 
+            background: #ffffff; 
+            border-radius: 16px; 
+            border: 2px dashed #e5e7eb; 
+        }
+        .empty-cards i { 
+            font-size: 48px; 
+            color: #d1d5db; 
+            margin-bottom: 16px; 
+        }
+        .empty-cards p { 
+            font-size: 16px; 
+            margin-bottom: 20px; 
+        }
+
+        /* ========== BOTÕES ========== */
+        .btn-primary {
+            background: #3b82f6;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: background 0.2s;
+        }
+        .btn-primary:hover {
+            background: #2563eb;
+        }
+        .btn-secondary {
+            background: #f3f4f6;
+            color: #374151;
+            padding: 10px 20px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: background 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .btn-secondary:hover {
+            background: #e5e7eb;
+        }
+
+        /* ========== RESPONSIVO ========== */
+        @media (max-width: 520px) {
+            .plan-card__header { padding: 16px; }
+            .plan-card__body { padding: 12px 16px; }
+            .plan-card__footer { padding: 12px 16px; }
+            .plan-card__progress { padding: 0 16px 12px; }
+            .plan-card__meta { grid-template-columns: 1fr; }
+            .plan-card__title { font-size: 16px; }
+        }
+    </style>
+</head>
+<body>
+    <nav id="sidebar-placeholder"></nav>
+
+    <section class="home">
+        <div class="text">
+            <h1>Gerenciar Planos de Ação</h1>
+            <p>Visualize e administre os planos de ação cadastrados.</p>
+        </div>
+
+        <div class="content-card">
+            <div class="content-card-body">
+                <div style="display:flex; justify-content:space-between; gap:16px; align-items:center; flex-wrap:wrap;">
+                    <div class="filters" aria-hidden="false">
+                        <input id="search-plano" type="search" placeholder="Pesquisar por nome, responsável ou KPI">
+
+                        <select id="filter-status" aria-label="Filtrar por status">
+                            <option value="">Todos os status</option>
+                            <option value="Não Iniciado">Não Iniciado</option>
+                            <option value="Em Andamento">Em Andamento</option>
+                            <option value="Atrasado">Atrasado</option>
+                            <option value="Concluído">Concluído</option>
+                            <option value="Cancelado">Cancelado</option>
+                        </select>
+
+                        <select id="filter-priority" aria-label="Filtrar por prioridade">
+                            <option value="">Todas prioridades</option>
+                            <option value="Baixo">Baixa</option>
+                            <option value="Médio">Média</option>
+                            <option value="Alto">Alta</option>
+                            <option value="Crítico">Crítico</option>
+                        </select>
+                    </div>
+
+                    <div style="display:flex; gap:12px; align-items:center;">
+                        <a class="btn-secondary" href="/Pages/PlanodeAcao/form_PlanoAcao.html" title="Criar novo plano">
+                            <i data-lucide="plus-circle"></i>
+                        </a>
+                        <button id="btn-refresh" class="btn-action" title="Atualizar lista">
+                            <i data-lucide="refresh-cw"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div id="planos-container" style="margin-top:18px;">
+                    <div id="emptyMessage" class="empty-cards" style="display:none;">
+                        <i class='bx bx-inbox' style="font-size:36px; display:block; margin-bottom:12px;"></i>
+                        <p>Nenhum plano de ação cadastrado.</p>
+                        <a href="/Pages/PlanodeAcao/form_PlanoAcao.html" class="btn-primary">Criar novo plano</a>
+                    </div>
+
+                    <div id="planos-cards" class="cards-grid" role="list" aria-live="polite"></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Notification container -->
+    <div id="notification-container" class="notification-container"></div>
+
+    <script type="module">
+        import { db, auth } from '/assets/js/firebase-config.js';
+        import { collection, getDocs, query, orderBy, deleteDoc, doc } from 'https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js';
+        import { garantirAutenticacao } from '/assets/js/auth-guard.js';
+        import { confirmar } from '/assets/js/confirm-dialog.js';
+
+        // Sistema de notificação simplificado
+        const notificacao = {
+            sucesso(titulo, mensagem) {
+                showNotification(titulo, mensagem, 'sucesso');
+            },
+            erro(titulo, mensagem) {
+                showNotification(titulo, mensagem, 'erro');
+            },
+            aviso(titulo, mensagem) {
+                showNotification(titulo, mensagem, 'aviso');
+            },
+            info(titulo, mensagem) {
+                showNotification(titulo, mensagem, 'info');
+            }
+        };
+
+        // Função para mostrar notificações
+        function showNotification(titulo, mensagem, tipo = 'info') {
+            const container = document.getElementById('notification-container');
+            if (!container) return;
+
+            const notification = document.createElement('div');
+            notification.className = `notification-card ${tipo}`;
+            
+            const icons = {
+                sucesso: 'check-circle',
+                erro: 'alert-circle',
+                aviso: 'alert-triangle',
+                info: 'info'
+            };
+
+            notification.innerHTML = `
+                <div class="notification-body">
+                    <div class="notification-icon-wrapper">
+                        <i data-lucide="${icons[tipo]}" class="icon-${tipo}"></i>
+                    </div>
+                    <div class="notification-text">
+                        <div class="notification-title">${titulo}</div>
+                        <div class="notification-message">${mensagem}</div>
+                    </div>
+                    <button class="notification-close-btn" onclick="this.closest('.notification-card').remove()">
+                        <i data-lucide="x"></i>
+                    </button>
+                </div>
+                <div class="notification-progress">
+                    <div class="notification-progress-bar" style="animation-duration: 5s;"></div>
+                </div>
+            `;
+
+            container.appendChild(notification);
+            lucide.createIcons();
+
+            // Auto-remover após 5 segundos
+            setTimeout(() => {
+                notification.classList.add('removing');
+                setTimeout(() => notification.remove(), 300);
+            }, 5000);
+        }
+
+        // Função de sanitização para prevenir XSS
+        function sanitizeHTML(str) {
+            if (!str) return '';
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
+        const container = document.getElementById('planos-cards');
+        const empty = document.getElementById('emptyMessage');
+        const searchEl = document.getElementById('search-plano');
+        const filterStatus = document.getElementById('filter-status');
+        const filterPriority = document.getElementById('filter-priority');
+        const btnRefresh = document.getElementById('btn-refresh');
+
+        let planos = [];
+        let currentUserId = null;
+
+        function fmtDate(d) {
+            if (!d) return '-';
+            try { 
+                const dateObj = d.toDate ? d.toDate() : new Date(d); 
+                return dateObj.toLocaleDateString('pt-BR'); 
+            } catch (e) { 
+                return '-'; 
+            }
+        }
+
+        function priorityToColor(prio) {
+            if (!prio) return 'badge-priority-baixo';
+            const p = prio.toString().toLowerCase();
+            if (p.includes('crít')) return 'badge-priority-crítico';
+            if (p.includes('alto')) return 'badge-priority-alto';
+            if (p.includes('méd')) return 'badge-priority-médio';
+            return 'badge-priority-baixo';
+        }
+
+        // Calcula se está atrasado e quantos dias
+        function calcLateDays(endDate, status) {
+            // Se já está concluído ou cancelado, não está atrasado
+            if (status === 'Concluído' || status === 'Cancelado') return null;
+            
+            if (!endDate) return null;
+            
+            try {
+                const end = endDate.toDate ? endDate.toDate() : new Date(endDate);
+                const now = new Date();
+                
+                // Zera as horas para comparar apenas datas
+                end.setHours(0, 0, 0, 0);
+                now.setHours(0, 0, 0, 0);
+                
+                if (now > end) {
+                    const diffTime = now - end;
+                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                    return diffDays;
+                }
+            } catch (e) {
+                return null;
+            }
+            return null;
+        }
+
+        function renderCards(list) {
+            container.innerHTML = '';
+            if (!Array.isArray(list) || list.length === 0) {
+                empty.style.display = 'block';
+                return;
+            }
+            empty.style.display = 'none';
+
+            list.forEach((p, idx) => {
+                const el = document.createElement('article');
+                el.className = 'plan-card';
+                el.setAttribute('role','listitem');
+
+                // Usar o progresso salvo no Firebase
+                const progress = p.progresso !== undefined ? p.progresso : 0;
+                const prioClass = priorityToColor(p.prioridade);
+                const status = p.status || 'Não Iniciado';
+                const lateDays = calcLateDays(p.whenFim, status);
+                const isLate = lateDays !== null && lateDays > 0;
+
+                // Sanitizar dados para prevenir XSS
+                const nomeSanitizado = sanitizeHTML(p.nome) || 'Sem título';
+                const descricaoSanitizada = sanitizeHTML(p.what || p.descricao || 'Sem descrição disponível');
+                const responsavelSanitizado = sanitizeHTML(p.who) || '-';
+                const metaSanitizada = sanitizeHTML(p.meta || p.kpiNome) || '-';
+
+                el.innerHTML = `
+                    <div class="plan-card__header">
+                        <div class="plan-card__badges">
+                            <span class="plan-card__badge badge-status" data-status="${status}">${status}</span>
+                            <span class="plan-card__badge ${prioClass}">${p.prioridade || 'Baixo'}</span>
+                        </div>
+                        <h3 class="plan-card__title">${nomeSanitizado}</h3>
+                    </div>
+
+                    <div class="plan-card__body">
+                        <p class="plan-card__description">${descricaoSanitizada}</p>
+                        <div class="plan-card__meta">
+                            <div class="meta-item">
+                                <span class="meta-item__label">Responsável</span>
+                                <span class="meta-item__value">${responsavelSanitizado}</span>
+                            </div>
+                            <div class="meta-item">
+                                <span class="meta-item__label">Meta/KPI</span>
+                                <span class="meta-item__value">${metaSanitizada}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="plan-card__progress">
+                        <div class="progress-header">
+                            <span class="progress-label">Progresso</span>
+                            <span class="progress-value">${progress}%</span>
+                        </div>
+                        <div class="progress-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${progress}">
+                            <div class="progress-bar__fill" data-status="${status}" style="width: ${progress}%"></div>
+                        </div>
+                    </div>
+
+                    <div class="plan-card__footer">
+                        <div class="plan-card__footer-row">
+                            <div class="plan-card__dates ${isLate ? 'is-late' : ''}">
+                                <i data-lucide="${isLate ? 'alert-circle' : 'calendar'}"></i>
+                                <span>${fmtDate(p.whenInicio)} → ${fmtDate(p.whenFim)}</span>
+                            </div>
+                            <div class="plan-card__actions">
+                                <button type="button" class="btn-action" data-id="${p.id}" data-action="view" title="Ver detalhes"><i data-lucide="eye"></i></button>
+                                ${p.criadoPor === currentUserId ? `<button type="button" class="btn-action" data-id="${p.id}" data-action="edit" title="Editar"><i data-lucide="edit-2"></i></button>` : ''}
+                                ${p.criadoPor === currentUserId ? `<button type="button" class="btn-action btn-delete" data-id="${p.id}" data-action="delete" title="Excluir"><i data-lucide="trash-2"></i></button>` : ''}
+                            </div>
+                        </div>
+                        ${isLate ? `<div class="late-alert">
+                            <i data-lucide="alert-triangle"></i>
+                            <span><strong>${lateDays} dia${lateDays > 1 ? 's' : ''}</strong> de atraso</span>
+                        </div>` : ''}
+                    </div>
+                `; 
+
+                // Inserir com animação
+                el.classList.add('card-enter');
+                container.appendChild(el);
+                requestAnimationFrame(() => setTimeout(() => el.classList.add('card-enter--visible'), idx * 70));
+            });
+
+            // Recriar ícones Lucide
+            try { 
+                if (typeof lucide !== 'undefined' && lucide.createIcons) {
+                    lucide.createIcons(); 
+                }
+            } catch (e) { 
+                console.warn('Erro ao criar ícones:', e);
+            }
+        }
+
+        async function carregarPlanos() {
+            try {
+                const q = query(collection(db, 'planos-acao'), orderBy('dataCriacao', 'desc'));
+                const snap = await getDocs(q);
+                planos = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+
+                // Enriquecer dados
+                planos.forEach(pl => {
+                    if (pl.kpiId && !pl.kpiNome) pl.kpiNome = pl.kpiNome || '';
+                    pl.descricao = pl.descricao || (pl.what ? (String(pl.what).slice(0,80) + (pl.what.length>80 ? '…':'')) : '');
+                    if (!pl.tags) pl.tags = [];
+                    if (pl.status && !pl.tags.includes(pl.status)) pl.tags.unshift(pl.status);
+                });
+
+                renderCards(planos);
+            } catch (err) {
+                console.error('Erro ao carregar planos:', err);
+                notificacao.erro('Erro', 'Falha ao carregar planos de ação');
+            }
+        }
+
+        function applyFilters() {
+            const q = searchEl.value.trim().toLowerCase();
+            const status = filterStatus.value;
+            const prio = filterPriority.value;
+
+            let filtered = planos.filter(p => {
+                if (status && p.status !== status) return false;
+                if (prio && p.prioridade !== prio) return false;
+                if (!q) return true;
+                return (p.nome || '').toLowerCase().includes(q) || 
+                       (p.responsavel || '').toLowerCase().includes(q) || 
+                       (p.kpiNome || '').toLowerCase().includes(q);
+            });
+            renderCards(filtered);
+        }
+
+        container.addEventListener('click', async (ev) => {
+            const btn = ev.target.closest('button[data-action]');
+            if (!btn) return;
+            const id = btn.dataset.id;
+            const action = btn.dataset.action;
+
+            if (action === 'view') {
+                try {
+                    sessionStorage.setItem('viewPlanoId', id);
+                } catch (e) {
+                    console.warn('SessionStorage não disponível:', e);
+                }
+                location.href = '/Pages/PlanodeAcao/DetalhesPlanoAcao.html';
+            }
+
+            if (action === 'edit') {
+                const plano = planos.find(x => x.id === id);
+                if (!plano || plano.criadoPor !== currentUserId) {
+                    notificacao.aviso('Acesso negado', 'Você só pode editar planos criados por você.');
+                    return;
+                }
+                try { 
+                    sessionStorage.setItem('planToEditId', id); 
+                } catch (e) { 
+                    console.warn('SessionStorage não disponível:', e);
+                }
+                location.href = '/Pages/PlanodeAcao/form_PlanoAcao.html';
+            }
+
+            if (action === 'delete') {
+                const plano = planos.find(x => x.id === id);
+                if (!plano || plano.criadoPor !== currentUserId) {
+                    notificacao.aviso('Acesso negado', 'Você só pode excluir planos criados por você.');
+                    return;
+                }
+                // NotificarSimNao (confirm-dialog.js)
+                const res = await confirmar.excluir(
+                    'Excluir plano?',
+                    'A remoção é irreversível.'
+                );
+                if (res) {
+                    try {
+                        await deleteDoc(doc(db, 'planos-acao', id));
+                        notificacao.sucesso('Deletado', 'Plano removido com sucesso');
+                        await carregarPlanos();
+                    } catch (err) {
+                        console.error(err);
+                        notificacao.erro('Erro', 'Falha ao deletar plano');
+                    }
+                }
+            }
+        });
+
+        // Eventos de filtro
+        searchEl.addEventListener('input', () => applyFilters());
+        filterStatus.addEventListener('input', () => applyFilters());
+        filterPriority.addEventListener('input', () => applyFilters());
+        btnRefresh.addEventListener('click', () => carregarPlanos());
+
+        // Inicialização
+        document.addEventListener('DOMContentLoaded', async () => {
+            try {
+                await garantirAutenticacao(auth);
+                currentUserId = auth.currentUser?.uid || null;
+                await carregarPlanos();
+                
+                // Inicializar ícones apenas uma vez
+                if (typeof lucide !== 'undefined' && lucide.createIcons) {
+                    lucide.createIcons();
+                }
+            } catch (err) {
+                console.error(err);
+                notificacao.erro('Erro', 'Falha ao inicializar página');
+            }
+        });
+    </script>
+
+    <script type="module" src="/assets/js/auth.js"></script>
+    <script src="/assets/js/main.js"></script>
+    <script src="/assets/js/components/Sidebar.js"></script>
+</body>
+</html>

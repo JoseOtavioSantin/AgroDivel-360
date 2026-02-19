@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Manutenção | Agro Divel 360</title>
+  <link rel="icon" type="image/png" href="/assets/images/iconeaba.png">
+  <meta name="theme-color" content="#001439" />
+  
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    }
+
+    body {
+      background: linear-gradient(135deg, #0f3460 0%, #1a5490 100%);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    body::before {
+      content: '';
+      position: absolute;
+      width: 400px;
+      height: 400px;
+      background: rgba(255, 255, 255, 0.03);
+      border-radius: 50%;
+      top: -100px;
+      right: -100px;
+    }
+
+    body::after {
+      content: '';
+      position: absolute;
+      width: 300px;
+      height: 300px;
+      background: rgba(255, 255, 255, 0.02);
+      border-radius: 50%;
+      bottom: -80px;
+      left: -80px;
+    }
+
+    .maintenance-container {
+      max-width: 600px;
+      width: 100%;
+      background: white;
+      border-radius: 24px;
+      box-shadow: 0 25px 80px rgba(0, 0, 0, 0.35);
+      overflow: hidden;
+      position: relative;
+      z-index: 1;
+      animation: fadeInUp 0.8s ease-out;
+    }
+
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .maintenance-header {
+      background: linear-gradient(135deg, #0f3460 0%, #1a5490 100%);
+      padding: 50px 40px;
+      text-align: center;
+      color: white;
+      position: relative;
+    }
+
+    .maintenance-header::before {
+      content: '';
+      position: absolute;
+      width: 200px;
+      height: 200px;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 50%;
+      top: -80px;
+      right: -60px;
+    }
+
+    .logo-container {
+      margin-bottom: 25px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .logo-container img {
+      width: 160px;
+      height: auto;
+      filter: brightness(0) invert(1);
+    }
+
+    .maintenance-icon {
+      width: 100px;
+      height: 100px;
+      background: rgba(255, 255, 255, 0.15);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 25px;
+      position: relative;
+      z-index: 1;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.3);
+      }
+      50% {
+        transform: scale(1.05);
+        box-shadow: 0 0 0 15px rgba(255, 255, 255, 0);
+      }
+    }
+
+    .maintenance-icon i {
+      font-size: 45px;
+      color: white;
+    }
+
+    .maintenance-body {
+      padding: 50px 40px;
+      text-align: center;
+    }
+
+    .maintenance-title {
+      font-size: 28px;
+      font-weight: 700;
+      color: #0f3460;
+      margin-bottom: 15px;
+      letter-spacing: -0.5px;
+    }
+
+    .maintenance-subtitle {
+      font-size: 16px;
+      color: #666;
+      line-height: 1.7;
+      max-width: 450px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .maintenance-footer {
+      background: #f8f9fa;
+      padding: 20px 40px;
+      text-align: center;
+      border-top: 1px solid #e9ecef;
+    }
+
+    .maintenance-footer p {
+      font-size: 12px;
+      color: #888;
+    }
+
+    .maintenance-footer a {
+      color: #1a5490;
+      text-decoration: none;
+      font-weight: 500;
+    }
+
+    .maintenance-footer a:hover {
+      text-decoration: underline;
+    }
+
+    /* Responsivo */
+    @media (max-width: 600px) {
+      .maintenance-container {
+        border-radius: 16px;
+      }
+
+      .maintenance-header {
+        padding: 40px 25px;
+      }
+
+      .logo-container img {
+        width: 130px;
+      }
+
+      .maintenance-icon {
+        width: 80px;
+        height: 80px;
+      }
+
+      .maintenance-icon i {
+        font-size: 35px;
+      }
+
+      .maintenance-body {
+        padding: 35px 25px;
+      }
+
+      .maintenance-title {
+        font-size: 22px;
+      }
+
+      .maintenance-subtitle {
+        font-size: 14px;
+      }
+
+      .maintenance-footer {
+        padding: 15px 25px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="maintenance-container">
+    <div class="maintenance-header">
+      <div class="logo-container">
+        <img src="/assets/images/Logo.png" alt="Agro Divel 360">
+      </div>
+      <div class="maintenance-icon">
+        <i class="fas fa-tools"></i>
+      </div>
+    </div>
+
+    <div class="maintenance-body">
+      <h1 class="maintenance-title">Sistema em Manutenção</h1>
+      <p class="maintenance-subtitle">
+        Estamos realizando melhorias para oferecer uma experiência ainda melhor. 
+        Em breve estaremos de volta!
+      </p>
+    </div>
+
+    <div class="maintenance-footer">
+      <p>&copy; 2026 <a href="#">Agro Divel 360</a> - Todos os direitos reservados</p>
+    </div>
+  </div>
+</body>
+</html>

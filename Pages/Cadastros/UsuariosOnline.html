@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="theme-color" content="#2c2f3f" />
+  <title>Controle - Usuários Online</title>
+  <link rel="icon" type="image/png" href="/assets/images/iconeaba.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- LIBS EXTERNAS -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+  <!-- CSS -->
+  <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+  <link rel="stylesheet" href="/assets/css/style.css">
+  <link rel="stylesheet" href="/assets/css/Pages/Dashboard/Principal.css">
+
+  <style>
+    .status-online {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      background-color: #dcfce7;
+      color: #166534;
+      border-radius: 6px;
+      font-weight: 600;
+      font-size: 13px;
+    }
+    
+    .status-online::before {
+      content: '';
+      width: 8px;
+      height: 8px;
+      background-color: #16a34a;
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+    }
+
+    .status-offline {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      background-color: #f3f4f6;
+      color: #4b5563;
+      border-radius: 6px;
+      font-weight: 600;
+      font-size: 13px;
+    }
+    
+    .status-offline::before {
+      content: '';
+      width: 8px;
+      height: 8px;
+      background-color: #9ca3af;
+      border-radius: 50%;
+    }
+
+    @keyframes pulse {
+      0%, 100% {
+        opacity: 1;
+      }
+      50% {
+        opacity: 0.5;
+      }
+    }
+
+    .content-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .btn-acao {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background-color: #193b7c;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      padding: 6px;
+      cursor: pointer;
+      transition: background-color 0.2s ease;
+      text-decoration: none;
+      margin: 0 2px;
+    }
+
+    .btn-acao:hover {
+      background-color: #132a5a;
+    }
+
+    .btn-acao i {
+      width: 18px;
+      height: 18px;
+      pointer-events: none;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+    }
+
+    thead {
+      background-color: #f3f4f6;
+    }
+
+    th {
+      padding: 12px;
+      text-align: left;
+      font-weight: 600;
+      color: #1f2937;
+      border-bottom: 2px solid #e5e7eb;
+    }
+
+    td {
+      padding: 12px;
+      border-bottom: 1px solid #e5e7eb;
+    }
+
+    tr:hover {
+      background-color: #f9fafb;
+    }
+  </style>
+</head>
+<body>
+
+  <nav id="sidebar-placeholder"></nav>
+
+  <!-- Conteúdo Principal da Página -->
+  <section class="home">
+    <div class="text">
+      <h1>Controle - Usuários Online</h1>
+      <p id="dynamic-title">Carregando...</p>
+    </div>
+
+    <!-- CARD EXPLICATIVO -->
+    <div style="background-color: #f0f4f8; border-left: 4px solid #2563eb; padding: 12px 15px; margin-bottom: 15px; border-radius: 6px;">
+      <p style="margin: 0; font-size: 14px; color: #1f2937;"><strong>📊 Legenda:</strong></p>
+      <p style="margin: 5px 0 0 0; font-size: 13px; color: #4b5563;">
+        <span style="margin-right: 15px;"><span style="display: inline-block; width: 8px; height: 8px; background-color: #16a34a; border-radius: 50%; margin-right: 5px; animation: pulse 2s infinite;"></span><strong>Online:</strong> Usuário conectado agora</span><br/>
+        <span><span style="display: inline-block; width: 8px; height: 8px; background-color: #9ca3af; border-radius: 50%; margin-right: 5px;"></span><strong>Offline:</strong> Sem atividade por mais de 2 minutos (teste)</span>
+      </p>
+    </div>
+
+    <!-- CONTAINER PRINCIPAL DO DASHBOARD -->
+    <div class="content-card">
+      <div class="content-card-header">
+        <h3>Usuários Conectados</h3>
+        <button id="btn-atualizar" class="btn-acao" title="Atualizar lista">
+          <i data-lucide="refresh-cw"></i>
+        </button>
+      </div>
+      <div class="content-card-body">
+        <table>
+          <thead>
+            <tr>
+              <th>Nome</th>
+              <th>Filial</th>
+              <th>Último Login</th>
+              <th>Tempo Online</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="painel-usuarios">
+            <tr>
+              <td colspan="5" style="text-align: center; padding: 20px;">Carregando...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+<script type="module">
+  import { garantirAutenticacao } from '/assets/js/auth-guard.js';
+  import { getApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import { getFirestore, collection, getDocs, doc, setDoc, deleteDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+  import { getAuth } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+  let db;
+  let userData;
+  let usuariosOnline = [];
+  let currentUid = null;
+
+  async function iniciarPagina() {
+    try {
+      userData = await garantirAutenticacao();
+      const app = getApp();
+      db = getFirestore(app);
+      const auth = getAuth(app);
+      currentUid = auth.currentUser?.uid;
+
+      if (!currentUid) {
+        throw new Error("Usuário não autenticado");
+      }
+
+      // Verificar permissão (apenas admin)
+      if (!userData.grupo || !userData.grupo.includes("admin")) {
+        document.body.innerHTML = `<div class="error-container">Acesso negado. Apenas administradores podem acessar.</div>`;
+        return;
+      }
+
+      document.getElementById("dynamic-title").textContent = `Filial: ${userData.filial ? userData.filial.join(", ") : "Todas"}`;
+      
+      // Registrar usuário como online
+      await registrarUsuarioOnline(currentUid, userData.nome, userData.filial ? userData.filial[0] : "N/A");
+      
+      await carregarUsuariosOnline();
+      configurarListeners();
+      configurarAutoAtualizar();
+
+      // Atualizar última atividade ao clicar
+      document.addEventListener('click', async () => {
+        await atualizarUltimaAtividade(currentUid);
+      });
+
+      // Limpar quando sair
+      window.addEventListener('beforeunload', async () => {
+        await removerUsuarioOnline(currentUid);
+      });
+
+    } catch (error) {
+      console.error("Falha na inicialização:", error);
+      document.body.innerHTML = `<div class="error-container">Erro: ${error.message}</div>`;
+    }
+  }
+
+  async function registrarUsuarioOnline(uid, nome, filial) {
+    try {
+      if (!uid) {
+        console.error("UID inválido:", uid);
+        return;
+      }
+      const usuarioRef = doc(db, "usuariosOnline", uid);
+      await setDoc(usuarioRef, {
+        uid,
+        nome,
+        filial,
+        loginTime: serverTimestamp(),
+        lastActivity: serverTimestamp()
+      }, { merge: true });
+    } catch (error) {
+      console.error("Erro ao registrar:", error);
+    }
+  }
+
+  async function atualizarUltimaAtividade(uid) {
+    try {
+      if (!uid) return;
+      const usuarioRef = doc(db, "usuariosOnline", uid);
+      await setDoc(usuarioRef, {
+        lastActivity: serverTimestamp()
+      }, { merge: true });
+    } catch (error) {
+      // Silenciar erros de atualização
+    }
+  }
+
+  async function removerUsuarioOnline(uid) {
+    try {
+      if (!uid) return;
+      const usuarioRef = doc(db, "usuariosOnline", uid);
+      await deleteDoc(usuarioRef);
+    } catch (error) {
+      console.error("Erro ao remover:", error);
+    }
+  }
+
+  async function carregarUsuariosOnline() {
+    try {
+      const querySnapshot = await getDocs(collection(db, "usuariosOnline"));
+      usuariosOnline = [];
+      const agora = new Date();
+      const timeout = 2 * 60 * 1000; // 2 minutos (para testes)
+
+      querySnapshot.forEach(docItem => {
+        const dados = docItem.data();
+        const lastActivity = dados.lastActivity?.toDate?.() || new Date();
+        const diferencaMs = agora - lastActivity;
+
+        // Se ultrapassou timeout, remover
+        if (diferencaMs > timeout) {
+          removerUsuarioOnline(docItem.id);
+          return;
+        }
+
+        usuariosOnline.push({
+          id: docItem.id,
+          nome: dados.nome || 'N/A',
+          filial: dados.filial || 'N/A',
+          loginTime: dados.loginTime?.toDate?.() || new Date(),
+          lastActivity: lastActivity
+        });
+      });
+
+      renderizarTabela();
+      atualizarStats();
+    } catch (error) {
+      console.error("Erro ao carregar usuários:", error);
+      document.getElementById("painel-usuarios").innerHTML = `<tr><td colspan="5" style="text-align: center; color: red;">Erro: ${error.message}</td></tr>`;
+    }
+  }
+
+  function renderizarTabela() {
+    const painel = document.getElementById("painel-usuarios");
+    
+    if (usuariosOnline.length === 0) {
+      painel.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 20px;">Nenhum usuário online.</td></tr>';
+      return;
+    }
+
+    usuariosOnline.sort((a, b) => new Date(b.loginTime) - new Date(a.loginTime));
+
+    painel.innerHTML = usuariosOnline.map(u => {
+      const tempoOnline = calcularTempoOnline(u.loginTime);
+      const ultimoLogin = formatarData(u.loginTime);
+
+      return `
+        <tr>
+          <td><strong>${u.nome}</strong></td>
+          <td>${u.filial}</td>
+          <td>${ultimoLogin}</td>
+          <td>${tempoOnline}</td>
+          <td><span class="status-online">Online</span></td>
+        </tr>
+      `;
+    }).join("");
+
+    lucide.createIcons();
+  }
+
+  function calcularTempoOnline(loginTime) {
+    const agora = new Date();
+    const diff = Math.floor((agora - loginTime) / 1000);
+
+    if (diff < 60) return `${diff}s`;
+    if (diff < 3600) return `${Math.floor(diff / 60)}m`;
+    if (diff < 86400) return `${Math.floor(diff / 3600)}h`;
+    return `${Math.floor(diff / 86400)}d`;
+  }
+
+  function formatarData(data) {
+    if (!data) return 'N/A';
+    return new Intl.DateTimeFormat('pt-BR', {
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit'
+    }).format(data);
+  }
+
+  function atualizarStats() {
+    // Apenas atualizar títulos
+  }
+
+  function configurarListeners() {
+    document.getElementById("btn-atualizar").addEventListener("click", carregarUsuariosOnline);
+  }
+
+  function configurarAutoAtualizar() {
+    setInterval(carregarUsuariosOnline, 30000);
+  }
+
+  iniciarPagina();
+</script>
+
+<!-- Scripts Globais -->
+<script type="module" src="/assets/js/firebase-config.js"></script>
+<script type="module" src="/assets/js/auth.js"></script>
+<script src="/assets/js/main.js"></script>
+<script src="/assets/js/components/Sidebar.js"></script>
+
+</body>
+</html>

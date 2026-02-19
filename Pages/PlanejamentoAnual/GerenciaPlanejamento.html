@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerenciar Grupos e Contas</title>
+    <link rel="icon" type="image/png" href="/assets/images/iconeaba.png">
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <link rel="stylesheet" href="/assets/css/style.css">
+    <link rel="stylesheet" href="/assets/css/Pages/Formularios/form-planejamento-anual.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+</head>
+<body>
+    <nav id="sidebar-placeholder"></nav>
+    <section class="home" style="min-height: 100vh;">
+        <div class="text">
+            <h1>Gerenciar Grupos e Contas</h1>
+            <p>Adicione, edite ou importe grupos e contas para planejamento anual.</p>
+        </div>
+        <div class="content-card">
+            <div class="content-card-header">
+                <h2>Base de Grupos e Contas</h2>
+                <div class="header-actions">
+                    <button type="button" class="btn-importar-header" id="btn-importar" title="Importar de Excel">
+                        <i class='bx bx-upload'></i> Importar
+                    </button>
+                    <button type="button" class="btn-novo-grupo-header" id="btn-novo-grupo" title="Adicionar Novo Grupo">
+                        <i class='bx bx-plus'></i> Novo Grupo
+                    </button>
+                    <button type="button" class="btn-mover-massa-header" id="btn-mover-massa" title="Mover contas em massa" onclick="window.moverEmMassa()">
+                        <i class='bx bx-share'></i> Mover em Massa
+                    </button>
+                    <button type="button" class="btn-salvar-header" id="btn-salvar" title="Salvar no Firebase">
+                        <i class='bx bx-save'></i> Salvar
+                    </button>
+                    <button type="button" class="btn-toggle-header" id="btn-toggle-grupos" title="Minimizar/Expandir Todos">
+                        <i class='bx bx-collapse-alt'></i> Minimizar Tudo
+                    </button>
+                </div>
+            </div>
+            <div class="content-card-body">
+                <div style="margin-bottom: 16px; display: flex; justify-content: flex-start;">
+                    <input id="campo-pesquisa-grupos-contas" class="input-melhorado" style="max-width: 350px;" type="text" placeholder="Pesquisar grupo, ID ou descrição...">
+                </div>
+                <div class="tabela-wrapper">
+                    <table id="tabela-grupos-contas" class="tabela-planejamento">
+                        <thead>
+                            <tr>
+                                <th>Grupo</th>
+                                <th>ID Conta</th>
+                                <th>Descrição</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabela-body">
+                            <!-- Linhas dinâmicas -->
+                        </tbody>
+                    </table>
+                </div>
+                <style>
+                    .input-melhorado {
+                        padding: 8px 12px;
+                        border: 1.5px solid #1a3263;
+                        border-radius: 5px;
+                        font-size: 1rem;
+                        width: 95%;
+                        box-sizing: border-box;
+                        margin: 2px 0;
+                        background: #f8fafc;
+                        transition: border 0.2s;
+                    }
+                    .input-melhorado:focus {
+                        border: 2px solid #0d6efd;
+                        outline: none;
+                        background: #fff;
+                    }
+                    .btn-acao {
+                        background: #fff;
+                        color: #0d6efd;
+                        border: 1.2px solid #0d6efd;
+                        border-radius: 4px;
+                        padding: 3px 8px;
+                        margin: 2px 2px;
+                        cursor: pointer;
+                        font-size: 0.90rem;
+                        font-weight: 500;
+                        transition: background 0.2s, color 0.2s;
+                        box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+                    }
+                    .btn-acao:hover {
+                        background: #0d6efd;
+                        color: #fff;
+                    }
+                    .btn-add-conta {
+                        background: #0d6efd;
+                        color: #fff;
+                        border: none;
+                        border-radius: 4px;
+                        padding: 3px 10px;
+                        margin-left: 4px;
+                        cursor: pointer;
+                        font-size: 0.90rem;
+                        font-weight: 500;
+                        transition: background 0.2s;
+                    }
+                    .btn-add-conta:hover {
+                        background: #0b5ed7;
+                    }
+                    .btn-salvar-header {
+                        background: #28a745;
+                        color: #fff;
+                        border: none;
+                        border-radius: 4px;
+                        padding: 8px 16px;
+                        cursor: pointer;
+                        font-size: 0.95rem;
+                        font-weight: 500;
+                        display: flex;
+                        align-items: center;
+                        gap: 6px;
+                        transition: background 0.2s;
+                    }
+                    .btn-salvar-header:hover {
+                        background: #218838;
+                    }
+                    .btn-toggle-header {
+                        background: #6c757d;
+                        color: #fff;
+                        border: none;
+                        border-radius: 4px;
+                        padding: 8px 16px;
+                        cursor: pointer;
+                        font-size: 0.95rem;
+                        font-weight: 500;
+                        display: flex;
+                        align-items: center;
+                        gap: 6px;
+                        transition: background 0.2s;
+                    }
+                    .btn-toggle-header:hover {
+                        background: #5a6268;
+                    }
+                </style>
+                                <!-- Sidebar já é carregada por Sidebar.js, não precisa carregar manualmente aqui -->
+            </div>
+        </div>
+    </section>
+        <script type="module" src="/assets/js/PlanejamentoAnual/gerencia-planejamento.js"></script>
+        <script src="/assets/js/firebase-config.js"></script>
+        <script type="module" src="/assets/js/auth.js"></script>
+        <script src="/assets/js/main.js"></script>
+        <script src="/assets/js/components/Sidebar.js"></script>
+</body>
+</html>

@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerenciar Técnicos - Agro Divel 360</title>
+    <link rel="icon" type="image/png" href="/assets/images/iconeaba.png">
+    
+    <!-- CSS -->
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <link rel="stylesheet" href="/assets/css/style.css">
+    <link rel="stylesheet" href="/assets/css/Pages/Cadastros/CadastroTecnico.css">
+
+</head>
+<body>
+
+    <nav id="sidebar-placeholder"></nav>
+
+    <section class="home">
+        <div class="text">
+            <h1>Gerenciar Técnicos</h1>
+            <p>Adicione, edite ou remova técnicos do sistema.</p>
+        </div>
+
+        <!-- CARD PARA CADASTRO E EDIÇÃO -->
+        <div class="content-card">
+            <div class="content-card-header">
+                <h2 id="form-title">Novo Técnico</h2>
+            </div>
+            <div class="content-card-body">
+                <form id="form-cadastro-tecnico" class="form-layout">
+                    <!-- Campo oculto para guardar o ID do técnico em edição -->
+                    <input type="hidden" id="tecnico-id" name="id">
+                    
+                    <div class="form-group">
+                        <label for="nome-tecnico">Nome do Técnico</label>
+                        <input type="text" id="nome-tecnico" name="nome" placeholder="Ex: José da Silva" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="filial-tecnico">Filial</label>
+                        <!-- CAMPO DE FILIAL AGORA É UM SELECT -->
+                        <select id="filial-tecnico" name="filial" required>
+                            <option value="" disabled selected>Selecione uma filial</option>
+                            <option value="Campos Novos">Campos Novos</option>
+                            <option value="Rio do Sul">Rio do Sul</option>
+                            <option value="Lages">Lages</option>
+                        </select>
+                    </div>
+                    <div class="form-group" style="flex-direction: row; gap: 10px;">
+                        <button type="submit" class="btn-submit">Cadastrar Técnico</button>
+                        <button type="button" id="btn-cancel-edit" class="btn-delete" style="display: none;">Cancelar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- CONTAINER DA LISTA DE TÉCNICOS -->
+        <div class="content-card technician-list-container">
+            <div class="content-card-header">
+                <h2>Técnicos Cadastrados</h2>
+            </div>
+            <div class="content-card-body">
+                <table class="technician-table">
+                    <thead>
+                        <tr>
+                            <th>Nome</th>
+                            <th>Filial</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="technician-table-body">
+                        <!-- Os dados serão inseridos aqui pelo JavaScript -->
+                    </tbody>
+                </table>
+                <div id="loading-message">Carregando técnicos...</div>
+                <div id="empty-message" style="display: none;">Nenhum técnico cadastrado.</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SCRIPT COMPLETO DE GERENCIAMENTO DA PÁGINA -->
+<script type="module">
+        // Importa o necessário do Firebase
+        import { db } from '/assets/js/firebase-config.js';
+        import { collection, onSnapshot, doc, setDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
+
+        // --- Elementos do DOM ---
+        const form = document.getElementById('form-cadastro-tecnico' );
+        const formTitle = document.getElementById('form-title');
+        const submitButton = form.querySelector('.btn-submit');
+        const cancelButton = document.getElementById('btn-cancel-edit');
+        const tableBody = document.getElementById('technician-table-body');
+        const loadingMessage = document.getElementById('loading-message');
+        const emptyMessage = document.getElementById('empty-message');
+        const nomeInput = document.getElementById('nome-tecnico');
+        const tecnicoIdInput = document.getElementById('tecnico-id');
+
+        // --- Funções e Lógica da Página (sem alterações, apenas movido para o lugar certo) ---
+
+        // 1. Renderiza a tabela
+        const renderTable = (technicians) => {
+            tableBody.innerHTML = '';
+            loadingMessage.style.display = 'none';
+
+            if (technicians.length === 0) {
+                emptyMessage.style.display = 'block';
+            } else {
+                emptyMessage.style.display = 'none';
+                technicians.sort((a, b) => a.nome.localeCompare(b.nome));
+                technicians.forEach(tech => {
+                    const row = document.createElement('tr');
+                    row.dataset.id = tech.id;
+                    row.innerHTML = `
+                        <td>${tech.nome}</td>
+                        <td>${tech.filial}</td>
+                        <td class="action-buttons">
+                            <button class="btn-edit">Editar</button>
+                            <button class="btn-delete">Excluir</button>
+                        </td>
+                    `;
+                    tableBody.appendChild(row);
+                });
+            }
+        };
+
+        // 2. Prepara o formulário para edição
+        const setupEditForm = (id, nome, filial) => {
+            tecnicoIdInput.value = id;
+            nomeInput.value = nome;
+            form.filial.value = filial;
+            formTitle.textContent = 'Editando Técnico';
+            submitButton.textContent = 'Salvar Alterações';
+            cancelButton.style.display = 'inline-block';
+            nomeInput.disabled = true;
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        };
+
+        // 3. Reseta o formulário
+        const resetForm = () => {
+            form.reset();
+            tecnicoIdInput.value = '';
+            formTitle.textContent = 'Novo Técnico';
+            submitButton.textContent = 'Cadastrar Técnico';
+            cancelButton.style.display = 'none';
+            nomeInput.disabled = false;
+        };
+
+        // --- Event Listeners ---
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const isEditing = tecnicoIdInput.value !== '';
+            const nome = nomeInput.value.trim();
+            const filial = form.filial.value;
+
+            if (!nome || !filial) {
+                alert('Por favor, preencha todos os campos.');
+                return;
+            }
+
+            submitButton.disabled = true;
+            submitButton.textContent = 'Salvando...';
+
+            try {
+                const docRef = doc(db, "tecnicos", nome);
+                await setDoc(docRef, { nome, filial }, { merge: isEditing });
+                alert(`Técnico "${nome}" ${isEditing ? 'atualizado' : 'cadastrado'} com sucesso!`);
+                resetForm();
+            } catch (error) {
+                console.error("Erro ao salvar técnico: ", error);
+                alert("Ocorreu um erro ao salvar o técnico.");
+            } finally {
+                submitButton.disabled = false;
+            }
+        });
+
+        tableBody.addEventListener('click', async (e) => {
+            const button = e.target.closest('button');
+            if (!button) return;
+
+            const row = button.closest('tr');
+            const id = row.dataset.id;
+
+            if (button.classList.contains('btn-delete')) {
+                if (confirm(`Tem certeza que deseja excluir o técnico "${id}"?`)) {
+                    try {
+                        await deleteDoc(doc(db, "tecnicos", id));
+                        alert('Técnico excluído com sucesso!');
+                    } catch (error) {
+                        console.error("Erro ao excluir técnico: ", error);
+                        alert("Ocorreu um erro ao excluir o técnico.");
+                    }
+                }
+            }
+
+            if (button.classList.contains('btn-edit')) {
+                const nome = row.cells[0].textContent;
+                const filial = row.cells[1].textContent;
+                setupEditForm(id, nome, filial);
+            }
+        });
+
+        cancelButton.addEventListener('click', resetForm);
+
+        // --- Carregamento em tempo real ---
+        const unsubscribe = onSnapshot(collection(db, "tecnicos"), (querySnapshot) => {
+            const technicians = [];
+            querySnapshot.forEach((doc) => {
+                technicians.push({ id: doc.id, ...doc.data() });
+            });
+            renderTable(technicians);
+        }, (error) => {
+            console.error("Erro ao buscar técnicos: ", error);
+            loadingMessage.textContent = 'Erro ao carregar dados.';
+            loadingMessage.style.color = 'red';
+        });
+    </script>
+
+  <script type="module" src="/assets/js/firebase-config.js"></script>
+  <script type="module" src="/assets/js/auth.js"></script>
+  <script src="/assets/js/main.js"></script> 
+  <script src="/assets/js/components/Sidebar.js"></script>
+
+</body>
+</html>
+
+

@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="theme-color" content="#2c2f3f" />
+  <title>Autorização de Pagamento</title>
+  <link rel="icon" type="image/png" href="/assets/images/iconeaba.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- LIBS EXTERNAS -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+  <!-- CSS GLOBAL DO SISTEMA -->
+  <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="/assets/css/style.css">
+  <link rel="stylesheet" href="/assets/css/Pages/Formularios/style-forms.css">
+
+  <style>
+    /* Mesmo grid e botões básicos do form-kit50horas */
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      margin-bottom: 20px;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .form-group label {
+      margin-bottom: 8px;
+      font-weight: 600;
+      color: #333;
+      font-size: 0.95rem;
+    }
+
+    .form-group input,
+    .form-group select {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 1rem;
+      font-family: inherit;
+      background-color: #fff;
+      box-sizing: border-box;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus {
+      outline: none;
+      border-color: #193b7c;
+      box-shadow: 0 0 0 2px rgba(25, 59, 124, 0.25);
+    }
+
+    .form-group.full-width {
+      grid-column: 1 / -1;
+    }
+
+    .currency-input {
+      text-align: right;
+      font-weight: 600;
+      color: #2c3e50;
+    }
+
+    .date-input {
+      text-align: center;
+    }
+
+    .required::after {
+      content: " *";
+      color: #dc3545;
+    }
+
+    .form-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+      margin-top: 20px;
+      padding-top: 20px;
+      border-top: 1px solid #eee;
+    }
+
+    .btn-primary {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 10px 18px;
+      border: none;
+      border-radius: 6px;
+      text-decoration: none;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.2s ease;
+      font-size: 1rem;
+      background-color: #28a745;
+      color: #fff;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      min-width: 170px;
+    }
+
+    .btn-primary i {
+      margin-right: 8px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .btn-primary:hover {
+      background-color: #218838;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 10px rgba(40, 167, 69, 0.18);
+    }
+
+    /* Para esta página pública: mostrar apenas a estrutura da sidebar
+       (logo / cabeçalho), mas ocultar completamente o menu e ícones. */
+    nav.sidebar .menu-bar {
+      display: none !important;
+    }
+
+    nav.sidebar .menu-links {
+      display: none;
+    }
+
+    @media (max-width: 900px) {
+      .form-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Sidebar somente visual (sem menus) -->
+  <nav id="sidebar-placeholder"></nav>
+
+  <section class="home">
+    <div class="text">
+      <h1 id="form-title">Autorização de Pagamento</h1>
+      <p id="form-subtitle">Preencha os dados para gerar o documento de autorização em PDF.</p>
+    </div>
+
+    <div class="content-card">
+      <div class="content-card-body">
+        <form id="formAutorizacao" autocomplete="off">
+          <div class="form-grid">
+            
+            <div class="form-group full-width">
+              <label for="fornecedor" class="required">Fornecedor</label>
+              <input type="text" id="fornecedor" placeholder="Digite o nome do fornecedor" required style="text-transform: uppercase;">
+            </div>
+
+            <div class="form-group">
+              <label for="filial" class="required">Filial</label>
+              <select id="filial" required>
+                <option value="">Selecione a filial</option>
+                <option value="CAMPOS NOVOS">CAMPOS NOVOS</option>
+                <option value="RIO DO SUL">RIO DO SUL</option>
+                <option value="LAGES">LAGES</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="titulo" class="required">Título</label>
+              <input type="text" id="titulo" placeholder="Digite o título" required style="text-transform: uppercase;">
+            </div>
+
+            <div class="form-group">
+              <label for="data-vencimento">Vencimento</label>
+              <input type="date" id="data-vencimento" class="date-input">
+            </div>
+
+            <div class="form-group">
+              <label for="valor">Valor</label>
+              <input type="text" id="valor" class="currency-input" placeholder="R$ 0,00" oninput="formatarValor(this)">
+            </div>
+
+            <div class="form-group">
+              <label for="banco">Banco</label>
+              <input type="text" id="banco" placeholder="Nome do banco" style="text-transform: uppercase;">
+            </div>
+
+            <div class="form-group">
+              <label for="agencia">Agência</label>
+              <input type="text" id="agencia" placeholder="Número da agência" style="text-transform: uppercase;">
+            </div>
+
+            <div class="form-group">
+              <label for="conta-corrente">Conta Corrente</label>
+              <input type="text" id="conta-corrente" placeholder="Número da conta" style="text-transform: uppercase;">
+            </div>
+
+            <div class="form-group">
+              <label for="CPF-CNPJ">CPF/CNPJ Titular</label>
+              <input type="text" id="CPF-CNPJ" placeholder="000.000.000-00 ou 00.000.000/0000-00" oninput="formatarCPF_CNPJ(this)">
+            </div>
+
+            <div class="form-group">
+              <label for="pix">PIX</label>
+              <input type="text" id="pix" placeholder="Chave PIX (CPF, CNPJ, email, telefone)" style="text-transform: uppercase;">
+            </div>
+
+            <div class="form-group">
+              <label for="data-pagamento">Programado pagamento para</label>
+              <input type="date" id="data-pagamento" class="date-input">
+            </div>
+
+            <div class="form-group">
+              <label for="solicitante">Solicitante</label>
+              <input type="text" id="solicitante" placeholder="Nome do solicitante" style="text-transform: uppercase;">
+            </div>
+
+          </div>
+
+          <div class="form-actions">
+            <button type="button" class="btn-primary" id="btn-pdf">
+              <i data-lucide="file-text"></i>
+              GERAR PDF
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </section>
+
+  <script>
+    function formatarValor(input) {
+      let valor = input.value.replace(/\D/g, '');
+      if (valor === '') {
+        input.value = 'R$ 0,00';
+        return;
+      }
+      valor = parseInt(valor);
+      valor = (valor / 100).toFixed(2);
+      valor = valor.replace(".", ",");
+      valor = valor.replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1.');
+      input.value = 'R$ ' + valor;
+    }
+
+    function formatarCPF_CNPJ(input) {
+      let value = input.value.replace(/\D/g, '');
+      if (value.length <= 11) {
+        value = value.replace(/(\d{3})(\d)/, '$1.$2');
+        value = value.replace(/(\d{3})(\d)/, '$1.$2');
+        value = value.replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+      } else {
+        value = value.replace(/(\d{2})(\d)/, '$1.$2');
+        value = value.replace(/(\d{3})(\d)/, '$1.$2');
+        value = value.replace(/(\d{3})(\d)/, '$1/$2');
+        value = value.replace(/(\d{4})(\d)/, '$1-$2');
+      }
+      input.value = value;
+    }
+
+    function formatarData(dataString) {
+      if (!dataString) return '';
+      try {
+        const data = new Date(dataString);
+        return data.toLocaleDateString('pt-BR');
+      } catch (e) {
+        return dataString;
+      }
+    }
+
+    async function gerarPDF() {
+      const fornecedor = document.getElementById('fornecedor').value.toUpperCase();
+      const filial = document.getElementById('filial').value.toUpperCase();
+      const titulo = document.getElementById('titulo').value.toUpperCase();
+      const dataVencimento = document.getElementById('data-vencimento').value;
+      const valor = document.getElementById('valor').value;
+      const banco = document.getElementById('banco').value.toUpperCase();
+      const agencia = document.getElementById('agencia').value.toUpperCase();
+      const contaCorrente = document.getElementById('conta-corrente').value.toUpperCase();
+      const cpfCnpj = document.getElementById('CPF-CNPJ').value;
+      const pix = document.getElementById('pix').value.toUpperCase();
+      const dataPagamento = document.getElementById('data-pagamento').value;
+      const solicitante = document.getElementById('solicitante').value.toUpperCase();
+
+      const doc = new window.jspdf.jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+      doc.setProperties({
+        title: 'Autorização',
+        subject: 'Documento de Autorização',
+        author: 'Agro Divel'
+      });
+
+      // Cabeçalho com logo (mantendo proporção original para não distorcer)
+      const logoUrl = '/assets/images/logoPDF.png';
+      let logoLoaded = false;
+
+      await new Promise((resolve) => {
+        const img = new window.Image();
+        img.crossOrigin = 'Anonymous';
+        img.src = logoUrl;
+        img.onload = () => {
+          try {
+            const desiredHeight = 18; // altura alvo em mm
+            const ratio = img.width / img.height || 3; // fallback de proporção
+            const logoHeight = desiredHeight;
+            const logoWidth = logoHeight * ratio;
+            const centerX = 105 - logoWidth / 2;
+            doc.addImage(img, 'PNG', centerX, 18, logoWidth, logoHeight);
+            logoLoaded = true;
+          } catch (e) { }
+          resolve();
+        };
+        img.onerror = () => resolve();
+      });
+
+      if (!logoLoaded) {
+        try {
+          const fallback = new Image();
+          fallback.src = '/assets/images/iconeaba.png';
+          fallback.crossOrigin = 'Anonymous';
+          await new Promise((r) => { fallback.onload = r; fallback.onerror = r; });
+          const desiredHeight = 14;
+          const ratio = fallback.width / fallback.height || 2.5;
+          const logoHeight = desiredHeight;
+          const logoWidth = logoHeight * ratio;
+          const centerX = 105 - logoWidth / 2;
+          doc.addImage(fallback, 'PNG', centerX, 20, logoWidth, logoHeight);
+        } catch (e) { }
+      }
+
+      // Título
+      doc.setTextColor(25, 59, 124);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(18);
+      doc.text('AUTORIZAÇÃO DE PAGAMENTO', 105, 45, { align: 'center' });
+
+      // Linha divisória
+      doc.setDrawColor(220, 223, 230);
+      doc.setLineWidth(0.4);
+      doc.line(20, 48, 190, 48);
+
+      // Layout dos campos
+      let y = 60;
+      const marginX = 20;
+      const contentWidth = 170;
+      const gap = 10;
+      const halfWidth = (contentWidth - gap) / 2;
+      const thirdWidth = (contentWidth - gap * 2) / 3;
+
+      const labelFontSize = 8.5;
+      const valueFontSize = 11.5;
+
+      function drawFieldFull(label, value) {
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(labelFontSize);
+        doc.setTextColor(120, 124, 135);
+        doc.text(label.toUpperCase(), marginX, y);
+
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(valueFontSize);
+        doc.setTextColor(17, 24, 39);
+        doc.text(value || '-', marginX, y + 5);
+
+        doc.setDrawColor(225, 229, 235);
+        doc.setLineWidth(0.3);
+        doc.line(marginX, y + 7, marginX + contentWidth, y + 7);
+
+        y += 13;
+      }
+
+      function drawFieldRow(label1, value1, label2, value2) {
+        const x1 = marginX;
+        const x2 = marginX + halfWidth + gap;
+
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(labelFontSize);
+        doc.setTextColor(120, 124, 135);
+        doc.text(label1.toUpperCase(), x1, y);
+        doc.text(label2.toUpperCase(), x2, y);
+
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(valueFontSize);
+        doc.setTextColor(17, 24, 39);
+        doc.text(value1 || '-', x1, y + 5);
+        doc.text(value2 || '-', x2, y + 5);
+
+        doc.setDrawColor(225, 229, 235);
+        doc.setLineWidth(0.3);
+        doc.line(x1, y + 7, x1 + halfWidth, y + 7);
+        doc.line(x2, y + 7, x2 + halfWidth, y + 7);
+
+        y += 13;
+      }
+
+      function drawFieldRow3(label1, value1, label2, value2, label3, value3) {
+        const x1 = marginX;
+        const x2 = marginX + thirdWidth + gap;
+        const x3 = marginX + 2 * (thirdWidth + gap);
+
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(labelFontSize);
+        doc.setTextColor(120, 124, 135);
+        doc.text(label1.toUpperCase(), x1, y);
+        doc.text(label2.toUpperCase(), x2, y);
+        doc.text(label3.toUpperCase(), x3, y);
+
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(valueFontSize);
+        doc.setTextColor(17, 24, 39);
+        doc.text(value1 || '-', x1, y + 5);
+        doc.text(value2 || '-', x2, y + 5);
+        doc.text(value3 || '-', x3, y + 5);
+
+        doc.setDrawColor(225, 229, 235);
+        doc.setLineWidth(0.3);
+        doc.line(x1, y + 7, x1 + thirdWidth, y + 7);
+        doc.line(x2, y + 7, x2 + thirdWidth, y + 7);
+        doc.line(x3, y + 7, x3 + thirdWidth, y + 7);
+
+        y += 13;
+      }
+
+      // Campos principais
+      drawFieldFull('Fornecedor', fornecedor);
+      drawFieldRow('Filial', filial, 'Título', titulo);
+      drawFieldRow('Vencimento', formatarData(dataVencimento), 'Valor', valor);
+      drawFieldRow3('Banco', banco, 'Agência', agencia, 'Conta Corrente', contaCorrente);
+      drawFieldRow('CPF/CNPJ Titular', cpfCnpj, 'PIX', pix);
+      drawFieldRow('Programado pagamento para', formatarData(dataPagamento), 'Solicitante', solicitante);
+
+      // Rodapé
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(9);
+      doc.setTextColor(120, 120, 120);
+      doc.text('Documento gerado pelo Sistema Agro Divel', 105, 285, { align: 'center' });
+
+      const nomeArquivo = fornecedor
+        ? `autorizacao_${fornecedor.replace(/[^a-zA-Z0-9]/g, '_').toLowerCase()}`
+        : `autorizacao_pagamento_${new Date().getTime()}`;
+      doc.save(`${nomeArquivo}.pdf`);
+
+      Swal.fire('PDF Gerado!', 'O PDF foi baixado com sucesso.', 'success');
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      if (window.lucide) lucide.createIcons();
+
+      const hoje = new Date();
+      const amanha = new Date(hoje);
+      amanha.setDate(hoje.getDate() + 1);
+
+      const vencimentoInput = document.getElementById('data-vencimento');
+      const pagamentoInput = document.getElementById('data-pagamento');
+      const valorInput = document.getElementById('valor');
+
+      if (vencimentoInput) vencimentoInput.valueAsDate = hoje;
+      if (pagamentoInput) pagamentoInput.valueAsDate = amanha;
+      if (valorInput) valorInput.value = 'R$ 0,00';
+
+      setTimeout(() => {
+        const fornecedorInput = document.getElementById('fornecedor');
+        if (fornecedorInput) fornecedorInput.focus();
+      }, 100);
+
+      const btnPdf = document.getElementById('btn-pdf');
+      if (btnPdf) {
+        btnPdf.addEventListener('click', async () => {
+          const fornecedor = document.getElementById('fornecedor').value.trim();
+          if (!fornecedor) {
+            Swal.fire('Atenção', 'Preencha o campo FORNECEDOR antes de gerar o PDF.', 'warning');
+            document.getElementById('fornecedor').focus();
+            return;
+          }
+          await gerarPDF();
+        });
+      }
+    });
+  </script>
+
+  <!-- Scripts de layout necessários apenas para a sidebar -->
+  <script src="/assets/js/main.js"></script>
+  <script src="/assets/js/components/Sidebar.js"></script>
+
+</body>
+</html>
+

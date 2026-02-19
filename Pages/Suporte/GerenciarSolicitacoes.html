@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="theme-color" content="#2c2f3f" />
+  <title>Gerenciar Solicitações de Suporte</title>
+  <link rel="icon" type="image/png" href="/assets/images/iconeaba.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- LIBS EXTERNAS -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  
+  <!-- CSS -->
+  <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+  <link rel="stylesheet" href="/assets/css/style.css">
+  <link rel="stylesheet" href="/assets/css/Pages/Dashboard/Principal.css">
+  <link rel="stylesheet" href="/assets/css/Pages/Controles/Pedidospecas.css">
+
+  <style>
+    /* Cores das linhas por status - Sistema de Cores */
+    tbody tr.status-pendente {
+      background: linear-gradient(90deg, #ff5252 0%, #ff6e6e 100%) !important;
+      border-left: 5px solid #c62828 !important;
+      color: white;
+      font-weight: 500;
+    }
+
+    tbody tr.status-em-andamento {
+      background: linear-gradient(90deg, #ffa726 0%, #ffb74d 100%) !important;
+      border-left: 5px solid #e65100 !important;
+      color: white;
+      font-weight: 500;
+    }
+
+    tbody tr.status-resolvido {
+      background: linear-gradient(90deg, #4caf50 0%, #66bb6a 100%) !important;
+      border-left: 5px solid #2e7d32 !important;
+      color: white;
+      font-weight: 500;
+    }
+
+    tbody tr.status-cancelado {
+      background: linear-gradient(90deg, #78909c 0%, #90a4ae 100%) !important;
+      border-left: 5px solid #455a64 !important;
+      color: white;
+      font-weight: 500;
+    }
+
+    /* Destaque para novas solicitações (primeiras 24h) */
+    tbody tr.status-pendente.nova-solicitacao {
+      background: linear-gradient(90deg, #ff1744 0%, #ff6e40 100%) !important;
+      box-shadow: 0 0 15px rgba(255, 23, 68, 0.6) inset;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% {
+        box-shadow: 0 0 15px rgba(255, 23, 68, 0.6) inset;
+      }
+      50% {
+        box-shadow: 0 0 25px rgba(255, 23, 68, 1) inset;
+      }
+    }
+
+    /* Badge de novo */
+    .badge-novo {
+      display: inline-block;
+      background: #ff1744;
+      color: white;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-size: 10px;
+      font-weight: bold;
+      margin-right: 5px;
+      animation: bounce 2s infinite;
+    }
+
+    @keyframes bounce {
+      0%, 100% {
+        transform: scale(1);
+      }
+      50% {
+        transform: scale(1.1);
+      }
+    }
+
+    /* Hover nas linhas */
+    tbody tr:hover {
+      opacity: 0.95;
+      transform: translateX(3px);
+      transition: all 0.3s;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    }
+
+    /* Botões de ação */
+    .action-buttons {
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+    }
+
+    .btn-action-table {
+      width: 40px;
+      height: 40px;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s;
+      font-size: 18px;
+    }
+
+    .btn-view-table {
+      background: #003a70;
+      color: #fff;
+    }
+
+    .btn-view-table:hover {
+      background: #004d94;
+      transform: scale(1.1);
+    }
+
+    .btn-edit-table {
+      background: #0066cc;
+      color: #fff;
+    }
+
+    .btn-edit-table:hover {
+      background: #0052a3;
+      transform: scale(1.1);
+    }
+
+    .btn-delete-table {
+      background: #8b0000;
+      color: #fff;
+    }
+
+    .btn-delete-table:hover {
+      background: #a00000;
+      transform: scale(1.1);
+    }
+
+    .empty-row {
+      text-align: center;
+      padding: 40px !important;
+      color: #aaa;
+    }
+
+    .solicitacao-actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .btn-action-table {
+      width: 40px;
+      height: 40px;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s;
+    }
+
+    .btn-view-table {
+      background: #003a70;
+      color: #fff;
+    }
+
+    .btn-view-table:hover {
+      background: #004d94;
+    }
+
+    .btn-edit-table {
+      background: #003a70;
+      color: #fff;
+    }
+
+    .btn-edit-table:hover {
+      background: #004d94;
+    }
+
+    .btn-delete-table {
+      background: #8b0000;
+      color: #fff;
+    }
+
+    .btn-delete-table:hover {
+      background: #a00000;
+    }
+
+    .empty-row {
+      text-align: center;
+      padding: 40px !important;
+      color: #aaa;
+    }
+
+    /* Badge de notificação */
+    .notification-badge {
+      position: absolute;
+      top: -5px;
+      right: -5px;
+      background: #ff0000;
+      color: white;
+      border-radius: 50%;
+      width: 18px;
+      height: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      font-weight: bold;
+      border: 2px solid #fff;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    }
+
+    .btn-action-table {
+      position: relative;
+    }
+  </style>
+</head>
+<body>
+
+  <nav id="sidebar-placeholder"></nav>
+
+  <section class="home">
+    <div class="text">
+      <h1>Controle de Solicitações de Suporte</h1>
+      <p>Filial: Campos Novos, Rio do Sul, Lages</p>
+    </div>
+
+    <!-- Cards de Estatísticas -->
+    <div class="dashboard-cards">
+      <!-- Card Total -->
+      <div class="dashboard-card blue-card">
+        <h2 id="stat-total">0</h2>
+        <p><i data-lucide="package"></i> Total de Solicitações</p>
+      </div>
+
+      <!-- Card Pendente -->
+      <div class="dashboard-card red-card">
+        <h2 id="stat-pendente">0</h2>
+        <p><i data-lucide="clock"></i> Pendente</p>
+      </div>
+
+      <!-- Card Em Andamento -->
+      <div class="dashboard-card orange-card">
+        <h2 id="stat-andamento">0</h2>
+        <p><i data-lucide="loader"></i> Em Andamento</p>
+      </div>
+
+      <!-- Card Resolvido -->
+      <div class="dashboard-card" style="background-color: #ffc107;">
+        <h2 id="stat-resolvido">0</h2>
+        <p><i data-lucide="check-circle"></i> Resolvido</p>
+      </div>
+
+      <!-- Card Cancelado -->
+      <div class="dashboard-card" style="background-color: #424242;">
+        <h2 id="stat-cancelado">0</h2>
+        <p><i data-lucide="x-circle"></i> Cancelado</p>
+      </div>
+    </div>
+
+    <!-- Content Card -->
+    <div class="content-card">
+      <div class="content-card-header">
+        <h3>Acompanhamento de Solicitações</h3>
+      </div>
+
+      <div class="content-card-body">
+        <!-- Filtros -->
+        <div class="filters">
+          <input id="filter-busca" type="text" placeholder="Buscar por Solicitante..." />
+          <select id="filter-status">
+            <option value="">Todos os Status</option>
+            <option value="Pendente">Pendente</option>
+            <option value="Em Andamento">Em Andamento</option>
+            <option value="Resolvido">Resolvido</option>
+            <option value="Cancelado">Cancelado</option>
+          </select>
+          <select id="filter-filial">
+            <option value="">Todas as Filiais</option>
+            <option value="Joaçaba">Joaçaba</option>
+            <option value="Campos Novos">Campos Novos</option>
+            <option value="Rio do Sul">Rio do Sul</option>
+            <option value="Lages">Lages</option>
+          </select>
+        </div>
+
+        <!-- Tabela -->
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>Solicitante</th>
+                <th>Email</th>
+                <th>Filial</th>
+                <th>Departamento</th>
+                <th>Rotina</th>
+                <th>Status</th>
+                <th>Data</th>
+                <th>Respondido por</th>
+                <th>Ações</th>
+              </tr>
+            </thead>
+            <tbody id="solicitacoes-tbody">
+              <tr>
+                <td colspan="9" style="text-align: center; padding: 40px; color: #aaa;">
+                  <i class='bx bx-loader bx-spin' style="font-size: 32px;"></i><br>
+                  Carregando solicitações...
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </section>
+
+  <!-- Scripts Globais -->
+  <script type="module" src="/assets/js/firebase-config.js"></script>
+  <script type="module" src="/assets/js/auth.js"></script>
+  <script src="/assets/js/main.js"></script> 
+  <script src="/assets/js/components/Sidebar.js"></script>
+
+  <script type="module">
+    import { garantirAutenticacao } from '/assets/js/auth-guard.js';
+    import { getApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getFirestore, collection, getDocs, doc, updateDoc, getDoc, query, orderBy } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+    let userData;
+    let todasSolicitacoes = [];
+
+    // Inicializar
+    (async () => {
+      try {
+        userData = await garantirAutenticacao();
+        const app = getApp();
+        const db = getFirestore(app);
+
+        // Carregar solicitações
+        await carregarSolicitacoes(db);
+
+        // Eventos de filtro
+        document.getElementById('filter-status').addEventListener('change', filtrarSolicitacoes);
+        document.getElementById('filter-filial').addEventListener('change', filtrarSolicitacoes);
+        document.getElementById('filter-busca').addEventListener('input', filtrarSolicitacoes);
+
+        lucide.createIcons();
+
+      } catch (error) {
+        console.error('Erro ao inicializar:', error);
+        Swal.fire('Erro', 'Não foi possível carregar as solicitações', 'error');
+      }
+    })();
+
+    async function carregarSolicitacoes(db) {
+      try {
+        const q = query(collection(db, 'SolicitaçõesSuporte'), orderBy('dataAbertura', 'desc'));
+        const snapshot = await getDocs(q);
+        
+        todasSolicitacoes = snapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        }));
+
+        atualizarEstatisticas();
+        renderizarSolicitacoes(todasSolicitacoes);
+
+      } catch (error) {
+        console.error('Erro ao carregar solicitações:', error);
+        document.getElementById('solicitacoes-tbody').innerHTML = `
+          <tr>
+            <td colspan="8" class="empty-row">
+              <i class='bx bx-error' style="font-size: 32px;"></i><br>
+              Erro ao carregar solicitações
+            </td>
+          </tr>
+        `;
+      }
+    }
+
+    function atualizarEstatisticas() {
+      const total = todasSolicitacoes.length;
+      const pendente = todasSolicitacoes.filter(s => s.status === 'Pendente').length;
+      const andamento = todasSolicitacoes.filter(s => s.status === 'Em Andamento').length;
+      const resolvido = todasSolicitacoes.filter(s => s.status === 'Resolvido').length;
+      const cancelado = todasSolicitacoes.filter(s => s.status === 'Cancelado').length;
+
+      document.getElementById('stat-total').textContent = total;
+      document.getElementById('stat-pendente').textContent = pendente;
+      document.getElementById('stat-andamento').textContent = andamento;
+      document.getElementById('stat-resolvido').textContent = resolvido;
+      document.getElementById('stat-cancelado').textContent = cancelado;
+    }
+
+    function filtrarSolicitacoes() {
+      const status = document.getElementById('filter-status').value;
+      const filial = document.getElementById('filter-filial').value;
+      const busca = document.getElementById('filter-busca').value.toLowerCase();
+
+      let filtradas = todasSolicitacoes.filter(s => {
+        const matchStatus = !status || s.status === status;
+        const matchFilial = !filial || s.filial === filial;
+        const matchBusca = !busca || 
+          s.solicitante?.toLowerCase().includes(busca) ||
+          s.email?.toLowerCase().includes(busca) ||
+          s.rotina?.toLowerCase().includes(busca) ||
+          s.descricao?.toLowerCase().includes(busca);
+
+        return matchStatus && matchFilial && matchBusca;
+      });
+
+      renderizarSolicitacoes(filtradas);
+    }
+
+    function renderizarSolicitacoes(solicitacoes) {
+      const tbody = document.getElementById('solicitacoes-tbody');
+
+      if (solicitacoes.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="8" class="empty-row">
+              <i class='bx bx-search-alt' style="font-size: 32px;"></i><br>
+              Nenhuma solicitação encontrada
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      tbody.innerHTML = solicitacoes.map(s => {
+        const data = s.dataAbertura?.toDate ? s.dataAbertura.toDate().toLocaleDateString('pt-BR') : 'N/A';
+        let statusClass = '';
+        
+        if (s.status === 'Pendente') statusClass = 'status-pendente';
+        else if (s.status === 'Em Andamento') statusClass = 'status-em-andamento';
+        else if (s.status === 'Resolvido') statusClass = 'status-resolvido';
+        else if (s.status === 'Cancelado') statusClass = 'status-cancelado';
+
+        // Verificar se é uma solicitação nova (menos de 24 horas)
+        const dataAberturaObj = s.dataAbertura?.toDate ? s.dataAbertura.toDate() : new Date(s.dataAbertura);
+        const agora = new Date();
+        const diferenca = agora - dataAberturaObj;
+        const horas = diferenca / (1000 * 60 * 60);
+        const ehNova = horas < 24 && s.status === 'Pendente';
+        const novaClass = ehNova ? 'nova-solicitacao' : '';
+
+        // Verificar se a última resposta foi do usuário (não do admin)
+        const historico = s.historico || [];
+        const respostas = historico.filter(h => h.tipo === 'resposta');
+        const ultimaResposta = respostas.length > 0 ? respostas[respostas.length - 1] : null;
+        const temNovasRespostas = ultimaResposta && (ultimaResposta.respondidoPor === s.solicitante || ultimaResposta.respondidoPor === s.email);
+
+        const badgeNovo = ehNova ? '<span class="badge-novo">🆕 NOVO</span>' : '';
+
+        return `
+          <tr class="${statusClass} ${novaClass}">
+            <td>${badgeNovo}${s.solicitante || 'N/A'}</td>
+            <td>${s.email || 'N/A'}</td>
+            <td>${s.filial || 'N/A'}</td>
+            <td>${s.departamento || 'N/A'}</td>
+            <td>${s.rotina || 'N/A'}</td>
+            <td>${s.status || 'Pendente'}</td>
+            <td>${data}</td>
+            <td>${s.respondidoPor || '-'}</td>
+            <td>
+              <div class="action-buttons">
+                <button class="btn-action-table btn-view-table" onclick="visualizarDetalhes('${s.id}')" title="Visualizar">
+                  <i class='bx bx-show'></i>
+                  ${temNovasRespostas ? '<span class="notification-badge">!</span>' : ''}
+                </button>
+                <button class="btn-action-table btn-edit-table" onclick="alterarStatus('${s.id}', '${s.status}')" title="Alterar Status">
+                  <i class='bx bx-edit'></i>
+                </button>
+                <button class="btn-action-table btn-delete-table" onclick="excluirSolicitacao('${s.id}')" title="Excluir">
+                  <i class='bx bx-trash'></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join('');
+
+      lucide.createIcons();
+    }
+
+    window.visualizarDetalhes = function(id) {
+      window.location.href = `/Pages/Suporte/DetalhessolicitacaoSuporte.html?id=${id}`;
+    };
+
+    window.visualizarImagem = function(url) {
+      Swal.fire({
+        imageUrl: url,
+        imageAlt: 'Imagem da solicitação',
+        showCloseButton: true,
+        showConfirmButton: false,
+        width: '80%'
+      });
+    };
+
+    window.alterarStatus = async function(id, statusAtual) {
+      const { value: novoStatus } = await Swal.fire({
+        title: 'Alterar Status',
+        input: 'select',
+        inputOptions: {
+          'Pendente': 'Pendente',
+          'Em Andamento': 'Em Andamento',
+          'Resolvido': 'Resolvido',
+          'Cancelado': 'Cancelado'
+        },
+        inputValue: statusAtual,
+        inputPlaceholder: 'Selecione o novo status',
+        showCancelButton: true,
+        confirmButtonText: 'Alterar Status',
+        cancelButtonText: 'Cancelar'
+      });
+
+      if (novoStatus && novoStatus !== statusAtual) {
+        try {
+          const app = getApp();
+          const db = getFirestore(app);
+          const solicitacao = todasSolicitacoes.find(s => s.id === id);
+          
+          // Adicionar ao histórico
+          const historico = solicitacao.historico || [];
+          historico.push({
+            data: new Date(),
+            responsavel: userData.nome || userData.email,
+            statusAnterior: statusAtual,
+            statusNovo: novoStatus,
+            tipo: 'mudanca_status'
+          });
+
+          await updateDoc(doc(db, 'SolicitaçõesSuporte', id), {
+            status: novoStatus,
+            historico: historico
+          });
+
+          // Enviar email de notificação
+          await enviarEmailNotificacao(db, solicitacao, novoStatus, `O status da sua solicitação foi alterado de "${statusAtual}" para "${novoStatus}".`, 'status');
+
+          Swal.fire('Sucesso!', 'Status atualizado com sucesso', 'success');
+          await carregarSolicitacoes(db);
+        } catch (error) {
+          console.error('Erro ao atualizar status:', error);
+          Swal.fire('Erro', 'Não foi possível atualizar o status', 'error');
+        }
+      }
+    };
+
+    async function enviarEmailNotificacao(db, solicitacao, status, mensagem, tipo = 'status') {
+      try {
+        const assunto = tipo === 'resposta' 
+          ? `Nova Resposta na sua Solicitação de Suporte`
+          : `Atualização na sua Solicitação de Suporte - ${status}`;
+
+        await addDoc(collection(db, 'mail'), {
+          to: solicitacao.email,
+          message: {
+            subject: assunto,
+            html: `
+              <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                <h2 style="color: #00205b;">${tipo === 'resposta' ? 'Nova Resposta' : 'Atualização de Status'}</h2>
+                <p>Olá <strong>${solicitacao.solicitante}</strong>,</p>
+                <p>${tipo === 'resposta' ? 'Você recebeu uma nova resposta na sua solicitação de suporte:' : 'Sua solicitação de suporte foi atualizada:'}</p>
+                <div style="background: #f5f5f5; padding: 15px; border-radius: 5px; margin: 20px 0;">
+                  <p><strong>Rotina:</strong> ${solicitacao.rotina}</p>
+                  <p><strong>Departamento:</strong> ${solicitacao.departamento}</p>
+                  <p><strong>Status Atual:</strong> <span style="color: #00205b; font-weight: bold;">${status}</span></p>
+                </div>
+                ${mensagem ? `
+                  <div style="background: #e8f0ff; padding: 15px; border-radius: 5px; margin: 20px 0;">
+                    <p><strong>Mensagem:</strong></p>
+                    <p>${mensagem}</p>
+                  </div>
+                ` : ''}
+                <p>Você pode acompanhar suas solicitações acessando o sistema.</p>
+                <hr style="margin: 30px 0; border: none; border-top: 1px solid #ddd;">
+                <p style="font-size: 12px; color: #666;">Este é um email automático, não responda.</p>
+              </div>
+            `
+          }
+        });
+        console.log('Email agendado para envio');
+      } catch (error) {
+        console.error('Erro ao agendar email:', error);
+      }
+    }
+
+    window.excluirSolicitacao = async function(id) {
+      const result = await Swal.fire({
+        title: 'Confirmar Exclusão',
+        text: 'Deseja realmente excluir esta solicitação?',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#dc3545',
+        cancelButtonColor: '#6c757d',
+        confirmButtonText: 'Sim, excluir',
+        cancelButtonText: 'Cancelar'
+      });
+
+      if (result.isConfirmed) {
+        try {
+          const app = getApp();
+          const db = getFirestore(app);
+          const { deleteDoc } = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js");
+          
+          await deleteDoc(doc(db, 'SolicitaçõesSuporte', id));
+          
+          Swal.fire('Excluído!', 'Solicitação removida com sucesso', 'success');
+          await carregarSolicitacoes(db);
+        } catch (error) {
+          console.error('Erro ao excluir solicitação:', error);
+          Swal.fire('Erro', 'Não foi possível excluir a solicitação', 'error');
+        }
+      }
+    };
+
+  </script>
+
+</body>
+</html>

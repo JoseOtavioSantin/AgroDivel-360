@@ -1,0 +1,34 @@
+/* Estilos gerais (sem alteração) */
+.btn-acao {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 36px; height: 36px; padding: 0;
+    background-color: #193b7c; color: white; border: none;
+    border-radius: 6px; cursor: pointer;
+    transition: background-color 0.2s ease; text-decoration: none;
+}
+.btn-acao:hover { background-color: #132a5a; }
+.btn-acao i { margin: 0; width: 18px; height: 18px; }
+.btn-delete { background-color: #950000; }
+.btn-delete:hover { background-color: #c62828; }
+.acoes-cell { display: flex; gap: 8px; flex-wrap: wrap; }
+td, input, select { text-transform: uppercase; }
+
+/* --- CLASSES DE STATUS ATUALIZADAS --- */
+/* Cores estáticas para os status que NÃO piscam */
+.status-pedir-peca td { background-color: #c62828 !important; }
+.status-peca-pedida td { background-color: #c67903 !important; }
+.status-separado td { background-color: #193b7c !important; }
+.status-entregue td { background-color: #626262 !important; }
+
+/* --- ANIMAÇÃO DE PISCAR --- */
+/* A animação define as cores que serão alternadas */
+@keyframes piscar {
+  0%, 100% { background-color: #ffc107 !important; } /* Azul claro */
+  50% { background-color: #ffc107 !important; } /* Amarelo para destaque */
+}
+
+.status-chegou td {
+    background-color: #ffc107 !important; /* Define a cor base */
+    animation: piscar 1.5s infinite;      /* Aplica a animação */
+    color: rgb(0, 0, 0);
+}

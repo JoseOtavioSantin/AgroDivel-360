@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="theme-color" content="#2c2f3f" />
+  <title>Controle Planos Vigentes</title>
+  <link rel="icon" type="image/png" href="/assets/images/iconeaba.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- LIBS EXTERNAS -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/pt.js"></script>
+
+  <!-- CSS -->
+  <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+  <link rel="stylesheet" href="/assets/css/style.css">
+  <link rel="stylesheet" href="/assets/css/Pages/Dashboard/Principal.css">
+
+  <style>
+    .content-card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .header-actions {
+        display: flex;
+        gap: 10px;
+    }
+    /* Estilos dos botões de ação na tabela */
+    .btn-acao {
+        display: inline-flex; align-items: center; justify-content: center;
+        background-color: #193b7c; color: white; border: none;
+        border-radius: 6px; padding: 6px; cursor: pointer;
+        transition: background-color 0.2s ease; text-decoration: none;
+        margin: 0 2px;
+    }
+    .btn-acao:hover { background-color: #132a5a; }
+    .btn-acao i { width: 18px; height: 18px; pointer-events: none; }
+    
+    /* Estilos específicos da página */
+    .status-em-andamento { background-color: #c67903; color: white; }
+    .status-concluido { background-color: #193b7c; color: white; }
+    
+    tr.linha-alerta td {
+        background-color: #c67903;
+        color: white;
+    }
+    /* Estilo para a área de filtros */
+    .filters {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr ));
+        gap: 15px;
+        margin-bottom: 20px;
+    }
+    .filters input, .filters select {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #ccc;
+        border-radius: 6px;
+    }
+  </style>
+</head>
+<body>
+
+  <nav id="sidebar-placeholder"></nav>
+
+  <!-- Conteúdo Principal da Página -->
+  <section class="home">
+    <div class="text">
+      <h1>Dashboard - Planos Vigentes</h1>
+      <p id="dynamic-title">Carregando...</p>
+    </div>
+
+    <!-- CARDS DE RESUMO -->
+    <div class="dashboard-cards">
+      <div class="dashboard-card blue-card"><h2 id="total-clientes">0</h2><p><i data-lucide="users"></i> Total de Clientes</p></div>
+      <div class="dashboard-card orange-card"><h2 id="em-andamento">0</h2><p><i data-lucide="loader-circle"></i> Em Andamento</p></div>
+      <div class="dashboard-card green-card"><h2 id="total-concluidos">0</h2><p><i data-lucide="check-circle"></i> Concluídos</p></div>
+      <div class="dashboard-card purple-card"><h2 id="valor-total">R$ 0,00</h2><p><i data-lucide="dollar-sign"></i> Valor Total (R$)</p></div>
+    </div>
+
+    <!-- CONTAINER PRINCIPAL DO DASHBOARD -->
+    <div class="content-card">
+      <div class="content-card-header">
+        <h3>Acompanhamento de Planos</h3>
+        <div class="header-actions">
+           <button id="btn-exportar" class="btn-acao" title="Exportar para Excel"><i data-lucide="download"></i></button>
+           <button id="btn-importar" class="btn-acao" title="Importar Horas Atuais">
+                <input type="file" id="arquivo-importar" accept=".xlsx" style="display:none;">
+                <i data-lucide="upload"></i>
+           </button>
+           <a href="/Pages/Formularios/form-planosvigentes.html" id="btn-novo-plano" class="btn-acao" title="Novo Plano"><i data-lucide="plus-circle"></i></a>
+        </div>
+      </div>
+      <div class="content-card-body">
+        <!-- CARD EXPLICATIVO DOS ÍCONES -->
+        <div style="background-color: #f0f4f8; border-left: 4px solid #2563eb; padding: 12px 15px; margin-bottom: 15px; border-radius: 6px;">
+          <p style="margin: 0; font-size: 14px; color: #1f2937;"><strong>📋 Legenda de Alertas:</strong></p>
+          <p style="margin: 5px 0 0 0; font-size: 13px; color: #4b5563;">
+            <span style="margin-right: 15px;">⚠️ <strong>Alerta de Horas:</strong> Avisa quando faltam 60 horas para a manutenção</span><br/>
+            <span>📅 <strong>Alerta de Tempo:</strong> Última manutenção há mais de 4 meses</span>
+          </p>
+        </div>
+
+        <!-- ÁREA DE FILTROS ATUALIZADA -->
+        <div class="filters">
+          <input id="filtro-cliente" type="text" placeholder="Buscar por cliente..." />
+          <input id="filtro-chassi" type="text" placeholder="Buscar por chassi..." />
+          <select id="filtro-filial">
+            <option value="">Todas as Filiais</option>
+            <option value="campos novos">Campos Novos</option>
+            <option value="rio do sul">Rio do Sul</option>
+            <option value="lages">Lages</option>
+          </select>
+          <select id="filtro-status">
+            <option value="Em andamento com alerta" selected>Em andamento com alerta</option>
+            <option value="Em andamento sem alerta">Em andamento sem alerta</option>
+            <option value="Em andamento">Todos em andamento</option>
+            <option value="Concluído">Concluído</option>
+            <option value="">Todos os status</option>
+          </select>
+          <input id="filtro-periodo" placeholder="Filtrar por período" />
+        </div>
+
+        <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th>Data Início</th><th>Data Fim</th><th>Cliente</th><th>Plano Vendido</th><th>Chassi</th><th>Modelo</th>
+                  <th>Horas Iniciais</th><th>Horas Finais</th><th>Horas Atuais</th><th>Checklist</th><th>Ações</th>
+                </tr>
+              </thead>
+              <tbody id="painel-detalhes"></tbody>
+            </table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- MODAL PARA ADICIONAR/EDITAR DATA E OS DO CHECKLIST -->
+  <div id="popupChecklistData" class="modal-overlay">
+    <div class="modal-container" style="max-width: 400px;">
+      <div class="modal-header">
+        <h3>Preencha as informações do Checklist</h3>
+        <button class="modal-close-btn" onclick="fecharPopupDataChecklist()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="docIdChecklistData">
+        <input type="hidden" id="valorChecklistData">
+        <div class="form-group"><label for="osChecklistData">OS</label><input type="text" id="osChecklistData"></div>
+        <div class="form-group"><label for="inputDataChecklist">Data</label><input type="date" id="inputDataChecklist"></div>
+      </div>
+      <div class="modal-footer">
+        <button class="modal-btn btn-cancel" onclick="fecharPopupDataChecklist()">Cancelar</button>
+        <button class="modal-btn btn-save" onclick="salvarDataChecklist()">Salvar</button>
+      </div>
+    </div>
+  </div>
+
+<script type="module">
+  import { garantirAutenticacao } from '/assets/js/auth-guard.js';
+  import { getApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import { getFirestore, collection, getDocs, doc, getDoc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+  const tipoChecklist = "planosVigentes";
+  let db;
+  let userData;
+  let dadosTotais = [];
+  let podeEditar = false;
+  let podeApagar = false;
+
+  async function iniciarPagina(  ) {
+    try {
+      userData = await garantirAutenticacao();
+      const app = getApp();
+      db = getFirestore(app);
+
+      if (!userData.filial || userData.filial.length === 0) {
+        document.body.innerHTML = `<div class="error-container">Acesso negado. Nenhuma filial associada.</div>`;
+        return;
+      }
+
+      if (userData.grupo) {
+          podeEditar = userData.grupo.includes("admin") || userData.grupo.includes("servicos");
+          podeApagar = userData.grupo.includes("admin");
+      }
+      
+      // Se não tem grupo mas tem permissão individual para esta página, libera edição
+      if (!podeEditar && userData.permissoes && userData.permissoes.includes("ctrl-PlanosVigentes")) {
+          podeEditar = true;
+      }
+      
+      configurarPermissoesVisuais();
+      document.getElementById("dynamic-title").textContent = `Filiais: ${userData.filial.join(", ")}`;
+      
+      await carregarDados();
+      configurarListeners();
+
+    } catch (error) {
+      console.error("Falha na inicialização da página:", error);
+      document.body.innerHTML = `<div class="error-container">Ocorreu um erro ao carregar a página.</div>`;
+    }
+  }
+
+  function configurarPermissoesVisuais() {
+    document.getElementById('btn-importar').style.display = podeEditar ? 'flex' : 'none';
+    document.getElementById('btn-novo-plano').style.display = podeEditar ? 'flex' : 'none';
+  }
+
+  async function carregarDados() {
+    const filiaisLogadas = userData.filial || [];
+    if (filiaisLogadas.length === 0) return;
+
+    const querySnapshot = await getDocs(collection(db, tipoChecklist));
+    dadosTotais = [];
+    const filiaisDoUsuarioLowerCase = filiaisLogadas.map(f => f.toLowerCase().trim());
+
+    querySnapshot.forEach(docItem => {
+      const dados = docItem.data();
+      const filialDoDocumento = (dados.filial || "").toLowerCase().trim();
+      if (filiaisDoUsuarioLowerCase.includes(filialDoDocumento)) {
+        dadosTotais.push({ id: docItem.id, ...dados });
+      }
+    });
+    aplicarFiltros();
+  }
+
+  // FUNÇÃO DE FILTRO ATUALIZADA
+  function aplicarFiltros() {
+    const clienteFiltro = document.getElementById("filtro-cliente").value.toLowerCase();
+    const chassiFiltro = document.getElementById("filtro-chassi").value.toLowerCase();
+    const filialFiltro = document.getElementById("filtro-filial").value.toLowerCase();
+    let statusFiltro = document.getElementById("filtro-status").value;
+    
+    const instance = document.getElementById("filtro-periodo")._flatpickr;
+    const selectedDates = instance ? instance.selectedDates : [];
+
+    let dataInicio = "", dataFim = "";
+    if (selectedDates.length === 2) {
+      dataInicio = selectedDates[0].toISOString().slice(0, 10);
+      dataFim = selectedDates[1].toISOString().slice(0, 10);
+    }
+
+    const filtrados = dadosTotais.filter(d => {
+      const totalChecklist = (d.checklistRealizado || []).length;
+      const preenchidos = (d.checklistRealizado || []).filter(item => (d.datasChecklist || {})[item]).length;
+      d.statusChecklist = totalChecklist > 0 && preenchidos === totalChecklist ? "Concluído" : "Em andamento";
+      
+      const dentroDoPeriodo = !dataInicio || (d.dataInicioContrato >= dataInicio && d.dataInicioContrato <= dataFim);
+      const temAlerta = alertaPorData(d) || alertaDoItem(d);
+      
+      // Validação do status com tratamento de alerta
+      let statusValido = true;
+      
+      if (statusFiltro === "Em andamento com alerta") {
+        statusValido = d.statusChecklist === "Em andamento" && temAlerta;
+      } else if (statusFiltro === "Em andamento sem alerta") {
+        statusValido = d.statusChecklist === "Em andamento" && !temAlerta;
+      } else if (statusFiltro === "Em andamento") {
+        statusValido = d.statusChecklist === "Em andamento";
+      } else if (statusFiltro === "Concluído") {
+        statusValido = d.statusChecklist === "Concluído";
+      }
+      // Se statusFiltro === "", mostra todos os status
+      
+      return (d.nomeCliente || "").toLowerCase().includes(clienteFiltro) &&
+        (d.chassi || "").toLowerCase().includes(chassiFiltro) &&
+        (filialFiltro === "" || (d.filial || "").toLowerCase() === filialFiltro) &&
+        statusValido &&
+        dentroDoPeriodo;
+    });
+
+    atualizarCards(filtrados);
+    renderizarTabela(filtrados);
+  }
+
+  function atualizarCards(dados) {
+    const total = dados.length;
+    const concluidos = dados.filter(d => d.statusChecklist === "Concluído").length;
+    const andamento = total - concluidos;
+    let totalValor = dados.reduce((acc, d) => acc + (parseFloat(d.valorNegociado) || 0), 0);
+
+    document.getElementById("total-clientes").textContent = total;
+    document.getElementById("total-concluidos").textContent = concluidos;
+    document.getElementById("em-andamento").textContent = andamento;
+    document.getElementById("valor-total").textContent = totalValor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+  }
+
+  function renderizarTabela(dados) {
+    dados.sort((a, b) => {
+      const statusOrderA = a.statusChecklist === 'Concluído' ? 1 : 0;
+      const statusOrderB = b.statusChecklist === 'Concluído' ? 1 : 0;
+      if (statusOrderA !== statusOrderB) return statusOrderA - statusOrderB;
+      const pontuacaoA = (alertaDoItem(a) ? 2 : 0) + (alertaPorData(a) ? 1 : 0);
+      const pontuacaoB = (alertaDoItem(b) ? 2 : 0) + (alertaPorData(b) ? 1 : 0);
+      if (pontuacaoB !== pontuacaoA) return pontuacaoB - pontuacaoA;
+      return new Date(a.dataInicioContrato) - new Date(b.dataInicioContrato);
+    });
+    
+    const painel = document.getElementById("painel-detalhes");
+    painel.innerHTML = dados.length === 0 ? '<tr><td colspan="11" style="text-align: center; padding: 20px;">Nenhum plano encontrado com os filtros aplicados.</td></tr>' : '';
+
+    dados.forEach(d => {
+      const statusClass = d.statusChecklist === "Concluído" ? "status-concluido" : "status-em-andamento";
+      const alertaHoras = alertaDoItem(d);
+      const alertaData = alertaPorData(d);
+      const alertaClass = (alertaHoras || alertaData) ? "linha-alerta" : "";
+      let iconeAlertaHTML = "";
+      if (alertaHoras) iconeAlertaHTML = `<span title="Alerta de Horas: Manutenção próxima!" style="color: #f59e0b; margin-left: 6px; font-weight: bold;">⚠️</span>`;
+      else if (alertaData) iconeAlertaHTML = `<span title="Alerta de Tempo: Última manutenção há mais de 4 meses!" style="color: #f59e0b; margin-left: 6px; font-weight: bold;">📅</span>`;
+
+      const checklistHtml = (d.checklistRealizado || []).sort((a, b) => parseFloat(a) - parseFloat(b)).map(item => {
+          const info = (d.datasChecklist || {})[item];
+          const corFundo = info ? '#047857' : '#e5e7eb';
+          const corTexto = info ? '#fff' : '#1f2937';
+          const tooltip = info ? `Visualizar (Data: ${formatarDataBR(info.data)}, OS: ${info.os || 'N/A'})` : `Adicionar dados para ${item}`;
+          return `<button onclick="abrirDataChecklist('${d.id}', '${item}')" style="background:${corFundo}; color:${corTexto}; padding:3px 8px; border:1px solid #ccc; border-radius:5px; margin:2px; font-size:10px; cursor: pointer;" title="${tooltip}">${item}</button>`;
+      }).join("");
+
+      const acoesHTML = `<div class="acoes-cell">
+          ${podeEditar ? `<a href="/Pages/Formularios/form-planosvigentes.html?id=${d.id}" class="btn-acao" title="Editar Plano"><i data-lucide="pencil"></i></a>` : ''}
+          ${podeApagar ? `<button class="btn-acao btn-delete" data-id="${d.id}" title="Apagar Plano"><i data-lucide="trash-2"></i></button>` : ''}
+      </div>`;
+
+      painel.innerHTML += `
+        <tr class="${statusClass} ${alertaClass}" data-id="${d.id}">
+          <td>${formatarDataBR(d.dataInicioContrato)}</td><td>${formatarDataBR(d.dataFimContrato)}</td><td>${d.nomeCliente || "-"}</td><td>${d.planoVendido || "-"}</td>
+          <td>${d.chassi || "-"}</td><td>${d.modelo || "-"}</td><td>${d.horasIniciais || "-"}</td><td>${d.horasFinais || "-"}</td>
+          <td>${d.horasAtuais || "-"}${iconeAlertaHTML}</td>
+          <td style="white-space: normal;">${checklistHtml}</td><td>${acoesHTML}</td>
+        </tr>`;
+    });
+    lucide.createIcons();
+  }
+
+  function alertaPorData(d) {
+      if (d.horasAtuais || d.statusChecklist === 'Concluído') return false;
+      const datasRealizadas = Object.values(d.datasChecklist || {}).map(info => info.data);
+      const dataLimite = new Date();
+      dataLimite.setMonth(dataLimite.getMonth() - 4);
+      if (datasRealizadas.length === 0) {
+          return d.dataInicioContrato ? new Date(d.dataInicioContrato) < dataLimite : false;
+      }
+      const ultimaData = datasRealizadas.reduce((max, data) => new Date(data) > new Date(max) ? data : max);
+      return new Date(ultimaData) < dataLimite;
+  }
+
+  function alertaDoItem(d) {
+      const horasAtuais = parseFloat(d.horasAtuais || 0);
+      if (!horasAtuais) return false;
+      const checklistsPendentes = (d.checklistRealizado || []).filter(item => !isNaN(parseFloat(item)) && !(d.datasChecklist || {})[item]);
+      return checklistsPendentes.some(item => horasAtuais >= (parseFloat(item) - 60));
+  }
+
+  // FUNÇÃO DE LISTENERS ATUALIZADA
+  function configurarListeners() {
+      lucide.createIcons();
+      document.getElementById("filtro-cliente").addEventListener("input", aplicarFiltros);
+      document.getElementById("filtro-chassi").addEventListener("input", aplicarFiltros);
+      document.getElementById("filtro-filial").addEventListener("change", aplicarFiltros);
+      document.getElementById("filtro-status").addEventListener("change", aplicarFiltros);
+      flatpickr("#filtro-periodo", { mode: "range", dateFormat: "Y-m-d", locale: "pt", onChange: aplicarFiltros });
+      document.getElementById("btn-exportar").addEventListener("click", exportarParaExcel);
+      document.getElementById("btn-importar").addEventListener("click", () => document.getElementById("arquivo-importar").click());
+      document.getElementById("arquivo-importar").addEventListener("change", importarHoras);
+      document.getElementById("painel-detalhes").addEventListener('click', (event) => {
+          const button = event.target.closest('button.btn-delete');
+          if (button) apagarPlano(button.dataset.id);
+      });
+  }
+
+  async function apagarPlano(id) {
+      const plano = dadosTotais.find(p => p.id === id);
+      const result = await Swal.fire({
+          title: 'Tem certeza?', text: `Deseja apagar o plano do cliente "${plano.nomeCliente}" (chassi: ${plano.chassi})?`,
+          icon: 'warning', showCancelButton: true, confirmButtonText: 'Sim, apagar!', cancelButtonText: 'Cancelar'
+      });
+      if (result.isConfirmed) {
+          try {
+              await deleteDoc(doc(db, tipoChecklist, id));
+              Swal.fire('Apagado!', 'Plano apagado com sucesso.', 'success');
+              carregarDados();
+          } catch (error) {
+              Swal.fire('Erro!', 'Falha ao apagar o plano.', 'error');
+          }
+      }
+  }
+
+  function exportarParaExcel() {
+      const headers = ["Data Início", "Data Fim", "Cliente", "Plano Vendido", "Chassi", "Modelo", "Horas Iniciais", "Horas Finais", "Horas Atuais", "Checklist"];
+      const linhas = dadosTotais.map(d => [
+        formatarDataBR(d.dataInicioContrato), formatarDataBR(d.dataFimContrato), d.nomeCliente, d.planoVendido, d.chassi,
+        d.modelo, d.horasIniciais, d.horasFinais, d.horasAtuais,
+        (d.checklistRealizado || []).join('; ')
+      ]);
+      const planilha = XLSX.utils.aoa_to_sheet([headers, ...linhas]);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, planilha, "PlanosVigentes");
+      XLSX.writeFile(wb, "planos_vigentes.xlsx");
+  }
+
+  async function importarHoras(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      Swal.fire({ title: 'Importando...', text: 'Aguarde...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+      const reader = new FileReader();
+      reader.onload = async (event) => {
+        try {
+          const data = new Uint8Array(event.target.result);
+          const workbook = XLSX.read(data, { type: "array" });
+          const sheet = workbook.Sheets[workbook.SheetNames[0]];
+          const registros = XLSX.utils.sheet_to_json(sheet);
+          let atualizados = 0;
+          for (const linha of registros) {
+            const chassi = String(linha["PIN"] || "").trim();
+            const horas = parseFloat(String(linha["Horas totais do motor"]).replace(",", "."));
+            if (!chassi || isNaN(horas)) continue;
+            const planoParaAtualizar = dadosTotais.find(p => p.chassi === chassi);
+            if (planoParaAtualizar) {
+              await updateDoc(doc(db, tipoChecklist, planoParaAtualizar.id), { horasAtuais: horas });
+              atualizados++;
+            }
+          }
+          Swal.fire('Sucesso!', `Importação concluída. ${atualizados} registros atualizados.`, 'success');
+          carregarDados();
+        } catch (err) { Swal.fire('Erro!', `Ocorreu um erro na importação: ${err.message}`, 'error'); }
+      };
+      reader.readAsArrayBuffer(file);
+  }
+
+  // --- Funções do Modal de Checklist ---
+  window.abrirDataChecklist = (id, valor) => {
+      const plano = dadosTotais.find(p => p.id === id);
+      if (!plano) return;
+      const info = (plano.datasChecklist || {})[valor] || {};
+      if (!podeEditar) {
+          if (info.data) Swal.fire({ title: `Checklist: ${valor}`, html: `<b>Data:</b> ${formatarDataBR(info.data)}  
+<b>OS:</b> ${info.os || 'N/A'}`, icon: 'info' });
+          return;
+      }
+      document.getElementById('docIdChecklistData').value = id;
+      document.getElementById('valorChecklistData').value = valor;
+      document.getElementById('inputDataChecklist').value = info.data || new Date().toISOString().split('T')[0];
+      document.getElementById('osChecklistData').value = info.os || '';
+      document.getElementById('popupChecklistData').classList.add('visible');
+  };
+  window.fecharPopupDataChecklist = () => document.getElementById('popupChecklistData').classList.remove('visible');
+  window.salvarDataChecklist = async () => {
+      const id = document.getElementById('docIdChecklistData').value;
+      const valor = document.getElementById('valorChecklistData').value;
+      const data = document.getElementById('inputDataChecklist').value;
+      if (!data) return Swal.fire("Atenção", "Preencha a data.", "warning");
+      const os = document.getElementById('osChecklistData').value.trim();
+      const docRef = doc(db, tipoChecklist, id);
+      try {
+          const docSnap = await getDoc(docRef);
+          const dadosAtuais = docSnap.data();
+          const datasChecklist = dadosAtuais.datasChecklist || {};
+          datasChecklist[valor] = { data, os };
+          await updateDoc(docRef, { datasChecklist });
+          fecharPopupDataChecklist();
+          carregarDados();
+          Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'Checklist atualizado!', showConfirmButton: false, timer: 2000 });
+      } catch (error) { Swal.fire('Erro!', `Falha ao salvar: ${error.message}`, 'error'); }
+  };
+
+  function formatarDataBR(data) {
+    if (!data) return "";
+    const [ano, mes, dia] = data.split('-');
+    return (dia && mes && ano) ? `${dia}/${mes}/${ano}` : data;
+  }
+
+  iniciarPagina();
+</script>
+
+<!-- Scripts Globais -->
+<script type="module" src="/assets/js/firebase-config.js"></script>
+<script type="module" src="/assets/js/auth.js"></script>
+<script src="/assets/js/main.js"></script> 
+<script src="/assets/js/components/Sidebar.js"></script>
+
+</body>
+</html>
