@@ -3,245 +3,687 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Manutenção | Agro Divel 360</title>
-  <link rel="icon" type="image/png" href="/assets/images/iconeaba.png">
+  <title>Agro Divel 360</title>
+
+  <!-- PWA Meta Tags -->
+  <link rel="manifest" href="/manifest.json" />
   <meta name="theme-color" content="#001439" />
+  <link rel="icon" href="/assets/images/192.png" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="AgroDivel 360" />
+  <link rel="apple-touch-icon" href="/assets/images/192.png" />
   
+
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <!-- Boxicons para os ícones do sidebar -->
+  <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
 
   <style>
     * {
       margin: 0;
       padding: 0;
       box-sizing: border-box;
-      font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     }
 
     body {
       background: linear-gradient(135deg, #0f3460 0%, #1a5490 100%);
       min-height: 100vh;
+      color: white;
+    }
+
+    .main-container {
+      display: grid;
+      grid-template-columns: 0.8fr 1.2fr;
+      min-height: 100vh;
+      align-items: stretch;
+    }
+
+    .welcome-section {
+      background: linear-gradient(135deg, #0f3460 0%, #1a5490 100%);
+      padding: 50px 30px;
       display: flex;
+      flex-direction: column;
       justify-content: center;
       align-items: center;
-      padding: 20px;
+      color: white;
       position: relative;
       overflow: hidden;
     }
 
-    body::before {
-      content: '';
-      position: absolute;
-      width: 400px;
-      height: 400px;
-      background: rgba(255, 255, 255, 0.03);
-      border-radius: 50%;
-      top: -100px;
-      right: -100px;
-    }
-
-    body::after {
+    .welcome-section::before {
       content: '';
       position: absolute;
       width: 300px;
       height: 300px;
-      background: rgba(255, 255, 255, 0.02);
+      background: rgba(255, 255, 255, 0.05);
       border-radius: 50%;
-      bottom: -80px;
-      left: -80px;
+      top: -80px;
+      right: -80px;
     }
 
-    .maintenance-container {
-      max-width: 600px;
-      width: 100%;
-      background: white;
-      border-radius: 24px;
-      box-shadow: 0 25px 80px rgba(0, 0, 0, 0.35);
-      overflow: hidden;
-      position: relative;
-      z-index: 1;
-      animation: fadeInUp 0.8s ease-out;
-    }
-
-    @keyframes fadeInUp {
-      from {
-        opacity: 0;
-        transform: translateY(30px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
-
-    .maintenance-header {
-      background: linear-gradient(135deg, #0f3460 0%, #1a5490 100%);
-      padding: 50px 40px;
-      text-align: center;
-      color: white;
-      position: relative;
-    }
-
-    .maintenance-header::before {
+    .welcome-section::after {
       content: '';
       position: absolute;
       width: 200px;
       height: 200px;
-      background: rgba(255, 255, 255, 0.05);
+      background: rgba(255, 255, 255, 0.03);
       border-radius: 50%;
-      top: -80px;
-      right: -60px;
+      bottom: -40px;
+      left: -40px;
     }
 
-    .logo-container {
-      margin-bottom: 25px;
+    .welcome-content {
       position: relative;
       z-index: 1;
+      text-align: center;
     }
 
-    .logo-container img {
+    .welcome-logo {
+      margin-bottom: 30px;
+    }
+
+    .welcome-logo img {
       width: 160px;
-      height: auto;
       filter: brightness(0) invert(1);
     }
 
-    .maintenance-icon {
-      width: 100px;
-      height: 100px;
-      background: rgba(255, 255, 255, 0.15);
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin: 0 auto 25px;
-      position: relative;
-      z-index: 1;
-      animation: pulse 2s infinite;
-    }
-
-    @keyframes pulse {
-      0%, 100% {
-        transform: scale(1);
-        box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.3);
-      }
-      50% {
-        transform: scale(1.05);
-        box-shadow: 0 0 0 15px rgba(255, 255, 255, 0);
-      }
-    }
-
-    .maintenance-icon i {
-      font-size: 45px;
-      color: white;
-    }
-
-    .maintenance-body {
-      padding: 50px 40px;
-      text-align: center;
-    }
-
-    .maintenance-title {
-      font-size: 28px;
+    .welcome-text h2 {
+      font-size: 32px;
       font-weight: 700;
-      color: #0f3460;
-      margin-bottom: 15px;
+      margin-bottom: 12px;
       letter-spacing: -0.5px;
     }
 
-    .maintenance-subtitle {
-      font-size: 16px;
+    .welcome-text p {
+      font-size: 14px;
+      color: rgba(255, 255, 255, 0.8);
+      line-height: 1.5;
+      max-width: 250px;
+    }
+
+    .content-section {
+      background: white;
+      padding: 40px 35px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      overflow-y: auto;
+    }
+
+    .content-header {
+      margin-bottom: 30px;
+    }
+
+    .content-header h1 {
+      font-size: 28px;
+      font-weight: 700;
+      color: #0f3460;
+      margin-bottom: 8px;
+    }
+
+    .content-header p {
+      font-size: 14px;
       color: #666;
-      line-height: 1.7;
-      max-width: 450px;
-      margin-left: auto;
-      margin-right: auto;
+      font-style: italic;
     }
 
-    .maintenance-footer {
-      background: #f8f9fa;
-      padding: 20px 40px;
+    .dashboard {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
+    }
+
+    .card {
+      background: white;
+      border-radius: 12px;
+      padding: 20px;
       text-align: center;
-      border-top: 1px solid #e9ecef;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 130px;
+      border: 2px solid #f0f0f0;
     }
 
-    .maintenance-footer p {
-      font-size: 12px;
-      color: #888;
+    .card:active {
+      transform: scale(0.97);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
     }
 
-    .maintenance-footer a {
-      color: #1a5490;
+    .card-icon {
+      font-size: 40px;
+      margin-bottom: 10px;
+      color: #0f3460;
+      display: block;
+    }
+
+    .card p {
+      margin: 0;
+      font-size: 13px;
+      font-weight: 600;
+      color: #0f3460;
+      line-height: 1.3;
+    }
+
+    a, a:visited {
+      color: inherit;
       text-decoration: none;
-      font-weight: 500;
     }
 
-    .maintenance-footer a:hover {
-      text-decoration: underline;
+    .notification-icon {
+      position: fixed;
+      top: 15px;
+      right: 15px;
+      font-size: 22px;
+      cursor: pointer;
+      color: white;
+      background-color: rgba(52, 152, 219, 0.9);
+      border-radius: 50%;
+      width: 48px;
+      height: 48px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+      z-index: 100;
+      transition: all 0.2s ease;
     }
 
-    /* Responsivo */
-    @media (max-width: 600px) {
-      .maintenance-container {
-        border-radius: 16px;
+    .notification-icon:active {
+      transform: scale(0.95);
+    }
+
+    #popup {
+      display: none;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 90%;
+      max-width: 380px;
+      background: white;
+      padding: 35px;
+      border-radius: 16px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      z-index: 1000;
+      text-align: center;
+      animation: popupSlideIn 0.3s ease;
+    }
+
+    @keyframes popupSlideIn {
+      from {
+        opacity: 0;
+        transform: translate(-50%, -55%);
+      }
+      to {
+        opacity: 1;
+        transform: translate(-50%, -50%);
+      }
+    }
+
+    #popup-body p {
+      font-size: 16px;
+      margin: 10px 0;
+      color: #333;
+      line-height: 1.6;
+    }
+
+    #popup-body p.nps {
+      font-size: 50px;
+      font-weight: 700;
+      margin-top: 25px;
+      color: #0f3460;
+    }
+
+    .fechar button {
+      background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+      border: none;
+      padding: 12px 30px;
+      color: white;
+      font-size: 16px;
+      font-weight: 600;
+      border-radius: 8px;
+      cursor: pointer;
+      margin-top: 20px;
+      transition: all 0.2s ease;
+    }
+
+    .fechar button:active {
+      transform: scale(0.98);
+    }
+
+    @media (max-width: 1024px) {
+      .main-container {
+        grid-template-columns: 1fr;
       }
 
-      .maintenance-header {
-        padding: 40px 25px;
-      }
-
-      .logo-container img {
-        width: 130px;
-      }
-
-      .maintenance-icon {
-        width: 80px;
-        height: 80px;
-      }
-
-      .maintenance-icon i {
-        font-size: 35px;
-      }
-
-      .maintenance-body {
+      .welcome-section {
         padding: 35px 25px;
+        min-height: auto;
       }
 
-      .maintenance-title {
+      .content-section {
+        padding: 30px 25px;
+      }
+
+      .welcome-logo img {
+        width: 140px;
+      }
+
+      .welcome-text h2 {
+        font-size: 28px;
+      }
+
+      .content-header h1 {
+        font-size: 24px;
+      }
+
+      .dashboard {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 14px;
+      }
+
+      .card {
+        padding: 18px;
+        min-height: 120px;
+      }
+
+      .card-icon {
+        font-size: 36px;
+      }
+
+      .card p {
+        font-size: 12px;
+      }
+    }
+
+    @media (max-width: 640px) {
+      body {
+        padding: 0;
+      }
+
+      .welcome-section {
+        padding: 30px 20px;
+      }
+
+      .content-section {
+        padding: 25px 20px;
+      }
+
+      .welcome-logo img {
+        width: 120px;
+      }
+
+      .welcome-text h2 {
+        font-size: 24px;
+        margin-bottom: 10px;
+      }
+
+      .welcome-text p {
+        font-size: 13px;
+      }
+
+      .content-header h1 {
         font-size: 22px;
       }
 
-      .maintenance-subtitle {
-        font-size: 14px;
+      .content-header p {
+        font-size: 13px;
       }
 
-      .maintenance-footer {
-        padding: 15px 25px;
+      .dashboard {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+      }
+
+      .card {
+        padding: 16px;
+        min-height: 110px;
+        border-radius: 10px;
+      }
+
+      .card-icon {
+        font-size: 34px;
+        margin-bottom: 8px;
+      }
+
+      .card p {
+        font-size: 11.5px;
+      }
+
+      .notification-icon {
+        width: 44px;
+        height: 44px;
+        font-size: 20px;
       }
     }
+
   </style>
 </head>
 <body>
-  <div class="maintenance-container">
-    <div class="maintenance-header">
-      <div class="logo-container">
-        <img src="/assets/images/Logo.png" alt="Agro Divel 360">
-      </div>
-      <div class="maintenance-icon">
-        <i class="fas fa-tools"></i>
+
+  <button id="instalarApp" style="display: none;">Instalar AgroDivel 360</button>
+
+  <div class="main-container">
+    <!-- Seção Bem-vindo -->
+    <div class="welcome-section">
+      <div class="welcome-content">
+        <div class="welcome-logo">
+          <img src="/assets/images/logo.png" alt="Logo Agro Divel" />
+        </div>
+        <div class="welcome-text">
+          <h2>Bem-vindo</h2>
+          <p>Acesse as soluções de gestão do Agro Divel 360 com suas credenciais de login.</p>
+        </div>
       </div>
     </div>
 
-    <div class="maintenance-body">
-      <h1 class="maintenance-title">Sistema em Manutenção</h1>
-      <p class="maintenance-subtitle">
-        Estamos realizando melhorias para oferecer uma experiência ainda melhor. 
-        Em breve estaremos de volta!
-      </p>
+    <!-- Seção de Conteúdo -->
+    <div class="content-section">
+      <div class="content-header">
+        <h1>Seus Formulários</h1>
+        <p>Selecione o setor e conecte o cliente à solução ideal</p>
+      </div>
+
+      <i class="fas fa-circle-info notification-icon" onclick="abrirPopup()"></i>
+
+    <div id="popup">
+      <div id="popup-body">
+        <p>Carregando...</p>
+      </div>
+      <div class="fechar" style="margin-top: 20px;">
+        <button onclick="fecharPopup()">Fechar</button>
+      </div>
     </div>
 
-    <div class="maintenance-footer">
-      <p>&copy; 2026 <a href="#">Agro Divel 360</a> - Todos os direitos reservados</p>
+    <div class="dashboard">
+      <a href="/Pages/Formularios/FormularioIndex/form-pecas.html" class="card">
+        <i class="fas fa-cogs card-icon"></i>
+        <p>Peças</p>
+      </a>
+      <a href="/Pages/Formularios/FormularioIndex/form-servicos.html" class="card">
+        <i class="fas fa-wrench card-icon"></i>
+        <p>Serviços</p>
+      </a>
+      <a href="/Pages/Formularios/FormularioIndex/form-PLM.html" class="card">
+        <i class="fa-solid fa-satellite card-icon"></i>
+        <p>PLM</p>
+      </a>
+      <a href="/Pages/Formularios/FormularioIndex/form-comercial.html" class="card">
+        <i class="fas fa-handshake card-icon"></i>
+        <p>Comercial</p>
+      </a>
+      <a href="/Pages/Formularios/FormularioIndex/form-consorcio.html" class="card">
+        <i class="fas fa-piggy-bank card-icon"></i>
+        <p>Consórcio</p>
+      </a>
+      <a href="/Pages/Formularios/FormularioIndex/form-seguro.html" class="card">
+        <i class="fa-solid fa-cloud card-icon"></i>
+        <p>Seguro</p>
+      </a>
+      <a href="/Pages/Formularios/FormularioIndex/form-planodemanutencao.html" class="card">
+        <i class="fa-solid fa-file card-icon"></i>
+        <p>Plano de Manutenção</p>
+      </a>
+      <a href="/Pages/Formularios/PromocaoAtivas.html" class="card">
+        <i class="fa-solid fa-tags card-icon"></i>
+        <p>Promoções Ativas</p>
+      </a>
+      <a href="/Pages/Formularios/FormularioIndex/form-insatisfacao.html" class="card">
+        <i class="fa-solid fa-circle-exclamation card-icon"></i>
+        <p>Insatisfação</p>
+      </a>
+      <a href="/Pages/Login/Login.html" class="card">
+        <i class="fa-solid fa-arrow-right-to-bracket card-icon"></i>
+        <p>Acessar Sistema</p>
+      </a>
+    </div>
     </div>
   </div>
+
+  <script type="module">
+    import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+    import { app } from './firebase.js';
+
+    const db = getFirestore(app);
+
+    window.abrirPopup = async function () {
+      document.getElementById("popup").style.display = "block";
+      const popupBody = document.getElementById("popup-body");
+      popupBody.innerHTML = "<p>Carregando...</p>";
+
+      try {
+        const docNps = await getDoc(doc(db, "informativos", "nps"));
+        const nps = docNps.exists() ? docNps.data().valor : "N/A";
+
+        popupBody.innerHTML = `
+          <p style="font-size: 16px; margin-bottom: 10px;">
+            Com a sua colaboração, nosso NPS segue crescendo!<br>Obrigado por fazer parte disso. 🙌
+          </p>
+          <p class="nps">${nps}%</p>
+        `;
+      } catch (e) {
+        popupBody.innerHTML = "<p>Erro ao carregar dados.</p>";
+        console.error("Erro ao carregar:", e);
+      }
+    }
+
+    window.fecharPopup = function () {
+      document.getElementById("popup").style.display = "none";
+    };
+
+    // Mostrar popup uma vez por dia automaticamente
+    function verificarPopupAutomatico() {
+      const hoje = new Date().toISOString().slice(0, 10); // Ex: "2025-07-22"
+      const ultimoDia = localStorage.getItem('popup_nps_hoje');
+
+      if (hoje !== ultimoDia) {
+        abrirPopup();
+        localStorage.setItem('popup_nps_hoje', hoje);
+      }
+    }
+
+    verificarPopupAutomatico();
+
+  </script>
+
+<!-- Aviso de atualização -->
+<div id="update-banner" style="
+  display: none;
+  background: #ffcc00;
+  color: #000;
+  font-weight: bold;
+  padding: 12px;
+  text-align: center;
+  cursor: pointer;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 9999;
+">
+  ⚠️ Nova versão disponível. Clique aqui para atualizar.
+</div>
+
+<!-- Bloqueio de interação durante atualização -->
+<div id="update-overlay" style="
+  display:none;
+  position:fixed;
+  inset:0;
+  background: rgba(0,0,0,.55);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+  z-index: 9998; /* abaixo do banner (9999), acima do app */
+"></div>
+
+<!-- Aviso de instalação -->
+<div id="install-banner" style="
+  display: none;
+  background: #ffcc00;
+  color: #000;
+  font-weight: bold;
+  padding: 12px;
+  text-align: center;
+  cursor: pointer;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 9999;
+">
+  📲 Instale o Agro Divel 360. Toque aqui para instalar.
+</div>
+
+<script>
+
+  function lockUIForUpdate(lock) {
+    const overlay = document.getElementById('update-overlay');
+    if (!overlay) return;
+    if (lock) {
+      overlay.style.display = 'block';
+      document.documentElement.style.overflow = 'hidden';
+      document.body.style.overscrollBehavior = 'none';
+    } else {
+      overlay.style.display = 'none';
+      document.documentElement.style.overflow = '';
+      document.body.style.overscrollBehavior = 'auto';
+    }
+  }
+
+  if ('serviceWorker' in navigator) {
+    const isLocalhost = ['localhost', '127.0.0.1'].includes(location.hostname);
+    if (window.isSecureContext || isLocalhost) {
+      navigator.serviceWorker.register('service-worker.js').then((reg) => {
+        const showUpdate = (swRef) => {
+          const banner = document.getElementById('update-banner');
+          const installBanner = document.getElementById('install-banner');
+          banner.style.display = 'block';
+
+          // Bloqueia interação e some com o banner de instalar para não confundir
+          lockUIForUpdate(true);
+          if (installBanner) installBanner.style.display = 'none';
+
+          const triggerUpdate = () => {
+            const target = reg.waiting || swRef;
+            if (target) target.postMessage({ action: 'skipWaiting' });
+          };
+
+          banner.addEventListener('click', triggerUpdate, { once: true });
+          document.getElementById('update-overlay')?.addEventListener('click', triggerUpdate, { once: true });
+          setTimeout(triggerUpdate, 10000); // fallback
+        };
+
+        // 1) Se já tem um SW em espera ao carregar
+        if (reg.waiting) {
+          showUpdate(reg.waiting);
+        }
+
+        // 2) Detecta novas instalações durante a sessão
+        reg.addEventListener('updatefound', () => {
+          const novoSW = reg.installing;
+          if (!novoSW) return;
+          novoSW.addEventListener('statechange', () => {
+            if (novoSW.state === 'installed' && navigator.serviceWorker.controller) {
+              showUpdate(novoSW);
+            }
+          });
+        });
+      });
+
+      // Recarrega quando o novo SW assumir
+      let refreshing = false;
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        if (!refreshing) {
+          refreshing = true;
+          try { lockUIForUpdate(false); } catch {}
+          location.reload();
+        }
+      });
+    } else {
+      console.warn('SW desativado: origem não segura (use HTTPS ou http://localhost).');
+    }
+  }
+  
+  // Mantém o botão como fallback, mas usaremos o banner
+  let deferredPrompt;
+  const installBtn = document.getElementById('instalarApp');
+  const installBanner = document.getElementById('install-banner');
+  const updateBanner = document.getElementById('update-banner');
+
+  function openInstallPrompt() {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    deferredPrompt.userChoice.then((choice) => {
+      if (choice.outcome === 'accepted') {
+        console.log('✅ PWA instalada');
+      } else {
+        console.log('ℹ️ Instalação cancelada');
+      }
+      deferredPrompt = null;
+      if (installBanner) installBanner.style.display = 'none';
+    });
+  }
+
+  // Mostra o banner de instalação quando o navegador sinalizar que pode instalar
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+
+    if (installBanner) {
+      // Se o banner de update já estiver visível, empurra o de instalação um pouco pra baixo
+      if (updateBanner && updateBanner.style.display === 'block') {
+        installBanner.style.top = '48px';
+      } else {
+        installBanner.style.top = '0';
+      }
+      installBanner.style.display = 'block';
+      installBanner.onclick = openInstallPrompt;
+    }
+
+    // Fallback: mantém o botão pronto, mas oculto
+    if (installBtn) {
+      installBtn.style.display = 'none';
+      installBtn.onclick = openInstallPrompt;
+    }
+  });
+
+  // Se o usuário instalar por outro caminho (ex.: omnibox)
+  window.addEventListener('appinstalled', () => {
+    if (installBanner) installBanner.style.display = 'none';
+    if (installBtn) installBtn.style.display = 'none';
+    deferredPrompt = null;
+  });
+
+  // iOS não dispara beforeinstallprompt -> mostra instrução amigável
+  const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+  if (isIOS && !isStandalone) {
+    if (installBanner) {
+      installBanner.innerHTML = '📲 Para instalar: toque em <strong>Compartilhar</strong> e depois <strong>Adicionar à Tela de Início</strong>.';
+      installBanner.style.top = '0';
+      installBanner.style.display = 'block';
+      installBanner.style.cursor = 'default';
+      installBanner.onclick = null;
+    }
+  }
+  
+</script>
+
+<!-- PWA Manager - Gerenciamento de Service Worker e Atualizações -->
+<script src="/assets/js/pwa-manager.js"></script>
+
+<!-- Notification System - Sistema de Notificações Visual -->
+<script type="module" src="/assets/js/notification-system.js"></script>
+
+<!-- Componente de Notificação -->
+<link rel="import" href="/assets/components/NotificarErro.html">
+
 </body>
 </html>
