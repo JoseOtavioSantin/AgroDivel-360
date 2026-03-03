@@ -9,6 +9,8 @@ document.head.appendChild(trackerScript);
 
 // --- MAPA DE PERMISSÕES ---
 const menuPermissions = {
+        // --- LUBRIFICANTES ---
+        'lubri-AnaliseLubrificantes': ['admin', 'diretoria', 'pecas'],
     // --- CHECKLIST ---
     'checklist-inicio': ['admin', 'diretoria', 'pecas', 'servicos'],
     
@@ -19,6 +21,7 @@ const menuPermissions = {
 
     // --- DIRETORIA ---
     'dash-geral': ['admin', 'diretoria'],
+    'dash-AnalisarParadas': ['admin', 'diretoria'],
 
     // --- COMERCIAL ---
     'dash-comercial': ['admin', 'diretoria', 'comercial'],
@@ -27,21 +30,38 @@ const menuPermissions = {
 
     // --- PECAS ---
     'dash-pecas': ['admin', 'diretoria', 'pecas'],
+    'ctrl-Kit50': ['admin', 'diretoria', 'pecas'],
+    'ctrl-ContagemDiaria': ['admin', 'diretoria', 'pecas'],
     'ctrl-PedidosPecas': ['admin', 'diretoria', 'pecas'],
+    'menu-ferramentas': ['admin', 'diretoria', 'pecas', 'comercial', 'servicos'],
+    'ctrl-ControleAlocacao': ['admin', 'diretoria', 'pecas', 'comercial', 'servicos'],
+    'ctrl-ControleEstoque': ['admin', 'diretoria', 'pecas', 'comercial', 'servicos'],
+    'ctrl-ControleGrupos': ['admin', 'diretoria', 'pecas'],
+    'ctrl-ControleHistorico': ['admin', 'diretoria', 'pecas', 'comercial', 'servicos'],
 
     // --- SERVICOS ---
     'dash-servicos': ['admin', 'diretoria', 'servicos'],
     'dash-PLM': ['admin', 'diretoria', 'servicos'],
     'dash-planos-manutencao': ['admin', 'diretoria', 'servicos'],
     'ctrl-PlanosVigentes': ['admin', 'diretoria', 'servicos'],
+    'ctrl-MaquinaParada': ['admin', 'diretoria', 'servicos'],
+    'ctrl-Tempario': ['admin', 'diretoria', 'servicos', 'pecas'],
+    'ctrl-Telemetria': ['admin', 'diretoria', 'servicos'],
     
     // --- MENUS (Grupos de submenu) ---
     'menu-controles': ['admin', 'diretoria', 'pecas', 'comercial', 'servicos'],
     'menu-planos': ['admin', 'diretoria', 'servicos'],
+    'menu-checklist': ['admin', 'diretoria', 'pecas', 'servicos'],
+    'menu-tempario': ['admin', 'diretoria', 'servicos', 'pecas'],
+    'menu-telemetria': ['admin', 'diretoria', 'servicos'],
     'menu-planejamento': ['admin', 'diretoria'],
     'menu-suporte': ['admin', 'diretoria', 'comercial', 'pecas', 'servicos'],
+    'menu-lubrificantes': ['admin', 'diretoria', 'pecas'],
     'menu-cadastros': ['admin'],
     'menu-dashboards': ['admin', 'diretoria', 'comercial', 'pecas', 'servicos'],
+    
+    // --- LUBRIFICANTES ---
+    'lubri-AnaliseLubrificantes': ['admin', 'diretoria', 'pecas'],
     
     // --- PLANEJAMENTO ---
     'plan-Anual': ['admin', 'diretoria'],
@@ -54,19 +74,19 @@ const menuPermissions = {
     'acao-Gerenciar': ['admin', 'diretoria', 'comercial', 'pecas', 'servicos'],
     'acao-Novo': ['admin', 'diretoria', 'comercial', 'pecas', 'servicos'],
     'acao-KPIs': ['admin', 'diretoria'],
-    'acao-Gantt': ['admin', 'diretoria', 'comercial', 'pecas', 'servicos'],
 
     // --- SUPORTE ---
     'suporte-SolicitacaoSuporte': ['admin', 'diretoria', 'comercial', 'pecas', 'servicos'],
     'suporte-MinhasSolicitacoes': ['admin', 'diretoria', 'comercial', 'pecas', 'servicos'],
     'suporte-GerenciarSolicitacoes': ['admin'],
-    // --- LUBRIFICANTES ---
-    'lubrificantes': ['admin', 'diretoria', 'servicos'],
 };
 
 // --- MAPA DE PÁGINAS PARA VERIFICAÇÃO ---
 const pagePermissions = {
+        '/Pages/Lubrificantes/AnaliseLubrificantes.html': ['admin', 'diretoria', 'pecas'],
+        '/Pages/PlanodeAcao/Gantt.html': ['admin', 'diretoria', 'comercial', 'pecas', 'servicos'],
     '/Pages/Dashboard/DashboardGeral.html': ['admin', 'diretoria'],
+    '/Pages/Dashboard/DashboardAnalisarParadas.html': ['admin', 'diretoria'],
     '/Pages/Dashboard/DashboardComercial.html': ['admin', 'diretoria', 'comercial'],
     '/Pages/Dashboard/DashboardSeguro.html': ['admin', 'diretoria', 'comercial'],
     '/Pages/Dashboard/DashboardConsorcio.html': ['admin', 'diretoria', 'comercial'],
@@ -74,7 +94,19 @@ const pagePermissions = {
     '/Pages/Dashboard/DashboardServicos.html': ['admin', 'diretoria', 'servicos'],
     '/Pages/Dashboard/DashboardPLM.html': ['admin', 'diretoria', 'servicos'],
     '/Pages/Dashboard/DashboardPlanosManutencao.html': ['admin', 'diretoria', 'servicos'],
+    '/Pages/Controles/Kits50Horas.html': ['admin', 'diretoria', 'pecas'],
+    '/Pages/Controles/ContagemDiaria.html': ['admin', 'diretoria', 'pecas'],
+    '/Pages/Controles/PedidosPecas.html': ['admin', 'diretoria', 'pecas'],
+    '/Pages/Ferramentas/ControleFerramentas-Alocacao.html': ['admin', 'diretoria', 'pecas', 'comercial', 'servicos'],
+    '/Pages/Ferramentas/ControleFerramentas-Estoque.html': ['admin', 'diretoria', 'pecas', 'comercial', 'servicos'],
+    '/Pages/Ferramentas/ControleFerramentas-Grupos.html': ['admin', 'diretoria', 'pecas'],
+    '/Pages/Ferramentas/ControleFerramentas-Historico.html': ['admin', 'diretoria', 'pecas', 'comercial', 'servicos'],
     '/Pages/Controles/PlanosVigentes.html': ['admin', 'diretoria', 'servicos'],
+    '/Pages/Controles/MaquinasParadas.html': ['admin', 'diretoria', 'servicos'],
+    '/Pages/Controles/Telemetria.html': ['admin', 'diretoria', 'servicos'],
+    '/Pages/Tempario/Tempario.html': ['admin', 'diretoria', 'servicos', 'pecas'],
+    '/Pages/Lubrificantes/AnaliseLubrificantes.html': ['admin', 'diretoria', 'pecas'],
+    '/Pages/Formularios/form-planejamento-anual.html': ['admin', 'diretoria'],
     '/Pages/PlanejamentoAnual/PreencherPlanejamento.html': ['admin', 'diretoria'],
     '/Pages/PlanejamentoAnual/GerenciaPlanejamento.html': ['admin', 'diretoria'],
     '/Pages/PlanejamentoAnual/GerenciarPermissoes.html': ['admin', 'diretoria'],
@@ -82,15 +114,64 @@ const pagePermissions = {
     '/Pages/PlanodeAcao/GerenciarPlanosAcao.html': ['admin', 'diretoria', 'comercial', 'pecas', 'servicos'],
     '/Pages/PlanodeAcao/form_PlanoAcao.html': ['admin', 'diretoria', 'comercial', 'pecas', 'servicos'],
     '/Pages/PlanodeAcao/DetalhesPlanoAcao.html': ['admin', 'diretoria', 'comercial', 'pecas', 'servicos'],
-    '/Pages/PlanodeAcao/Gantt.html': ['admin', 'diretoria', 'comercial', 'pecas', 'servicos'],
     '/Pages/Cadastros/CadastroGestores.html': ['admin'],
     '/Pages/Cadastros/CadastroTecnicos.html': ['admin'],
     '/Pages/Cadastros/UsuariosOnline.html': ['admin'],
     '/Pages/Suporte/SolicitacaoSuporte.html': ['admin', 'diretoria', 'comercial', 'pecas', 'servicos'],
     '/Pages/Suporte/MinhasSolicitacoes.html': ['admin', 'diretoria', 'comercial', 'pecas', 'servicos'],
-    '/Pages/Suporte/GerenciarSolicitacoes.html': ['admin'],
-    '/Pages/Lubrificantes/AnaliseLubrificantes.html': ['admin', 'diretoria', 'servicos']
+    '/Pages/Suporte/GerenciarSolicitacoes.html': ['admin']
 };
+
+// --- MAPA DE QUAIS ITENS PERTENCEM A CADA MENU ---
+const menuItems = {
+    'menu-ferramentas': ['ctrl-ControleAlocacao', 'ctrl-ControleEstoque', 'ctrl-ControleGrupos', 'ctrl-ControleHistorico'],
+    'menu-checklist': ['checklist-inicio'],
+    'menu-controles': ['ctrl-MaquinaParada', 'ctrl-Kit50', 'ctrl-ContagemDiaria', 'ctrl-PedidosPecas'],
+    'menu-planos': ['ctrl-PlanosVigentes'],
+    'menu-tempario': ['ctrl-Tempario'],
+    'menu-telemetria': ['ctrl-Telemetria'],
+    'menu-planejamento': ['plan-Preencher', 'plan-Gerenciar', 'plan-Permissoes'],
+    'menu-plano-acao': ['acao-Gerenciar', 'acao-Novo', 'acao-KPIs'],
+    'menu-suporte': ['suporte-SolicitacaoSuporte', 'suporte-MinasSolicitacoes', 'suporte-GerenciarSolicitacoes'],
+    'menu-lubrificantes': ['lubri-AnaliseLubrificantes'],
+    'menu-cadastros': ['admin-CadastroGestores', 'admin-CadastroTecnicos', 'admin-UsuariosOnline'],
+    'menu-dashboards': ['dash-geral', 'dash-AnalisarParadas', 'dash-comercial', 'dash-Seguro', 'dash-Consorcio', 'dash-pecas', 'dash-servicos', 'dash-PLM', 'dash-planos-manutencao']
+};
+
+// Função que verifica se o usuário tem acesso a um item de menu
+function hasPermission(menuItemId, userGroup, permissoesIndividuais = []) {
+    // Se for um item de menu (começa com 'menu-'), verifica seus subitens
+    if (menuItemId.startsWith('menu-') && menuItems[menuItemId]) {
+        // Verifica se algum subitem tem permissão
+        for (const subItemId of menuItems[menuItemId]) {
+            if (hasPermission(subItemId, userGroup, permissoesIndividuais)) {
+                return true;
+            }
+        }
+        // Se nenhum subitem tem permissão, o menu não deve ser mostrado
+        return false;
+    }
+    
+    // Para itens normais (não menus), verifica as permissões
+    const allowedGroups = menuPermissions[menuItemId];
+    
+    // Se não tem definição de permissão, não mostra
+    if (!allowedGroups) {
+        return false;
+    }
+    
+    // Verifica acesso por grupo
+    if (userGroup !== 'nenhum' && allowedGroups.includes(userGroup)) {
+        return true;
+    }
+    
+    // Verifica acesso por permissão individual
+    if (permissoesIndividuais.includes(menuItemId)) {
+        return true;
+    }
+    
+    return false;
+}
 
 // Função para verificar se o usuário tem acesso à página atual
 function checkPageAccess(userGroup, permissoesIndividuais) {
@@ -119,89 +200,56 @@ function checkPageAccess(userGroup, permissoesIndividuais) {
         return true;
     }
 
-    // Verifica acesso por permissões individuais
-    // Para isso, precisamos mapear a página de volta para o ID do menu
-    const pageToMenuId = Object.entries(pagePermissions).find(([page, groups]) => page === currentPage);
-    if (pageToMenuId) {
-        // Encontra o ID do menu correspondente a esta página
-        const menuId = Object.keys(menuPermissions).find(key => {
-            // Mapeia páginas para IDs de menu (você pode precisar ajustar isso)
-            const pageMap = {
-                '/Pages/Dashboard/DashboardGeral.html': 'dash-geral',
-                '/Pages/Dashboard/DashboardComercial.html': 'dash-comercial',
-                '/Pages/Dashboard/DashboardSeguro.html': 'dash-Seguro',
-                '/Pages/Dashboard/DashboardConsorcio.html': 'dash-Consorcio',
-                '/Pages/Dashboard/DashboardPecas.html': 'dash-pecas',
-                '/Pages/Dashboard/DashboardServicos.html': 'dash-servicos',
-                '/Pages/Dashboard/DashboardPLM.html': 'dash-PLM',
-                '/Pages/Dashboard/DashboardPlanosManutencao.html': 'dash-planos-manutencao',
-                '/Pages/Controles/PlanosVigentes.html': 'ctrl-PlanosVigentes',
-                '/Pages/PlanejamentoAnual/PreencherPlanejamento.html': 'plan-Preencher',
-                '/Pages/PlanejamentoAnual/GerenciaPlanejamento.html': 'plan-Gerenciar',
-                '/Pages/PlanejamentoAnual/GerenciarPermissoes.html': 'plan-Permissoes',
-                '/Pages/PlanodeAcao/form_KPIs.html': 'acao-KPIs',
-                '/Pages/PlanodeAcao/GerenciarPlanosAcao.html': 'acao-Gerenciar',
-                '/Pages/PlanodeAcao/form_PlanoAcao.html': 'acao-Novo',
-                '/Pages/PlanodeAcao/DetalhesPlanoAcao.html': 'acao-Gerenciar',
-                '/Pages/PlanodeAcao/Gantt.html': 'acao-Gantt',
-                '/Pages/Cadastros/CadastroGestores.html': 'admin-CadastroGestores',
-                '/Pages/Cadastros/CadastroTecnicos.html': 'admin-CadastroTecnicos',
-                '/Pages/Cadastros/UsuariosOnline.html': 'admin-UsuariosOnline',
-                '/Pages/Suporte/SolicitacaoSuporte.html': 'suporte-SolicitacaoSuporte',
-                '/Pages/Suporte/MinhasSolicitacoes.html': 'suporte-MinhasSolicitacoes',
-                '/Pages/Suporte/GerenciarSolicitacoes.html': 'suporte-GerenciarSolicitacoes',
-                '/Pages/Lubrificantes/AnaliseLubrificantes.html': 'lubrificantes'
-            };
-            return pageMap[currentPage] === key;
-        });
-
-        if (menuId && permissoesIndividuais.includes(menuId)) {
-            console.log("Acesso permitido via permissão individual:", menuId);
-            return true;
-        }
+    // Verifica acesso por permissões individuais (padrão antigo)
+    const pageMap = {
+        '/Pages/Dashboard/DashboardGeral.html': 'dash-geral',
+        '/Pages/Dashboard/DashboardAnalisarParadas.html': 'dash-AnalisarParadas',
+        '/Pages/Dashboard/DashboardComercial.html': 'dash-comercial',
+        '/Pages/Dashboard/DashboardSeguro.html': 'dash-Seguro',
+        '/Pages/Dashboard/DashboardConsorcio.html': 'dash-Consorcio',
+        '/Pages/Dashboard/DashboardPecas.html': 'dash-pecas',
+        '/Pages/Dashboard/DashboardServicos.html': 'dash-servicos',
+        '/Pages/Dashboard/DashboardPLM.html': 'dash-PLM',
+        '/Pages/Dashboard/DashboardPlanosManutencao.html': 'dash-planos-manutencao',
+        '/Pages/Controles/Kits50Horas.html': 'ctrl-Kit50',
+        '/Pages/Controles/ContagemDiaria.html': 'ctrl-ContagemDiaria',
+        '/Pages/Controles/PedidosPecas.html': 'ctrl-PedidosPecas',
+        '/Pages/Ferramentas/ControleFerramentas-Alocacao.html': 'ctrl-ControleAlocacao',
+        '/Pages/Ferramentas/ControleFerramentas-Estoque.html': 'ctrl-ControleEstoque',
+        '/Pages/Ferramentas/ControleFerramentas-Grupos.html': 'ctrl-ControleGrupos',
+        '/Pages/Ferramentas/ControleFerramentas-Historico.html': 'ctrl-ControleHistorico',
+        '/Pages/Controles/PlanosVigentes.html': 'ctrl-PlanosVigentes',
+        '/Pages/Controles/MaquinasParadas.html': 'ctrl-MaquinaParada',
+        '/Pages/Controles/Telemetria.html': 'ctrl-Telemetria',
+        '/Pages/Tempario/Tempario.html': 'ctrl-Tempario',
+        '/Pages/Lubrificantes/AnaliseLubrificantes.html': 'lubri-AnaliseLubrificantes',
+        '/Pages/Formularios/form-planejamento-anual.html': 'plan-Anual',
+        '/Pages/PlanejamentoAnual/PreencherPlanejamento.html': 'plan-Preencher',
+        '/Pages/PlanejamentoAnual/GerenciaPlanejamento.html': 'plan-Gerenciar',
+        '/Pages/PlanejamentoAnual/GerenciarPermissoes.html': 'plan-Permissoes',
+        '/Pages/PlanodeAcao/form_KPIs.html': 'acao-KPIs',
+        '/Pages/PlanodeAcao/GerenciarPlanosAcao.html': 'acao-Gerenciar',
+        '/Pages/PlanodeAcao/form_PlanoAcao.html': 'acao-Novo',
+        '/Pages/PlanodeAcao/DetalhesPlanoAcao.html': 'acao-Gerenciar',
+        '/Pages/PlanodeAcao/Gantt.html': 'acao-Gantt',
+        '/Pages/Cadastros/CadastroGestores.html': 'admin-CadastroGestores',
+        '/Pages/Cadastros/CadastroTecnicos.html': 'admin-CadastroTecnicos',
+        '/Pages/Cadastros/UsuariosOnline.html': 'admin-UsuariosOnline',
+        '/Pages/Suporte/SolicitacaoSuporte.html': 'suporte-SolicitacaoSuporte',
+        '/Pages/Suporte/MinhasSolicitacoes.html': 'suporte-MinhasSolicitacoes',
+        '/Pages/Suporte/GerenciarSolicitacoes.html': 'suporte-GerenciarSolicitacoes',
+        '/Pages/Lubrificantes/AnaliseLubrificantes.html': 'lubri-AnaliseLubrificantes'
+    };
+    const menuId = pageMap[currentPage];
+    if (menuId && permissoesIndividuais.includes(menuId)) {
+        console.log("Acesso permitido via permissão individual:", menuId);
+        return true;
     }
 
     // Se não tem acesso, redireciona
     console.log("Acesso NEGADO para página:", currentPage);
     alert("Você não tem permissão para acessar esta página.");
     window.location.href = '/Pages/Menu.html';
-    return false;
-}
-
-// Função que verifica se o usuário tem acesso a um item de menu
-// --- MAPA DE QUAIS ITENS PERTENCEM A CADA MENU ---
-const menuItems = {
-    'menu-controles': ['ctrl-PedidosPecas'],
-    'menu-planos': ['ctrl-PlanosVigentes'],
-    'menu-planejamento': ['plan-Preencher', 'plan-Gerenciar', 'plan-Permissoes'],
-    'menu-plano-acao': ['acao-Gerenciar', 'acao-Novo', 'acao-KPIs'],
-    'menu-suporte': ['suporte-SolicitacaoSuporte', 'suporte-MinhasSolicitacoes', 'suporte-GerenciarSolicitacoes'],
-    'menu-cadastros': ['admin-CadastroGestores', 'admin-CadastroTecnicos', 'admin-UsuariosOnline'],
-    'menu-dashboards': ['dash-geral', 'dash-comercial', 'dash-Seguro', 'dash-Consorcio', 'dash-pecas', 'dash-servicos', 'dash-PLM', 'dash-planos-manutencao']
-};
-
-function hasPermission(menuItemId, userGroup, permissoesIndividuais) {
-    const allowedGroups = menuPermissions[menuItemId];
-    
-    // Verifica se o grupo principal tem acesso
-    if (userGroup !== 'nenhum' && allowedGroups && allowedGroups.includes(userGroup)) {
-        return true;
-    }
-    
-    // Verifica se tem permissão individual específica
-    if (permissoesIndividuais.includes(menuItemId)) {
-        return true;
-    }
-
-    // Para menus (menu-*), verifica se tem permissão em ALGUM dos itens dentro
-    if (menuItemId.startsWith('menu-') && menuItems[menuItemId]) {
-        for (const itemId of menuItems[menuItemId]) {
-            if (hasPermission(itemId, userGroup, permissoesIndividuais)) {
-                return true;
-            }
-        }
-    }
-    
     return false;
 }
 
@@ -277,27 +325,28 @@ onAuthStateChanged(auth, async (user) => {
 function applyMenuPermissions(userGroup, permissoesIndividuais = []) {
     for (const menuItemId in menuPermissions) {
         const element = document.getElementById(menuItemId);
+
         if (element) {
             const temAcesso = hasPermission(menuItemId, userGroup, permissoesIndividuais);
+            
             if (!temAcesso) {
                 element.style.display = 'none';
             } else {
-                element.style.display = '';
+                element.style.display = ''; // Garante que está visível
             }
         }
     }
 
-    // Garante que menus pais aparecem se pelo menos um filho estiver visível
+    // Esconde menus pais sem itens visíveis
     document.querySelectorAll('.submenu-parent').forEach(menu => {
         const totalItems = menu.querySelectorAll('ul.submenu > li');
         const visibleItems = Array.from(totalItems).filter(item => item.style.display !== 'none');
-        if (visibleItems.length > 0) {
-            menu.style.display = '';
-        } else if (totalItems.length > 0) {
+
+        if (visibleItems.length === 0 && totalItems.length > 0) {
             menu.style.display = 'none';
         }
     });
-
+    
     // Mostrar sidebar após aplicar permissões
     const menuLinks = document.querySelector('.menu-links');
     if (menuLinks) {
