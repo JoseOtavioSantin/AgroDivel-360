@@ -88,8 +88,8 @@ const pagePermissions = {
     '/Pages/Cadastros/UsuariosOnline.html': ['admin'],
     '/Pages/Suporte/SolicitacaoSuporte.html': ['admin', 'diretoria', 'comercial', 'pecas', 'servicos'],
     '/Pages/Suporte/MinhasSolicitacoes.html': ['admin', 'diretoria', 'comercial', 'pecas', 'servicos'],
-    '/Pages/Suporte/GerenciarSolicitacoes.html': ['admin']
-    ,'/Pages/Lubrificantes/AnaliseLubrificantes.html': ['admin', 'diretoria', 'servicos']
+    '/Pages/Suporte/GerenciarSolicitacoes.html': ['admin'],
+    '/Pages/Lubrificantes/AnaliseLubrificantes.html': ['admin', 'diretoria', 'servicos']
 };
 
 // Função para verificar se o usuário tem acesso à página atual
@@ -149,7 +149,8 @@ function checkPageAccess(userGroup, permissoesIndividuais) {
                 '/Pages/Cadastros/UsuariosOnline.html': 'admin-UsuariosOnline',
                 '/Pages/Suporte/SolicitacaoSuporte.html': 'suporte-SolicitacaoSuporte',
                 '/Pages/Suporte/MinhasSolicitacoes.html': 'suporte-MinhasSolicitacoes',
-                '/Pages/Suporte/GerenciarSolicitacoes.html': 'suporte-GerenciarSolicitacoes'
+                '/Pages/Suporte/GerenciarSolicitacoes.html': 'suporte-GerenciarSolicitacoes',
+                '/Pages/Lubrificantes/AnaliseLubrificantes.html': 'lubrificantes'
             };
             return pageMap[currentPage] === key;
         });
@@ -369,8 +370,3 @@ document.addEventListener('click', async () => {
         // Silenciar erros de atualização
     }
 });
-
-
-
-
-
