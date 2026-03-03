@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="theme-color" content="#2c2f3f" />
+  <title>Visualização de Conversa do Suporte</title>
+  <link rel="icon" type="image/png" href="/assets/images/iconeaba.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+  <link rel="stylesheet" href="/assets/css/style.css">
+  <style>
+    body { background: #f5f7fa; }
+    .conversa-container { max-width: 900px; margin: 40px auto; background: #fff; border-radius: 12px; box-shadow: 0 2px 16px rgba(25,59,124,0.08); padding: 32px 28px; }
+    .conversa-header { font-size: 22px; font-weight: bold; color: #193b7c; margin-bottom: 18px; }
+    .chat-messages { min-height: 200px; max-height: 500px; overflow-y: auto; background: #f9fafb; border-radius: 8px; padding: 24px 18px; display: flex; flex-direction: column; gap: 16px; }
+    .mensagem-grupo { display: flex; flex-direction: column; gap: 2px; }
+    .mensagem-bubble { max-width: 70%; padding: 12px 18px; border-radius: 14px; font-size: 15px; line-height: 1.5; background: #e3f2fd; color: #1a202c; align-self: flex-start; }
+    .mensagem-suporte .mensagem-bubble { background: #193b7c; color: #fff; align-self: flex-end; }
+    .mensagem-meta { font-size: 11px; color: #8b92a9; margin-top: 2px; }
+    .mensagem-suporte .mensagem-meta { text-align: right; }
+    .mensagem-usuario .mensagem-meta { text-align: left; }
+    .vazio-aviso { text-align: center; color: #a0aec0; padding: 40px 20px; font-size: 14px; font-style: italic; }
+  </style>
+</head>
+<body>
+  <nav id="sidebar-placeholder"></nav>
+  <section class="conversa-container">
+    <div class="conversa-header">Conversa da Solicitação de Suporte</div>
+    <div id="detalhes-solicitacao" style="margin-bottom:22px;"></div>
+    <div class="chat-messages" id="chat-messages">
+      <div class="vazio-aviso">Carregando mensagens...</div>
+    </div>
+  </section>
+  <script type="module" src="/assets/js/firebase-config.js"></script>
+  <script type="module" src="/assets/js/auth.js"></script>
+  <script src="/assets/js/main.js"></script>
+  <script src="/assets/js/components/Sidebar.js"></script>
+  <script type="module">
+    import { garantirAutenticacao } from '/assets/js/auth-guard.js';
+    import { getApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+    let solicitacaoId;
+    let solicitacao;
+    let db;
+    (async () => {
+      try {
+        await garantirAutenticacao();
+        const app = getApp();
+        db = getFirestore(app);
+        const params = new URLSearchParams(window.location.search);
+        solicitacaoId = params.get('id');
+        if (!solicitacaoId) {
+          document.getElementById('chat-messages').innerHTML = '<div class="vazio-aviso">ID da solicitação não fornecido</div>';
+          return;
+        }
+        const docRef = doc(db, 'SolicitaçõesSuporte', solicitacaoId);
+        const docSnap = await getDoc(docRef);
+        if (!docSnap.exists()) {
+          document.getElementById('chat-messages').innerHTML = '<div class="vazio-aviso">Solicitação não encontrada</div>';
+          return;
+        }
+        solicitacao = { id: docSnap.id, ...docSnap.data() };
+        renderizarDetalhes();
+        renderizarChat();
+      } catch (error) {
+        document.getElementById('chat-messages').innerHTML = '<div class="vazio-aviso">Erro ao carregar conversa</div>';
+      }
+    })();
+    function ofuscarNome(nome) {
+      if (!nome || typeof nome !== 'string') return 'N/A';
+      const partes = nome.split(' ');
+      return partes.map(p => p.length > 0 ? p[0].toUpperCase() + '*'.repeat(Math.max(0, p.length - 1)) : '').join(' ');
+    }
+    function renderizarDetalhes() {
+      const detalhesDiv = document.getElementById('detalhes-solicitacao');
+      let imagensHTML = '';
+      if (solicitacao.imagens && solicitacao.imagens.length > 0) {
+        imagensHTML = solicitacao.imagens.map(url => `<img src="${url}" alt="Imagem enviada" style="max-width:110px;max-height:90px;border-radius:7px;margin-right:8px;margin-bottom:4px;border:1.5px solid #e5e7eb;">`).join('');
+      } else {
+        imagensHTML = '<span style="color:#aaa;font-size:13px;">Nenhuma imagem enviada</span>';
+      }
+      detalhesDiv.innerHTML = `
+        <div style="margin-bottom:10px;font-size:15px;"><b>Descrição do erro:</b><br><span style='color:#193b7c;'>${solicitacao.descricao ? solicitacao.descricao : 'Sem descrição.'}</span></div>
+        <div style="margin-bottom:10px;font-size:15px;"><b>Imagens enviadas:</b><br>${imagensHTML}</div>
+      `;
+    }
+    function renderizarChat() {
+      const historico = solicitacao.historico || [];
+      const respostas = historico.filter(h => h.tipo === 'resposta');
+      if (respostas.length === 0) {
+        document.getElementById('chat-messages').innerHTML = '<div class="vazio-aviso">Nenhuma mensagem ainda</div>';
+        return;
+      }
+      const html = respostas.map(h => {
+        const dataResposta = h.data?.toDate 
+          ? h.data.toDate().toLocaleString('pt-BR')
+          : (h.data ? new Date(h.data).toLocaleString('pt-BR') : 'N/A');
+        const isUsuario = h.respondidoPor === solicitacao.solicitante || h.respondidoPor === solicitacao.email;
+        const classeMensagem = isUsuario ? 'mensagem-usuario' : 'mensagem-suporte';
+        return `
+          <div class="mensagem-grupo ${classeMensagem}">
+            <div class="mensagem-bubble">${h.mensagem || ''}</div>
+            <div class="mensagem-meta">${ofuscarNome(h.respondidoPor)}<span> ${dataResposta}</span></div>
+          </div>
+        `;
+      }).join('');
+      document.getElementById('chat-messages').innerHTML = html;
+      document.getElementById('chat-messages').scrollTop = document.getElementById('chat-messages').scrollHeight;
+    }
+  </script>
+</body>
+</html>

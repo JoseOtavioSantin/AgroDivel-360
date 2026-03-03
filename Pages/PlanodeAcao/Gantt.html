@@ -1,0 +1,981 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gantt Plano de Ação - Ritmo da Semana</title>
+    <link rel="icon" type="image/png" href="/assets/images/iconeaba.png">
+    
+    <!-- CSS -->
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <link rel="stylesheet" href="/assets/css/style.css">
+    <link rel="stylesheet" href="/assets/css/Pages/Formularios/form-ritmo.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
+    <!-- Gantt custom (sem dependências) -->
+
+    <style>
+        /* Mensagens */
+        .error-message { color: #dc2626; background: #fef2f2; padding: 16px; border-radius: 8px; text-align: center; border: 1px solid #fecaca; }
+        .loading-message { color: #6b7280; text-align: center; padding: 20px; }
+
+        /* GANTT CUSTOM */
+        .gantt-wrap { display:flex; gap:16px; align-items:flex-start; }
+        /* coluna esquerda removida (usuário pediu para ocultar os índices) */
+        .gantt-left { display: none; }
+        .gantt-left .gantt-label { display: none; }
+        .gantt-right { flex:1; background:#fff; border-radius:8px; padding:24px 12px 12px 12px; box-shadow: 0 6px 20px rgba(2,6,23,0.04); border:1px solid #eef2f7; overflow:auto; position:relative; }
+        .gantt-timeline { position:relative; min-height:60px; }
+        .gantt-grid-container { position:absolute; left:0; top:0; right:0; bottom:0; z-index:0; pointer-events:none; }
+        .gantt-grid-column { position:absolute; top:0; bottom:0; border-right:1px solid #f1f5f9; pointer-events:none; }
+        .gantt-gridline { position:absolute; top:0; bottom:0; width:1px; background:transparent; border-left:1px solid rgba(2,6,23,0.03); z-index:1; }
+        /* month header sits above tick labels; tick labels slightly lower to make room */
+        .gantt-months { position:absolute; left:0; right:0; top:-42px; height:20px; z-index:6; pointer-events:none; }
+        /* remoção do rótulo central do mês — exibiremos apenas o rótulo no início do mês */
+        .gantt-month-segment { display: none; position:absolute; top:0; height:20px; align-items:center; justify-content:center; font-weight:700; color:#374151; pointer-events:none; }
+        .gantt-start-line { position:absolute; top:0; bottom:0; width:2px; background:rgba(59,130,246,0.95); box-shadow: 0 0 6px rgba(59,130,246,0.12); z-index:2; pointer-events:none; }
+        /* month boundary marker (vertical line at 1st day of month) */
+        .gantt-month-boundary { position:absolute; top:0; bottom:0; width:2px; background:rgba(148,163,184,0.6); box-shadow: 0 0 6px rgba(148,163,184,0.06); z-index:2; pointer-events:none; }
+        /* mostrar o rótulo da quebra com estilo idêntico ao rótulo do segmento do mês (ex.: "fevereiro") */
+        .gantt-month-boundary-label { position:absolute; top:0; transform:translateX(-50%); font-size:13px; color:#374151; background:transparent; padding:0 6px; border-radius:4px; z-index:8; pointer-events:none; font-weight:700; display:flex; align-items:center; justify-content:center; height:20px; }
+        .gantt-tick-label { position:absolute; top:-12px; transform:translateX(-50%); font-size:12px; color:#6b7280; z-index:4; white-space:nowrap; }
+        .gantt-row { position:relative; height:30px; margin-bottom:6px; z-index:2; }
+        .gantt-bar { position:absolute; height:20px; border-radius:8px; box-shadow: 0 6px 20px rgba(2,6,23,0.06); display:flex; align-items:center; overflow:hidden; cursor:pointer; z-index:3; padding:0 8px; }
+        .gantt-bar .progress { height:100%; background: transparent; border-radius:inherit; }
+        .gantt-bar .pct { margin-left:auto; padding:2px 6px; color:#fff; font-weight:700; font-size:11px; background: rgba(0,0,0,0.15); border-radius:6px; cursor:help; pointer-events:auto; }        /* bolinha de prioridade (na frente da barra) */
+        .gantt-priority-dot { position:absolute; width:12px; height:12px; border-radius:50%; box-shadow:0 2px 6px rgba(2,6,23,0.12); border:2px solid #fff; z-index:5; pointer-events:none; transform:translateX(-50%); }
+        .gantt-priority-dot.small { width:10px; height:10px; }
+        /* .gantt-update-badge removed — last-update description is shown only inside the bar tooltip */
+        @keyframes gantt-pulse { 0% { box-shadow: 0 0 0 0 rgba(37,99,235,0.2); } 70% { box-shadow: 0 0 0 8px rgba(37,99,235,0); } 100% { box-shadow: 0 0 0 0 rgba(37,99,235,0); } }
+        /* timeline header removed (user request) */
+        .gantt-legend { font-size:13px; color:#374151; margin-bottom:12px; }
+        .gantt-empty { padding:32px; text-align:center; color:#6b7280; }
+        .gantt-tooltip { position:fixed; display:none; z-index:9999; background:rgba(2,6,23,0.9); color:#fff; padding:8px 10px; border-radius:6px; box-shadow: 0 6px 24px rgba(2,6,23,0.25); font-size:13px; min-width:140px; }
+
+        /* linha e rótulo de HOJE (central) */
+        .gantt-today-center { position:absolute; left:50%; top:0; bottom:0; width:2px; background:rgba(59,130,246,0.95); box-shadow: 0 0 8px rgba(59,130,246,0.08); z-index:12; pointer-events:none; transform:translateX(-50%); }
+        .gantt-today-label { position:absolute; left:50%; top:-28px; transform:translateX(-50%); background:#2563eb; color:#fff; font-size:12px; padding:4px 8px; border-radius:6px; z-index:13; font-weight:700; pointer-events:none; }
+
+        @media (max-width:900px){ .gantt-left{display:none;} }
+    </style>
+</head>
+<body>
+
+    <!-- Placeholder onde a Sidebar será carregada -->
+    <nav id="sidebar-placeholder"></nav>
+
+    <section class="home">
+        <div class="text">
+            <h1>Gantt Plano de Ação</h1>
+            <p>Visualize e gerencie o progresso das atividades do plano de ação.</p>
+        </div>
+        
+        <div id="gantt-container" style="margin: 32px auto; max-width: 1900px; min-height: 550px; background: #fff; border-radius: 16px; box-shadow: 0 4px 24px rgba(0,0,0,0.06); padding: 24px;">
+            <div id="gantt-controls" style="display:flex;gap:12px;align-items:center;margin-bottom:12px;flex-wrap:wrap">
+                <select id="gantt-viewmode" style="padding:6px 10px;border-radius:8px;border:1px solid #e6edf3;background:#fff;color:#374151">
+                    <option value="Month">Month</option>
+                    <option value="Week">Week</option>
+                    <option value="Day">Day</option>
+                </select>
+                <select id="gantt-filter-month" style="padding:6px 10px;border-radius:8px;border:1px solid #e6edf3;background:#fff;color:#374151">
+                    <option value="all">Todos os meses</option>
+                </select>
+                <select id="gantt-filter-priority" style="padding:6px 10px;border-radius:8px;border:1px solid #e6edf3;background:#fff;color:#374151">
+                    <option value="all">Todas prioridades</option>
+                </select>
+                <select id="gantt-filter-where" style="padding:6px 10px;border-radius:8px;border:1px solid #e6edf3;background:#fff;color:#374151">
+                    <option value="all">Todos departamentos</option>
+                </select>
+                <div id="gantt-status-legend" style="margin-left:auto;display:flex;gap:12px;align-items:center;color:#374151;font-size:13px"></div>
+                <div id="gantt-legend" style="display:flex;gap:8px;align-items:center;opacity:0.9"></div>
+            </div>
+            <div id="gantt-chart"></div>
+        </div>
+    </section>
+
+
+    <!-- Scripts auxiliares -->
+    <script type="module" src="/assets/js/auth.js"></script>
+    <script src="/assets/js/main.js"></script>
+    <script src="/assets/js/components/Sidebar.js"></script>
+    <script type="module" src="/assets/js/Formularios/form-ritmo.js"></script>
+
+    <!-- Script de renderização do Gantt DEPOIS de todos os scripts externos -->
+    <script>
+    console.log('[Gantt] Script de renderização carregado e DOM pronto?');
+    function formatDate(dateValue) {
+        if (!dateValue) return '';
+        try {
+            if (dateValue.toDate) {
+                return dateValue.toDate().toISOString().split('T')[0];
+            }
+            return new Date(dateValue).toISOString().split('T')[0];
+        } catch (e) {
+            console.warn('Erro ao formatar data:', e);
+            return '';
+        }
+    }
+    function formatDateTime(dateValue) {
+        if (!dateValue) return '';
+        try {
+            const d = dateValue.toDate ? dateValue.toDate() : new Date(dateValue);
+            return d.toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
+        } catch (e) {
+            return '';
+        }
+    }
+    function getProgressFromStatus(status) {
+        const statusMap = {
+            'Não Iniciado': 0,
+            'Em Andamento': 50,
+            'Concluído': 100,
+            'Cancelado': 0,
+            'Atrasado': 75
+        };
+        return statusMap[status] || 0;
+    }
+    async function fetchPlanosAcao() {
+        try {
+            const planosRef = window.collection(window.db, 'planos-acao');
+            const q = window.query(planosRef, window.orderBy('whenInicio', 'asc'));
+            const snapshot = await window.getDocs(q);
+            return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        } catch (error) {
+            console.error('Erro ao buscar planos:', error);
+            throw error;
+        }
+    }
+    function mapPlanosToGanttTasks(planos) {
+        return planos.map(plano => {
+            const startDate = formatDate(plano.whenInicio);
+            const endDate = formatDate(plano.whenFim);
+            if (!startDate || !endDate) {
+                console.warn('Plano sem datas válidas:', plano.id);
+                return null;
+            }
+            return {
+                id: plano.id,
+                name: plano.nome || plano.titulo || 'Plano sem nome',
+                start: startDate,
+                end: endDate,
+                // usar campo numérico `progresso` quando presente; caso contrário derivar do `status`
+                progress: (plano.progresso !== undefined && plano.progresso !== null) ? Number(plano.progresso) : getProgressFromStatus(plano.status),
+                custom_class: plano.status ? plano.status.replace(/\s+/g, '-').toLowerCase() : '',
+                // responsavel: preferir `who` (campo preenchido no registro do plano)
+                responsavel: plano.who || plano.responsavel || 'Não atribuído',
+                prioridade: plano.prioridade || 'Não definida',
+                where: plano.where || plano.filial || '',
+                descricao: plano.what || plano.descricao || '',
+                // KPI / Meta — necessários para o tooltip
+                kpiNome: plano.kpiNome || '',
+                meta: plano.meta || '',
+                // data da última atualização (pode ser preenchida a partir da subcollection 'atualizacoes')
+                dataAtualizacao: plano.dataAtualizacao || null
+            };
+        }).filter(task => task !== null);
+    }
+
+    // Renderizador Gantt custom (sem dependências)
+    // aceita opcionalmente `opts = { forceStart: ISODate, windowDays: number }` para forçar uma janela
+    function renderCustomGantt(container, tasks, view = 'Month', opts = {}) {
+        container.innerHTML = '';
+        const wrap = document.createElement('div');
+        wrap.className = 'gantt-wrap';
+
+        const left = document.createElement('div');
+        left.className = 'gantt-left';
+
+        const right = document.createElement('div');
+        right.className = 'gantt-right';
+
+        // Header / legenda
+        // (badge "Visão" removido a pedido — controles externos já existem acima)
+
+        const legend = document.createElement('div');
+        legend.className = 'gantt-legend';
+        legend.textContent = `${tasks.length} atividade(s)`;
+        right.appendChild(legend);
+
+        // Compute timeline range
+        const msPerDay = 24 * 60 * 60 * 1000;
+        let minDate, maxDate;
+        if (view === 'Day' && opts.forceStart && opts.windowDays) {
+            // janela forçada (p.ex. 30 dias a partir de opts.forceStart)
+            minDate = new Date(opts.forceStart);
+            minDate.setHours(0,0,0,0);
+            maxDate = new Date(minDate.getTime() + opts.windowDays * msPerDay);
+        } else {
+            const dates = tasks.reduce((acc, t) => {
+                acc.push(new Date(t.start));
+                acc.push(new Date(t.end));
+                return acc;
+            }, []);
+            minDate = new Date(Math.min.apply(null, dates));
+            maxDate = new Date(Math.max.apply(null, dates));
+            // normalize to midnight
+            minDate.setHours(0,0,0,0);
+            maxDate.setHours(0,0,0,0);
+            // add one day to include end
+            maxDate.setDate(maxDate.getDate() + 1);
+        }
+        const totalDays = Math.max(1, Math.round((maxDate - minDate) / msPerDay));
+
+        // timeline header removed — we no longer render the top date label (per user)
+
+        const visibleRows = Math.max(1, tasks.length);
+        const timeline = document.createElement('div');
+        timeline.className = 'gantt-timeline';
+        // calcular altura do timeline — forçar um mínimo para preencher o espaço vazio quando houver poucas tarefas
+        const minTimelineHeight = (opts && opts.minHeight) || window._ganttMinTimelineHeight || 420; // px
+        const rowEstimate = 36; // espaço (altura + gap) por linha — reduzido para compactar visual
+        const computedHeight = Math.max(visibleRows * rowEstimate + 20, minTimelineHeight);
+        timeline.style.height = computedHeight + 'px';
+        // garantir que o container da direita acomode o timeline maior
+        right.style.minHeight = Math.max(right.clientHeight || 0, computedHeight + 40) + 'px';
+        right.appendChild(timeline);
+
+        // ticks generation according to view
+        function generateTicks(minD, maxD, viewMode) {
+            const ticks = [];
+            const d = new Date(minD);
+            if (viewMode === 'Day') {
+                while (d <= maxD) { ticks.push(new Date(d)); d.setDate(d.getDate()+1); }
+            } else if (viewMode === 'Week') {
+                // align to Monday
+                const start = new Date(minD);
+                const day = start.getDay();
+                const diff = (day + 6) % 7; // days since Monday
+                start.setDate(start.getDate() - diff);
+                const cur = new Date(start);
+                while (cur <= maxD) { ticks.push(new Date(cur)); cur.setDate(cur.getDate()+7); }
+            } else { // Month
+                const start = new Date(minD.getFullYear(), minD.getMonth(), 1);
+                const cur = new Date(start);
+                while (cur <= maxD) { ticks.push(new Date(cur)); cur.setMonth(cur.getMonth()+1); }
+            }
+            return ticks;
+        }
+
+        const ticks = generateTicks(minDate, maxDate, view);
+        // limit labels when too many — for Day view show every day
+        const labelStep = (view === 'Day' || (opts && opts.windowDays)) ? 1 : Math.max(1, Math.ceil(ticks.length / 12));
+
+        ticks.forEach((tick, idx) => {
+            const pos = Math.round(((tick - minDate) / (msPerDay * totalDays)) * 10000) / 100; // percent
+            const line = document.createElement('div');
+            line.className = 'gantt-gridline';
+            line.style.left = pos + '%';
+            timeline.appendChild(line);
+
+            if (idx % labelStep === 0) {
+                const lbl = document.createElement('div');
+                lbl.className = 'gantt-tick-label';
+                lbl.style.left = pos + '%';
+                if (view === 'Day') {
+                    // mostrar apenas o número do dia (1,2,3...)
+                    lbl.textContent = String(tick.getDate());
+                } else if (view === 'Week') lbl.textContent = `Sem ${tick.toISOString().slice(0,10)}`;
+                else {
+                    const raw = tick.toLocaleString('pt-BR', { month: 'short', year: 'numeric' });
+                    lbl.textContent = raw.charAt(0).toUpperCase() + raw.slice(1);
+                }
+                timeline.appendChild(lbl);
+            }
+        });
+
+        // month header segments (ex.: Fevereiro / Março) — posicionados acima dos ticks
+        if (view === 'Day' || (opts && opts.windowDays)) {
+            const monthsContainer = document.createElement('div');
+            monthsContainer.className = 'gantt-months';
+            timeline.appendChild(monthsContainer);
+
+            const iter = new Date(minDate);
+            iter.setDate(1);
+            while (iter < maxDate) {
+                const monthStart = new Date(iter.getFullYear(), iter.getMonth(), 1);
+                const monthEnd = new Date(iter.getFullYear(), iter.getMonth()+1, 1);
+                const segStart = new Date(Math.max(minDate.getTime(), monthStart.getTime()));
+                const segEnd = new Date(Math.min(maxDate.getTime(), monthEnd.getTime()));
+                const segDays = Math.round((segEnd - segStart) / msPerDay);
+                if (segDays > 0) {
+                    const startOffset = Math.round((segStart - minDate) / msPerDay);
+                    const leftPctSeg = (startOffset / totalDays) * 100;
+                    const widthPctSeg = (segDays / totalDays) * 100;
+
+                    // (removido) rótulo central do mês — agora exibimos SOMENTE rótulos no início do mês
+
+                    // desenhar linha vertical na quebra do mês (ex.: início de março)
+                    // somente se a quebra estiver dentro do intervalo visível
+                    if (segStart.getTime() >= minDate.getTime() && segStart.getTime() < maxDate.getTime()) {
+                        // linha sobre toda a timeline
+                        const boundaryLine = document.createElement('div');
+                        boundaryLine.className = 'gantt-month-boundary';
+                        boundaryLine.style.left = leftPctSeg + '%';
+                        timeline.appendChild(boundaryLine);
+
+                        // rótulo no início do mês (apenas aqui)
+                        const boundaryLabel = document.createElement('div');
+                        boundaryLabel.className = 'gantt-month-boundary-label';
+                        boundaryLabel.style.left = leftPctSeg + '%';
+                        const monthRaw = monthStart.toLocaleString('pt-BR', { month: 'long' });
+                        boundaryLabel.textContent = monthRaw.charAt(0).toUpperCase() + monthRaw.slice(1);
+                        monthsContainer.appendChild(boundaryLabel);
+                    }
+                }
+                iter.setMonth(iter.getMonth() + 1);
+            }
+        }
+
+        // colunas diárias (visual tipo calendário)
+        const gridContainer = document.createElement('div');
+        gridContainer.className = 'gantt-grid-container';
+        gridContainer.style.position = 'absolute';
+        gridContainer.style.left = '0';
+        gridContainer.style.top = '0';
+        gridContainer.style.right = '0';
+        gridContainer.style.bottom = '0';
+        gridContainer.style.zIndex = '0';
+        timeline.appendChild(gridContainer);
+        for (let d = 0; d < totalDays; d++) {
+            const col = document.createElement('div');
+            col.className = 'gantt-grid-column';
+            const leftPctCol = (d / totalDays) * 100;
+            const widthPctCol = (1 / totalDays) * 100;
+            col.style.left = leftPctCol + '%';
+            col.style.width = widthPctCol + '%';
+            col.style.position = 'absolute';
+            col.style.top = '0';
+            col.style.bottom = '0';
+            col.style.borderRight = '1px solid #f1f5f9';
+            col.style.background = (d % 2 === 0) ? 'rgba(2,6,23,0.01)' : 'transparent';
+            col.style.pointerEvents = 'none';
+            col.setAttribute('data-day', new Date(minDate.getTime() + d * msPerDay).toISOString().slice(0,10));
+            gridContainer.appendChild(col);
+        }
+
+        // linha 'Hoje' ANCORADA à coluna do dia atual (move junto com o dia ao rolar/arrastar)
+        try {
+            const today = new Date(); today.setHours(0,0,0,0);
+            if (today >= minDate && today < maxDate) {
+                const offsetDays = Math.round((today - minDate) / msPerDay);
+                const leftPctToday = Math.max(0, Math.min(100, (offsetDays / totalDays) * 100));
+
+                const todayLine = document.createElement('div');
+                todayLine.className = 'gantt-today-center';
+                todayLine.style.left = leftPctToday + '%';
+                timeline.appendChild(todayLine);
+
+                const todayLabel = document.createElement('div');
+                todayLabel.className = 'gantt-today-label';
+                todayLabel.style.left = leftPctToday + '%';
+                todayLabel.textContent = 'Hoje';
+                todayLabel.title = today.toLocaleDateString('pt-BR');
+                // colocar o label acima da timeline (mesmo container) para que se mova junto com o conteúdo
+                timeline.appendChild(todayLabel);
+            }
+        } catch (e) { console.warn('[Gantt] falha ao desenhar linha HOJE:', e); }
+
+        // start-of-window indicator (vertical line only; label removed per request)
+        try {
+            if ((view === 'Day' || (opts && opts.windowDays)) && (opts && opts.forceStart)) {
+                const forceStart = new Date(opts.forceStart);
+                // apontar para o início do mês correspondente ao forceStart (1º dia do mês)
+                const monthStart = new Date(forceStart.getFullYear(), forceStart.getMonth(), 1);
+
+                const markerDate = (monthStart >= minDate && monthStart < maxDate) ? monthStart : forceStart;
+                const startOffsetDays = Math.round((markerDate - minDate) / msPerDay);
+                const leftPctStart = Math.max(0, Math.min(100, (startOffsetDays / totalDays) * 100));
+                const startLine = document.createElement('div');
+                startLine.className = 'gantt-start-line';
+                startLine.style.left = leftPctStart + '%';
+                timeline.appendChild(startLine);
+                // note: label intentionally removed
+            }
+        } catch (e) { console.warn('[Gantt] falha ao desenhar indicador de início:', e); }
+
+        // tooltip element
+        let tooltip = document.getElementById('gantt-tooltip');
+        if (!tooltip) { tooltip = document.createElement('div'); tooltip.id = 'gantt-tooltip'; tooltip.className = 'gantt-tooltip'; document.body.appendChild(tooltip); }
+
+        // helper: posiciona o tooltip próximo ao ponteiro, evitando overflow
+        function positionTooltipAtMouse(ev) {
+            if (!tooltip) return;
+            const TW = tooltip.offsetWidth || 260;
+            const TH = tooltip.offsetHeight || 120;
+            const padding = 12;
+            const mouseX = ev.clientX;
+            const mouseY = ev.clientY;
+            const maxRight = window.innerWidth - padding;
+            let left = mouseX + 12;
+            if (left + TW > maxRight) left = mouseX - 12 - TW;
+            if (left < padding) left = padding;
+            let top = mouseY + window.scrollY - (TH / 2);
+            const minTop = window.scrollY + 8;
+            const maxTop = window.scrollY + window.innerHeight - TH - 8;
+            if (top < minTop) top = minTop;
+            if (top > maxTop) top = maxTop;
+            tooltip.style.left = left + 'px';
+            tooltip.style.top = top + 'px';
+        }
+
+        tasks.forEach((t, i) => {
+            // left column removida (usuário solicitou) — não exibimos índices/nomes à esquerda
+            const row = document.createElement('div');
+            row.className = 'gantt-row';
+            row.style.top = (i * rowEstimate) + 'px';
+
+            const taskStart = new Date(t.start);
+            const taskEnd = new Date(t.end);
+            const startOffset = Math.round((taskStart - minDate) / msPerDay);
+            const rawDuration = Math.round((taskEnd - taskStart) / msPerDay) + 1;
+            // visible portion inside timeline window (clip to [0, totalDays])
+            const visibleStartOffset = Math.max(0, startOffset);
+            const visibleEndOffset = Math.min(totalDays, startOffset + rawDuration);
+            if (visibleEndOffset <= 0 || visibleStartOffset >= totalDays) {
+                // tarefa fora da janela visível — pular renderização
+                return;
+            }
+            const visibleDuration = Math.max(1, visibleEndOffset - visibleStartOffset);
+            const leftPct = (visibleStartOffset / totalDays) * 100;
+            const widthPct = (visibleDuration / totalDays) * 100;
+
+            const bar = document.createElement('div');
+            bar.className = 'gantt-bar';
+            bar.style.left = leftPct + '%';
+            bar.style.width = widthPct + '%';
+            bar.style.height = '22px';
+
+            // cores por status/urgência (barra)
+            const statusColors = {
+                'concluido': ['#bbf7d0','#059669'],    // weak (mais forte) -> strong
+                'atrasado': ['#fecaca','#ef4444'],     // weak agora um pouco mais visível
+                'em-risco': ['#ffedd5','#fb923c'],     // weak levemente mais saturada
+                'dentro': ['#bfdbfe','#2563eb']        // weak um pouco mais escura
+            };
+            // determinar status de cor com base em datas + progresso
+            const today = new Date(); today.setHours(0,0,0,0);
+            const endDt = new Date(t.end);
+            let urgencyKey = 'dentro';
+            if ((Number(t.progress) || 0) >= 100 || (t.custom_class || '').toLowerCase().includes('conclu')) urgencyKey = 'concluido';
+            else if (endDt < today) urgencyKey = 'atrasado';
+            else {
+                const daysToEnd = Math.ceil((endDt - today) / msPerDay);
+                if (daysToEnd <= 7) urgencyKey = 'em-risco';
+            }
+            const sc = statusColors[urgencyKey] || statusColors.dentro;
+            // bar background = cor fraca (fundo), progress (fill) = cor forte
+            bar.style.background = sc[0];
+
+            // bolinha de prioridade (na frente da barra) — usa paleta de prioridade
+            const priorityColors = {
+                'Crítico': ['#ef4444','#dc2626'],
+                'Alto': ['#fb923c','#f97316'],
+                'Médio': ['#f59e0b','#f97316'],
+                'Baixo': ['#34d399','#10b981'],
+                'Não definida': ['#94a3b8','#64748b']
+            };
+            const pr = (t.prioridade || 'Não definida');
+            const dot = document.createElement('span');
+            dot.className = 'gantt-priority-dot';
+            // posicionar o ponto ligeiramente antes da barra (calc com percentagens)
+            dot.style.left = `calc(${leftPct}% - 10px)`;
+            dot.style.top = Math.max(6, (row.offsetTop ? 9 : 9)) + 'px';
+            const pcol = (priorityColors[pr] && priorityColors[pr][0]) || '#94a3b8';
+            dot.style.background = pcol;
+            dot.title = 'Prioridade: ' + pr;
+            row.appendChild(dot);
+
+            bar.setAttribute('data-id', t.id);
+
+            const progress = document.createElement('div');
+            progress.className = 'progress';
+            progress.style.width = Math.max(4, Math.min(100, t.progress)) + '%';
+            // usar a cor forte (segunda cor do par) como preenchimento de progresso
+            try { progress.style.background = (sc && sc[1]) ? sc[1] : '#2563eb'; } catch(e) { progress.style.background = '#2563eb'; }
+            bar.appendChild(progress);
+
+            const pct = document.createElement('div');
+            pct.className = 'pct';
+            pct.textContent = `${Math.round(t.progress)}%`;
+            bar.appendChild(pct);
+
+            /* update badge removed — última atualização (incl. descrição) aparece apenas no tooltip da barra */
+
+            // tooltip handlers - agora posicionam o card onde o mouse estiver sobre a barra
+            bar.addEventListener('mouseenter', (ev) => {
+                tooltip.style.display = 'block';
+                // sanitizar e truncar a descricao (se existir)
+                const rawDesc = (t.lastUpdateDescricao || '').toString().trim();
+                const safeDesc = rawDesc.replace(/</g,'&lt;').replace(/>/g,'&gt;');
+                const shortDesc = safeDesc.length > 220 ? (safeDesc.slice(0,220) + '...') : safeDesc;
+                tooltip.innerHTML = `
+                    <div style="min-width:260px;padding:6px 8px;">
+                        <div style="font-weight:800;color:#fff;margin-bottom:6px">${t.name || '—'}</div>
+                        <div style="font-size:12px;color:#d1d5db;margin-bottom:4px"><strong style=\"color:#cbd5e1\">Meta/KPI:</strong> ${t.kpiNome ? (t.kpiNome + (t.meta ? ' — ' + t.meta : '')) : (t.meta || '-')}</div>
+                        <div style="font-size:12px;color:#d1d5db;margin-bottom:4px"><strong style=\"color:#cbd5e1\">Responsável:</strong> ${t.responsavel || '-'}</div>
+                        <div style="font-size:12px;color:#d1d5db;margin-bottom:6px"><strong style=\"color:#cbd5e1\">Última atualização:</strong> ${formatDateTime(t.dataAtualizacao) || '-'}${t.lastUpdateTitle ? (' — ' + t.lastUpdateTitle) : ''}${t.lastUpdateUser ? (' • ' + t.lastUpdateUser) : ''}</div>
+                        ${rawDesc ? `<div style="margin:6px 0 0 0;padding:8px;border-radius:6px;background:rgba(255,255,255,0.03);font-size:12px;color:#ffe7d6"><strong style=\"color:#ffd\">Detalhe:</strong> ${shortDesc}</div>` : ''}
+                        <div style="border-top:1px solid rgba(255,255,255,0.06);margin-top:8px;padding-top:6px;font-size:12px;color:#d1d5db">${t.start} → ${t.end} • Progresso: ${Math.round(t.progress)}%</div>
+                    </div>`;
+                // posiciona usando o evento do mouse
+                positionTooltipAtMouse(ev);
+            });
+            bar.addEventListener('mousemove', (ev) => {
+                // reposiciona o tooltip onde o mouse está
+                positionTooltipAtMouse(ev);
+            });
+            bar.addEventListener('mouseleave', () => { tooltip.style.display = 'none'; });
+
+            /* pct hover removed — use the full-bar tooltip instead (reduces duplicate UI) */
+
+            // click / dblclick
+            bar.addEventListener('click', () => window.location.href = `/Pages/PlanodeAcao/DetalhesPlanoAcao.html?id=${t.id}`);
+            bar.addEventListener('dblclick', () => { sessionStorage.setItem('planToEditId', t.id); window.location.href = '/Pages/PlanodeAcao/form_PlanoAcao.html'; });
+
+            timeline.appendChild(row);
+            row.appendChild(bar);
+        });
+
+        if (tasks.length === 0 && view === 'Day' && opts && opts.windowDays) {
+            const empty = document.createElement('div');
+            empty.className = 'gantt-empty';
+            empty.style.position = 'absolute';
+            empty.style.left = '50%';
+            empty.style.top = '32px';
+            empty.style.transform = 'translateX(-50%)';
+            empty.textContent = 'Nenhuma atividade nos próximos ' + opts.windowDays + ' dias.';
+            timeline.appendChild(empty);
+        }
+
+        wrap.appendChild(left);
+        wrap.appendChild(right);
+        container.appendChild(wrap);
+
+        // centralizar automaticamente o dia de HOJE (Day view) — não sobrescrever se o usuário já moveu (pan)
+        try {
+            if ((view === 'Day' || (opts && opts.windowDays)) && !window._ganttUserPanned) {
+                const todayISO = new Date().toISOString().slice(0,10);
+                // esperar o layout estabilizar
+                requestAnimationFrame(() => {
+                    const rightEl = container.querySelector('.gantt-right');
+                    const todayCol = container.querySelector(`.gantt-grid-column[data-day="${todayISO}"]`);
+                    if (rightEl && todayCol) {
+                        const colCenter = todayCol.offsetLeft + (todayCol.offsetWidth / 2);
+                        const targetScroll = Math.max(0, Math.round(colCenter - (rightEl.clientWidth / 2)));
+                        rightEl.scrollLeft = targetScroll;
+                    }
+                });
+            }
+        } catch (e) { console.warn('[Gantt] falha ao centrar hoje:', e); }
+    }
+
+    function waitForGanttAndRender() {
+        console.log('[Gantt] waitForGanttAndRender (custom) — chamando renderGantt()');
+        renderGantt();
+    }
+    async function renderGantt() {
+        console.log('[Gantt] Entrou em renderGantt');
+        const container = document.getElementById('gantt-chart');
+        try {
+            console.log('[Gantt] Iniciando renderGantt');
+            if (!window.db) {
+                container.innerHTML = '<div class="error-message">[Gantt] window.db não está disponível!</div>';
+                console.error('[Gantt] window.db não está disponível!', window.db);
+                return;
+            }
+            if (!window.collection) {
+                container.innerHTML = '<div class="error-message">[Gantt] window.collection não está disponível!</div>';
+                console.error('[Gantt] window.collection não está disponível!', window.collection);
+                return;
+            }
+            if (window.garantirAutenticacao) await window.garantirAutenticacao();
+            container.innerHTML = '<div class="loading-message">Carregando planos...</div>';
+            console.log('[Gantt] Chamando fetchPlanosAcao()');
+            const planos = await fetchPlanosAcao();
+            console.log('[Gantt] Planos carregados do Firestore:', planos.length, planos);
+
+            // --------------- buscar última atualização no histórico (subcollection) para cada plano ---------------
+            try {
+                await Promise.all(planos.map(async (plano) => {
+                    try {
+                        const updatesRef = window.collection(window.db, 'planos-acao', String(plano.id), 'atualizacoes');
+                        const q = window.query(updatesRef, window.orderBy('data', 'desc'), window.limit(1));
+                        const snap = await window.getDocs(q);
+                        if (!snap.empty && snap.docs[0]) {
+                            const d = snap.docs[0].data();
+                            // campo usado no histórico é `data` (Timestamp)
+                            plano.dataAtualizacao = d.data || d.dataCriacao || plano.dataAtualizacao || null;
+                            // capturar também autor/título/descrição da última atualização (quando presente)
+                            plano.lastUpdateUser = d.usuario || d.usuarioNome || d.usuarioId || null;
+                            plano.lastUpdateTitle = d.titulo || null;
+                            plano.lastUpdateDescricao = (typeof d.descricao === 'string' && d.descricao.trim()) ? d.descricao.trim() : null;
+                        } else {
+                            // fallback para o campo no documento principal
+                            plano.dataAtualizacao = plano.dataAtualizacao || plano.updatedAt || plano._updatedAt || null;
+                            plano.lastUpdateUser = plano.lastUpdateUser || plano.usuario || null;
+                            plano.lastUpdateTitle = plano.lastUpdateTitle || null;
+                            plano.lastUpdateDescricao = plano.lastUpdateDescricao || null;
+                        }
+                    } catch (errInner) {
+                        console.warn('[Gantt] não foi possível buscar atualizacoes para plano', plano.id, errInner);
+                        plano.dataAtualizacao = plano.dataAtualizacao || null;
+                    }
+                }));
+            } catch (e) {
+                console.warn('[Gantt] erro ao buscar históricos de atualizações:', e);
+            }
+
+            if (!planos || planos.length === 0) {
+                container.innerHTML = '<div class="loading-message">Nenhum plano de ação encontrado.</div>';
+                return;
+            }
+            const tasks = mapPlanosToGanttTasks(planos);
+            console.log('[Gantt] Planos válidos para o gráfico (antes validação):', tasks.length, tasks);
+
+            // Validação robusta das datas (aceitar apenas YYYY-MM-DD válidos)
+            function isValidISODateString(d) {
+                return typeof d === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(d) && !isNaN(new Date(d).getTime());
+            }
+
+            const validTasks = [];
+            const invalidTasks = [];
+            for (const t of tasks) {
+                if (isValidISODateString(t.start) && isValidISODateString(t.end)) {
+                    validTasks.push(t);
+                } else {
+                    invalidTasks.push({ id: t.id, start: t.start, end: t.end });
+                }
+            }
+
+            console.log('[Gantt] tarefas válidas:', validTasks.length, 'inválidas:', invalidTasks.length, invalidTasks);
+
+            if (validTasks.length === 0) {
+                container.innerHTML = `<div class="loading-message">Nenhum plano com datas válidas encontrado.<br><small style="color:#888">(${planos.length} planos carregados do Firestore; ${invalidTasks.length} inválidos)</small></div>`;
+                return;
+            }
+
+            if (invalidTasks.length > 0) {
+                // Mostrar aviso breve na UI sobre entradas ignoradas
+                const aviso = document.createElement('div');
+                aviso.style.color = '#b45309';
+                aviso.style.fontSize = '13px';
+                aviso.style.marginBottom = '8px';
+                aviso.textContent = `${validTasks.length} planos serão exibidos. ${invalidTasks.length} plano(s) ignorado(s) por datas inválidas.`;
+                container.appendChild(aviso);
+            } else {
+                container.innerHTML = `<div style='color:#888;font-size:13px;margin-bottom:8px;'>${planos.length} planos carregados, ${validTasks.length} exibidos no Gantt</div>`;
+            }
+
+            // Painel de debug — exibido apenas quando window._ganttDebug === true
+            try {
+                if (window._ganttDebug) {
+                    const debugPanel = document.createElement('pre');
+                    debugPanel.style.fontSize = '12px';
+                    debugPanel.style.color = '#374151';
+                    debugPanel.style.background = '#f8fafc';
+                    debugPanel.style.padding = '10px';
+                    debugPanel.style.borderRadius = '8px';
+                    debugPanel.style.marginBottom = '12px';
+                    const sample = validTasks.slice(0, 5).map(t => ({
+                        id: t.id,
+                        name: t.name,
+                        start: t.start,
+                        end: t.end,
+                        startType: typeof t.start,
+                        endType: typeof t.end,
+                        startTs: isNaN(new Date(t.start).getTime()) ? null : new Date(t.start).toISOString(),
+                        endTs: isNaN(new Date(t.end).getTime()) ? null : new Date(t.end).toISOString()
+                    }));
+                    debugPanel.textContent = 'DEBUG — amostra de tasks validados:\n' + JSON.stringify(sample, null, 2);
+                    container.appendChild(debugPanel);
+                    console.log('[Gantt][DEBUG] amostra de tasks validados:', sample);
+                }
+            } catch (dbgErr) {
+                console.warn('[Gantt] Falha ao criar painel de debug:', dbgErr);
+            }
+
+            // Normalizar campos e forçar formato YYYY-MM-DD
+            const ganttTasks = validTasks.map(t => ({
+                id: String(t.id),
+                name: String(t.name || ''),
+                start: new Date(t.start).toISOString().slice(0,10),
+                end: new Date(t.end).toISOString().slice(0,10),
+                progress: Number(t.progress || 0),
+                custom_class: t.custom_class || '',
+                prioridade: t.prioridade || 'Não definida',
+                where: t.where || (t.where === undefined ? (t.filial || '') : t.where),
+                responsavel: t.responsavel || '',
+                meta: t.meta || '',
+                kpiNome: t.kpiNome || '',
+                dataAtualizacao: t.dataAtualizacao || null,
+                lastUpdateUser: t.lastUpdateUser || null,
+                lastUpdateTitle: t.lastUpdateTitle || null,
+                lastUpdateDescricao: t.lastUpdateDescricao || null
+            }));
+
+            // Corrige intervals invertidos (start > end) — trocar ou ajustar automaticamente
+            for (const gt of ganttTasks) {
+                const s = new Date(gt.start).getTime();
+                const e = new Date(gt.end).getTime();
+                if (s > e) {
+                    console.warn('[Gantt] Encontrado intervalo invertido — ajustando (start>end):', gt);
+                    // trocar as datas
+                    const tmp = gt.start; gt.start = gt.end; gt.end = tmp;
+                }
+            }
+
+            console.log('[Gantt] tarefas preparadas (após ajuste):', JSON.stringify(ganttTasks, null, 2));
+
+            // Persistir correções no Firestore (normalizar quando solicitado)
+            (async function persistCorrecoes() {
+                try {
+                    const updates = [];
+                    for (const plano of planos) {
+                        const gt = ganttTasks.find(x => x.id === String(plano.id));
+                        if (!gt) continue;
+                        const origStart = formatDate(plano.whenInicio);
+                        const origEnd = formatDate(plano.whenFim);
+                        if (origStart !== gt.start || origEnd !== gt.end) {
+                            const ref = window.doc(window.db, 'planos-acao', plano.id);
+                            console.log('[Gantt] Salvando correção de datas para plano', plano.id, origStart, origEnd, '→', gt.start, gt.end);
+                            updates.push(window.updateDoc(ref, { whenInicio: gt.start, whenFim: gt.end }).catch(e => { console.error('[Gantt] falha ao salvar correção para', plano.id, e); }));
+                        }
+                    }
+                    if (updates.length) await Promise.all(updates);
+                    if (updates.length) console.log('[Gantt] Correções de datas salvas no Firestore:', updates.length);
+                } catch (e) {
+                    console.error('[Gantt] Erro ao persistir correções:', e);
+                }
+            })();
+
+            // Popular filtros (prioridade / departamento) e legenda
+            try {
+                const prioSelect = document.getElementById('gantt-filter-priority');
+                const whereSelect = document.getElementById('gantt-filter-where');
+                const legendEl = document.getElementById('gantt-legend');
+
+                // months
+                const monthSelect = document.getElementById('gantt-filter-month');
+                const monthsSet = new Map();
+                ganttTasks.forEach(t => {
+                    const s = new Date(t.start);
+                    const key = `${s.getFullYear()}-${String(s.getMonth()+1).padStart(2,'0')}`;
+                    if (!monthsSet.has(key)) {
+                        const raw = s.toLocaleString('pt-BR', { month: 'long', year: 'numeric' });
+                        monthsSet.set(key, raw.charAt(0).toUpperCase() + raw.slice(1));
+                    }
+                });
+                const monthsHtml = ['<option value="all">Todos os meses</option>'].concat(Array.from(monthsSet.entries()).map(([k,label]) => `<option value="${k}">${label}</option>`)).join('');
+                if (monthSelect) monthSelect.innerHTML = monthsHtml;
+
+                // priorities
+                const prios = Array.from(new Set(ganttTasks.map(t => (t.prioridade || 'Não definida'))));
+                prios.sort((a,b) => a.localeCompare(b));
+                prioSelect.innerHTML = '<option value="all">Todas prioridades</option>' + prios.map(p => `<option value="${p}">${p}</option>`).join('');
+
+                // where / departamentos
+                const whs = Array.from(new Set(ganttTasks.map(t => (t.where || '').trim()).filter(Boolean)));
+                whs.sort((a,b) => a.localeCompare(b));
+                whereSelect.innerHTML = '<option value="all">Todos departamentos</option>' + whs.map(w => `<option value="${w}">${w}</option>`).join('');
+
+                // legenda de prioridades (cores)
+                const priorityColors = {
+                    'Crítico': ['#ef4444','#dc2626'],
+                    'Alto': ['#fb923c','#f97316'],
+                    'Médio': ['#f59e0b','#f97316'],
+                    'Baixo': ['#34d399','#10b981'],
+                    'Não definida': ['#94a3b8','#64748b']
+                };
+                legendEl.innerHTML = prios.map(p => {
+                    const c = priorityColors[p] || ['#60a5fa','#2563eb'];
+                    return `<div style=\"display:flex;align-items:center;gap:6px;\"><span style=\"width:12px;height:12px;border-radius:6px;background:linear-gradient(90deg,${c[0]},${c[1]});display:inline-block;\"></span><small style=\"color:#374151\">${p}</small></div>`;
+                }).join('&nbsp;&nbsp;');
+
+                // legenda de status/urgência (cores de barra)
+                const statusLegendEl = document.getElementById('gantt-status-legend');
+                if (statusLegendEl) {
+                    const statusColorsLegend = {
+                        'Dentro do prazo': ['#60a5fa','#2563eb'],
+                        'Em risco (≤7 dias)': ['#fb923c','#f97316'],
+                        'Atrasado': ['#ef4444','#dc2626'],
+                        'Concluído': ['#16a34a','#059669']
+                    };
+                    statusLegendEl.innerHTML = Object.entries(statusColorsLegend).map(([label,c]) => `\n                        <div style=\"display:flex;align-items:center;gap:6px;\"><span style=\"width:10px;height:10px;border-radius:999px;background:linear-gradient(90deg,${c[0]},${c[1]});display:inline-block;box-shadow:0 2px 6px rgba(2,6,23,0.05);\"></span><small style=\"color:#374151\">${label}</small></div>`).join('&nbsp;&nbsp;');
+                }
+
+            } catch (e) {
+                console.warn('[Gantt] Falha ao popular filtros/legenda:', e);
+            }
+
+            // Função para aplicar filtro por mês (se houver)
+            function applyMonthFilter(key) {
+                if (!key || key === 'all') return ganttTasks.slice();
+                const [y, m] = key.split('-').map(Number);
+                const start = new Date(y, m-1, 1);
+                const end = new Date(y, m, 0); // último dia do mês
+                return ganttTasks.filter(t => {
+                    const s = new Date(t.start);
+                    const e = new Date(t.end);
+                    return s <= end && e >= start; // overlap
+                });
+            }
+
+
+            // Render / aplicar filtros e controles
+            try {
+                // default view
+                let viewSelectEl = document.getElementById('gantt-viewmode');
+                let monthSelectEl = document.getElementById('gantt-filter-month');
+
+                function doRender() {
+                    // requery selects (ensure they exist)
+                    viewSelectEl = document.getElementById('gantt-viewmode') || viewSelectEl;
+                    monthSelectEl = document.getElementById('gantt-filter-month') || monthSelectEl;
+                    const prioSelectEl = document.getElementById('gantt-filter-priority');
+                    const whereSelectEl = document.getElementById('gantt-filter-where');
+
+                    // força visualização por dias (janela fixa de 30 dias) — respeitar pan do usuário
+                    const forcedView = 'Day';
+                    window._ganttViewMode = forcedView;
+                    if (viewSelectEl) viewSelectEl.value = 'Day';
+                    const msPerDayLocal = 24 * 60 * 60 * 1000;
+                    window._ganttWindowDays = window._ganttWindowDays || 30;
+                    const windowDays = Number(window._ganttWindowDays);
+
+                    // determinar windowStart: preferir valor persistente (panning); caso contrário centralizar HOJE
+                    window._ganttUserPanned = window._ganttUserPanned || false;
+                    if (!window._ganttWindowStart) {
+                        const today = new Date(); today.setHours(0,0,0,0);
+                        const half = Math.floor(windowDays / 2);
+                        const defaultStart = new Date(today.getTime() - half * msPerDayLocal);
+                        window._ganttWindowStart = defaultStart;
+                    }
+                    const windowStart = new Date(window._ganttWindowStart); windowStart.setHours(0,0,0,0);
+                    const windowEnd = new Date(windowStart.getTime() + (windowDays - 1) * msPerDayLocal);
+
+                    // start with full set and apply filters sequentially
+                    let filtered = ganttTasks.slice();
+
+                    // filtrar pela janela de 30 dias (com base no windowStart atual)
+                    filtered = filtered.filter(t => {
+                        const s = new Date(t.start);
+                        const e = new Date(t.end);
+                        return s <= windowEnd && e >= windowStart;
+                    });
+
+                    // month filter (mantido — opcional)
+                    const monthKey = monthSelectEl?.value || 'all';
+                    if (monthKey && monthKey !== 'all') filtered = applyMonthFilter(monthKey);
+
+                    // priority filter
+                    const prioKey = prioSelectEl?.value || 'all';
+                    if (prioKey && prioKey !== 'all') filtered = filtered.filter(t => (t.prioridade || '').toLowerCase() === prioKey.toLowerCase());
+
+                    // department/where filter
+                    const whereKey = whereSelectEl?.value || 'all';
+                    if (whereKey && whereKey !== 'all') filtered = filtered.filter(t => (t.where || '').toLowerCase() === whereKey.toLowerCase());
+
+                    renderCustomGantt(container, filtered, forcedView, { forceStart: windowStart.toISOString(), windowDays });
+                }
+
+                // render inicial
+                doRender();
+
+                // listeners (re-query elements to attach)
+                viewSelectEl = document.getElementById('gantt-viewmode');
+                monthSelectEl = document.getElementById('gantt-filter-month');
+                const prioSelectEl = document.getElementById('gantt-filter-priority');
+                const whereSelectEl = document.getElementById('gantt-filter-where');
+
+                viewSelectEl?.addEventListener('change', () => doRender());
+                monthSelectEl?.addEventListener('change', () => doRender());
+                prioSelectEl?.addEventListener('change', () => doRender());
+                whereSelectEl?.addEventListener('change', () => doRender());
+
+                // Pan/drag controls: panning sempre ativo + botão 'Hoje'
+                const centerTodayBtn = document.getElementById('gantt-center-today');
+                const chartRoot = document.getElementById('gantt-chart');
+                let isPanning = false;
+                let panStartX = 0;
+                let panStartWindow = null;
+                let panRaf = null;
+
+                // panning sempre disponível — cursor sugestivo
+                const rightEl = chartRoot?.querySelector('.gantt-right');
+                if (rightEl) rightEl.style.cursor = 'grab';
+
+                centerTodayBtn?.addEventListener('click', () => {
+                    // resetar preferência do usuário e recentralizar em hoje
+                    window._ganttUserPanned = false;
+                    const msPerDay = 24*60*60*1000; const today = new Date(); today.setHours(0,0,0,0);
+                    const half = Math.floor((window._ganttWindowDays||30)/2);
+                    window._ganttWindowStart = new Date(today.getTime() - half * msPerDay);
+                    doRender();
+                });
+
+                // pointer-based dragging on the chart (quando panMode ativo)
+                chartRoot?.addEventListener('pointerdown', (ev) => {
+                    // marcar que o usuário iniciou um pan — interrompe as recentralizações automáticas
+                    window._ganttUserPanned = true;
+                    isPanning = true; panStartX = ev.clientX; panStartWindow = new Date(window._ganttWindowStart || Date.now());
+                    chartRoot.setPointerCapture?.(ev.pointerId);
+                    chartRoot.style.cursor = 'grabbing';
+                });
+                chartRoot?.addEventListener('pointermove', (ev) => {
+                    if (!isPanning) return;
+                    const dx = ev.clientX - panStartX;
+                    const width = chartRoot.clientWidth || 800;
+                    const daysDelta = Math.round(-dx / width * (window._ganttWindowDays || 30));
+                    const msPerDay = 24*60*60*1000;
+                    const newStart = new Date(panStartWindow.getTime() + daysDelta * msPerDay);
+                    // throttle render via rAF
+                    window._ganttWindowStart = new Date(newStart.getFullYear(), newStart.getMonth(), newStart.getDate());
+                    if (!panRaf) panRaf = requestAnimationFrame(() => { panRaf = null; doRender(); });
+                });
+                ['pointerup','pointercancel','pointerleave'].forEach(evtName => chartRoot?.addEventListener(evtName, (ev) => {
+                    if (!isPanning) return; isPanning = false; chartRoot.style.cursor = '';
+                    try { chartRoot.releasePointerCapture?.(ev.pointerId); } catch(e){}
+                }));
+
+            } catch (err) {
+                console.error('[Gantt] Erro ao renderizar Gantt custom:', err, 'ganttTasks:', ganttTasks);
+                container.innerHTML = `
+                    <div class="error-message">
+                        <strong>Erro ao renderizar Gantt</strong><br>
+                        ${err.message}
+                        <div style="margin-top:8px;font-size:12px;color:#666">Revise os dados dos planos ou me envie o console para eu investigar.</div>
+                    </div>
+                `;
+            }
+
+        } catch (e) {
+            console.error('[Gantt] Erro inesperado ao renderizar:', e);
+            container.innerHTML = `
+                <div class=\"error-message\">
+                    <i class='bx bx-error-circle' style=\"font-size: 24px; margin-right: 8px;\"></i>
+                    <span>Erro ao carregar planos: ${e.message}</span>
+                </div>
+            `;
+        }
+    }
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('[Gantt] DOMContentLoaded: iniciando render custom do Gantt');
+        waitForGanttAndRender();
+        setTimeout(function() {
+            const container = document.getElementById('gantt-chart');
+            if (container && container.innerHTML.trim() === '') {
+                container.innerHTML = '<div class="error-message">[Gantt] Nenhuma mensagem foi exibida. O script foi executado, mas nada foi renderizado.</div>';
+                console.warn('[Gantt] Fallback: Nenhuma mensagem foi exibida no container do Gantt.');
+            }
+        }, 3000);
+    });
+    </script>
+
+    <!-- Scripts auxiliares -->
+    <script type="module" src="/assets/js/auth.js"></script>
+    <script src="/assets/js/main.js"></script>
+    <script src="/assets/js/components/Sidebar.js"></script>
+    <script type="module" src="/assets/js/Formularios/form-ritmo.js"></script>
+
+</body>
+</html>

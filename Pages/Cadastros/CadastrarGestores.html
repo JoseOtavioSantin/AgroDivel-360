@@ -120,6 +120,16 @@
         import '/assets/js/components/Sidebar.js';
         // Proteger página por autenticação
         import { garantirAutenticacao } from '/assets/js/auth-guard.js';
+        garantirAutenticacao().then(() => {
+            // Checagem se o Gantt está configurado (exemplo: localStorage, pode ser Firestore)
+            const ganttConfigurado = localStorage.getItem('ganttConfigurado');
+            if (!ganttConfigurado || ganttConfigurado !== 'true') {
+                alert('O Gantt precisa estar configurado para acessar esta página.');
+                window.location.href = '/Pages/Menu.html';
+            }
+        });
+        // Proteger página por autenticação
+        import { garantirAutenticacao } from '/assets/js/auth-guard.js';
         garantirAutenticacao();
     </script>
 
@@ -281,6 +291,8 @@
             'acao-Gerenciar': ['admin', 'diretoria', 'comercial', 'pecas', 'servicos'],
             'acao-Novo': ['admin', 'diretoria', 'comercial', 'pecas', 'servicos'],
             'acao-KPIs': ['admin', 'diretoria'],
+            'acao-Gantt': ['admin', 'diretoria', 'comercial', 'pecas', 'servicos'],
+
 
             // --- SUPORTE ---
             'suporte-SolicitacaoSuporte': ['admin', 'diretoria', 'comercial', 'pecas', 'servicos'],
@@ -322,9 +334,10 @@
             'acao-Gerenciar': 'Gerenciar Planos de Ação',
             'acao-Novo': 'Novo Plano de Ação',
             'acao-KPIs': 'Cadastrar KPIs',
+            'acao-Gantt': 'Gantt',
             'suporte-SolicitacaoSuporte': 'Nova Solicitação de Suporte',
             'suporte-MinhasSolicitacoes': 'Minhas Solicitações',
-            'suporte-GerenciarSolicitacoes': 'Gerenciar Solicitações'
+            'suporte-GerenciarSolicitacoes': 'Gerenciar Solicitações',
         };
 
         // --- Elementos do DOM ---
