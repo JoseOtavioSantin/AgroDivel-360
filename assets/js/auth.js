@@ -54,11 +54,14 @@ const menuPermissions = {
     'acao-Gerenciar': ['admin', 'diretoria', 'comercial', 'pecas', 'servicos'],
     'acao-Novo': ['admin', 'diretoria', 'comercial', 'pecas', 'servicos'],
     'acao-KPIs': ['admin', 'diretoria'],
+    'acao-Gantt': ['admin', 'diretoria', 'comercial', 'pecas', 'servicos'],
 
     // --- SUPORTE ---
     'suporte-SolicitacaoSuporte': ['admin', 'diretoria', 'comercial', 'pecas', 'servicos'],
     'suporte-MinhasSolicitacoes': ['admin', 'diretoria', 'comercial', 'pecas', 'servicos'],
     'suporte-GerenciarSolicitacoes': ['admin'],
+    // --- LUBRIFICANTES ---
+    'lubrificantes': ['admin', 'diretoria', 'servicos'],
 };
 
 // --- MAPA DE PÁGINAS PARA VERIFICAÇÃO ---
@@ -79,12 +82,14 @@ const pagePermissions = {
     '/Pages/PlanodeAcao/GerenciarPlanosAcao.html': ['admin', 'diretoria', 'comercial', 'pecas', 'servicos'],
     '/Pages/PlanodeAcao/form_PlanoAcao.html': ['admin', 'diretoria', 'comercial', 'pecas', 'servicos'],
     '/Pages/PlanodeAcao/DetalhesPlanoAcao.html': ['admin', 'diretoria', 'comercial', 'pecas', 'servicos'],
+    '/Pages/PlanodeAcao/Gantt.html': ['admin', 'diretoria', 'comercial', 'pecas', 'servicos'],
     '/Pages/Cadastros/CadastroGestores.html': ['admin'],
     '/Pages/Cadastros/CadastroTecnicos.html': ['admin'],
     '/Pages/Cadastros/UsuariosOnline.html': ['admin'],
     '/Pages/Suporte/SolicitacaoSuporte.html': ['admin', 'diretoria', 'comercial', 'pecas', 'servicos'],
     '/Pages/Suporte/MinhasSolicitacoes.html': ['admin', 'diretoria', 'comercial', 'pecas', 'servicos'],
     '/Pages/Suporte/GerenciarSolicitacoes.html': ['admin']
+    ,'/Pages/Lubrificantes/AnaliseLubrificantes.html': ['admin', 'diretoria', 'servicos']
 };
 
 // Função para verificar se o usuário tem acesso à página atual
@@ -138,6 +143,7 @@ function checkPageAccess(userGroup, permissoesIndividuais) {
                 '/Pages/PlanodeAcao/GerenciarPlanosAcao.html': 'acao-Gerenciar',
                 '/Pages/PlanodeAcao/form_PlanoAcao.html': 'acao-Novo',
                 '/Pages/PlanodeAcao/DetalhesPlanoAcao.html': 'acao-Gerenciar',
+                '/Pages/PlanodeAcao/Gantt.html': 'acao-Gantt',
                 '/Pages/Cadastros/CadastroGestores.html': 'admin-CadastroGestores',
                 '/Pages/Cadastros/CadastroTecnicos.html': 'admin-CadastroTecnicos',
                 '/Pages/Cadastros/UsuariosOnline.html': 'admin-UsuariosOnline',
@@ -270,28 +276,27 @@ onAuthStateChanged(auth, async (user) => {
 function applyMenuPermissions(userGroup, permissoesIndividuais = []) {
     for (const menuItemId in menuPermissions) {
         const element = document.getElementById(menuItemId);
-
         if (element) {
             const temAcesso = hasPermission(menuItemId, userGroup, permissoesIndividuais);
-            
             if (!temAcesso) {
                 element.style.display = 'none';
             } else {
-                element.style.display = ''; // Garante que está visível
+                element.style.display = '';
             }
         }
     }
 
-    // Esconde menus pais sem itens visíveis
+    // Garante que menus pais aparecem se pelo menos um filho estiver visível
     document.querySelectorAll('.submenu-parent').forEach(menu => {
         const totalItems = menu.querySelectorAll('ul.submenu > li');
         const visibleItems = Array.from(totalItems).filter(item => item.style.display !== 'none');
-
-        if (visibleItems.length === 0 && totalItems.length > 0) {
+        if (visibleItems.length > 0) {
+            menu.style.display = '';
+        } else if (totalItems.length > 0) {
             menu.style.display = 'none';
         }
     });
-    
+
     // Mostrar sidebar após aplicar permissões
     const menuLinks = document.querySelector('.menu-links');
     if (menuLinks) {

@@ -250,6 +250,25 @@ console.log('   → verRelatorioLeituras()   - Ver relatório completo');
 console.log('   → verStatsAtuais()         - Ver stats em tempo real');
 console.log('   → salvarStatsAgora()       - Forçar salvamento');
 
+
+// Expor funções Firestore no window para uso em scripts não-modulo
+window.db = db;
+window.collection = collection;
+window.query = query;
+window.orderBy = orderBy;
+window.getDocs = getDocs;
+window.where = where;
+window.limit = limit;
+window.doc = doc;
+window.getDoc = getDoc;
+window.setDoc = setDoc;
+window.deleteDoc = deleteDoc;
+window.updateDoc = updateDoc;
+window.serverTimestamp = serverTimestamp;
+window.increment = increment;
+window.addDoc = addDoc;
+window.onSnapshot = onSnapshot;
+
 export { 
     db, auth, storage, 
     onAuthStateChanged, signOut, 
