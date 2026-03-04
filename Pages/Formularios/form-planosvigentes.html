@@ -209,7 +209,7 @@
                 await addDoc(collection(db, tipoChecklist), dadosPlano);
                 await Swal.fire('Sucesso!', 'Novo plano salvo com sucesso!', 'success');
             }
-            window.location.href = '/Pages/Controles/PlanosVigentes.html';
+            window.location.href = '/Pages/Planos/PlanosVigentes.html';
         } catch (error) {
             Swal.fire('Erro!', `Falha ao salvar: ${error.message}`, 'error');
         }
@@ -287,3 +287,4 @@
 
 </body>
 </html>
+
