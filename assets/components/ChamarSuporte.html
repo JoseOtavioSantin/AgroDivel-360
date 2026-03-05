@@ -1,0 +1,51 @@
+<!-- Componente Botão Flutuante de Suporte -->
+<style>
+.suporte-fab {
+  position: fixed;
+  bottom: 32px;
+  right: 32px;
+  z-index: 9999;
+  background: #0052a3;
+  border-radius: 50%;
+  width: 90px;
+  height: 90px;
+  box-shadow: 0 4px 18px rgba(0,0,0,0.18);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: box-shadow 0.2s, transform 0.2s;
+  border: none;
+  outline: none;
+}
+.suporte-fab:hover {
+  box-shadow: 0 8px 32px rgba(0,0,0,0.28);
+  transform: scale(1.07);
+  background: #003a70;
+}
+/* Centraliza e reduz a imagem dentro do botão */
+.suporte-fab img {
+  width: 44px;
+  height: 44px;
+  display: block;
+  margin: 0 auto;
+  pointer-events: none;
+}
+@media (max-width: 600px) {
+  .suporte-fab {
+    width: 54px;
+    height: 54px;
+    bottom: 18px;
+    right: 18px;
+  }
+  .suporte-fab img {
+    width: 28px;
+    height: 28px;
+  }
+}
+</style>
+
+<button class="suporte-fab" title="Solicitar Suporte" onclick="window.location.href='/Pages/Suporte/SolicitacaoSuporte.html'">
+  <img src="/assets/images/suporte-icone.png" alt="Chamar Suporte" />
+</button>
+<!-- Fim do componente -->
