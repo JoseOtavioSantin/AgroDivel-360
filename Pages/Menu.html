@@ -39,6 +39,14 @@
         <!-- 3. Placeholder onde o componente do Calendário de Ritmo será carregado -->
         <div id="calendario-ritmo-placeholder"></div>
 
+        <!-- Botão flutuante de suporte -->
+        <div id="chamar-suporte-placeholder"></div>
+        <script>
+            fetch('/assets/components/ChamarSuporte.html')
+                .then(r => r.text())
+                .then(html => document.getElementById('chamar-suporte-placeholder').innerHTML = html);
+        </script>
+
     </section>
 
     <!-- Scripts Essenciais -->

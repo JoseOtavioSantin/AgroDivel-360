@@ -14,6 +14,14 @@
 </head>
 <body>
 
+    <!-- Botão flutuante de suporte -->
+    <div id="chamar-suporte-placeholder"></div>
+    <script>
+            fetch('/assets/components/ChamarSuporte.html')
+                .then(r => r.text())
+                .then(html => document.getElementById('chamar-suporte-placeholder').innerHTML = html);
+    </script>
+
     <!-- Placeholder onde a Sidebar será carregada -->
     <nav id="sidebar-placeholder"></nav>
 
