@@ -607,7 +607,8 @@
         { tipo: 'Faturamento', cor: '#1976d2', icon: 'file-text' },
         { tipo: 'Cancelamento', cor: '#d32f2f', icon: 'x-square' },
         { tipo: 'Erros', cor: '#ffa000', icon: 'alert-triangle' },
-        { tipo: 'Dúvidas', cor: '#388e3c', icon: 'help-circle' }
+        { tipo: 'Dúvidas', cor: '#388e3c', icon: 'help-circle' },
+        { tipo: 'TI', cor: '#6a1b9a', icon: 'cpu' } // Card do TI
       ];
       const statusList = [
         { status: 'Pendente', cor: '#ff5252', icon: 'clock' },
@@ -619,22 +620,33 @@
       if (!cardsContainer) return;
       cardsContainer.innerHTML = tipos.map(t => {
         const isSelected = tipoSuporteSelecionado === t.tipo;
-        const solicitacoesTipo = todasSolicitacoes.filter(s => (s.tipoSuporte || s.departamento || '').toLowerCase() === t.tipo.toLowerCase());
+        // Para o card de TI, considerar tanto tipoSuporte quanto departamento igual a 'TI'
+        let solicitacoesTipo = [];
+        if (t.tipo === 'TI') {
+          solicitacoesTipo = todasSolicitacoes.filter(s => {
+            const tipo = (s.tipoSuporte || '').toLowerCase();
+            const dep = (s.departamento || '').toLowerCase();
+            return tipo === 'ti' || dep === 'ti';
+          });
+        } else {
+          solicitacoesTipo = todasSolicitacoes.filter(s => (s.tipoSuporte || s.departamento || '').toLowerCase() === t.tipo.toLowerCase());
+        }
+        // Card sempre mostrando todos os status, mais compacto
         return `
-          <div class="card-tipo-suporte${isSelected ? ' card-tipo-suporte-selecionado' : ''}" data-tipo="${t.tipo}" style="background: #2c2f3f; color: #fff; border-radius: 12px; padding: 18px 28px; width: 260px; min-height: 140px; box-shadow: 0 2px 8px rgba(0,0,0,0.10); display: flex; flex-direction: column; gap: 10px; position: relative; cursor: pointer; border: ${isSelected ? '3px solid #fff' : 'none'};">
+          <div class="card-tipo-suporte${isSelected ? ' card-tipo-suporte-selecionado' : ''}" data-tipo="${t.tipo}" style="background: #2c2f3f; color: #fff; border-radius: 12px; padding: 12px 18px; width: 220px; min-height: 40px; box-shadow: 0 2px 8px rgba(0,0,0,0.10); display: flex; flex-direction: column; gap: 6px; position: relative; cursor: pointer; border: ${isSelected ? '3px solid #888' : 'none'};">
             <div style="position: absolute; left: 0; top: 0; bottom: 0; width: 7px; border-radius: 12px 0 0 12px; background: ${t.cor};"></div>
-            <div style='display: flex; align-items: center; gap: 12px;'>
-              <i data-lucide='${t.icon}' style='font-size: 32px;'></i>
-              <span style='font-size: 22px; font-weight: bold;'>${t.tipo}</span>
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <i data-lucide='${t.icon}' style='font-size: 26px;'></i>
+              <span style='font-size: 18px; font-weight: bold;'>${t.tipo}</span>
             </div>
-            <div style='margin-top: 8px;'>
+            <div class="card-tipo-suporte-status" style="margin-top: 4px; display: flex; flex-direction: column; gap: 3px;">
               ${statusList.map(s => {
                 const qtd = solicitacoesTipo.filter(sol => sol.status === s.status).length;
                 return `
-                  <div style='display: flex; align-items: center; gap: 8px; margin-bottom: 4px;'>
-                    <i data-lucide='${s.icon}' style='font-size: 18px; color: ${s.cor};'></i>
-                    <span style='font-size: 16px;'>${s.status}:</span>
-                    <span style='font-size: 16px; font-weight: bold;'>${qtd}</span>
+                  <div style='display: flex; align-items: center; gap: 6px; margin-bottom: 0;'>
+                    <i data-lucide='${s.icon}' style='font-size: 14px; color: ${s.cor};'></i>
+                    <span style='font-size: 13px;'>${s.status}:</span>
+                    <span style='font-size: 13px; font-weight: bold;'>${qtd}</span>
                   </div>
                 `;
               }).join('')}
@@ -644,6 +656,7 @@
       }).join('');
       // Adicionar eventos de clique aos cards
       Array.from(cardsContainer.querySelectorAll('.card-tipo-suporte')).forEach(card => {
+        // Voltar ao clique no card inteiro para seleção/filtro
         card.addEventListener('click', function() {
           const tipo = this.getAttribute('data-tipo');
           if (tipoSuporteSelecionado === tipo) {
