@@ -24,7 +24,7 @@ const firebaseConfig = {
   apiKey: "AIzaSyDcjPa9jXsCCu6lNc1fjVg4Bzz1toKWAGY",
   authDomain: "agro-divel.firebaseapp.com",
   projectId: "agro-divel",
-  storageBucket: "agro-divel.firebasestorage.app", 
+    storageBucket: "agro-divel.firebasestorage.app", 
   messagingSenderId: "583977436505",
   appId: "1:583977436505:web:3754ec029aebb3d9d67848"
 };

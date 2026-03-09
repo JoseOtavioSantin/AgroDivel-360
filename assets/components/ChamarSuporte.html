@@ -1,10 +1,13 @@
-<!-- Componente Botão Flutuante de Suporte -->
+<!-- Componente Botão Flutuante de Suporte com Menu -->
 <style>
-.suporte-fab {
+.suporte-container {
   position: fixed;
   bottom: 32px;
   right: 32px;
   z-index: 9999;
+}
+
+.suporte-fab {
   background: #0052a3;
   border-radius: 50%;
   width: 90px;
@@ -18,12 +21,13 @@
   border: none;
   outline: none;
 }
+
 .suporte-fab:hover {
   box-shadow: 0 8px 32px rgba(0,0,0,0.28);
   transform: scale(1.07);
   background: #003a70;
 }
-/* Centraliza e reduz a imagem dentro do botão */
+
 .suporte-fab img {
   width: 44px;
   height: 44px;
@@ -31,21 +35,192 @@
   margin: 0 auto;
   pointer-events: none;
 }
+
+/* Menu de opções */
+.suporte-menu {
+  position: absolute;
+  bottom: 100px;
+  right: 0;
+  background: transparent;
+  border-radius: 16px;
+  padding: 0;
+  min-width: 280px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.25);
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(20px) scale(0.95);
+  transition: all 0.3s ease;
+  overflow: hidden;
+}
+
+.suporte-menu.active {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0) scale(1);
+}
+
+.suporte-menu-item {
+  display: flex;
+  align-items: center;
+  padding: 16px 20px;
+  color: #ffffff;
+  font-size: 15px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border-bottom: 1px solid rgba(0,0,0,0.15);
+  text-decoration: none;
+}
+
+.suporte-menu-item:last-child {
+  border-bottom: none;
+}
+
+.suporte-menu-item:hover {
+  filter: brightness(1.15);
+  padding-left: 28px;
+}
+
+.suporte-menu-item i {
+  margin-right: 12px;
+  font-size: 18px;
+}
+
+/* Cores individuais para cada tipo de solicitação */
+.suporte-menu-item.cancelamento {
+  background: linear-gradient(90deg, #dc3545 0%, #c82333 100%);
+  border-radius: 16px 16px 0 0;
+}
+
+.suporte-menu-item.erros-faturamento {
+  background: linear-gradient(90deg, #fd7e14 0%, #e06c0b 100%);
+}
+
+.suporte-menu-item.demais-erros {
+  background: linear-gradient(90deg, #6f42c1 0%, #5a32a3 100%);
+}
+
+.suporte-menu-item.duvidas {
+  background: linear-gradient(90deg, #28a745 0%, #1e7e34 100%);
+}
+
+.suporte-menu-item.ti {
+  background: linear-gradient(90deg, #17a2b8 0%, #117a8b 100%);
+  border-radius: 0 0 16px 16px;
+}
+
+/* Seta do menu apontando para o botão */
+.suporte-menu::after {
+  content: '';
+  position: absolute;
+  bottom: -10px;
+  right: 35px;
+  width: 0;
+  height: 0;
+  border-left: 12px solid transparent;
+  border-right: 12px solid transparent;
+  border-top: 12px solid #117a8b;
+}
+
+/* Overlay para fechar o menu */
+.suporte-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.3);
+  z-index: 9998;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s ease;
+}
+
+.suporte-overlay.active {
+  opacity: 1;
+  visibility: visible;
+}
+
 @media (max-width: 600px) {
-  .suporte-fab {
-    width: 54px;
-    height: 54px;
+  .suporte-container {
     bottom: 18px;
     right: 18px;
   }
+  
+  .suporte-fab {
+    width: 54px;
+    height: 54px;
+  }
+  
   .suporte-fab img {
     width: 28px;
     height: 28px;
   }
+  
+  .suporte-menu {
+    min-width: 220px;
+    bottom: 65px;
+    right: -10px;
+  }
+  
+  .suporte-menu-item {
+    padding: 14px 16px;
+    font-size: 13px;
+  }
 }
 </style>
 
-<button class="suporte-fab" title="Solicitar Suporte" onclick="window.location.href='/Pages/Suporte/SolicitacaoSuporte.html'">
-  <img src="/assets/images/suporte-icone.png" alt="Chamar Suporte" />
-</button>
+<div class="suporte-overlay" id="suporte-overlay" onclick="toggleSuporteMenu()"></div>
+
+<div class="suporte-container">
+  <div class="suporte-menu" id="suporte-menu">
+    <a href="/Pages/Suporte/SolicitacaoCancelamento.html" class="suporte-menu-item cancelamento">
+      <i class='bx bx-x-circle'></i>
+      Cancelamento
+    </a>
+    <a href="/Pages/Suporte/SolicitacaoErros.html" class="suporte-menu-item erros-faturamento">
+      <i class='bx bx-error-circle'></i>
+      Erros de Faturamento
+    </a>
+    <a href="/Pages/Suporte/SolicitacaoDemaisErros.html" class="suporte-menu-item demais-erros">
+      <i class='bx bx-bug'></i>
+      Demais Erros
+    </a>
+    <a href="/Pages/Suporte/SolicitacaoDuvidas.html" class="suporte-menu-item duvidas">
+      <i class='bx bx-help-circle'></i>
+      Dúvidas
+    </a>
+    <a href="/Pages/Suporte/SolicitacaoTI.html" class="suporte-menu-item ti">
+      <i class='bx bx-desktop'></i>
+      TI
+    </a>
+  </div>
+  
+  <button class="suporte-fab" title="Solicitar Suporte" onclick="toggleSuporteMenu()">
+    <img src="/assets/images/suporte-icone.png" alt="Chamar Suporte" />
+  </button>
+</div>
+
+<script>
+function toggleSuporteMenu() {
+  const menu = document.getElementById('suporte-menu');
+  const overlay = document.getElementById('suporte-overlay');
+  menu.classList.toggle('active');
+  overlay.classList.toggle('active');
+}
+
+// Fechar menu com ESC
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') {
+    const menu = document.getElementById('suporte-menu');
+    const overlay = document.getElementById('suporte-overlay');
+    if (menu && menu.classList.contains('active')) {
+      menu.classList.remove('active');
+      overlay.classList.remove('active');
+    }
+  }
+});
+</script>
 <!-- Fim do componente -->
