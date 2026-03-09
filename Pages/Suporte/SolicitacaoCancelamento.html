@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="theme-color" content="#2c2f3f" />
+  <title>Solicitação de Cancelamento</title>
+  <link rel="icon" type="image/png" href="/assets/images/iconeaba.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- LIBS EXTERNAS -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  
+  <!-- CSS -->
+  <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+  <link rel="stylesheet" href="/assets/css/style.css">
+  <link rel="stylesheet" href="/assets/css/Pages/Formularios/style-forms.css">
+
+  <style>
+    .upload-area {
+      border: 2px dashed #ccc;
+      border-radius: 10px;
+      padding: 30px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.3s;
+      background: #f9f9f9;
+    }
+    .upload-area:hover {
+      border-color: #193b7c;
+      background: #e8f0ff;
+    }
+    .upload-area.dragging {
+      border-color: #193b7c;
+      background: #e8f0ff;
+    }
+    .preview-images {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 15px;
+    }
+    .preview-item {
+      position: relative;
+      width: 120px;
+      height: 120px;
+    }
+    .preview-item img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: 8px;
+      border: 2px solid #ddd;
+    }
+    .preview-item .remove-btn {
+      position: absolute;
+      top: -8px;
+      right: -8px;
+      background: #dc3545;
+      color: white;
+      border: none;
+      border-radius: 50%;
+      width: 24px;
+      height: 24px;
+      cursor: pointer;
+      font-size: 14px;
+      line-height: 1;
+    }
+    .page-header {
+      background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+      color: white;
+      padding: 20px;
+      border-radius: 12px;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+    .page-header i {
+      font-size: 32px;
+    }
+    .page-header h1 {
+      margin: 0;
+      font-size: 24px;
+    }
+    .page-header p {
+      margin: 5px 0 0;
+      opacity: 0.9;
+      font-size: 14px;
+    }
+    .form-row {
+      display: flex;
+      gap: 15px;
+    }
+    .form-row .form-group {
+      flex: 1;
+    }
+    @media (max-width: 600px) {
+      .form-row {
+        flex-direction: column;
+        gap: 0;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <nav id="sidebar-placeholder"></nav>
+
+  <section class="home">
+    <div class="text">
+      <div class="page-header">
+        <i class='bx bx-x-circle'></i>
+        <div>
+          <h1>Solicitação de Cancelamento</h1>
+          <p>Preencha os dados para solicitar um cancelamento</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="content-card">
+      <div class="content-card-body">
+        <form id="form-cancelamento">
+          
+          <!-- Email (Automático) -->
+          <div class="form-group">
+            <label for="email">Seu email <span class="required">*</span></label>
+            <input type="email" id="email" readonly style="background-color: #adafb8; cursor: not-allowed;" required>
+          </div>
+
+          <!-- Solicitante (Automático) -->
+          <div class="form-group">
+            <label for="solicitante">Solicitante <span class="required">*</span></label>
+            <input type="text" id="solicitante" readonly style="background-color: #adafb8; cursor: not-allowed;" required>
+          </div>
+
+          <!-- Filial -->
+          <div class="form-group">
+            <label for="filial">Filial <span class="required">*</span></label>
+            <select id="filial" required>
+              <option value="">Selecione a filial</option>
+              <option value="Joaçaba">Joaçaba</option>
+              <option value="Campos Novos">Campos Novos</option>
+              <option value="Rio do Sul">Rio do Sul</option>
+              <option value="Lages">Lages</option>
+              <option value="São Miguel do Oeste">São Miguel do Oeste</option>
+              <option value="Campo Erê">Campo Erê</option>
+              <option value="Pinhalzinho">Pinhalzinho</option>
+            </select>
+          </div>
+
+          <!-- Departamento -->
+          <div class="form-group">
+            <label for="departamento">Departamento <span class="required">*</span></label>
+            <select id="departamento" required>
+              <option value="">Selecione o departamento</option>
+              <option value="Peças">Peças</option>
+              <option value="Serviços">Serviços</option>
+              <option value="Máquinas">Máquinas</option>
+              <option value="Administrativo">Administrativo</option>
+            </select>
+          </div>
+
+          <!-- Número da NF -->
+          <div class="form-group">
+            <label for="numero-nf">Número da NF <span class="required">*</span></label>
+            <input type="text" id="numero-nf" placeholder="Digite o número da nota fiscal" required>
+          </div>
+
+          <!-- Motivo do Cancelamento -->
+          <div class="form-group">
+            <label for="motivo">Motivo do Cancelamento <span class="required">*</span></label>
+            <textarea id="motivo" rows="3" placeholder="Descreva o motivo do cancelamento" required></textarea>
+          </div>
+
+          <!-- Data e Hora da Emissão -->
+          <div class="form-row">
+            <div class="form-group">
+              <label for="data-emissao">Data da Emissão da NF <span class="required">*</span></label>
+              <input type="date" id="data-emissao" required>
+            </div>
+            <div class="form-group">
+              <label for="hora-emissao">Hora da Emissão da NF <span class="required">*</span></label>
+              <input type="time" id="hora-emissao" placeholder="Ex: 14:25" required>
+            </div>
+          </div>
+
+          <!-- Upload de Imagem -->
+          <div class="form-group">
+            <label>Imagem <span class="required">*</span></label>
+            <small style="color: #666; display: block; margin-bottom: 10px;">Anexe prints ou documentos relacionados ao cancelamento</small>
+            <div class="upload-area" id="upload-area">
+              <i data-lucide="upload-cloud" style="width: 48px; height: 48px; color: #193b7c; margin: 0 auto 10px;"></i>
+              <p style="color: #193b7c; font-weight: 600; margin: 0;">Insira arquivos clicando aqui ou arraste e solte</p>
+              <input type="file" id="file-input" accept="image/*" multiple style="display: none;">
+            </div>
+            <div class="preview-images" id="preview-images"></div>
+          </div>
+
+          <!-- Observações -->
+          <div class="form-group">
+            <label for="observacoes">Observações</label>
+            <textarea id="observacoes" rows="4" placeholder="Informações adicionais (opcional)"></textarea>
+          </div>
+
+          <!-- BOTÕES DE AÇÃO -->
+          <div class="form-actions">
+            <button type="button" class="btn-secondary" onclick="window.history.back()">Cancelar</button>
+            <button type="submit" class="btn-primary">Enviar Solicitação</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </section>
+
+  <!-- Scripts Globais -->
+  <script type="module" src="/assets/js/firebase-config.js"></script>
+  <script type="module" src="/assets/js/auth.js"></script>
+  <script src="/assets/js/main.js"></script> 
+  <script src="/assets/js/components/Sidebar.js"></script>
+
+  <script type="module">
+    import { garantirAutenticacao } from '/assets/js/auth-guard.js';
+    import { getApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+    import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
+
+    let userData;
+    let selectedFiles = [];
+
+    (async () => {
+      try {
+        userData = await garantirAutenticacao();
+        const app = getApp();
+        const db = getFirestore(app);
+        const storage = getStorage(app, 'gs://agro-divel.firebasestorage.app');
+
+        // Preencher campos automáticos
+        document.getElementById('email').value = userData.email || '';
+        document.getElementById('solicitante').value = userData.nome || '';
+        
+        // Auto-selecionar filial
+        if (userData.filial && userData.filial.length === 1) {
+          const filialSelect = document.getElementById('filial');
+          const filialNome = userData.filial[0];
+          for (let option of filialSelect.options) {
+            if (option.value.toLowerCase().includes(filialNome.toLowerCase()) || 
+                filialNome.toLowerCase().includes(option.value.toLowerCase())) {
+              option.selected = true;
+              break;
+            }
+          }
+        }
+
+        // Configurar upload de imagens
+        const uploadArea = document.getElementById('upload-area');
+        const fileInput = document.getElementById('file-input');
+        const previewImages = document.getElementById('preview-images');
+
+        uploadArea.addEventListener('click', () => fileInput.click());
+
+        uploadArea.addEventListener('dragover', (e) => {
+          e.preventDefault();
+          uploadArea.classList.add('dragging');
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+          uploadArea.classList.remove('dragging');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+          e.preventDefault();
+          uploadArea.classList.remove('dragging');
+          const files = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/'));
+          addFiles(files);
+        });
+
+        fileInput.addEventListener('change', (e) => {
+          const files = Array.from(e.target.files);
+          addFiles(files);
+        });
+
+        function addFiles(files) {
+          files.forEach(file => {
+            if (selectedFiles.length >= 5) {
+              Swal.fire('Limite atingido', 'Você pode enviar no máximo 5 imagens', 'warning');
+              return;
+            }
+            selectedFiles.push(file);
+            renderPreview();
+          });
+        }
+
+        function renderPreview() {
+          previewImages.innerHTML = '';
+          selectedFiles.forEach((file, index) => {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+              const div = document.createElement('div');
+              div.className = 'preview-item';
+              div.innerHTML = `
+                <img src="${e.target.result}" alt="Preview">
+                <button type="button" class="remove-btn" data-index="${index}">&times;</button>
+              `;
+              previewImages.appendChild(div);
+            };
+            reader.readAsDataURL(file);
+          });
+
+          setTimeout(() => {
+            document.querySelectorAll('.remove-btn').forEach(btn => {
+              btn.addEventListener('click', (e) => {
+                const index = parseInt(e.target.dataset.index);
+                selectedFiles.splice(index, 1);
+                renderPreview();
+              });
+            });
+          }, 100);
+        }
+
+        // Submit do formulário
+        document.getElementById('form-cancelamento').addEventListener('submit', async (e) => {
+          e.preventDefault();
+
+          const filial = document.getElementById('filial').value;
+          const departamento = document.getElementById('departamento').value;
+          const numeroNF = document.getElementById('numero-nf').value.trim();
+          const motivo = document.getElementById('motivo').value.trim();
+          const dataEmissao = document.getElementById('data-emissao').value;
+          const horaEmissao = document.getElementById('hora-emissao').value;
+          const observacoes = document.getElementById('observacoes').value.trim();
+
+          if (!filial || !departamento || !numeroNF || !motivo || !dataEmissao || !horaEmissao) {
+            Swal.fire('Atenção', 'Preencha todos os campos obrigatórios', 'warning');
+            return;
+          }
+
+          if (selectedFiles.length === 0) {
+            Swal.fire('Atenção', 'É obrigatório enviar pelo menos uma imagem.', 'warning');
+            return;
+          }
+
+          try {
+            Swal.fire({
+              title: 'Enviando...',
+              text: 'Aguarde enquanto processamos sua solicitação',
+              allowOutsideClick: false,
+              didOpen: () => Swal.showLoading()
+            });
+
+            // Upload das imagens
+            const imageUrls = [];
+            for (const file of selectedFiles) {
+              const timestamp = Date.now();
+              const filename = `SolicitacoesSuporte/cancelamento_${timestamp}_${file.name}`;
+              const storageRef = ref(storage, filename);
+              await uploadBytes(storageRef, file);
+              const url = await getDownloadURL(storageRef);
+              imageUrls.push(url);
+            }
+
+            // Salvar no Firestore
+            await addDoc(collection(db, 'SolicitaçõesSuporte'), {
+              email: userData.email,
+              solicitante: userData.nome,
+              filial: filial,
+              departamento: departamento,
+              tipoSolicitacao: 'Cancelamento',
+              numeroNF,
+              motivo,
+              dataEmissao,
+              horaEmissao,
+              observacoes,
+              imagens: imageUrls,
+              status: 'Pendente',
+              dataAbertura: serverTimestamp(),
+              userId: userData.uid || userData.id || ''
+            });
+
+            Swal.fire({
+              icon: 'success',
+              title: 'Solicitação enviada!',
+              text: 'Sua solicitação de cancelamento foi registrada',
+              timer: 2000
+            }).then(() => {
+              document.getElementById('form-cancelamento').reset();
+              selectedFiles = [];
+              previewImages.innerHTML = '';
+              document.getElementById('email').value = userData.email || '';
+              document.getElementById('solicitante').value = userData.nome || '';
+            });
+
+          } catch (error) {
+            console.error('Erro ao enviar solicitação:', error);
+            Swal.fire('Erro', 'Não foi possível enviar a solicitação. Tente novamente.', 'error');
+          }
+        });
+
+        lucide.createIcons();
+
+      } catch (error) {
+        console.error('Erro ao inicializar:', error);
+        Swal.fire('Erro', 'Não foi possível carregar os dados do usuário', 'error');
+      }
+    })();
+  </script>
+
+</body>
+</html>

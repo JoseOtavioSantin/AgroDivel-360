@@ -263,7 +263,14 @@
       background: white;
       border-top: 1px solid #e5e7eb;
       display: flex;
+      flex-direction: column;
       gap: 10px;
+    }
+
+    .chat-input-row {
+      display: flex;
+      gap: 10px;
+      align-items: flex-end;
     }
 
     .chat-textarea {
@@ -286,6 +293,46 @@
       box-shadow: 0 0 0 3px rgba(25, 59, 124, 0.1);
     }
 
+    .chat-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .chat-btn-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 8px;
+      border: 1px solid #e5e7eb;
+      background: #f9fafb;
+      color: #4b5563;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s;
+    }
+
+    .chat-btn-icon:hover {
+      background: #e5e7eb;
+      color: #193b7c;
+    }
+
+    .chat-btn-icon.recording {
+      background: #ff5252;
+      color: white;
+      border-color: #ff5252;
+      animation: pulse-recording 1s infinite;
+    }
+
+    @keyframes pulse-recording {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+    }
+
+    .chat-btn-icon i {
+      font-size: 18px;
+    }
+
     .chat-button {
       padding: 10px 16px;
       background: linear-gradient(135deg, #193b7c 0%, #00205b 100%);
@@ -297,11 +344,164 @@
       font-size: 12px;
       transition: all 0.3s;
       white-space: nowrap;
+      height: 40px;
     }
 
     .chat-button:hover {
       transform: translateY(-2px);
       box-shadow: 0 4px 12px rgba(25, 59, 124, 0.25);
+    }
+
+    .preview-anexos {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      padding: 8px 0;
+    }
+
+    .preview-item {
+      position: relative;
+      border-radius: 8px;
+      overflow: hidden;
+      border: 1px solid #e5e7eb;
+    }
+
+    .preview-item img {
+      width: 60px;
+      height: 60px;
+      object-fit: cover;
+    }
+
+    .preview-item audio {
+      height: 40px;
+      max-width: 200px;
+    }
+
+    .preview-item .remove-anexo {
+      position: absolute;
+      top: 2px;
+      right: 2px;
+      width: 18px;
+      height: 18px;
+      background: #ff5252;
+      color: white;
+      border: none;
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* Estilos para mídia nas mensagens */
+    .mensagem-imagem {
+      max-width: 200px;
+      border-radius: 8px;
+      margin-top: 6px;
+      cursor: pointer;
+    }
+
+    .mensagem-audio {
+      margin-top: 8px;
+      background: rgba(255, 255, 255, 0.15);
+      border-radius: 20px;
+      padding: 8px 12px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 220px;
+      max-width: 280px;
+    }
+
+    .mensagem-usuario .mensagem-audio {
+      background: rgba(25, 59, 124, 0.1);
+    }
+
+    .mensagem-audio audio {
+      width: 100%;
+      height: 40px;
+      border-radius: 20px;
+    }
+
+    .mensagem-audio audio::-webkit-media-controls-panel {
+      background: transparent;
+    }
+
+    .audio-player-custom {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      width: 100%;
+    }
+
+    .audio-player-custom .play-btn {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: #193b7c;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: all 0.2s;
+    }
+
+    .mensagem-usuario .audio-player-custom .play-btn {
+      background: #193b7c;
+    }
+
+    .audio-player-custom .play-btn:hover {
+      transform: scale(1.1);
+      background: #0d2a5c;
+    }
+
+    .audio-player-custom .play-btn i {
+      color: white;
+      font-size: 18px;
+    }
+
+    .audio-player-custom .audio-info {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .audio-player-custom .audio-progress {
+      width: 100%;
+      height: 4px;
+      background: rgba(255, 255, 255, 0.3);
+      border-radius: 2px;
+      cursor: pointer;
+      position: relative;
+    }
+
+    .mensagem-usuario .audio-player-custom .audio-progress {
+      background: rgba(25, 59, 124, 0.2);
+    }
+
+    .audio-player-custom .audio-progress-bar {
+      height: 100%;
+      background: #fff;
+      border-radius: 2px;
+      width: 0%;
+      transition: width 0.1s linear;
+    }
+
+    .mensagem-usuario .audio-player-custom .audio-progress-bar {
+      background: #193b7c;
+    }
+
+    .audio-player-custom .audio-time {
+      font-size: 11px;
+      color: rgba(255, 255, 255, 0.8);
+    }
+
+    .mensagem-usuario .audio-player-custom .audio-time {
+      color: #666;
     }
 
     .btn-voltar {
@@ -405,10 +605,22 @@
           <p class="vazio-aviso">Carregando mensagens...</p>
         </div>
         <div class="chat-input-area">
-          <textarea class="chat-textarea" id="resposta-texto" placeholder="Escreva sua resposta..."></textarea>
-          <button class="chat-button" onclick="enviarResposta()">
-            <i class='bx bx-send'></i> Enviar
-          </button>
+          <div class="preview-anexos" id="preview-anexos"></div>
+          <div class="chat-input-row">
+            <div class="chat-actions">
+              <input type="file" id="input-imagem" accept="image/*" style="display: none;" multiple>
+              <button class="chat-btn-icon" onclick="document.getElementById('input-imagem').click()" title="Anexar imagem">
+                <i class='bx bx-image'></i>
+              </button>
+              <button class="chat-btn-icon" id="btn-audio" onclick="toggleGravacaoAudio()" title="Gravar áudio">
+                <i class='bx bx-microphone'></i>
+              </button>
+            </div>
+            <textarea class="chat-textarea" id="resposta-texto" placeholder="Escreva sua resposta..."></textarea>
+            <button class="chat-button" onclick="enviarResposta()">
+              <i class='bx bx-send'></i> Enviar
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -422,14 +634,27 @@
 
   <script type="module">
     import { garantirAutenticacao } from '/assets/js/auth-guard.js';
-    import { getApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-    import { getFirestore, collection, doc, getDoc, updateDoc, addDoc, serverTimestamp, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+    import { storage } from '/assets/js/firebase-config.js';
+    import { getApp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js";
+    import { getFirestore, collection, doc, getDoc, updateDoc, addDoc, serverTimestamp, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
+    import { ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-storage.js";
 
     let userData;
     let solicitacaoId;
     let solicitacao;
     let db;
     let unsubscribe; // Para desinscrever do listener
+    
+    // Variáveis para gravação de áudio
+    let mediaRecorder;
+    let audioChunks = [];
+    let isRecording = false;
+    
+    // Anexos pendentes
+    let anexosPendentes = {
+      imagens: [],
+      audios: []
+    };
 
     // Inicializar
     (async () => {
@@ -451,6 +676,8 @@
         await carregarDetalhes();
         // Iniciar listener em tempo real para mensagens
         iniciarListenerChat();
+        // Configurar input de imagem
+        configurarInputImagem();
 
         lucide.createIcons();
 
@@ -637,10 +864,41 @@
         const isUsuario = h.respondidoPor === solicitacao.solicitante || h.respondidoPor === solicitacao.email;
         const classeMensagem = isUsuario ? 'mensagem-usuario' : 'mensagem-suporte';
 
+        // Renderizar imagens da mensagem
+        let imagensHTML = '';
+        if (h.imagens && h.imagens.length > 0) {
+          imagensHTML = h.imagens.map(url => 
+            `<img src="${url}" class="mensagem-imagem" onclick="visualizarImagem('${url}')" alt="Imagem">`
+          ).join('');
+        }
+
+        // Renderizar áudios da mensagem
+        let audiosHTML = '';
+        if (h.audios && h.audios.length > 0) {
+          audiosHTML = h.audios.map((url, idx) => 
+            `<div class="mensagem-audio">
+              <div class="audio-player-custom" data-audio-url="${url}">
+                <button class="play-btn" onclick="toggleAudioPlay(this)">
+                  <i class="bx bx-play"></i>
+                </button>
+                <div class="audio-info">
+                  <div class="audio-progress" onclick="seekAudio(event, this)">
+                    <div class="audio-progress-bar"></div>
+                  </div>
+                  <span class="audio-time">0:00 / --:--</span>
+                </div>
+              </div>
+              <audio src="${url}" preload="metadata" style="display:none;"></audio>
+            </div>`
+          ).join('');
+        }
+
         return `
           <div class="mensagem-grupo ${classeMensagem}">
             <div class="mensagem-bubble">
               ${h.mensagem || ''}
+              ${imagensHTML}
+              ${audiosHTML}
             </div>
             <div class="mensagem-meta">
               <span>${h.respondidoPor}</span>
@@ -702,17 +960,41 @@
     window.enviarResposta = async function() {
       const mensagem = document.getElementById('resposta-texto').value.trim();
       
-      if (!mensagem) {
-        Swal.showValidationMessage('Digite uma mensagem');
+      // Verificar se há mensagem ou anexos
+      if (!mensagem && anexosPendentes.imagens.length === 0 && anexosPendentes.audios.length === 0) {
+        Swal.fire('Atenção', 'Digite uma mensagem ou anexe um arquivo', 'warning');
         return;
       }
 
       try {
+        // Mostrar loading
+        Swal.fire({
+          title: 'Enviando...',
+          allowOutsideClick: false,
+          didOpen: () => Swal.showLoading()
+        });
+
+        // Upload das imagens
+        const urlsImagens = [];
+        for (const file of anexosPendentes.imagens) {
+          const url = await uploadArquivo(file, 'imagens');
+          urlsImagens.push(url);
+        }
+
+        // Upload dos áudios
+        const urlsAudios = [];
+        for (const blob of anexosPendentes.audios) {
+          const url = await uploadArquivo(blob, 'audios');
+          urlsAudios.push(url);
+        }
+
         const historico = solicitacao.historico || [];
         historico.push({
           data: new Date(),
           respondidoPor: userData.nome || userData.email,
           mensagem: mensagem,
+          imagens: urlsImagens,
+          audios: urlsAudios,
           tipo: 'resposta'
         });
 
@@ -724,12 +1006,145 @@
 
         solicitacao = { ...solicitacao, historico };
         document.getElementById('resposta-texto').value = '';
+        
+        // Limpar anexos pendentes
+        anexosPendentes = { imagens: [], audios: [] };
+        renderizarPreviewAnexos();
+        
         renderizarChat();
-        // Popup removido conforme solicitado
+        Swal.close();
 
       } catch (error) {
         console.error('Erro ao enviar resposta:', error);
-        Swal.fire('Erro', 'Não foi possível enviar a resposta', 'error');
+        Swal.fire('Erro', `Não foi possível enviar: ${error.message}`, 'error');
+      }
+    };
+
+    // Função para upload de arquivo
+    async function uploadArquivo(file, pasta) {
+      try {
+        console.log('Iniciando upload...', file, pasta);
+        console.log('Storage:', storage);
+        const timestamp = Date.now();
+        const nomeArquivo = `suporte/${pasta}/${solicitacaoId}/${timestamp}_${file.name || 'audio.webm'}`;
+        console.log('Nome arquivo:', nomeArquivo);
+        const storageRef = ref(storage, nomeArquivo);
+        console.log('StorageRef:', storageRef);
+        console.log('Iniciando uploadBytes...');
+        const snapshot = await uploadBytes(storageRef, file);
+        console.log('Upload concluído:', snapshot);
+        const url = await getDownloadURL(storageRef);
+        console.log('URL:', url);
+        return url;
+      } catch (error) {
+        console.error('Erro detalhado no upload:', error);
+        console.error('Código do erro:', error.code);
+        console.error('Mensagem:', error.message);
+        console.error('ServerResponse:', error.serverResponse);
+        throw error;
+      }
+    }
+
+    // Configurar input de imagem
+    function configurarInputImagem() {
+      document.getElementById('input-imagem').addEventListener('change', function(e) {
+        const files = Array.from(e.target.files);
+        files.forEach(file => {
+          if (file.type.startsWith('image/')) {
+            anexosPendentes.imagens.push(file);
+          }
+        });
+        renderizarPreviewAnexos();
+        e.target.value = ''; // Limpar input
+      });
+    }
+
+    // Renderizar preview dos anexos
+    function renderizarPreviewAnexos() {
+      const container = document.getElementById('preview-anexos');
+      let html = '';
+
+      // Preview de imagens
+      anexosPendentes.imagens.forEach((file, index) => {
+        const url = URL.createObjectURL(file);
+        html += `
+          <div class="preview-item">
+            <img src="${url}" alt="Preview">
+            <button class="remove-anexo" onclick="removerAnexo('imagem', ${index})">
+              <i class='bx bx-x'></i>
+            </button>
+          </div>
+        `;
+      });
+
+      // Preview de áudios
+      anexosPendentes.audios.forEach((blob, index) => {
+        const url = URL.createObjectURL(blob);
+        html += `
+          <div class="preview-item" style="padding: 8px;">
+            <audio controls src="${url}"></audio>
+            <button class="remove-anexo" onclick="removerAnexo('audio', ${index})">
+              <i class='bx bx-x'></i>
+            </button>
+          </div>
+        `;
+      });
+
+      container.innerHTML = html;
+    }
+
+    // Remover anexo
+    window.removerAnexo = function(tipo, index) {
+      if (tipo === 'imagem') {
+        anexosPendentes.imagens.splice(index, 1);
+      } else if (tipo === 'audio') {
+        anexosPendentes.audios.splice(index, 1);
+      }
+      renderizarPreviewAnexos();
+    };
+
+    // Gravação de áudio
+    window.toggleGravacaoAudio = async function() {
+      const btnAudio = document.getElementById('btn-audio');
+
+      if (!isRecording) {
+        // Iniciar gravação
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          mediaRecorder = new MediaRecorder(stream);
+          audioChunks = [];
+
+          mediaRecorder.ondataavailable = (e) => {
+            audioChunks.push(e.data);
+          };
+
+          mediaRecorder.onstop = () => {
+            const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+            audioBlob.name = `audio_${Date.now()}.webm`;
+            anexosPendentes.audios.push(audioBlob);
+            renderizarPreviewAnexos();
+            
+            // Parar todas as tracks
+            stream.getTracks().forEach(track => track.stop());
+          };
+
+          mediaRecorder.start();
+          isRecording = true;
+          btnAudio.classList.add('recording');
+          btnAudio.innerHTML = '<i class="bx bx-stop"></i>';
+          btnAudio.title = 'Parar gravação';
+
+        } catch (error) {
+          console.error('Erro ao acessar microfone:', error);
+          Swal.fire('Erro', 'Não foi possível acessar o microfone. Verifique as permissões.', 'error');
+        }
+      } else {
+        // Parar gravação
+        mediaRecorder.stop();
+        isRecording = false;
+        btnAudio.classList.remove('recording');
+        btnAudio.innerHTML = '<i class="bx bx-microphone"></i>';
+        btnAudio.title = 'Gravar áudio';
       }
     };
 
@@ -742,6 +1157,77 @@
         width: '80%'
       });
     };
+
+    // Funções do player de áudio customizado
+    let currentPlayingAudio = null;
+
+    window.toggleAudioPlay = function(btn) {
+      const container = btn.closest('.mensagem-audio');
+      const audio = container.querySelector('audio');
+      const icon = btn.querySelector('i');
+      
+      // Pausar outro áudio se estiver tocando
+      if (currentPlayingAudio && currentPlayingAudio !== audio) {
+        currentPlayingAudio.pause();
+        const otherBtn = currentPlayingAudio.closest('.mensagem-audio').querySelector('.play-btn i');
+        if (otherBtn) otherBtn.className = 'bx bx-play';
+      }
+
+      if (audio.paused) {
+        audio.play();
+        icon.className = 'bx bx-pause';
+        currentPlayingAudio = audio;
+        
+        // Atualizar progresso
+        audio.ontimeupdate = function() {
+          const progress = (audio.currentTime / audio.duration) * 100;
+          container.querySelector('.audio-progress-bar').style.width = progress + '%';
+          container.querySelector('.audio-time').textContent = formatAudioTime(audio.currentTime) + ' / ' + formatAudioTime(audio.duration);
+        };
+        
+        audio.onended = function() {
+          icon.className = 'bx bx-play';
+          container.querySelector('.audio-progress-bar').style.width = '0%';
+          currentPlayingAudio = null;
+        };
+      } else {
+        audio.pause();
+        icon.className = 'bx bx-play';
+        currentPlayingAudio = null;
+      }
+    };
+
+    window.seekAudio = function(event, progressBar) {
+      const container = progressBar.closest('.mensagem-audio');
+      const audio = container.querySelector('audio');
+      const rect = progressBar.getBoundingClientRect();
+      const pos = (event.clientX - rect.left) / rect.width;
+      audio.currentTime = pos * audio.duration;
+    };
+
+    function formatAudioTime(seconds) {
+      if (isNaN(seconds)) return '--:--';
+      const mins = Math.floor(seconds / 60);
+      const secs = Math.floor(seconds % 60);
+      return mins + ':' + (secs < 10 ? '0' : '') + secs;
+    }
+
+    // Inicializar duração dos áudios quando carregados
+    function initAudioPlayers() {
+      document.querySelectorAll('.mensagem-audio audio').forEach(audio => {
+        audio.addEventListener('loadedmetadata', function() {
+          const container = audio.closest('.mensagem-audio');
+          const timeSpan = container.querySelector('.audio-time');
+          if (timeSpan) {
+            timeSpan.textContent = '0:00 / ' + formatAudioTime(audio.duration);
+          }
+        });
+      });
+    }
+
+    // Observar mudanças no chat para inicializar novos players
+    const chatObserver = new MutationObserver(initAudioPlayers);
+    chatObserver.observe(document.getElementById('chat-messages'), { childList: true, subtree: true });
 
     // Enviar mensagem ao pressionar Enter (sem Shift)
     document.getElementById('resposta-texto').addEventListener('keydown', function(e) {

@@ -507,7 +507,15 @@
     <script>
             fetch('/assets/components/ChamarSuporte.html')
                 .then(r => r.text())
-                .then(html => document.getElementById('chamar-suporte-placeholder').innerHTML = html);
+                .then(html => {
+                    document.getElementById('chamar-suporte-placeholder').innerHTML = html;
+                    const scripts = document.getElementById('chamar-suporte-placeholder').querySelectorAll('script');
+                    scripts.forEach(oldScript => {
+                        const newScript = document.createElement('script');
+                        newScript.textContent = oldScript.textContent;
+                        document.body.appendChild(newScript);
+                    });
+                });
     </script>
 
     <nav id="sidebar-placeholder"></nav>

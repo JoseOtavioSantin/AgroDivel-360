@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="theme-color" content="#2c2f3f" />
+  <title>Gerenciar Solicitações - Selecionar Tipo</title>
+  <link rel="icon" type="image/png" href="/assets/images/iconeaba.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- LIBS EXTERNAS -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  
+  <!-- CSS -->
+  <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+  <link rel="stylesheet" href="/assets/css/style.css">
+  <link rel="stylesheet" href="/assets/css/Pages/Dashboard/Principal.css">
+
+  <style>
+    /* Container dos cards */
+    .cards-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 24px;
+      padding: 20px 0;
+    }
+
+    /* Card de tipo */
+    .card-tipo {
+      background: #1e2132;
+      border-radius: 16px;
+      padding: 24px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      border-left: 5px solid;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card-tipo::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+    }
+
+    .card-tipo:hover {
+      transform: translateY(-8px);
+      box-shadow: 0 12px 40px rgba(0,0,0,0.4);
+    }
+
+    .card-tipo:hover .card-tipo-icon {
+      transform: scale(1.15);
+    }
+
+    /* Cores específicas */
+    .card-tipo.cancelamento {
+      border-left-color: #dc3545;
+    }
+    .card-tipo.cancelamento::before {
+      background: linear-gradient(90deg, #dc3545, transparent);
+    }
+    .card-tipo.cancelamento .card-tipo-icon {
+      color: #dc3545;
+    }
+
+    .card-tipo.faturamento {
+      border-left-color: #fd7e14;
+    }
+    .card-tipo.faturamento::before {
+      background: linear-gradient(90deg, #fd7e14, transparent);
+    }
+    .card-tipo.faturamento .card-tipo-icon {
+      color: #fd7e14;
+    }
+
+    .card-tipo.erros {
+      border-left-color: #6f42c1;
+    }
+    .card-tipo.erros::before {
+      background: linear-gradient(90deg, #6f42c1, transparent);
+    }
+    .card-tipo.erros .card-tipo-icon {
+      color: #6f42c1;
+    }
+
+    .card-tipo.duvidas {
+      border-left-color: #28a745;
+    }
+    .card-tipo.duvidas::before {
+      background: linear-gradient(90deg, #28a745, transparent);
+    }
+    .card-tipo.duvidas .card-tipo-icon {
+      color: #28a745;
+    }
+
+    .card-tipo.ti {
+      border-left-color: #17a2b8;
+    }
+    .card-tipo.ti::before {
+      background: linear-gradient(90deg, #17a2b8, transparent);
+    }
+    .card-tipo.ti .card-tipo-icon {
+      color: #17a2b8;
+    }
+
+    /* Header do card */
+    .card-tipo-header {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+
+    .card-tipo-icon {
+      font-size: 36px;
+      transition: transform 0.3s ease;
+    }
+
+    .card-tipo-title {
+      font-size: 20px;
+      font-weight: 700;
+      color: #fff;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    /* Status do card */
+    .card-tipo-status {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .status-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 14px;
+      color: #ccc;
+    }
+
+    .status-row i {
+      font-size: 18px;
+    }
+
+    .status-row.pendente i { color: #ffa726; }
+    .status-row.andamento i { color: #42a5f5; }
+    .status-row.resolvido i { color: #66bb6a; }
+    .status-row.cancelado i { color: #78909c; }
+
+    .status-row span {
+      font-weight: 600;
+      color: #fff;
+    }
+
+    /* Badge de pendentes */
+    .badge-pendentes {
+      position: absolute;
+      top: 15px;
+      right: 15px;
+      background: #ff5252;
+      color: white;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 700;
+      box-shadow: 0 2px 8px rgba(255, 82, 82, 0.4);
+      animation: pulse-badge 2s infinite;
+    }
+
+    @keyframes pulse-badge {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+    }
+
+    /* Loading */
+    .loading-cards {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 300px;
+      color: #aaa;
+      font-size: 16px;
+    }
+
+    .loading-cards i {
+      font-size: 40px;
+      margin-bottom: 15px;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    /* Responsivo */
+    @media (max-width: 768px) {
+      .cards-container {
+        grid-template-columns: 1fr;
+      }
+
+      .card-tipo {
+        padding: 20px;
+      }
+
+      .card-tipo-title {
+        font-size: 18px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Sidebar -->
+  <nav id="sidebar-placeholder"></nav>
+
+  <!-- Conteúdo Principal -->
+  <section class="home">
+    <div class="text">
+      <h1>Gerenciar Solicitações de Suporte</h1>
+      <p>Selecione o tipo de solicitação para visualizar e gerenciar</p>
+    </div>
+
+    <div class="cards-container" id="cards-container">
+      <div class="loading-cards">
+        <div style="text-align: center;">
+          <i class='bx bx-loader-alt'></i>
+          <p>Carregando dados...</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Botão flutuante de suporte -->
+    <div id="chamar-suporte-placeholder"></div>
+    <script>
+      fetch('/assets/components/ChamarSuporte.html')
+        .then(r => r.text())
+        .then(html => {
+          document.getElementById('chamar-suporte-placeholder').innerHTML = html;
+          const scripts = document.getElementById('chamar-suporte-placeholder').querySelectorAll('script');
+          scripts.forEach(oldScript => {
+            const newScript = document.createElement('script');
+            newScript.textContent = oldScript.textContent;
+            document.body.appendChild(newScript);
+          });
+        });
+    </script>
+  </section>
+
+  <!-- Scripts -->
+  <script type="module" src="/assets/js/firebase-config.js"></script>
+  <script type="module" src="/assets/js/auth.js"></script>
+  <script src="/assets/js/main.js"></script>
+  <script src="/assets/js/components/Sidebar.js"></script>
+
+  <script type="module">
+    import { garantirAutenticacao } from '/assets/js/auth-guard.js';
+    import { getApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { 
+      getFirestore, 
+      collection, 
+      getDocs, 
+      query, 
+      orderBy 
+    } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+    // Tipos de solicitação com suas configurações
+    const tiposSolicitacao = [
+      {
+        id: 'Cancelamento',
+        titulo: 'Cancelamento',
+        icon: 'bx-x-circle',
+        classe: 'cancelamento',
+        url: '/Pages/Suporte/GerenciarCancelamento.html'
+      },
+      {
+        id: 'Erros de Faturamento',
+        titulo: 'Erros de Faturamento',
+        icon: 'bx-file',
+        classe: 'faturamento',
+        url: '/Pages/Suporte/GerenciarFaturamento.html'
+      },
+      {
+        id: 'Demais Erros',
+        titulo: 'Demais Erros',
+        icon: 'bx-error-alt',
+        classe: 'erros',
+        url: '/Pages/Suporte/GerenciarErros.html'
+      },
+      {
+        id: 'Dúvidas',
+        titulo: 'Dúvidas',
+        icon: 'bx-help-circle',
+        classe: 'duvidas',
+        url: '/Pages/Suporte/GerenciarDuvidas.html'
+      },
+      {
+        id: 'TI',
+        titulo: 'TI',
+        icon: 'bx-cog',
+        classe: 'ti',
+        url: '/Pages/Suporte/GerenciarTI.html'
+      }
+    ];
+
+    async function carregarContadores() {
+      try {
+        await garantirAutenticacao();
+
+        const app = getApp();
+        const db = getFirestore(app);
+
+        const container = document.getElementById('cards-container');
+        const solicitacoesRef = collection(db, 'SolicitaçõesSuporte');
+        const snapshot = await getDocs(solicitacoesRef);
+
+        // Organizar dados por tipo
+        const dadosPorTipo = {};
+        tiposSolicitacao.forEach(tipo => {
+          dadosPorTipo[tipo.id] = {
+            pendente: 0,
+            emAndamento: 0,
+            resolvido: 0,
+            cancelado: 0
+          };
+        });
+
+        snapshot.forEach(doc => {
+          const data = doc.data();
+          const tipo = data.tipoSolicitacao;
+          const status = data.status || 'Pendente';
+
+          if (dadosPorTipo[tipo]) {
+            if (status === 'Pendente') dadosPorTipo[tipo].pendente++;
+            else if (status === 'Em Andamento') dadosPorTipo[tipo].emAndamento++;
+            else if (status === 'Resolvido') dadosPorTipo[tipo].resolvido++;
+            else if (status === 'Cancelado') dadosPorTipo[tipo].cancelado++;
+          }
+        });
+
+        // Renderizar cards
+        container.innerHTML = tiposSolicitacao.map(tipo => {
+          const dados = dadosPorTipo[tipo.id];
+          const temPendentes = dados.pendente > 0;
+
+          return `
+            <div class="card-tipo ${tipo.classe}" onclick="window.location.href='${tipo.url}'">
+              ${temPendentes ? `<div class="badge-pendentes">${dados.pendente} pendente${dados.pendente > 1 ? 's' : ''}</div>` : ''}
+              
+              <div class="card-tipo-header">
+                <i class='bx ${tipo.icon} card-tipo-icon'></i>
+                <span class="card-tipo-title">${tipo.titulo}</span>
+              </div>
+
+              <div class="card-tipo-status">
+                <div class="status-row pendente">
+                  <i class='bx bx-time-five'></i>
+                  Pendente: <span>${dados.pendente}</span>
+                </div>
+                <div class="status-row andamento">
+                  <i class='bx bx-loader'></i>
+                  Em Andamento: <span>${dados.emAndamento}</span>
+                </div>
+                <div class="status-row resolvido">
+                  <i class='bx bx-check-circle'></i>
+                  Resolvido: <span>${dados.resolvido}</span>
+                </div>
+                <div class="status-row cancelado">
+                  <i class='bx bx-x-circle'></i>
+                  Cancelado: <span>${dados.cancelado}</span>
+                </div>
+              </div>
+            </div>
+          `;
+        }).join('');
+
+      } catch (error) {
+        console.error('Erro ao carregar contadores:', error);
+        document.getElementById('cards-container').innerHTML = `
+          <div style="text-align: center; color: #ff5252; padding: 40px;">
+            <i class='bx bx-error' style="font-size: 48px;"></i>
+            <p>Erro ao carregar dados. Tente novamente.</p>
+          </div>
+        `;
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      carregarContadores();
+      // Atualiza automaticamente a cada 5 minutos (300000 ms)
+      setInterval(carregarContadores, 300000);
+    });
+  </script>
+
+</body>
+</html>

@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="theme-color" content="#2c2f3f" />
+  <title>Solicitação - TI</title>
+  <link rel="icon" type="image/png" href="/assets/images/iconeaba.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- LIBS EXTERNAS -->
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  
+  <!-- CSS -->
+  <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+  <link rel="stylesheet" href="/assets/css/style.css">
+  <link rel="stylesheet" href="/assets/css/Pages/Formularios/style-forms.css">
+
+  <style>
+    .page-header {
+      background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+      color: white;
+      padding: 20px;
+      border-radius: 12px;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+    .page-header i {
+      font-size: 32px;
+    }
+    .page-header h1 {
+      margin: 0;
+      font-size: 24px;
+    }
+    .page-header p {
+      margin: 5px 0 0;
+      opacity: 0.9;
+      font-size: 14px;
+    }
+    .em-construcao {
+      text-align: center;
+      padding: 60px 20px;
+    }
+    .em-construcao i {
+      font-size: 80px;
+      color: #17a2b8;
+      margin-bottom: 20px;
+    }
+    .em-construcao h2 {
+      color: #333;
+      margin-bottom: 10px;
+    }
+    .em-construcao p {
+      color: #666;
+      font-size: 16px;
+    }
+  </style>
+</head>
+<body>
+
+  <nav id="sidebar-placeholder"></nav>
+
+  <section class="home">
+    <div class="text">
+      <div class="page-header">
+        <i class='bx bx-desktop'></i>
+        <div>
+          <h1>Chamado de TI</h1>
+          <p>Solicite suporte técnico</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="content-card">
+      <div class="content-card-body">
+        <div class="em-construcao">
+          <i class='bx bx-cog bx-spin'></i>
+          <h2>Em Construção</h2>
+          <p>Este formulário está sendo desenvolvido e estará disponível em breve.</p>
+          <br>
+          <button class="btn-secondary" onclick="window.history.back()">
+            <i class='bx bx-arrow-back'></i>&nbsp; Voltar
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Scripts Globais -->
+  <script type="module" src="/assets/js/firebase-config.js"></script>
+  <script type="module" src="/assets/js/auth.js"></script>
+  <script src="/assets/js/main.js"></script> 
+  <script src="/assets/js/components/Sidebar.js"></script>
+
+</body>
+</html>
