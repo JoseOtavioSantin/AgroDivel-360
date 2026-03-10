@@ -122,7 +122,7 @@ const pagePermissions = {
     '/Pages/Cadastros/CadastroGestores.html': ['admin'],
     '/Pages/Cadastros/CadastroTecnicos.html': ['admin'],
     '/Pages/Suporte/SolicitacaoSuporte.html': ['admin', 'diretoria', 'comercial', 'pecas', 'servicos'],
-    '/Pages/Suporte/MinhasSolicitacoes.html': ['admin', 'diretoria', 'comercial', 'pecas', 'servicos'],
+    // MinhasSolicitacoes é liberado para todos usuários autenticados (cada um vê só suas próprias)
     '/Pages/Suporte/GerenciarSolicitacoes.html': ['admin']
 };
 

@@ -24,7 +24,7 @@ const firebaseConfig = {
   apiKey: "AIzaSyDcjPa9jXsCCu6lNc1fjVg4Bzz1toKWAGY",
   authDomain: "agro-divel.firebaseapp.com",
   projectId: "agro-divel",
-  storageBucket: "agro-divel.firebasestorage.app", 
+    storageBucket: "agro-divel.firebasestorage.app", 
   messagingSenderId: "583977436505",
   appId: "1:583977436505:web:3754ec029aebb3d9d67848"
 };
@@ -249,6 +249,25 @@ console.log('📊 Firebase Stats ativo!');
 console.log('   → verRelatorioLeituras()   - Ver relatório completo');
 console.log('   → verStatsAtuais()         - Ver stats em tempo real');
 console.log('   → salvarStatsAgora()       - Forçar salvamento');
+
+
+// Expor funções Firestore no window para uso em scripts não-modulo
+window.db = db;
+window.collection = collection;
+window.query = query;
+window.orderBy = orderBy;
+window.getDocs = getDocs;
+window.where = where;
+window.limit = limit;
+window.doc = doc;
+window.getDoc = getDoc;
+window.setDoc = setDoc;
+window.deleteDoc = deleteDoc;
+window.updateDoc = updateDoc;
+window.serverTimestamp = serverTimestamp;
+window.increment = increment;
+window.addDoc = addDoc;
+window.onSnapshot = onSnapshot;
 
 export { 
     db, auth, storage, 
