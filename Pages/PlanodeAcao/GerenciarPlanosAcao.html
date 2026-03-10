@@ -224,14 +224,19 @@
             overflow: hidden;
         }
         .plan-card__meta {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
+            display: flex;
+            flex-direction: column;
             gap: 12px;
         }
         .meta-item {
             display: flex;
             flex-direction: column;
-            gap: 2px;
+            gap: 4px;
+        }
+        .meta-item--inline {
+            flex-direction: row;
+            align-items: center;
+            gap: 8px;
         }
         .meta-item__label {
             font-size: 11px;
@@ -239,14 +244,21 @@
             text-transform: uppercase;
             letter-spacing: 0.5px;
             font-weight: 600;
+            flex-shrink: 0;
         }
         .meta-item__value {
             font-size: 14px;
             color: #111827;
             font-weight: 600;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
+        }
+        .meta-item__value--wrap {
+            word-break: break-word;
+            line-height: 1.4;
+        }
+        .meta-item__row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
         }
 
         /* ========== PROGRESSO ========== */
@@ -661,6 +673,7 @@
 
         let planos = [];
         let currentUserId = null;
+        let isAdmin = false;
 
         function fmtDate(d) {
             if (!d) return '-';
@@ -747,9 +760,9 @@
                         <div class="plan-card__meta">
                             <div class="meta-item">
                                 <span class="meta-item__label">Responsável</span>
-                                <span class="meta-item__value">${responsavelSanitizado}</span>
+                                <span class="meta-item__value meta-item__value--wrap">${responsavelSanitizado}</span>
                             </div>
-                            <div class="meta-item">
+                            <div class="meta-item meta-item--inline">
                                 <span class="meta-item__label">Meta/KPI</span>
                                 <span class="meta-item__value">${metaSanitizada}</span>
                             </div>
@@ -774,8 +787,8 @@
                             </div>
                             <div class="plan-card__actions">
                                 <button type="button" class="btn-action" data-id="${p.id}" data-action="view" title="Ver detalhes"><i data-lucide="eye"></i></button>
-                                ${p.criadoPor === currentUserId ? `<button type="button" class="btn-action" data-id="${p.id}" data-action="edit" title="Editar"><i data-lucide="edit-2"></i></button>` : ''}
-                                ${p.criadoPor === currentUserId ? `<button type="button" class="btn-action btn-delete" data-id="${p.id}" data-action="delete" title="Excluir"><i data-lucide="trash-2"></i></button>` : ''}
+                                ${(p.criadoPor === currentUserId || isAdmin) ? `<button type="button" class="btn-action" data-id="${p.id}" data-action="edit" title="Editar"><i data-lucide="edit-2"></i></button>` : ''}
+                                ${(p.criadoPor === currentUserId || isAdmin) ? `<button type="button" class="btn-action btn-delete" data-id="${p.id}" data-action="delete" title="Excluir"><i data-lucide="trash-2"></i></button>` : ''}
                             </div>
                         </div>
                         ${isLate ? `<div class="late-alert">
@@ -855,7 +868,7 @@
 
             if (action === 'edit') {
                 const plano = planos.find(x => x.id === id);
-                if (!plano || plano.criadoPor !== currentUserId) {
+                if (!plano || (plano.criadoPor !== currentUserId && !isAdmin)) {
                     notificacao.aviso('Acesso negado', 'Você só pode editar planos criados por você.');
                     return;
                 }
@@ -869,7 +882,7 @@
 
             if (action === 'delete') {
                 const plano = planos.find(x => x.id === id);
-                if (!plano || plano.criadoPor !== currentUserId) {
+                if (!plano || (plano.criadoPor !== currentUserId && !isAdmin)) {
                     notificacao.aviso('Acesso negado', 'Você só pode excluir planos criados por você.');
                     return;
                 }
@@ -902,6 +915,15 @@
             try {
                 await garantirAutenticacao(auth);
                 currentUserId = auth.currentUser?.uid || null;
+                
+                // Verificar se é admin
+                try {
+                    const userGroups = JSON.parse(localStorage.getItem('userGroups') || '[]');
+                    isAdmin = userGroups.includes('admin');
+                } catch (e) {
+                    isAdmin = false;
+                }
+                
                 await carregarPlanos();
                 
                 // Inicializar ícones apenas uma vez
