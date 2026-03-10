@@ -18,55 +18,36 @@
   <link rel="stylesheet" href="/assets/css/Pages/Controles/Pedidospecas.css">
 
   <style>
-    .text {
-      margin-bottom: 24px;
-    }
-
-    .btn-voltar {
-      background: #dc3545;
-      color: white;
-      border: none;
-      padding: 12px 20px;
-      border-radius: 10px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 14px;
-      font-weight: 600;
-      transition: all 0.3s;
-    }
-
-    .btn-voltar:hover {
-      background: #c82333;
-      transform: translateX(-3px);
-    }
-
     /* Cores das linhas por status */
     tbody tr.status-pendente {
       background: linear-gradient(90deg, #ff5252 0%, #ff6e6e 100%) !important;
+      border-left: 5px solid #c62828 !important;
       color: white;
       font-weight: 500;
     }
 
     tbody tr.status-em-andamento {
       background: linear-gradient(90deg, #ffa726 0%, #ffb74d 100%) !important;
+      border-left: 5px solid #e65100 !important;
       color: white;
       font-weight: 500;
     }
 
     tbody tr.status-resolvido {
       background: linear-gradient(90deg, #4caf50 0%, #66bb6a 100%) !important;
+      border-left: 5px solid #2e7d32 !important;
       color: white;
       font-weight: 500;
     }
 
     tbody tr.status-cancelado {
       background: linear-gradient(90deg, #78909c 0%, #90a4ae 100%) !important;
+      border-left: 5px solid #455a64 !important;
       color: white;
       font-weight: 500;
     }
 
+    /* Destaque para novas solicitações (primeiras 24h) */
     tbody tr.status-pendente.nova-solicitacao {
       background: linear-gradient(90deg, #ff1744 0%, #ff6e40 100%) !important;
       box-shadow: 0 0 15px rgba(255, 23, 68, 0.6) inset;
@@ -74,8 +55,34 @@
     }
 
     @keyframes pulse {
-      0%, 100% { box-shadow: 0 0 15px rgba(255, 23, 68, 0.6) inset; }
-      50% { box-shadow: 0 0 25px rgba(255, 23, 68, 1) inset; }
+      0%, 100% {
+        box-shadow: 0 0 15px rgba(255, 23, 68, 0.6) inset;
+      }
+      50% {
+        box-shadow: 0 0 25px rgba(255, 23, 68, 1) inset;
+      }
+    }
+
+    /* Badge de novo */
+    .badge-novo {
+      display: inline-block;
+      background: #ff1744;
+      color: white;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-size: 10px;
+      font-weight: bold;
+      margin-right: 5px;
+      animation: bounce 2s infinite;
+    }
+
+    @keyframes bounce {
+      0%, 100% {
+        transform: scale(1);
+      }
+      50% {
+        transform: scale(1.1);
+      }
     }
 
     tbody tr:hover {
@@ -85,6 +92,7 @@
       box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
     }
 
+    /* Botões de ação */
     .action-buttons {
       display: flex;
       gap: 8px;
@@ -102,7 +110,6 @@
       justify-content: center;
       transition: all 0.3s;
       font-size: 18px;
-      position: relative;
     }
 
     .btn-view-table {
@@ -115,12 +122,7 @@
       transform: scale(1.1);
     }
 
-    .empty-row {
-      text-align: center;
-      padding: 40px !important;
-      color: #aaa;
-    }
-
+    /* Badge de notificação */
     .notification-badge {
       position: absolute;
       top: -5px;
@@ -139,80 +141,116 @@
       box-shadow: 0 2px 4px rgba(0,0,0,0.3);
     }
 
-    .badge-novo {
-      display: inline-block;
-      background: #ff1744;
-      color: white;
-      padding: 2px 8px;
-      border-radius: 12px;
-      font-size: 10px;
-      font-weight: bold;
-      margin-right: 5px;
-      animation: bounce 2s infinite;
+    .btn-action-table {
+      position: relative;
     }
 
-    @keyframes bounce {
-      0%, 100% { transform: scale(1); }
-      50% { transform: scale(1.1); }
-    }
-
-    .filters {
+    /* Timeline de progresso */
+    .timeline-container {
       display: flex;
-      gap: 12px;
-      flex-wrap: wrap;
-      margin-bottom: 16px;
-    }
-
-    .filters input, .filters select {
-      padding: 10px 14px;
-      border-radius: 8px;
-      border: 1px solid #444;
-      background: #232533;
-      color: #fff;
-      font-size: 14px;
-    }
-
-    .stats-bar {
-      display: flex;
-      gap: 16px;
-      margin-bottom: 20px;
-      flex-wrap: wrap;
+      justify-content: space-between;
       align-items: center;
-    }
-
-    .stat-item {
-      background: #232533;
-      padding: 12px 20px;
+      padding: 20px;
+      background: #1e1e2f;
       border-radius: 10px;
+      margin: 20px 0;
+      position: relative;
+    }
+
+    .timeline-step {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      position: relative;
+      flex: 1;
+    }
+
+    .timeline-icon {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      background: #3a3d4f;
       display: flex;
       align-items: center;
-      gap: 10px;
-    }
-
-    .stat-item i {
-      font-size: 20px;
-    }
-
-    .stat-item.pendente i { color: #ff5252; }
-    .stat-item.andamento i { color: #ffa726; }
-    .stat-item.resolvido i { color: #4caf50; }
-    .stat-item.cancelado i { color: #78909c; }
-
-    .stat-item span {
-      font-size: 14px;
-      color: #ccc;
-    }
-
-    .stat-item strong {
+      justify-content: center;
       color: #fff;
-      font-size: 18px;
+      font-size: 24px;
+      margin-bottom: 10px;
+      z-index: 2;
+      border: 3px solid #2c2f3f;
     }
 
-    .descricao-truncada {
-      max-width: 200px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
+    .timeline-step.active .timeline-icon {
+      background: #0066cc;
+      box-shadow: 0 0 20px rgba(0, 102, 204, 0.5);
+    }
+
+    .timeline-step.completed .timeline-icon {
+      background: #28a745;
+    }
+
+    .timeline-label {
+      color: #aaa;
+      font-size: 12px;
+      text-align: center;
+      font-weight: 600;
+    }
+
+    .timeline-step.active .timeline-label,
+    .timeline-step.completed .timeline-label {
+      color: #fff;
+    }
+
+    .timeline-line {
+      position: absolute;
+      top: 25px;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: #3a3d4f;
+      z-index: 1;
+    }
+
+    .timeline-step:first-child .timeline-line {
+      left: 50%;
+    }
+
+    .timeline-step:last-child .timeline-line {
+      right: 50%;
+    }
+
+    .timeline-step.completed .timeline-line {
+      background: #28a745;
+    }
+
+    /* Badge de status */
+    .status-badge-large {
+      display: inline-block;
+      padding: 10px 20px;
+      border-radius: 25px;
+      font-weight: 700;
+      font-size: 14px;
+      margin: 10px 0;
+    }
+
+    .status-badge-pendente {
+      background: #c62828;
+      color: #fff;
+    }
+
+    .status-badge-andamento {
+      background: #cc8800;
+      color: #fff;
+    }
+
+    .status-badge-resolvido {
+      background: #28a745;
+      color: #fff;
+    }
+
+    .status-badge-cancelado {
+      background: #6c757d;
+      color: #fff;
     }
   </style>
 </head>
@@ -222,42 +260,42 @@
 
   <section class="home">
     <div class="text">
-      <h1>Minhas Solicitações</h1>
-      <p>Acompanhe o status das suas solicitações de suporte</p>
+      <h1>Minhas Solicitações de Suporte</h1>
+      <p>Acompanhe o status das suas solicitações</p>
     </div>
 
-    <!-- Estatísticas -->
-    <div class="stats-bar">
-      <button class="btn-voltar" onclick="window.location.href='/Pages/Menu.html'">
-        <i class='bx bx-arrow-back'></i>
-        Voltar
-      </button>
-      <div class="stat-item pendente">
-        <i class='bx bx-time-five'></i>
-        <span>Pendente:</span>
-        <strong id="stat-pendente">0</strong>
+    <!-- Cards de Estatísticas -->
+    <div class="dashboard-cards">
+      <div class="dashboard-card blue-card">
+        <h2 id="stat-total">0</h2>
+        <p><i data-lucide="package"></i> Total</p>
       </div>
-      <div class="stat-item andamento">
-        <i class='bx bx-loader'></i>
-        <span>Em Andamento:</span>
-        <strong id="stat-andamento">0</strong>
+
+      <div class="dashboard-card red-card">
+        <h2 id="stat-pendente">0</h2>
+        <p><i data-lucide="clock"></i> Pendente</p>
       </div>
-      <div class="stat-item resolvido">
-        <i class='bx bx-check-circle'></i>
-        <span>Resolvido:</span>
-        <strong id="stat-resolvido">0</strong>
+
+      <div class="dashboard-card orange-card">
+        <h2 id="stat-andamento">0</h2>
+        <p><i data-lucide="loader"></i> Em Andamento</p>
       </div>
-      <div class="stat-item cancelado">
-        <i class='bx bx-x-circle'></i>
-        <span>Cancelado:</span>
-        <strong id="stat-cancelado">0</strong>
+
+      <div class="dashboard-card" style="background-color: #ffc107;">
+        <h2 id="stat-resolvido">0</h2>
+        <p><i data-lucide="check-circle"></i> Resolvido</p>
       </div>
     </div>
 
     <!-- Content Card -->
     <div class="content-card">
       <div class="content-card-header">
-        <h3>Lista de Solicitações</h3>
+        <h3>Histórico de Solicitações</h3>
+        <div class="header-actions">
+          <a href="/Pages/Suporte/SolicitacaoSuporte.html" class="btn-acao" title="Nova Solicitação">
+            <i data-lucide="plus"></i>
+          </a>
+        </div>
       </div>
 
       <div class="content-card-body">
@@ -271,15 +309,6 @@
             <option value="Resolvido">Resolvido</option>
             <option value="Cancelado">Cancelado</option>
           </select>
-          <select id="filter-tipo">
-            <option value="">Todos os Tipos</option>
-            <option value="Erro do Sistema">Erro do Sistema</option>
-            <option value="TI">TI</option>
-            <option value="Dúvidas">Dúvidas</option>
-            <option value="Cancelamento">Cancelamento</option>
-            <option value="Faturamento">Faturamento</option>
-            <option value="Demais Erros">Demais Erros</option>
-          </select>
         </div>
 
         <!-- Tabela -->
@@ -287,19 +316,19 @@
           <table>
             <thead>
               <tr>
-                <th>DATA</th>
-                <th>TIPO</th>
-                <th>ROTINA</th>
-                <th>DESCRIÇÃO</th>
-                <th>RESPONDIDO POR</th>
-                <th>STATUS</th>
-                <th>AÇÕES</th>
+                <th>Data</th>
+                <th>Departamento</th>
+                <th>Rotina</th>
+                <th>Descrição</th>
+                <th>Status</th>
+                <th>Respondido por</th>
+                <th>Ações</th>
               </tr>
             </thead>
             <tbody id="solicitacoes-tbody">
               <tr>
-                <td colspan="7" class="empty-row">
-                  <i class='bx bx-loader-alt bx-spin' style="font-size: 32px;"></i><br>
+                <td colspan="6" style="text-align: center; padding: 40px; color: #aaa;">
+                  <i class='bx bx-loader bx-spin' style="font-size: 32px;"></i><br>
                   Carregando suas solicitações...
                 </td>
               </tr>
@@ -309,21 +338,6 @@
       </div>
     </div>
 
-    <!-- Botão flutuante de suporte -->
-    <div id="chamar-suporte-placeholder"></div>
-    <script>
-      fetch('/assets/components/ChamarSuporte.html')
-        .then(r => r.text())
-        .then(html => {
-          document.getElementById('chamar-suporte-placeholder').innerHTML = html;
-          const scripts = document.getElementById('chamar-suporte-placeholder').querySelectorAll('script');
-          scripts.forEach(oldScript => {
-            const newScript = document.createElement('script');
-            newScript.textContent = oldScript.textContent;
-            document.body.appendChild(newScript);
-          });
-        });
-    </script>
   </section>
 
   <!-- Scripts Globais -->
@@ -353,7 +367,8 @@
         // Eventos de filtro
         document.getElementById('filter-status').addEventListener('change', filtrarSolicitacoes);
         document.getElementById('filter-busca').addEventListener('input', filtrarSolicitacoes);
-        document.getElementById('filter-tipo').addEventListener('change', filtrarSolicitacoes);
+
+        lucide.createIcons();
 
       } catch (error) {
         console.error('Erro ao inicializar:', error);
@@ -369,7 +384,7 @@
           console.error('UserId não encontrado. userData:', userData);
           document.getElementById('solicitacoes-tbody').innerHTML = `
             <tr>
-              <td colspan="7" class="empty-row">
+              <td colspan="6" style="text-align: center; padding: 40px; color: #aaa;">
                 <i class='bx bx-error' style="font-size: 32px;"></i><br>
                 Erro: Usuário não identificado
               </td>
@@ -409,7 +424,7 @@
         console.error('Erro ao carregar solicitações:', error);
         document.getElementById('solicitacoes-tbody').innerHTML = `
           <tr>
-            <td colspan="7" class="empty-row">
+            <td colspan="6" style="text-align: center; padding: 40px; color: #aaa;">
               <i class='bx bx-error' style="font-size: 32px;"></i><br>
               Erro ao carregar suas solicitações<br>
               <small>${error.message}</small>
@@ -420,32 +435,29 @@
     }
 
     function atualizarEstatisticas() {
+      const total = minhasSolicitacoes.length;
       const pendente = minhasSolicitacoes.filter(s => s.status === 'Pendente').length;
       const andamento = minhasSolicitacoes.filter(s => s.status === 'Em Andamento').length;
       const resolvido = minhasSolicitacoes.filter(s => s.status === 'Resolvido').length;
-      const cancelado = minhasSolicitacoes.filter(s => s.status === 'Cancelado').length;
 
+      document.getElementById('stat-total').textContent = total;
       document.getElementById('stat-pendente').textContent = pendente;
       document.getElementById('stat-andamento').textContent = andamento;
       document.getElementById('stat-resolvido').textContent = resolvido;
-      document.getElementById('stat-cancelado').textContent = cancelado;
     }
 
     function filtrarSolicitacoes() {
       const status = document.getElementById('filter-status').value;
       const busca = document.getElementById('filter-busca').value.toLowerCase();
-      const tipo = document.getElementById('filter-tipo').value;
 
       let filtradas = minhasSolicitacoes.filter(s => {
         const matchStatus = !status || s.status === status;
-        const matchTipo = !tipo || s.departamento === tipo || s.tipoSolicitacao === tipo;
         const matchBusca = !busca || 
           s.rotina?.toLowerCase().includes(busca) ||
           s.descricao?.toLowerCase().includes(busca) ||
-          s.departamento?.toLowerCase().includes(busca) ||
-          s.tipo?.toLowerCase().includes(busca);
+          s.departamento?.toLowerCase().includes(busca);
 
-        return matchStatus && matchBusca && matchTipo;
+        return matchStatus && matchBusca;
       });
 
       renderizarSolicitacoes(filtradas);
@@ -457,7 +469,7 @@
       if (solicitacoes.length === 0) {
         tbody.innerHTML = `
           <tr>
-            <td colspan="7" class="empty-row">
+            <td colspan="7" style="text-align: center; padding: 40px; color: #aaa;">
               <i class='bx bx-search-alt' style="font-size: 32px;"></i><br>
               Nenhuma solicitação encontrada
             </td>
@@ -482,7 +494,7 @@
         const horas = diferenca / (1000 * 60 * 60);
         const ehNova = horas < 24 && s.status === 'Pendente';
         const novaClass = ehNova ? 'nova-solicitacao' : '';
-        const badgeNovo = ehNova ? '<span class="badge-novo">NOVO</span>' : '';
+        const badgeNovo = ehNova ? '<span class="badge-novo">🆕 NOVO</span>' : '';
 
         // Verificar se a última resposta foi do suporte (não do usuário)
         const historico = s.historico || [];
@@ -497,11 +509,11 @@
         return `
           <tr class="${statusClass} ${novaClass}">
             <td>${badgeNovo}${data}</td>
-            <td>${s.departamento || s.tipoSolicitacao || 'N/A'}</td>
+            <td>${s.departamento || 'N/A'}</td>
             <td>${s.rotina || 'N/A'}</td>
-            <td class="descricao-truncada" title="${s.descricao || ''}">${descricaoResumida}</td>
-            <td>${s.respondidoPor || '-'}</td>
+            <td>${descricaoResumida}</td>
             <td>${s.status || 'Pendente'}</td>
+            <td>${s.respondidoPor || '-'}</td>
             <td>
               <div class="action-buttons">
                 <button class="btn-action-table btn-view-table" onclick="visualizarDetalhes('${s.id}')" title="Visualizar Detalhes">
@@ -513,10 +525,22 @@
           </tr>
         `;
       }).join('');
+
+      lucide.createIcons();
     }
 
     window.visualizarDetalhes = function(id) {
       window.location.href = `/Pages/Suporte/DetalhessolicitacaoSuporte.html?id=${id}`;
+    };
+
+    window.visualizarImagem = function(url) {
+      Swal.fire({
+        imageUrl: url,
+        imageAlt: 'Imagem da solicitação',
+        showCloseButton: true,
+        showConfirmButton: false,
+        width: '80%'
+      });
     };
 
   </script>

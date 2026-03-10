@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Cadastrar Nova Ferramenta</title>
+    <link rel="icon" type="image/png" href="/assets/images/iconeaba.png">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#F0F2F5" />
+
+    <!-- LIBS EXTERNAS -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-storage-compat.js"></script>
+    
+    <!-- FONTES -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --cor-fundo: #F0F2F5;
+            --cor-container: #FFFFFF;
+            --cor-input: #F9F9F9;
+            --cor-texto: #333333;
+            --cor-texto-label: #555555;
+            --cor-borda: #DCDCDC;
+            --cor-primaria-inicio: #007BFF;
+            --cor-primaria-fim: #005C97;
+            --cor-borda-foco: #005C97;
+            --shadow-color: rgba(0, 0, 0, 0.08 );
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        html { font-size: 16px; }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--cor-fundo);
+            color: var(--cor-texto);
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            padding: 1.5rem 1rem;
+        }
+
+        .form-container {
+            background-color: var(--cor-container);
+            padding: 2rem;
+            border-radius: 16px;
+            width: 100%;
+            max-width: 550px;
+            box-shadow: 0 8px 20px var(--shadow-color);
+            border: 1px solid #E5E5E5;
+        }
+
+        .form-header { text-align: center; margin-bottom: 2rem; }
+        #form-title { font-size: 1.5rem; font-weight: 600; color: var(--cor-texto); margin-bottom: 0.25rem; }
+        #form-subtitle { font-size: 0.9rem; color: #777; }
+
+        .form-group { margin-bottom: 1.25rem; }
+        .form-group label { display: block; margin-bottom: 0.5rem; font-size: 0.875rem; font-weight: 600; color: var(--cor-texto-label); }
+        
+        .input-wrapper { position: relative; display: flex; align-items: center; }
+        .input-wrapper .lucide { position: absolute; left: 1rem; color: #999; width: 1.25rem; height: 1.25rem; }
+
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 0.875rem 1rem 0.875rem 3.2rem;
+            border-radius: 8px;
+            border: 1px solid var(--cor-borda);
+            background-color: var(--cor-input);
+            color: var(--cor-texto);
+            font-size: 1rem;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .form-group input:focus, .form-group select:focus {
+            outline: none;
+            border-color: var(--cor-borda-foco);
+            box-shadow: 0 0 0 3px rgba(0, 92, 151, 0.2);
+        }
+
+        .uppercase-input { text-transform: uppercase; }
+
+        /* Área de Upload */
+        #ferramenta-fotos { display: none; }
+        .file-upload-label {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+            width: 100%;
+            padding: 1.5rem;
+            border-radius: 8px;
+            border: 2px dashed var(--cor-borda);
+            background-color: #FAFAFA;
+            color: #888;
+            cursor: pointer;
+            transition: background-color 0.2s, border-color 0.2s, color 0.2s;
+        }
+        .file-upload-label.dragover {
+            background-color: #f0f8ff;
+            border-color: var(--cor-borda-foco);
+            color: var(--cor-borda-foco);
+        }
+
+        /* Preview de Imagens */
+        #preview-container { display: flex; flex-wrap: wrap; gap: 1rem; margin-top: 1rem; }
+        .preview-item { position: relative; }
+        .preview-image { width: 80px; height: 80px; object-fit: cover; border-radius: 8px; border: 1px solid var(--cor-borda); }
+        .remove-image-btn {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background-color: #E53E3E;
+            color: white;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        .preview-placeholder { color: #AAA; font-size: 0.9rem; width: 100%; text-align: center; padding: 1rem 0; }
+
+        /* Botões */
+        .form-actions { margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid #EEE; display: flex; flex-direction: column; gap: 0.75rem; }
+        .btn {
+            width: 100%;
+            border: none;
+            padding: 1rem;
+            border-radius: 8px;
+            color: white;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            transition: filter 0.2s ease;
+        }
+        .btn .lucide { width: 1.25rem; height: 1.25rem; }
+        .btn:disabled { cursor: not-allowed; filter: grayscale(0.5) brightness(0.8); }
+        .btn-primary { background: linear-gradient(145deg, var(--cor-primaria-inicio), var(--cor-primaria-fim)); }
+        .btn-primary:hover:not(:disabled) { filter: brightness(1.1); }
+        .btn-secondary { background-color: #F0F0F0; border: 1px solid #DCDCDC; color: #555; }
+        .btn-secondary:hover:not(:disabled) { background-color: #E5E5E5; }
+
+        /* Animação de Spin */
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        .spin { animation: spin 1s linear infinite; }
+    </style>
+</head>
+<body>
+
+    <div class="form-container">
+        <div class="form-header">
+            <h1 id="form-title">Cadastrar Ferramenta</h1>
+            <p id="form-subtitle">Preencha os dados abaixo.</p>
+        </div>
+
+        <form id="form-ferramenta" novalidate>
+            <div class="form-group">
+                <label for="ferramenta-filial">Filial</label>
+                <div class="input-wrapper">
+                    <i data-lucide="map-pin"></i>
+                    <select id="ferramenta-filial" required><option value="">Selecione a Filial</option><option value="Campos Novos">Campos Novos</option><option value="Rio do Sul">Rio do Sul</option><option value="Lages">Lages</option></select>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="ferramenta-grupo">Grupo</label>
+                <div class="input-wrapper">
+                    <i data-lucide="tag"></i>
+                    <select id="ferramenta-grupo" required><option value="">Aguardando...</option></select>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="ferramenta-codigo">Código</label>
+                <div class="input-wrapper">
+                    <i data-lucide="hash"></i>
+                    <input type="text" id="ferramenta-codigo" required class="uppercase-input">
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="ferramenta-descricao">Descrição</label>
+                <div class="input-wrapper">
+                    <i data-lucide="file-text"></i>
+                    <input type="text" id="ferramenta-descricao" required class="uppercase-input">
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="ferramenta-localizacao">Localização (Ex: 14 A 9)</label>
+                <div class="input-wrapper">
+                    <i data-lucide="archive"></i>
+                    <input type="text" id="ferramenta-localizacao" required placeholder="Prateleira e Nível">
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="ferramenta-quantidade">Quantidade</label>
+                <div class="input-wrapper">
+                    <i data-lucide="package"></i>
+                    <input type="number" id="ferramenta-quantidade" required min="1" value="1">
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label>Fotos</label>
+                <label for="ferramenta-fotos" class="file-upload-label">
+                    <i data-lucide="camera"></i>
+                    <span>Adicionar Fotos</span>
+                </label>
+                <input type="file" id="ferramenta-fotos" accept="image/*" capture="environment" multiple>
+                <div id="preview-container"><span class="preview-placeholder">Nenhuma imagem</span></div>
+            </div>
+            
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary" id="btn-salvar"><i data-lucide="save"></i> Salvar</button>
+                <button type="button" class="btn btn-secondary" id="btn-cancelar">Limpar Campos</button>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        // --- CONFIGURAÇÃO DO FIREBASE ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyDcjPa9jXsCCu6lNc1fjVg4Bzz1toKWAGY",
+            authDomain: "agro-divel.firebaseapp.com",
+            projectId: "agro-divel",
+            storageBucket: "agro-divel.firebasestorage.app",
+            messagingSenderId: "583977436505",
+            appId: "1:583977436505:web:3754ec029aebb3d9d67848"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        const storage = firebase.storage();
+        const ferramentasCollection = db.collection('ferramentas');
+        const gruposCollection = db.collection('grupos');
+
+        // --- VARIÁVEIS GLOBAIS ---
+        let novosArquivos = [];
+
+        const form = document.getElementById('form-ferramenta');
+        const fotosInput = document.getElementById('ferramenta-fotos');
+        const previewContainer = document.getElementById('preview-container');
+        const btnSalvar = document.getElementById('btn-salvar');
+        const btnCancelar = document.getElementById('btn-cancelar');
+        const localizacaoInput = document.getElementById('ferramenta-localizacao');
+        const fileUploadLabel = document.querySelector('.file-upload-label');
+
+        // --- FUNÇÕES DE UI ---
+        const createLucideIcons = () => lucide.createIcons();
+        
+        const showToast = (message, icon = 'success') => {
+            Swal.mixin({
+                toast: true,
+                position: 'top-end',
+                showConfirmButton: false,
+                timer: 3000,
+                timerProgressBar: true,
+            }).fire({ icon, title: message });
+        };
+
+        const limparFormulario = () => {
+            form.reset();
+            novosArquivos = [];
+            atualizarPreview();
+            document.getElementById('ferramenta-filial').focus();
+        };
+
+        // --- LÓGICA DE UPLOAD E PREVIEW ---
+        const atualizarPreview = () => {
+            previewContainer.innerHTML = '';
+            if (novosArquivos.length === 0) {
+                previewContainer.innerHTML = '<span class="preview-placeholder">Nenhuma imagem</span>';
+                return;
+            }
+
+            const fragment = document.createDocumentFragment();
+            novosArquivos.forEach(file => {
+                const src = URL.createObjectURL(file);
+                const previewItem = document.createElement('div');
+                previewItem.className = 'preview-item';
+                
+                const img = document.createElement('img');
+                img.src = src;
+                img.className = 'preview-image';
+                img.onload = () => URL.revokeObjectURL(src);
+
+                const removeBtn = document.createElement('button');
+                removeBtn.type = 'button';
+                removeBtn.className = 'remove-image-btn';
+                removeBtn.innerHTML = '&times;';
+                removeBtn.onclick = () => handleRemoverImagem(file);
+
+                previewItem.appendChild(img);
+                previewItem.appendChild(removeBtn);
+                fragment.appendChild(previewItem);
+            });
+            previewContainer.appendChild(fragment);
+        };
+
+        const handleRemoverImagem = (fileToRemove) => {
+            novosArquivos = novosArquivos.filter(file => file !== fileToRemove);
+            atualizarPreview();
+        };
+
+        const handleFiles = (files) => {
+            const imageFiles = Array.from(files).filter(file => file.type.startsWith('image/'));
+            if (imageFiles.length > 0) {
+                novosArquivos.push(...imageFiles);
+                atualizarPreview();
+            }
+        };
+
+        // --- EVENT LISTENERS ---
+        localizacaoInput.addEventListener('input', (e) => {
+            let valor = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+            let match = valor.match(/^(\d+)([A-Z]?)(\d*)/);
+            if (match) {
+                let prateleira = match[1] || '', letra = match[2] || '', nivel = match[3] || '';
+                e.target.value = letra ? `${prateleira} ${letra} ${nivel}`.trim() : prateleira;
+            } else {
+                e.target.value = valor;
+            }
+        });
+
+        fotosInput.addEventListener('change', (e) => handleFiles(e.target.files));
+        btnCancelar.addEventListener('click', limparFormulario);
+
+        // Drag & Drop Events
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            fileUploadLabel.addEventListener(eventName, (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+            }, false);
+        });
+        ['dragenter', 'dragover'].forEach(eventName => {
+            fileUploadLabel.addEventListener(eventName, () => fileUploadLabel.classList.add('dragover'), false);
+        });
+        ['dragleave', 'drop'].forEach(eventName => {
+            fileUploadLabel.addEventListener(eventName, () => fileUploadLabel.classList.remove('dragover'), false);
+        });
+        fileUploadLabel.addEventListener('drop', (e) => handleFiles(e.dataTransfer.files));
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            if (!form.checkValidity()) {
+                showToast('Por favor, preencha todos os campos obrigatórios.', 'warning');
+                form.reportValidity();
+                return;
+            }
+
+            const originalButtonHtml = btnSalvar.innerHTML;
+            btnSalvar.disabled = true;
+            btnSalvar.innerHTML = '<i data-lucide="loader-2" class="spin"></i> Salvando...';
+            createLucideIcons();
+
+            try {
+                const uploadPromises = novosArquivos.map(file => {
+                    const filePath = `ferramentas/${Date.now()}_${file.name}`;
+                    const storageRef = storage.ref(filePath);
+                    return storageRef.put(file).then(uploadTask => uploadTask.ref.getDownloadURL());
+                });
+                const fotosURLs = await Promise.all(uploadPromises);
+
+                const dados = {
+                    filial: document.getElementById('ferramenta-filial').value,
+                    grupoId: document.getElementById('ferramenta-grupo').value,
+                    codigo: document.getElementById('ferramenta-codigo').value.toUpperCase(),
+                    descricao: document.getElementById('ferramenta-descricao').value.toUpperCase(),
+                    localizacao: localizacaoInput.value.toUpperCase(),
+                    quantidade: parseInt(document.getElementById('ferramenta-quantidade').value, 10),
+                    reparo: false,
+                    fotosURLs: fotosURLs,
+                    dataCriacao: new Date()
+                };
+
+                await ferramentasCollection.add(dados);
+                showToast('Nova ferramenta cadastrada!', 'success');
+                limparFormulario();
+
+            } catch (error) {
+                console.error("Erro ao salvar: ", error);
+                Swal.fire('Erro!', `Ocorreu uma falha ao salvar: ${error.message}`, 'error');
+            } finally {
+                btnSalvar.disabled = false;
+                btnSalvar.innerHTML = '<i data-lucide="save"></i> Salvar';
+                createLucideIcons();
+            }
+        });
+
+        // --- INICIALIZAÇÃO ---
+        const init = async () => {
+            try {
+                await carregarGrupos();
+                createLucideIcons();
+            } catch(error) {
+                console.error("Falha na inicialização:", error);
+                document.body.innerHTML = `<div style="color:black; text-align:center; padding: 2rem;"><h1>Erro Crítico</h1><p>Não foi possível carregar a página.</p></div>`;
+            }
+        };
+
+        const carregarGrupos = async () => {
+            const selectGrupo = document.getElementById('ferramenta-grupo');
+            selectGrupo.innerHTML = '<option value="">Buscando...</option>';
+            try {
+                const snapshot = await gruposCollection.orderBy('nome').get();
+                selectGrupo.innerHTML = '<option value="">Selecione um Grupo</option>';
+                snapshot.forEach(doc => {
+                    const grupo = doc.data();
+                    const option = document.createElement('option');
+                    option.value = doc.id;
+                    option.textContent = grupo.nome;
+                    selectGrupo.appendChild(option);
+                });
+            } catch (error) {
+                console.error("ERRO ao buscar grupos:", error);
+                selectGrupo.innerHTML = '<option value="">Falha ao carregar</option>';
+            }
+        };
+
+        document.addEventListener("DOMContentLoaded", init);
+    </script>
+
+</body>
+</html>

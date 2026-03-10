@@ -1,0 +1,1571 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Controle de Ferramentas</title>
+    <link rel="icon" type="image/png" href="/assets/images/iconeaba.png">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#2c2f3f" />
+
+    <!-- LIBS EXTERNAS -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <!-- CSS -->
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <link rel="stylesheet" href="/assets/css/style.css">
+    <link rel="stylesheet" href="/assets/css/Pages/Dashboard/Principal.css">
+    <link rel="stylesheet" href="/assets/css/Pages/Controles/ControleFerramentas.css">
+
+    <!-- ========== CSS PARA OS MODAIS, GALERIA E SPINNER DE CARREGAMENTO ========== -->
+    <style>
+        .error-container { padding: 20px; background-color: #ffdddd; border: 1px solid #ff0000; color: #D8000C; border-radius: 8px; margin: 20px; }
+
+        /* Estilo do Overlay (fundo escuro) */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        /* Conteúdo do Modal de Imagem */
+        .image-modal-content {
+            background-color: #2c2f3f;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.4);
+            width: 90%;
+            max-width: 800px;
+            max-height: 90vh;
+            display: flex;
+            flex-direction: column;
+            transform: scale(0.9);
+            transition: transform 0.3s ease;
+        }
+
+        .modal-overlay.active .image-modal-content {
+            transform: scale(1);
+        }
+
+        .image-modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #444;
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+            color: #fff;
+        }
+
+        .image-modal-header h3 { margin: 0; font-size: 1.2rem; }
+        .image-modal-header .close-button { cursor: pointer; font-size: 1.8rem; color: #aaa; transition: color 0.2s; }
+        .image-modal-header .close-button:hover { color: #fff; }
+
+        /* Container da Imagem Principal */
+        .main-image-container {
+            flex-grow: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            margin-bottom: 15px;
+            min-height: 200px;
+        }
+
+        .main-image-container img {
+            max-width: 100%;
+            max-height: 60vh;
+            object-fit: contain;
+            border-radius: 8px;
+        }
+
+        /* Galeria de Miniaturas (Thumbnails) */
+        .thumbnail-gallery {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+            padding-top: 10px;
+            border-top: 1px solid #444;
+        }
+
+        .thumbnail-gallery img {
+            width: 80px;
+            height: 80px;
+            object-fit: cover;
+            border-radius: 6px;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: border-color 0.2s, transform 0.2s;
+        }
+
+        .thumbnail-gallery img:hover {
+            transform: scale(1.05);
+        }
+
+        .thumbnail-gallery img.active-thumb {
+            border-color: var(--cor-primaria);
+        }
+        
+        .no-image-message { color: #888; text-align: center; padding: 40px 0; }
+
+        /* Spinner de carregamento */
+        .image-loading-placeholder {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+            height: 100%;
+            color: #fff;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        .spinner {
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top-color: var(--cor-primaria, #fff);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+
+        /* Estilos simplificados para a tabela de alocações */
+        .os-badge {
+            background: #e3f2fd;
+            color: #1976d2;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+            border: 1px solid #bbdefb;
+        }
+
+        .btn-pdf-header {
+            background-color: #d32f2f !important;
+        }
+
+        .btn-pdf-header:hover {
+            background-color: #b71c1c !important;
+        }
+
+        /* Estilos para o modal de devolução */
+        .modal-ferramentas .modal-content {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+        }
+
+        .modal-ferramentas .modal-body {
+            padding: 20px;
+        }
+
+        .radio-option {
+            transition: all 0.2s ease;
+        }
+
+        .radio-option:hover {
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        /* Indicador visual de ferramenta inativa */
+        .ferramenta-inativa {
+            background-color: #ffebee !important;
+            opacity: 0.7;
+        }
+
+        .status-inativa {
+            display: inline-block;
+            background: #d32f2f;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-left: 8px;
+        }
+
+        /* Botão de status na tabela */
+        .btn-status {
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .btn-status:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+
+        .btn-status:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+        }
+
+        /* Estilos para grupos de OS */
+        .grupo-os:hover {
+            background-color: #34495e !important;
+        }
+
+        .grupo-os td {
+            font-weight: 500;
+        }
+
+        .detalhes-os table {
+            font-size: 0.9rem;
+            background-color: #ffffff;
+        }
+
+        .detalhes-os tbody tr {
+            background-color: #ffffff !important;
+        }
+
+        .detalhes-os tbody tr:hover {
+            background-color: #e3f2fd !important;
+        }
+
+        .detalhes-os td {
+            color: #fff !important;
+        }
+    </style>
+</head>
+<body>
+
+    <nav id="sidebar-placeholder"></nav>
+
+    <section class="home">
+        <div class="text">
+            <h1>Controle de Ferramentas</h1>
+            <p id="dynamic-title">Gestão de alocação, estoque e histórico</p>
+        </div>
+        
+        <div class="tab-nav">
+            <button id="nav-alocacao" class="tab-button active"><i data-lucide="users"></i> Alocação</button>
+            <button id="nav-estoque" class="tab-button"><i data-lucide="archive"></i> Estoque</button>
+            <button id="nav-grupos" class="tab-button"><i data-lucide="folder-kanban"></i> Grupos</button>
+            <button id="nav-historico" class="tab-button"><i data-lucide="history"></i> Histórico</button>
+        </div>
+        
+        <!-- ABA ALOCAÇÃO -->
+        <div id="view-alocacao" class="tab-content active">
+            <div class="content-card">
+                <div class="content-card-header">
+                    <h3>Ferramentas Alocadas</h3>
+                    <div class="header-actions">
+                        <a href="/Pages/Formularios/form-alocacao.html" class="btn-acao" title="Alocar Nova Ferramenta">
+                            <i data-lucide="plus"></i>
+                        </a>
+                        <a href="/Pages/Formularios/GerarRelatorio.html" class="btn-acao btn-pdf-header" title="Gerar PDF por OS">
+                            <i data-lucide="file-text"></i>
+                        </a>
+                    </div>
+                </div>
+                <div class="content-card-body">
+                    <div class="filters">
+                        <select id="filtro-aloc-filial">
+                            <option value="">Todas as Filiais</option>
+                            <option value="Campos Novos">Campos Novos</option>
+                            <option value="Rio do Sul">Rio do Sul</option>
+                            <option value="Lages">Lages</option>
+                        </select>
+                        <input id="filtro-aloc-ferramenta" type="text" placeholder="Buscar por ferramenta..." />
+                        <input id="filtro-aloc-funcionario" type="text" placeholder="Buscar por funcionário..." />
+                        <input id="filtro-aloc-os" type="text" placeholder="Buscar por OS..." />
+                    </div>
+                    <div class="table-wrapper">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>OS</th>
+                                    <th>Ferramenta</th>
+                                    <th>Funcionário</th>
+                                    <th>Data Alocação</th>
+                                    <th style="text-align: center;">Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tabela-alocacao"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- ABA ESTOQUE -->
+        <div id="view-estoque" class="tab-content">
+            <div class="content-card">
+                <div class="content-card-header">
+                    <h3>Estoque de Ferramentas</h3>
+                    <div class="header-actions">
+                        <a href="/Pages/Formularios/form_cadastroferramenta.html" class="btn-acao" title="Adicionar Nova Ferramenta">
+                            <i data-lucide="plus"></i>
+                        </a>
+                    </div>
+                </div>
+                <div class="content-card-body">
+                    <div class="filters">
+                        <select id="filtro-filial">
+                            <option value="">Todas as Filiais</option>
+                            <option value="Campos Novos">Campos Novos</option>
+                            <option value="Rio do Sul">Rio do Sul</option>
+                            <option value="Lages">Lages</option>
+                        </select>
+                        <input id="filtro-codigo" type="text" placeholder="Buscar por código..." />
+                        <input id="filtro-descricao" type="text" placeholder="Buscar por descrição..." />
+                        <select id="filtro-grupo"></select>
+                        <select id="filtro-reparo">
+                            <option value="">Todos os Status</option>
+                            <option value="ativa">Ativa</option>
+                            <option value="inativa">Inativa/Avaria</option>
+                            <option value="reparo">Em Reparo</option>
+                        </select>
+                    </div>
+                    <div class="table-wrapper">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Filial</th>
+                                    <th>Código</th>
+                                    <th>Descrição</th>
+                                    <th>Grupo</th>
+                                    <th>Localização</th>
+                                    <th style="text-align: center;">Qtd.</th>
+                                    <th style="text-align: center;">Status</th>
+                                    <th style="text-align: center;">Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tabela-ferramentas"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ABA GRUPOS -->
+        <div id="view-grupos" class="tab-content">
+            <div class="content-card" style="max-width: 700px; margin: 0 auto;">
+                <div class="content-card-header">
+                    <h3>Gerenciar Grupos de Ferramentas</h3>
+                </div>
+                <div class="content-card-body">
+                    <form id="form-grupo" style="display: flex; gap: 10px; margin-bottom: 20px;">
+                        <input type="text" id="grupo-nome" placeholder="Nome do novo grupo" required style="flex: 1; padding: 10px; border-radius: 6px; border: 1px solid #555; background-color: var(--cor-fundo); color: var(--cor-texto);">
+                        <button type="submit" class="btn btn-primario">Adicionar</button>
+                    </form>
+                    <ul id="lista-grupos" style="list-style: none; padding: 0;"></ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- ABA HISTÓRICO -->
+        <div id="view-historico" class="tab-content">
+            <div class="content-card">
+                <div class="content-card-header">
+                    <h3>Histórico de Movimentações</h3>
+                </div>
+                <div class="content-card-body">
+                    <div class="filters">
+                        <select id="filtro-hist-filial">
+                            <option value="">Todas as Filiais</option>
+                            <option value="Campos Novos">Campos Novos</option>
+                            <option value="Rio do Sul">Rio do Sul</option>
+                            <option value="Lages">Lages</option>
+                        </select>
+                        <input id="filtro-hist-ferramenta" type="text" placeholder="Buscar por ferramenta..." />
+                        <input id="filtro-hist-funcionario" type="text" placeholder="Buscar por funcionário..." />
+                        <select id="filtro-hist-tipo">
+                            <option value="">Todos os Tipos</option>
+                            <option value="criacao">Criação</option>
+                            <option value="edicao">Edição</option>
+                            <option value="alocacao">Alocação</option>
+                            <option value="devolucao">Devolução</option>
+                        </select>
+                    </div>
+                    <div id="lista-historico"></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Modal de Histórico -->
+    <div id="modal-historico-ferramenta" class="modal-ferramentas">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modal-historico-titulo">Histórico da Ferramenta</h3>
+                <span class="close-button">&times;</span>
+            </div>
+            <div id="historico-ferramenta-content"></div>
+        </div>
+    </div>
+
+    <!-- MODAL DE IMAGEM COM GALERIA -->
+    <div id="modal-imagem-overlay" class="modal-overlay">
+        <div class="image-modal-content">
+            <div class="image-modal-header">
+                <h3 id="modal-imagem-titulo">Imagem da Ferramenta</h3>
+                <span class="close-button">&times;</span>
+            </div>
+            <div class="main-image-container">
+                <!-- O conteúdo aqui (spinner ou imagem) será gerenciado pelo JS -->
+            </div>
+            <div id="thumbnail-gallery-container" class="thumbnail-gallery">
+                <!-- As miniaturas serão inseridas aqui pelo JavaScript -->
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL DE DEVOLUÇÃO INTELIGENTE -->
+    <div id="modal-devolucao" class="modal-ferramentas">
+        <div class="modal-content" style="max-width: 600px;">
+            <div class="modal-header">
+                <h3>Devolução de Ferramenta</h3>
+                <span class="close-button" onclick="fecharModalDevolucao()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div id="info-ferramenta-devolucao" style="background: #f5f5f5; padding: 15px; border-radius: 8px; margin-bottom: 20px; color: #333;">
+                    <!-- Informações da ferramenta serão inseridas aqui -->
+                </div>
+
+                <div id="selecao-devolucao" style="margin-bottom: 20px; color: #333;">
+                    <!-- Opções de seleção serão inseridas dinamicamente -->
+                </div>
+
+                <div style="margin-bottom: 15px;">
+                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                        <input type="checkbox" id="checkbox-avaria" style="width: 18px; height: 18px; cursor: pointer;">
+                        <span style="font-weight: 600; color: #d32f2f;">A ferramenta possui avaria?</span>
+                    </label>
+                </div>
+
+                <div id="container-avaria" style="display: none; margin-bottom: 15px;">
+                    <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #333;">Descrição da Avaria:</label>
+                    <textarea id="textarea-avaria" 
+                              placeholder="Descreva a avaria encontrada na ferramenta..." 
+                              style="width: 100%; min-height: 100px; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-family: inherit; resize: vertical; color: #333;"></textarea>
+                    
+                    <label style="display: flex; align-items: center; gap: 8px; margin-top: 12px; cursor: pointer;">
+                        <input type="checkbox" id="checkbox-inativa" style="width: 18px; height: 18px; cursor: pointer;">
+                        <span style="font-weight: 600; color: #f57c00;">Marcar ferramenta como inativa (não disponível para alocação)</span>
+                    </label>
+                </div>
+
+                <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px;">
+                    <button class="btn btn-secundario" onclick="fecharModalDevolucao()">Cancelar</button>
+                    <button class="btn btn-sucesso" onclick="confirmarDevolucao()">
+                        <i data-lucide="check"></i> Confirmar Devolução
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL DE STATUS DA FERRAMENTA -->
+    <div id="modal-status-ferramenta" class="modal-ferramentas">
+        <div class="modal-content" style="max-width: 600px;">
+            <div class="modal-header">
+                <h3>Status da Ferramenta</h3>
+                <span class="close-button" onclick="fecharModalStatus()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div id="info-status-ferramenta" style="background: #f5f5f5; padding: 15px; border-radius: 8px; margin-bottom: 20px; color: #333;">
+                    <!-- Informações da ferramenta -->
+                </div>
+
+                <div id="status-atual-container" style="margin-bottom: 20px;">
+                    <!-- Status atual será inserido aqui -->
+                </div>
+
+                <div id="acoes-status-container">
+                    <!-- Ações disponíveis serão inseridas aqui -->
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="toast-container" id="toast-container"></div>
+
+    <!-- SCRIPT COMPLETO -->
+    <script type="module">
+        import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js";
+        import { getFirestore, collection, onSnapshot, query, orderBy, addDoc, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
+        import { getAuth } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-auth.js";
+        import { garantirAutenticacao } from '/assets/js/auth-guard.js';
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDcjPa9jXsCCu6lNc1fjVg4Bzz1toKWAGY",
+            authDomain: "agro-divel.firebaseapp.com",
+            projectId: "agro-divel",
+            storageBucket: "agro-divel.appspot.com",
+            messagingSenderId: "583977436505",
+            appId: "1:583977436505:web:3754ec029aebb3d9d67848"
+        };
+
+        let app, db, auth;
+        let todosGrupos = [], todasFerramentas = [], todasAlocacoes = [], todoHistorico = [];
+
+        async function iniciarPagina() {
+            try {
+                if (!getApps().length) { 
+                    app = initializeApp(firebaseConfig); 
+                } else { 
+                    app = getApp(); 
+                }
+                db = getFirestore(app);
+                auth = getAuth(app);
+                await garantirAutenticacao(auth);
+                carregarDados();
+                configurarEventListeners();
+                lucide.createIcons();
+                alternarTela('alocacao');
+            } catch (error) {
+                console.error("Falha na inicialização:", error);
+                const homeSection = document.querySelector('.home');
+                if (homeSection) {
+                    homeSection.innerHTML = `<div class="error-container"><h1>Erro</h1><p>Não foi possível carregar os dados.</p></div>`;
+                }
+            }
+        }
+
+        // FUNÇÃO MELHORADA PARA RENDERIZAR ALOCAÇÕES AGRUPADAS POR OS
+        function renderizarTabelaAlocacao(alocacoes) {
+            const tabelaBody = document.getElementById('tabela-alocacao');
+            tabelaBody.innerHTML = '';
+            
+            if (alocacoes.length === 0) {
+                tabelaBody.innerHTML = `
+                    <tr>
+                        <td colspan="5" style="text-align: center; padding: 20px; color: #666;">
+                            <i data-lucide="inbox"></i>
+                            <br>Nenhuma ferramenta alocada
+                        </td>
+                    </tr>
+                `;
+                lucide.createIcons();
+                return;
+            }
+
+            // Agrupar alocações por OS
+            const alocacoesPorOS = {};
+            alocacoes.forEach(a => {
+                const os = a.ordemServico || 'Sem OS';
+                if (!alocacoesPorOS[os]) {
+                    alocacoesPorOS[os] = [];
+                }
+                alocacoesPorOS[os].push(a);
+            });
+
+            // Renderizar cada grupo de OS
+            Object.keys(alocacoesPorOS).forEach(os => {
+                const alocacoesOS = alocacoesPorOS[os];
+                const primeiraAlocacao = alocacoesOS[0];
+                const dataAlocacao = formatarDataHora(primeiraAlocacao.dataAlocacao);
+                const funcionario = primeiraAlocacao.funcionario;
+                
+                // Pegar a primeira ferramenta para mostrar a filial
+                const primeiraFerramenta = todasFerramentas.find(f => f.id === primeiraAlocacao.ferramentaId);
+                const filial = primeiraFerramenta ? primeiraFerramenta.filial : '';
+
+                // Linha principal do grupo (cabeçalho clicável)
+                const trGrupo = document.createElement('tr');
+                trGrupo.className = 'grupo-os';
+                trGrupo.style.cursor = 'pointer';
+                trGrupo.style.backgroundColor = '#2c3e50';
+                trGrupo.style.borderLeft = '4px solid #3498db';
+                trGrupo.style.color = '#ffffff';
+                
+                trGrupo.innerHTML = `
+                    <td style="padding: 15px 10px;">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <i data-lucide="chevron-right" class="chevron-icon" style="width: 20px; height: 20px; transition: transform 0.3s; color: #3498db;"></i>
+                            <span class="os-badge" style="font-size: 14px; font-weight: 700; background: #3498db; color: white; border: none;">${os}</span>
+                        </div>
+                    </td>
+                    <td style="padding: 15px 10px;">
+                        <div>
+                            <strong style="color: #ffffff;">${alocacoesOS.length} ferramenta${alocacoesOS.length > 1 ? 's' : ''} alocada${alocacoesOS.length > 1 ? 's' : ''}</strong>
+                            <div style="font-size: 0.85em; color: #bdc3c7; margin-top: 2px;">
+                                ${filial ? `Filial: ${filial}` : ''}
+                            </div>
+                        </div>
+                    </td>
+                    <td style="padding: 15px 10px;">
+                        <strong style="color: #ffffff;">${funcionario}</strong>
+                    </td>
+                    <td style="padding: 15px 10px; color: #ecf0f1;">${dataAlocacao}</td>
+                    <td style="text-align: center; padding: 15px 10px;">
+                        <button class="btn btn-sucesso btn-devolver-os" 
+                                data-os="${os}"
+                                title="Devolver todas as ferramentas desta OS"
+                                style="font-size: 0.85rem;">
+                            <i data-lucide="arrow-left-circle"></i> Devolver Todas
+                        </button>
+                    </td>
+                `;
+
+                trGrupo.addEventListener('click', (e) => {
+                    // Não expandir se clicar no botão
+                    if (e.target.closest('.btn-devolver-os')) return;
+                    
+                    const detalhesRow = trGrupo.nextElementSibling;
+                    const chevron = trGrupo.querySelector('.chevron-icon');
+                    
+                    if (detalhesRow && detalhesRow.classList.contains('detalhes-os')) {
+                        const isVisible = detalhesRow.style.display !== 'none';
+                        detalhesRow.style.display = isVisible ? 'none' : 'table-row';
+                        chevron.style.transform = isVisible ? 'rotate(0deg)' : 'rotate(90deg)';
+                    }
+                });
+
+                tabelaBody.appendChild(trGrupo);
+
+                // Linha de detalhes (expandível)
+                const trDetalhes = document.createElement('tr');
+                trDetalhes.className = 'detalhes-os';
+                trDetalhes.style.display = 'none';
+                trDetalhes.style.backgroundColor = '#ffffff';
+                
+                let detalhesHTML = '<td colspan="5" style="padding: 0;"><div style="padding: 15px 20px; border-left: 4px solid #3498db; margin-left: 4px; background: #f8f9fa;">';
+                detalhesHTML += '<table style="width: 100%; border-collapse: collapse; background: white; border-radius: 6px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">';
+                detalhesHTML += '<thead><tr style="background: #1a252f; color: white; font-size: 0.9rem;">';
+                detalhesHTML += '<th style="padding: 14px; text-align: left; font-weight: 600;">Ferramenta</th>';
+                detalhesHTML += '<th style="padding: 14px; text-align: left; font-weight: 600;">Código</th>';
+                detalhesHTML += '<th style="padding: 14px; text-align: left; font-weight: 600;">Localização</th>';
+                detalhesHTML += '<th style="padding: 14px; text-align: center; font-weight: 600;">Ações</th>';
+                detalhesHTML += '</tr></thead><tbody>';
+
+                alocacoesOS.forEach(a => {
+                    const ferramenta = todasFerramentas.find(f => f.id === a.ferramentaId);
+                    const descricao = ferramenta ? ferramenta.descricao : 'Ferramenta não encontrada';
+                    const codigo = ferramenta ? ferramenta.codigo : 'N/A';
+                    const localizacao = ferramenta ? (ferramenta.localizacao || '-') : '-';
+                    
+                    detalhesHTML += `
+                        <tr style="border-bottom: 1px solid #dee2e6; background-color: #ffffff;">
+                            <td style="padding: 14px; color: #1a252f; font-size: 0.95rem;">
+                                <strong>${descricao}</strong>
+                            </td>
+                            <td style="padding: 14px; color: #1a252f; font-weight: 500; font-size: 0.95rem;">${codigo}</td>
+                            <td style="padding: 14px; color: #1a252f; font-weight: 500; font-size: 0.95rem;">${localizacao}</td>
+                            <td style="padding: 12px; text-align: center;">
+                                <button class="btn btn-secundario btn-devolver" 
+                                        data-id="${a.id}" 
+                                        data-ferramenta-id="${a.ferramentaId}" 
+                                        data-funcionario="${a.funcionario}"
+                                        title="Devolver apenas esta ferramenta"
+                                        style="font-size: 0.8rem; padding: 6px 12px;">
+                                    <i data-lucide="arrow-left-circle" style="width: 14px; height: 14px;"></i> Devolver
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                });
+
+                detalhesHTML += '</tbody></table></div></td>';
+                trDetalhes.innerHTML = detalhesHTML;
+                tabelaBody.appendChild(trDetalhes);
+            });
+            
+            lucide.createIcons();
+        }
+
+        // FUNÇÃO PARA RENDERIZAR FERRAMENTAS
+        function renderizarTabelaFerramentas(ferramentas) {
+            const tabelaBody = document.getElementById('tabela-ferramentas');
+            tabelaBody.innerHTML = '';
+            ferramentas.forEach(f => {
+                const grupo = todosGrupos.find(g => g.id === f.grupoId);
+                const tr = document.createElement('tr');
+                const temImagem = f.fotosURLs && Array.isArray(f.fotosURLs) && f.fotosURLs.length > 0;
+
+                // Se a ferramenta está inativa, destacar visualmente
+                if (f.inativa) {
+                    tr.style.backgroundColor = '#ffebee';
+                    tr.style.opacity = '0.85';
+                }
+
+                const acoesHTML = `
+                    <td style="text-align: center; display: flex; gap: 5px; justify-content: center;">
+                        <button class="btn btn-secundario btn-ver-imagem" data-ferramenta-id="${f.id}" title="Ver Imagem(ns)" ${!temImagem ? 'disabled' : ''}>
+                            <i data-lucide="image"></i>
+                        </button>
+                        <button class="btn btn-info btn-historico-ferramenta" data-id="${f.id}" title="Ver Histórico">
+                            <i data-lucide="history"></i>
+                        </button>
+                        <a href="/Pages/Formularios/form_cadastroferramenta.html?id=${f.id}" class="btn btn-aviso" title="Editar">
+                            <i data-lucide="edit"></i>
+                        </a>
+                        <button class="btn btn-alerta btn-remover-ferramenta" data-id="${f.id}" title="Remover">
+                            <i data-lucide="trash-2"></i>
+                        </button>
+                    </td>
+                `;
+
+                // Determinar status e cor
+                let statusHTML = '';
+                let statusTexto = 'Ativa';
+                let statusCor = '#4caf50';
+                let statusIcon = '✓';
+                
+                if (f.inativa) {
+                    statusTexto = 'Inativa';
+                    statusCor = '#d32f2f';
+                    statusIcon = '⚠️';
+                } else if (f.reparo) {
+                    statusTexto = 'Em Reparo';
+                    statusCor = '#ff9800';
+                    statusIcon = '🔧';
+                }
+
+                statusHTML = `
+                    <button class="btn-status" 
+                            data-ferramenta-id="${f.id}" 
+                            style="background: ${statusCor}; color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.85rem; display: flex; align-items: center; gap: 5px; justify-content: center; min-width: 110px;"
+                            title="Ver detalhes do status">
+                        <span>${statusIcon}</span>
+                        <span>${statusTexto}</span>
+                    </button>
+                `;
+
+                tr.innerHTML = `
+                    <td>${f.filial}</td>
+                    <td>${f.codigo}</td>
+                    <td>${f.descricao}</td>
+                    <td>${grupo ? grupo.nome : 'Sem grupo'}</td>
+                    <td>${f.localizacao}</td>
+                    <td style="text-align: center;">${f.quantidade}</td>
+                    <td style="text-align: center;">${statusHTML}</td>
+                    ${acoesHTML}
+                `;
+                tabelaBody.appendChild(tr);
+            });
+            lucide.createIcons();
+        }
+
+        // FUNÇÃO PARA RENDERIZAR LISTA DE GRUPOS
+        function renderizarListaGrupos() {
+            const lista = document.getElementById('lista-grupos');
+            lista.innerHTML = '';
+            todosGrupos.forEach(g => {
+                const li = document.createElement('li');
+                li.innerHTML = `
+                    <span>${g.nome}</span>
+                    <div>
+                        <button class="btn btn-alerta btn-remover-grupo" data-id="${g.id}" title="Remover">
+                            <i data-lucide="trash-2"></i>
+                        </button>
+                    </div>
+                `;
+                lista.appendChild(li);
+            });
+            lucide.createIcons();
+        }
+
+        // FUNÇÃO PARA RENDERIZAR HISTÓRICO
+        function renderizarHistorico(historico) {
+            const container = document.getElementById('lista-historico');
+            container.innerHTML = '';
+            if (historico.length === 0) {
+                container.innerHTML = '<p style="text-align: center; color: #ccc;">Nenhum registro encontrado.</p>';
+                return;
+            }
+            historico.forEach(h => {
+                const div = document.createElement('div');
+                div.className = `log-entry ${h.tipo}`;
+                let titulo = '', detalhes = '', icone = 'help-circle';
+                switch (h.tipo) {
+                    case 'criacao': 
+                        titulo = `Ferramenta Criada: ${h.ferramentaDescricao}`; 
+                        detalhes = `Código: ${h.ferramentaCodigo} | Filial: ${h.filial}`; 
+                        icone = 'plus-circle'; 
+                        break;
+                    case 'edicao': 
+                        titulo = `Ferramenta Editada: ${h.ferramentaDescricao}`; 
+                        detalhes = `Código: ${h.ferramentaCodigo} | Filial: ${h.filial}${h.detalhes.alteracoes ? ` | Alterações: ${h.detalhes.alteracoes}` : ''}`; 
+                        icone = 'edit-3'; 
+                        break;
+                    case 'alocacao': 
+                        titulo = `Ferramenta Alocada: ${h.ferramentaDescricao}`; 
+                        detalhes = `Para: ${h.detalhes.funcionario} | Código: ${h.ferramentaCodigo} | Filial: ${h.filial}`; 
+                        icone = 'arrow-right-circle'; 
+                        break;
+                    case 'devolucao': 
+                        titulo = `Ferramenta Devolvida: ${h.ferramentaDescricao}`; 
+                        detalhes = `Por: ${h.detalhes.funcionario} | Código: ${h.ferramentaCodigo} | Filial: ${h.filial}`; 
+                        icone = 'arrow-left-circle'; 
+                        break;
+                }
+                div.innerHTML = `
+                    <div class="log-entry-icon"><i data-lucide="${icone}"></i></div>
+                    <div class="log-entry-content">
+                        <div class="log-entry-header">${titulo}</div>
+                        <div class="log-entry-details">${detalhes}</div>
+                    </div>
+                    <div class="log-entry-timestamp">${formatarDataHora(h.timestamp)}</div>
+                `;
+                container.appendChild(div);
+            });
+            lucide.createIcons();
+        }
+
+        // FUNÇÃO PARA RENDERIZAR HISTÓRICO DE FERRAMENTA ESPECÍFICA
+        function renderizarHistoricoFerramenta(ferramentaId) {
+            const historicoFerramenta = todoHistorico.filter(h => h.ferramentaId === ferramentaId);
+            const container = document.getElementById('historico-ferramenta-content');
+            container.innerHTML = '';
+            if (historicoFerramenta.length === 0) {
+                container.innerHTML = '<p style="text-align: center; color: #ccc;">Nenhum histórico para esta ferramenta.</p>';
+                return;
+            }
+            historicoFerramenta.forEach(h => {
+                const div = document.createElement('div');
+                div.className = `log-entry ${h.tipo}`;
+                let titulo = '', detalhes = '';
+                switch (h.tipo) {
+                    case 'criacao': titulo = 'Ferramenta Criada'; detalhes = 'Ferramenta adicionada ao sistema'; break;
+                    case 'edicao': titulo = 'Ferramenta Editada'; detalhes = h.detalhes.alteracoes || 'Dados da ferramenta foram alterados'; break;
+                    case 'alocacao': titulo = 'Ferramenta Alocada'; detalhes = `Alocada para: ${h.detalhes.funcionario}`; break;
+                    case 'devolucao': titulo = 'Ferramenta Devolvida'; detalhes = `Devolvida por: ${h.detalhes.funcionario}`; break;
+                }
+                div.innerHTML = `
+                    <div class="log-entry-header">${titulo}</div>
+                    <div class="log-entry-details">${detalhes}</div>
+                    <div class="log-entry-details">${formatarDataHora(h.timestamp)}</div>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        // FUNÇÃO PARA FILTRAR ALOCAÇÕES
+        function aplicarFiltrosAlocacao() {
+            const filial = document.getElementById('filtro-aloc-filial').value;
+            const ferramenta = document.getElementById('filtro-aloc-ferramenta').value.toLowerCase();
+            const funcionario = document.getElementById('filtro-aloc-funcionario').value.toLowerCase();
+            const os = document.getElementById('filtro-aloc-os').value.toLowerCase();
+            
+            const filtrado = todasAlocacoes.filter(a => {
+                const ferramentaObj = todasFerramentas.find(f => f.id === a.ferramentaId);
+                const descricaoFerramenta = ferramentaObj ? ferramentaObj.descricao.toLowerCase() : '';
+                const codigoFerramenta = ferramentaObj ? ferramentaObj.codigo.toLowerCase() : '';
+                const filialFerramenta = ferramentaObj ? ferramentaObj.filial : '';
+                
+                return (
+                    (!filial || filialFerramenta === filial) &&
+                    (!ferramenta || descricaoFerramenta.includes(ferramenta) || codigoFerramenta.includes(ferramenta)) &&
+                    (!funcionario || a.funcionario.toLowerCase().includes(funcionario)) &&
+                    (!os || (a.ordemServico && a.ordemServico.toLowerCase().includes(os)))
+                );
+            });
+            
+            filtrado.sort((a, b) => {
+                const dataA = a.dataAlocacao?.toDate?.() || new Date(0);
+                const dataB = b.dataAlocacao?.toDate?.() || new Date(0);
+                return dataB - dataA;
+            });
+            
+            renderizarTabelaAlocacao(filtrado);
+        }
+
+        // FUNÇÃO PARA FILTRAR ESTOQUE
+        function aplicarFiltrosEstoque() {
+            const f = document.getElementById('filtro-filial').value;
+            const c = document.getElementById('filtro-codigo').value.toLowerCase();
+            const d = document.getElementById('filtro-descricao').value.toLowerCase();
+            const g = document.getElementById('filtro-grupo').value;
+            const r = document.getElementById('filtro-reparo').value;
+            
+            const filtrado = todasFerramentas.filter(i => {
+                // Filtros básicos
+                const passaFilial = !f || i.filial === f;
+                const passaGrupo = !g || i.grupoId === g;
+                const passaCodigo = i.codigo.toLowerCase().includes(c);
+                const passaDescricao = i.descricao.toLowerCase().includes(d);
+                
+                // Filtro de status
+                let passaStatus = true;
+                if (r === 'ativa') {
+                    passaStatus = !i.inativa && !i.reparo;
+                } else if (r === 'inativa') {
+                    passaStatus = i.inativa === true;
+                } else if (r === 'reparo') {
+                    passaStatus = i.reparo === true && !i.inativa;
+                }
+                
+                return passaFilial && passaGrupo && passaCodigo && passaDescricao && passaStatus;
+            });
+            renderizarTabelaFerramentas(filtrado);
+        }
+
+        // FUNÇÃO PARA FILTRAR HISTÓRICO
+        function aplicarFiltrosHistorico() {
+            const f = document.getElementById('filtro-hist-filial').value;
+            const d = document.getElementById('filtro-hist-ferramenta').value.toLowerCase();
+            const u = document.getElementById('filtro-hist-funcionario').value.toLowerCase();
+            const t = document.getElementById('filtro-hist-tipo').value;
+            
+            const filtrado = todoHistorico.filter(h => 
+                (!f || h.filial === f) && 
+                (!d || h.ferramentaDescricao.toLowerCase().includes(d) || h.ferramentaCodigo.toLowerCase().includes(d)) && 
+                (!u || (h.detalhes.funcionario && h.detalhes.funcionario.toLowerCase().includes(u))) && 
+                (!t || h.tipo === t)
+            );
+            renderizarHistorico(filtrado);
+        }
+
+        // FUNÇÃO PARA CARREGAR DADOS
+        function carregarDados() {
+            const colecoes = {
+                grupos: { 
+                    ref: collection(db, 'grupos'), 
+                    order: orderBy('nome'), 
+                    callback: (data) => { 
+                        todosGrupos = data; 
+                        renderizarListaGrupos(); 
+                        atualizarSelectsDeGrupo(); 
+                        aplicarFiltrosEstoque(); 
+                    } 
+                },
+                ferramentas: { 
+                    ref: collection(db, 'ferramentas'), 
+                    order: orderBy('codigo'), 
+                    callback: (data) => { 
+                        todasFerramentas = data; 
+                        aplicarFiltrosEstoque(); 
+                        aplicarFiltrosAlocacao(); 
+                    } 
+                },
+                alocacoes: { 
+                    ref: collection(db, 'alocacoes'), 
+                    order: orderBy('dataAlocacao', 'desc'), 
+                    callback: (data) => { 
+                        todasAlocacoes = data; 
+                        aplicarFiltrosAlocacao(); 
+                    } 
+                },
+                historico: { 
+                    ref: collection(db, 'historico'), 
+                    order: orderBy('timestamp', 'desc'), 
+                    callback: (data) => { 
+                        todoHistorico = data; 
+                        aplicarFiltrosHistorico(); 
+                    } 
+                }
+            };
+            
+            for (const key in colecoes) {
+                const q = query(colecoes[key].ref, colecoes[key].order);
+                onSnapshot(q, (snapshot) => {
+                    const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    colecoes[key].callback(data);
+                }, (error) => console.error(`Erro ao carregar ${key}:`, error));
+            }
+        }
+
+        // FUNÇÃO PARA CONFIGURAR EVENT LISTENERS
+        function configurarEventListeners() {
+            // Navegação entre abas
+            document.getElementById('nav-alocacao').addEventListener('click', () => alternarTela('alocacao'));
+            document.getElementById('nav-estoque').addEventListener('click', () => alternarTela('estoque'));
+            document.getElementById('nav-grupos').addEventListener('click', () => alternarTela('grupos'));
+            document.getElementById('nav-historico').addEventListener('click', () => alternarTela('historico'));
+
+            // Fechar modais
+            document.querySelectorAll('.modal-ferramentas .close-button').forEach(btn => {
+                btn.addEventListener('click', () => fecharModal(btn.closest('.modal-ferramentas')));
+            });
+
+            // Formulário de grupo
+            document.getElementById('form-grupo').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const nome = document.getElementById('grupo-nome').value.trim().toUpperCase();
+                if (nome) {
+                    try {
+                        await addDoc(collection(db, 'grupos'), { nome });
+                        document.getElementById('grupo-nome').value = '';
+                        showToast('Grupo adicionado!', 'success');
+                    } catch (error) {
+                        showToast('Erro ao adicionar grupo', 'error');
+                    }
+                }
+            });
+
+            // Remover grupo
+            document.getElementById('lista-grupos').addEventListener('click', (e) => {
+                const btn = e.target.closest('.btn-remover-grupo');
+                if (btn) {
+                    if (todasFerramentas.some(f => f.grupoId === btn.dataset.id)) {
+                        showToast('Grupo em uso!', 'error');
+                        return;
+                    }
+                    if (confirm('Remover este grupo?')) {
+                        deleteDoc(doc(db, 'grupos', btn.dataset.id));
+                    }
+                }
+            });
+
+            // Devolver ferramenta (Modal Inteligente)
+            document.getElementById('tabela-alocacao').addEventListener('click', async (e) => {
+                // Botão devolver todas as ferramentas da OS
+                const btnDevolverOS = e.target.closest('.btn-devolver-os');
+                if (btnDevolverOS) {
+                    const os = btnDevolverOS.dataset.os;
+                    const alocacoesOS = todasAlocacoes.filter(a => a.ordemServico === os);
+                    
+                    if (alocacoesOS.length > 0) {
+                        // Pega qualquer alocação para abrir o modal
+                        const primeiraAlocacao = alocacoesOS[0];
+                        abrirModalDevolucao(primeiraAlocacao.id, primeiraAlocacao.ferramentaId, primeiraAlocacao.funcionario);
+                    }
+                    return;
+                }
+
+                // Botão devolver ferramenta individual
+                const btnDev = e.target.closest('.btn-devolver');
+                if (btnDev) {
+                    abrirModalDevolucao(btnDev.dataset.id, btnDev.dataset.ferramentaId, btnDev.dataset.funcionario);
+                }
+            });
+
+            // Checkbox de avaria
+            document.getElementById('checkbox-avaria').addEventListener('change', (e) => {
+                const containerAvaria = document.getElementById('container-avaria');
+                if (e.target.checked) {
+                    containerAvaria.style.display = 'block';
+                } else {
+                    containerAvaria.style.display = 'none';
+                    document.getElementById('textarea-avaria').value = '';
+                    document.getElementById('checkbox-inativa').checked = false;
+                }
+            });
+
+            // Ações na tabela de ferramentas
+            document.getElementById('tabela-ferramentas').addEventListener('click', (e) => {
+                // Botão de status
+                const btnStatus = e.target.closest('.btn-status');
+                if (btnStatus) {
+                    const ferramentaId = btnStatus.dataset.ferramentaId;
+                    const ferramenta = todasFerramentas.find(f => f.id === ferramentaId);
+                    if (ferramenta) {
+                        abrirModalStatus(ferramenta);
+                    }
+                    return;
+                }
+
+                const btnImg = e.target.closest('.btn-ver-imagem');
+                if (btnImg) {
+                    const ferramentaId = btnImg.dataset.ferramentaId;
+                    const ferramenta = todasFerramentas.find(f => f.id === ferramentaId);
+                    if (ferramenta) {
+                        abrirModalImagem(ferramenta);
+                    }
+                }
+
+                const btnHist = e.target.closest('.btn-historico-ferramenta');
+                if (btnHist) {
+                    const f = todasFerramentas.find(f => f.id === btnHist.dataset.id);
+                    if (f) {
+                        document.getElementById('modal-historico-titulo').innerText = `Histórico: ${f.descricao}`;
+                        renderizarHistoricoFerramenta(f.id);
+                        abrirModal(document.getElementById('modal-historico-ferramenta'));
+                    }
+                }
+
+                const btnRem = e.target.closest('.btn-remover-ferramenta');
+                if (btnRem) {
+                    if (confirm('Remover esta ferramenta?')) {
+                        deleteDoc(doc(db, 'ferramentas', btnRem.dataset.id));
+                    }
+                }
+            });
+
+            // Filtros
+            document.querySelectorAll('#filtro-filial, #filtro-codigo, #filtro-descricao, #filtro-grupo, #filtro-reparo').forEach(el => {
+                el.addEventListener('input', aplicarFiltrosEstoque);
+                el.addEventListener('change', aplicarFiltrosEstoque);
+            });
+            document.querySelectorAll('#filtro-aloc-filial, #filtro-aloc-ferramenta, #filtro-aloc-funcionario, #filtro-aloc-os').forEach(el => {
+                el.addEventListener('input', aplicarFiltrosAlocacao);
+            });
+            document.querySelectorAll('#filtro-hist-filial, #filtro-hist-ferramenta, #filtro-hist-funcionario, #filtro-hist-tipo').forEach(el => {
+                el.addEventListener('input', aplicarFiltrosHistorico);
+                el.addEventListener('change', aplicarFiltrosHistorico);
+            });
+
+            // Modal de imagem
+            const modalOverlay = document.getElementById('modal-imagem-overlay');
+            modalOverlay.querySelector('.close-button').addEventListener('click', fecharModalImagem);
+            modalOverlay.addEventListener('click', (e) => {
+                if (e.target === modalOverlay) {
+                    fecharModalImagem();
+                }
+            });
+        }
+
+        // FUNÇÃO PARA ABRIR MODAL DE IMAGEM
+        function abrirModalImagem(ferramenta) {
+            const modalOverlay = document.getElementById('modal-imagem-overlay');
+            const tituloModal = document.getElementById('modal-imagem-titulo');
+            const imagemPrincipalContainer = document.querySelector('.main-image-container');
+            const galeria = document.getElementById('thumbnail-gallery-container');
+
+            tituloModal.textContent = ferramenta.descricao;
+            galeria.innerHTML = '';
+            
+            imagemPrincipalContainer.innerHTML = '<div class="image-loading-placeholder"><div class="spinner"></div></div>';
+
+            const urls = ferramenta.fotosURLs;
+            if (urls && urls.length > 0) {
+                const carregarImagem = (url) => {
+                    imagemPrincipalContainer.innerHTML = '<div class="image-loading-placeholder"><div class="spinner"></div></div>';
+                    
+                    const img = new Image();
+                    img.src = url;
+                    img.id = 'main-modal-image';
+                    img.alt = 'Imagem principal da ferramenta';
+                    
+                    img.onload = () => {
+                        imagemPrincipalContainer.innerHTML = '';
+                        imagemPrincipalContainer.appendChild(img);
+                    };
+                    img.onerror = () => {
+                        imagemPrincipalContainer.innerHTML = '<p class="no-image-message">Erro ao carregar a imagem.</p>';
+                    };
+                };
+
+                carregarImagem(urls[0]);
+
+                urls.forEach((url, index) => {
+                    const thumb = document.createElement('img');
+                    thumb.src = url;
+                    if (index === 0) {
+                        thumb.classList.add('active-thumb');
+                    }
+                    thumb.addEventListener('click', () => {
+                        carregarImagem(url);
+                        galeria.querySelector('.active-thumb')?.classList.remove('active-thumb');
+                        thumb.classList.add('active-thumb');
+                    });
+                    galeria.appendChild(thumb);
+                });
+                
+                galeria.style.display = urls.length > 1 ? 'flex' : 'none';
+
+            } else {
+                imagemPrincipalContainer.innerHTML = '<p class="no-image-message">Nenhuma imagem cadastrada.</p>';
+            }
+            
+            modalOverlay.classList.add('active');
+        }
+
+        // FUNÇÃO PARA FECHAR MODAL DE IMAGEM
+        function fecharModalImagem() {
+            const modalOverlay = document.getElementById('modal-imagem-overlay');
+            modalOverlay.classList.remove('active');
+            modalOverlay.querySelector('.main-image-container').innerHTML = '';
+        }
+
+        // FUNÇÕES UTILITÁRIAS
+        function showToast(message, type = 'info') {
+            const c = document.getElementById('toast-container');
+            if (!c) return;
+            const t = document.createElement('div');
+            t.className = `toast ${type}`;
+            t.textContent = message;
+            c.appendChild(t);
+            setTimeout(() => t.classList.add('show'), 100);
+            setTimeout(() => {
+                t.classList.remove('show');
+                setTimeout(() => c.removeChild(t), 300);
+            }, 3000);
+        }
+
+        function formatarDataHora(timestamp) {
+            if (!timestamp) return 'Data inválida';
+            const data = timestamp.seconds ? new Date(timestamp.seconds * 1000) : new Date(timestamp);
+            return data.toLocaleString('pt-BR');
+        }
+
+        async function adicionarHistorico(tipo, ferramentaId, detalhes = {}) {
+            const f = todasFerramentas.find(fer => fer.id === ferramentaId);
+            if (!f) return;
+            await addDoc(collection(db, 'historico'), {
+                tipo,
+                ferramentaId,
+                ferramentaCodigo: f.codigo,
+                ferramentaDescricao: f.descricao,
+                filial: f.filial,
+                timestamp: new Date(),
+                detalhes
+            });
+        }
+
+        // VARIÁVEL GLOBAL PARA ARMAZENAR DADOS DA DEVOLUÇÃO
+        let dadosDevolucaoAtual = null;
+
+        // FUNÇÃO PARA ABRIR MODAL DE DEVOLUÇÃO INTELIGENTE
+        window.abrirModalDevolucao = function(alocacaoId, ferramentaId, funcionario) {
+            const alocacaoAtual = todasAlocacoes.find(a => a.id === alocacaoId);
+            const ferramenta = todasFerramentas.find(f => f.id === ferramentaId);
+            
+            if (!ferramenta || !alocacaoAtual) {
+                showToast('Dados não encontrados!', 'error');
+                return;
+            }
+
+            const osAtual = alocacaoAtual.ordemServico;
+            
+            // Buscar todas as alocações desta OS (mesmo número de OS)
+            const alocacoesDaOS = todasAlocacoes.filter(a => a.ordemServico === osAtual);
+            
+            // Armazenar dados para uso posterior
+            dadosDevolucaoAtual = {
+                alocacaoId: alocacaoId,
+                ferramentaId: ferramentaId,
+                funcionario: funcionario,
+                ferramenta: ferramenta,
+                ordemServico: osAtual,
+                alocacoes: alocacoesDaOS
+            };
+
+            // Preencher informações da ferramenta
+            const infoContainer = document.getElementById('info-ferramenta-devolucao');
+            infoContainer.innerHTML = `
+                <div style="display: flex; align-items: center; gap: 15px;">
+                    <div style="font-size: 2.5rem;">🔧</div>
+                    <div style="flex: 1;">
+                        <h4 style="margin: 0 0 5px 0; color: #333;">${ferramenta.descricao}</h4>
+                        <p style="margin: 0; color: #666; font-size: 0.9rem;">
+                            <strong>Código:</strong> ${ferramenta.codigo} | 
+                            <strong>Filial:</strong> ${ferramenta.filial} | 
+                            <strong>OS:</strong> ${osAtual || 'N/A'}
+                        </p>
+                    </div>
+                </div>
+            `;
+
+            // Preencher opções de seleção
+            const selecaoContainer = document.getElementById('selecao-devolucao');
+            
+            if (alocacoesDaOS.length > 1) {
+                // Múltiplas ferramentas na mesma OS - mostrar opções
+                const listaFerramentasOS = alocacoesDaOS.map(a => {
+                    const f = todasFerramentas.find(fer => fer.id === a.ferramentaId);
+                    return f ? f.descricao : 'Ferramenta desconhecida';
+                }).join(', ');
+
+                selecaoContainer.innerHTML = `
+                    <div style="background: #fff3cd; padding: 12px; border-radius: 6px; border-left: 4px solid #ffc107; margin-bottom: 15px; color: #333;">
+                        <strong style="color: #856404;">⚠️ Esta OS possui ${alocacoesDaOS.length} ferramentas alocadas</strong>
+                        <p style="margin: 5px 0 0 0; font-size: 0.85rem; color: #856404;">
+                            ${alocacoesDaOS.map(a => {
+                                const f = todasFerramentas.find(fer => fer.id === a.ferramentaId);
+                                return f ? `• ${f.descricao}` : '';
+                            }).filter(t => t).join('<br>')}
+                        </p>
+                    </div>
+                    <label style="display: block; font-weight: 600; margin-bottom: 10px; color: #333;">Selecione o que deseja devolver:</label>
+                    <div style="display: flex; flex-direction: column; gap: 10px;">
+                        <label style="display: flex; align-items: center; gap: 10px; padding: 10px; border: 2px solid #2c5aa0; border-radius: 6px; cursor: pointer; transition: all 0.2s; background: #f0f7ff;" class="radio-option">
+                            <input type="radio" name="tipo-devolucao" value="unica" checked style="width: 18px; height: 18px; cursor: pointer;">
+                            <div>
+                                <div style="font-weight: 600; color: #333;">Devolver apenas esta ferramenta</div>
+                                <div style="font-size: 0.85rem; color: #666;">${ferramenta.descricao} - ${funcionario}</div>
+                            </div>
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 10px; padding: 10px; border: 2px solid #ddd; border-radius: 6px; cursor: pointer; transition: all 0.2s; background: white;" class="radio-option">
+                            <input type="radio" name="tipo-devolucao" value="todas-os" style="width: 18px; height: 18px; cursor: pointer;">
+                            <div>
+                                <div style="font-weight: 600; color: #333;">Devolver todas as ${alocacoesDaOS.length} ferramentas da OS ${osAtual}</div>
+                                <div style="font-size: 0.85rem; color: #666;">Todas as ferramentas desta ordem de serviço</div>
+                            </div>
+                        </label>
+                    </div>
+                `;
+
+                // Adicionar efeito hover nas opções
+                document.querySelectorAll('.radio-option').forEach(label => {
+                    label.addEventListener('mouseenter', () => {
+                        if (!label.querySelector('input[type="radio"]').checked) {
+                            label.style.borderColor = '#2c5aa0';
+                            label.style.backgroundColor = '#f0f7ff';
+                        }
+                    });
+                    label.addEventListener('mouseleave', () => {
+                        const input = label.querySelector('input[type="radio"]');
+                        if (!input.checked) {
+                            label.style.borderColor = '#ddd';
+                            label.style.backgroundColor = 'white';
+                        }
+                    });
+                    label.querySelector('input[type="radio"]').addEventListener('change', () => {
+                        document.querySelectorAll('.radio-option').forEach(l => {
+                            l.style.borderColor = '#ddd';
+                            l.style.backgroundColor = 'white';
+                        });
+                        label.style.borderColor = '#2c5aa0';
+                        label.style.backgroundColor = '#f0f7ff';
+                    });
+                });
+            } else {
+                // Apenas uma alocação
+                selecaoContainer.innerHTML = `
+                    <div style="background: #e8f5e9; padding: 12px; border-radius: 6px; border-left: 4px solid #4caf50; color: #333;">
+                        <strong style="color: #2e7d32;">✓ Alocação única</strong>
+                        <p style="margin: 5px 0 0 0; font-size: 0.9rem; color: #2e7d32;">
+                            Esta é a única alocação ativa desta ferramenta.
+                        </p>
+                    </div>
+                `;
+            }
+
+            // Resetar campos de avaria
+            document.getElementById('checkbox-avaria').checked = false;
+            document.getElementById('container-avaria').style.display = 'none';
+            document.getElementById('textarea-avaria').value = '';
+            document.getElementById('checkbox-inativa').checked = false;
+
+            // Abrir modal
+            abrirModal(document.getElementById('modal-devolucao'));
+            lucide.createIcons();
+        };
+
+        // FUNÇÃO PARA FECHAR MODAL DE DEVOLUÇÃO
+        window.fecharModalDevolucao = function() {
+            fecharModal(document.getElementById('modal-devolucao'));
+            dadosDevolucaoAtual = null;
+        };
+
+        // FUNÇÃO PARA CONFIRMAR DEVOLUÇÃO
+        window.confirmarDevolucao = async function() {
+            if (!dadosDevolucaoAtual) return;
+
+            try {
+                const temAvaria = document.getElementById('checkbox-avaria').checked;
+                const descricaoAvaria = document.getElementById('textarea-avaria').value.trim();
+                const marcarInativa = document.getElementById('checkbox-inativa').checked;
+
+                // Validação
+                if (temAvaria && !descricaoAvaria) {
+                    showToast('Por favor, descreva a avaria encontrada', 'error');
+                    return;
+                }
+
+                // Determinar quais alocações devolver
+                let alocacoesParaDevolver = [];
+                const radioSelecionado = document.querySelector('input[name="tipo-devolucao"]:checked');
+                
+                if (radioSelecionado && radioSelecionado.value === 'todas-os') {
+                    // Devolver todas as ferramentas da OS
+                    alocacoesParaDevolver = dadosDevolucaoAtual.alocacoes;
+                } else {
+                    // Devolver apenas esta ferramenta específica
+                    alocacoesParaDevolver = [todasAlocacoes.find(a => a.id === dadosDevolucaoAtual.alocacaoId)];
+                }
+
+                // Processar devoluções
+                const promises = [];
+                const ferramentasDevolvidas = new Set();
+                
+                for (const alocacao of alocacoesParaDevolver) {
+                    if (alocacao) {
+                        promises.push(deleteDoc(doc(db, 'alocacoes', alocacao.id)));
+                        
+                        const detalhes = { 
+                            funcionario: alocacao.funcionario,
+                            ordemServico: alocacao.ordemServico
+                        };
+                        if (temAvaria) {
+                            detalhes.avaria = descricaoAvaria;
+                        }
+                        promises.push(adicionarHistorico('devolucao', alocacao.ferramentaId, detalhes));
+                        ferramentasDevolvidas.add(alocacao.ferramentaId);
+                    }
+                }
+
+                // Se houver avaria e marcar como inativa (apenas na ferramenta clicada)
+                if (temAvaria && marcarInativa) {
+                    const ferramentaRef = doc(db, 'ferramentas', dadosDevolucaoAtual.ferramentaId);
+                    const { updateDoc } = await import("https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js");
+                    promises.push(updateDoc(ferramentaRef, {
+                        inativa: true,
+                        motivoInativa: descricaoAvaria,
+                        dataInativa: new Date()
+                    }));
+                }
+
+                // Executar todas as operações
+                await Promise.all(promises);
+
+                let mensagem = '';
+                if (alocacoesParaDevolver.length > 1) {
+                    mensagem = `${alocacoesParaDevolver.length} ferramentas da OS ${dadosDevolucaoAtual.ordemServico} devolvidas com sucesso!`;
+                } else {
+                    mensagem = 'Ferramenta devolvida com sucesso!';
+                }
+                
+                showToast(mensagem, 'success');
+                
+                if (temAvaria && marcarInativa) {
+                    showToast('Ferramenta marcada como inativa', 'info');
+                }
+
+                fecharModalDevolucao();
+            } catch (error) {
+                console.error('Erro ao devolver ferramenta:', error);
+                showToast('Erro ao processar devolução', 'error');
+            }
+        };
+
+        // FUNÇÕES PARA MODAL DE STATUS
+        window.abrirModalStatus = function(ferramenta) {
+            // Preencher informações da ferramenta
+            const infoContainer = document.getElementById('info-status-ferramenta');
+            infoContainer.innerHTML = `
+                <div style="display: flex; align-items: center; gap: 15px;">
+                    <div style="font-size: 2.5rem;">🔧</div>
+                    <div style="flex: 1;">
+                        <h4 style="margin: 0 0 5px 0; color: #333;">${ferramenta.descricao}</h4>
+                        <p style="margin: 0; color: #666; font-size: 0.9rem;">
+                            <strong>Código:</strong> ${ferramenta.codigo} | 
+                            <strong>Filial:</strong> ${ferramenta.filial}
+                        </p>
+                    </div>
+                </div>
+            `;
+
+            // Preencher status atual
+            const statusContainer = document.getElementById('status-atual-container');
+            let statusHTML = '';
+            
+            if (ferramenta.inativa) {
+                const dataInativa = ferramenta.dataInativa ? formatarDataHora(ferramenta.dataInativa) : 'Não informada';
+                statusHTML = `
+                    <div style="background: #ffebee; padding: 15px; border-radius: 8px; border-left: 4px solid #d32f2f;">
+                        <h4 style="margin: 0 0 10px 0; color: #c62828;">⚠️ Ferramenta Inativa</h4>
+                        <p style="margin: 5px 0; color: #333;"><strong>Motivo:</strong> ${ferramenta.motivoInativa || 'Não especificado'}</p>
+                        <p style="margin: 5px 0; color: #666; font-size: 0.85rem;"><strong>Data:</strong> ${dataInativa}</p>
+                    </div>
+                `;
+            } else if (ferramenta.reparo) {
+                statusHTML = `
+                    <div style="background: #fff3e0; padding: 15px; border-radius: 8px; border-left: 4px solid #ff9800;">
+                        <h4 style="margin: 0 0 10px 0; color: #e65100;">🔧 Em Reparo</h4>
+                        <p style="margin: 5px 0; color: #333;">Esta ferramenta está marcada como em reparo.</p>
+                    </div>
+                `;
+            } else {
+                statusHTML = `
+                    <div style="background: #e8f5e9; padding: 15px; border-radius: 8px; border-left: 4px solid #4caf50;">
+                        <h4 style="margin: 0 0 10px 0; color: #2e7d32;">✓ Ferramenta Ativa</h4>
+                        <p style="margin: 5px 0; color: #333;">Esta ferramenta está disponível para uso.</p>
+                    </div>
+                `;
+            }
+            statusContainer.innerHTML = statusHTML;
+
+            // Preencher ações
+            const acoesContainer = document.getElementById('acoes-status-container');
+            let acoesHTML = '';
+            
+            if (ferramenta.inativa) {
+                acoesHTML = `
+                    <div style="margin-top: 20px;">
+                        <h4 style="margin-bottom: 15px; color: #333;">Ações Disponíveis:</h4>
+                        <button class="btn btn-sucesso" onclick="marcarComoResolvido('${ferramenta.id}')" style="width: 100%; padding: 12px;">
+                            <i data-lucide="check-circle"></i> Marcar Problema como Resolvido
+                        </button>
+                        <p style="margin-top: 10px; font-size: 0.85rem; color: #666; text-align: center;">
+                            A ferramenta voltará a ficar disponível para alocação
+                        </p>
+                    </div>
+                `;
+            } else {
+                acoesHTML = `
+                    <div style="margin-top: 20px; text-align: center;">
+                        <button class="btn btn-secundario" onclick="fecharModalStatus()">
+                            Fechar
+                        </button>
+                    </div>
+                `;
+            }
+            acoesContainer.innerHTML = acoesHTML;
+
+            // Abrir modal
+            abrirModal(document.getElementById('modal-status-ferramenta'));
+            lucide.createIcons();
+        };
+
+        window.fecharModalStatus = function() {
+            fecharModal(document.getElementById('modal-status-ferramenta'));
+        };
+
+        window.marcarComoResolvido = async function(ferramentaId) {
+            if (!confirm('Confirma que o problema foi resolvido? A ferramenta voltará a ficar disponível para alocação.')) {
+                return;
+            }
+
+            try {
+                const ferramentaRef = doc(db, 'ferramentas', ferramentaId);
+                const { updateDoc } = await import("https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js");
+                
+                await updateDoc(ferramentaRef, {
+                    inativa: false,
+                    motivoInativa: null,
+                    dataInativa: null,
+                    dataResolucao: new Date()
+                });
+
+                showToast('Ferramenta reativada com sucesso!', 'success');
+                fecharModalStatus();
+            } catch (error) {
+                console.error('Erro ao reativar ferramenta:', error);
+                showToast('Erro ao reativar ferramenta', 'error');
+            }
+        };
+
+        function alternarTela(telaAtiva) {
+            document.querySelectorAll('.tab-button, .tab-content').forEach(el => el.classList.remove('active'));
+            document.getElementById(`nav-${telaAtiva}`).classList.add('active');
+            document.getElementById(`view-${telaAtiva}`).classList.add('active');
+        }
+
+        function abrirModal(modal) {
+            modal.classList.add('active');
+        }
+
+        function fecharModal(modal) {
+            modal.classList.remove('active');
+        }
+
+        function atualizarSelectsDeGrupo() {
+            const s = document.getElementById('filtro-grupo');
+            if (!s) return;
+            const v = s.value;
+            s.innerHTML = `<option value="">Todos os Grupos</option>`;
+            todosGrupos.forEach(g => {
+                s.innerHTML += `<option value="${g.id}">${g.nome}</option>`;
+            });
+            s.value = v;
+        }
+
+        // INICIALIZAÇÃO
+        document.addEventListener('DOMContentLoaded', iniciarPagina);
+    </script>
+
+    <!-- Scripts Globais -->
+    <script type="module" src="/assets/js/auth.js"></script>
+    <script src="/assets/js/main.js"></script> 
+    <script src="/assets/js/components/Sidebar.js"></script>
+</body>
+</html>

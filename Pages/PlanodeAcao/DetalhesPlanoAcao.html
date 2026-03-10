@@ -1136,141 +1136,6 @@
             font-size: 13px;
         }
 
-        /* === ETAPAS CHECKLIST === */
-        .etapas-section {
-            margin-top: 20px;
-            padding-top: 20px;
-            border-top: 2px dashed #e2e8f0;
-        }
-        .etapas-section__header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 16px;
-        }
-        .etapas-section__title {
-            font-size: 14px;
-            font-weight: 700;
-            color: #1e293b;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        .etapas-section__title i {
-            width: 18px;
-            height: 18px;
-            color: #3b82f6;
-        }
-        .etapas-section__progress {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        .etapas-progress-bar {
-            width: 120px;
-            height: 8px;
-            background: #e2e8f0;
-            border-radius: 4px;
-            overflow: hidden;
-        }
-        .etapas-progress-fill {
-            height: 100%;
-            background: linear-gradient(90deg, #22c55e 0%, #16a34a 100%);
-            transition: width 0.3s;
-        }
-        .etapas-progress-text {
-            font-size: 13px;
-            font-weight: 700;
-            color: #16a34a;
-        }
-        .etapa-card {
-            background: #f8fafc;
-            border: 1px solid #d0dae8;
-            border-radius: 12px;
-            margin-bottom: 14px;
-            overflow: hidden;
-        }
-        .etapa-card__header {
-            padding: 14px 16px;
-            background: #193b7c;
-            border-bottom: 1px solid #142f63;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .etapa-card__title {
-            font-size: 14px;
-            font-weight: 700;
-            color: #ffffff;
-        }
-        .etapa-card__badge {
-            padding: 4px 10px;
-            border-radius: 20px;
-            font-size: 11px;
-            font-weight: 700;
-            background: rgba(255, 255, 255, 0.2);
-            color: #ffffff;
-        }
-        .etapa-card__badge.complete {
-            background: #22c55e;
-            color: #ffffff;
-        }
-        .etapa-card__body {
-            padding: 12px 16px;
-        }
-        .checklist-item-detail {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 10px 14px;
-            background: white;
-            border: 1px solid #e2e8f0;
-            border-radius: 8px;
-            margin-bottom: 8px;
-            transition: all 0.2s;
-            cursor: pointer;
-        }
-        .checklist-item-detail:hover {
-            border-color: #3b82f6;
-            box-shadow: 0 2px 8px rgba(59, 130, 246, 0.1);
-        }
-        .checklist-item-detail.completed {
-            background: #e8eef7;
-            border-color: #193b7c;
-            border-left: 3px solid #193b7c;
-        }
-        .checklist-item-detail.completed .checklist-texto {
-            text-decoration: line-through;
-            color: #193b7c;
-        }
-        .checklist-checkbox-detail {
-            width: 22px;
-            height: 22px;
-            cursor: pointer;
-            accent-color: #193b7c;
-            flex-shrink: 0;
-        }
-        .checklist-texto {
-            flex: 1;
-            font-size: 14px;
-            color: #334155;
-        }
-        .checklist-icon {
-            width: 18px;
-            height: 18px;
-            color: #193b7c;
-            display: none;
-        }
-        .checklist-item-detail.completed .checklist-icon {
-            display: block;
-        }
-        .etapa-empty {
-            text-align: center;
-            padding: 20px;
-            color: #94a3b8;
-            font-style: italic;
-        }
-
         /* ========== LOADING ========== */
         .loading {
             display: flex;
@@ -1627,24 +1492,15 @@
                                             </div>
                                         </div>
                                         <div class="pdca-item__content">
-                                            <div class="pdca-item__value empty" id="view-do" style="display: none;">Não preenchido</div>
-                                            
-                                            <!-- ETAPAS/CHECKLIST -->
-                                            <div class="etapas-section" id="etapas-section" style="display: none;">
-                                                <div class="etapas-section__header">
-                                                    <div class="etapas-section__title">
-                                                        <i data-lucide="list-checks"></i>
-                                                        Etapas do Processo
-                                                    </div>
-                                                    <div class="etapas-section__progress">
-                                                        <div class="etapas-progress-bar">
-                                                            <div class="etapas-progress-fill" id="etapas-progress-fill" style="width: 0%"></div>
-                                                        </div>
-                                                        <span class="etapas-progress-text" id="etapas-progress-text">0%</span>
-                                                    </div>
+                                            <div class="pdca-item__value empty" id="view-do">Não preenchido</div>
+                                            <div id="input-do-wrapper" style="display: none;">
+                                                <div style="margin-bottom: 16px;">
+                                                    <label style="display: block; margin-bottom: 6px; font-weight: 500; color: #334155; font-size: 14px;">Data Real de Início</label>
+                                                    <input type="date" id="input-do-data" style="width: 100%; padding: 10px 12px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 14px; font-family: inherit;">
                                                 </div>
-                                                <div id="etapas-container">
-                                                    <!-- Etapas serão renderizadas aqui -->
+                                                <div>
+                                                    <label style="display: block; margin-bottom: 6px; font-weight: 500; color: #334155; font-size: 14px;">Descrição da Execução</label>
+                                                    <textarea id="input-do" placeholder="Descreva as ações executadas, treinamentos realizados, implementações feitas..."></textarea>
                                                 </div>
                                             </div>
                                         </div>
@@ -1895,193 +1751,6 @@
         const loadingEl = document.getElementById('loading');
         const contentEl = document.getElementById('content');
 
-        // ==================== FUNÇÕES DE ETAPAS/CHECKLIST ====================
-        function renderEtapas() {
-            const etapas = planoData.etapas || [];
-            const etapasSection = document.getElementById('etapas-section');
-            const etapasContainer = document.getElementById('etapas-container');
-            
-            if (!etapas.length) {
-                etapasSection.style.display = 'none';
-                return;
-            }
-            
-            etapasSection.style.display = 'block';
-            
-            // Expandir automaticamente o "Do" para mostrar as etapas
-            const doItem = document.querySelector('.pdca-item[data-step="do"]');
-            if (doItem && !doItem.classList.contains('expanded')) {
-                doItem.classList.add('expanded');
-            }
-            
-            etapasContainer.innerHTML = '';
-            
-            etapas.forEach((etapa, etapaIndex) => {
-                const itens = etapa.itens || [];
-                const concluidos = itens.filter(i => i.concluido).length;
-                const total = itens.length;
-                const percentual = total > 0 ? Math.round((concluidos / total) * 100) : 0;
-                const isComplete = total > 0 && concluidos === total;
-                
-                let itensHtml = '';
-                if (itens.length === 0) {
-                    itensHtml = '<div class="etapa-empty">Nenhum item nesta etapa</div>';
-                } else {
-                    itens.forEach((item, itemIndex) => {
-                        const checked = item.concluido ? 'checked' : '';
-                        const completedClass = item.concluido ? 'completed' : '';
-                        const disabled = !isOwner ? 'disabled' : '';
-                        
-                        itensHtml += `
-                            <div class="checklist-item-detail ${completedClass}" onclick="toggleChecklistItem(${etapaIndex}, ${itemIndex})">
-                                <input type="checkbox" class="checklist-checkbox-detail" ${checked} ${disabled} 
-                                    onclick="event.stopPropagation(); toggleChecklistItem(${etapaIndex}, ${itemIndex})">
-                                <span class="checklist-texto">${item.texto}</span>
-                                <i data-lucide="check-circle-2" class="checklist-icon"></i>
-                            </div>
-                        `;
-                    });
-                }
-                
-                etapasContainer.innerHTML += `
-                    <div class="etapa-card" data-etapa="${etapaIndex}">
-                        <div class="etapa-card__header">
-                            <span class="etapa-card__title">${etapa.nome || 'Etapa ' + (etapaIndex + 1)}</span>
-                            <span class="etapa-card__badge ${isComplete ? 'complete' : ''}">${concluidos}/${total}</span>
-                        </div>
-                        <div class="etapa-card__body">
-                            ${itensHtml}
-                        </div>
-                    </div>
-                `;
-            });
-            
-            atualizarProgressoEtapas();
-            lucide.createIcons();
-        }
-        
-        function atualizarProgressoEtapas() {
-            const etapas = planoData.etapas || [];
-            let totalItens = 0;
-            let itensConcluidos = 0;
-            
-            etapas.forEach(etapa => {
-                const itens = etapa.itens || [];
-                totalItens += itens.length;
-                itensConcluidos += itens.filter(i => i.concluido).length;
-            });
-            
-            // Percentual das etapas (0-100%)
-            const percentualEtapas = totalItens > 0 ? Math.round((itensConcluidos / totalItens) * 100) : 0;
-            
-            // Atualizar barra de progresso das etapas
-            document.getElementById('etapas-progress-fill').style.width = percentualEtapas + '%';
-            document.getElementById('etapas-progress-text').textContent = percentualEtapas + '%';
-            
-            return percentualEtapas;
-        }
-        
-        function calcularProgressoGeral(percentualEtapas) {
-            // PDCA: Plan=25%, Do=50%, Check=75%, Act=100%
-            // As etapas estão no "Do", então contribuem de 25% até 50% (25 pontos)
-            // Progresso base = 25% (Plan sempre preenchido pelo 5W2H)
-            
-            const pdca = planoData.pdca || {};
-            let progressoGeral = 25; // Plan base
-            
-            // Do: adiciona até 25% baseado nas etapas
-            if (percentualEtapas > 0) {
-                progressoGeral = 25 + Math.round((percentualEtapas / 100) * 25);
-            }
-            
-            // Se Check está preenchido, vai para pelo menos 75%
-            if (pdca.check) {
-                progressoGeral = Math.max(progressoGeral, 75);
-            }
-            
-            // Se Act está preenchido, vai para 100%
-            if (pdca.act) {
-                progressoGeral = 100;
-            }
-            
-            return progressoGeral;
-        }
-        
-        window.toggleChecklistItem = async function(etapaIndex, itemIndex) {
-            if (!isOwner) {
-                notificacao.aviso('Atenção', 'Apenas o criador pode marcar itens como concluídos');
-                return;
-            }
-            
-            const etapas = planoData.etapas || [];
-            const etapa = etapas[etapaIndex];
-            if (!etapa || !etapa.itens || !etapa.itens[itemIndex]) return;
-            
-            const item = etapa.itens[itemIndex];
-            const novoStatus = !item.concluido;
-            
-            // Atualizar localmente
-            etapas[etapaIndex].itens[itemIndex].concluido = novoStatus;
-            planoData.etapas = etapas;
-            
-            // Calcular novo progresso das etapas (0-100%)
-            const percentualEtapas = atualizarProgressoEtapas();
-            
-            // Calcular progresso geral (etapas contribuem de 25% a 50%)
-            const progressoGeral = calcularProgressoGeral(percentualEtapas);
-            
-            try {
-                // Salvar no Firebase
-                await updateDoc(doc(db, 'planos-acao', planoId), {
-                    etapas: etapas,
-                    progresso: progressoGeral,
-                    dataAtualizacao: new Date()
-                });
-                
-                // Registrar no histórico
-                const acao = novoStatus ? 'concluído' : 'reaberto';
-                await addDoc(collection(db, 'planos-acao', planoId, 'atualizacoes'), {
-                    tipo: 'checklist',
-                    titulo: `Item ${acao}`,
-                    descricao: `${etapa.nome || 'Etapa ' + (etapaIndex + 1)}: "${item.texto}" foi ${acao}`,
-                    progresso: progressoGeral,
-                    usuario: getUserName(),
-                    data: Timestamp.now()
-                });
-                
-                // Atualizar dados locais
-                planoData.progresso = progressoGeral;
-                
-                // Re-renderizar
-                renderEtapas();
-                await loadAtualizacoes();
-                
-                // Atualizar PDCA badges e sequência
-                updatePDCAProgress();
-                updatePDCASequence();
-                
-                // Atualizar barra de progresso principal
-                document.getElementById('progress-value').textContent = progressoGeral + '%';
-                document.getElementById('progress-fill').style.width = progressoGeral + '%';
-                if (progressoGeral > 15) {
-                    document.getElementById('progress-text').textContent = progressoGeral + '%';
-                }
-                
-                lucide.createIcons();
-                
-                const msg = novoStatus ? 'Item marcado como concluído!' : 'Item reaberto';
-                notificacao.sucesso('Atualizado', msg);
-                
-            } catch (err) {
-                console.error('Erro ao atualizar checklist:', err);
-                // Reverter localmente
-                etapas[etapaIndex].itens[itemIndex].concluido = !novoStatus;
-                planoData.etapas = etapas;
-                renderEtapas();
-                notificacao.erro('Erro', 'Falha ao atualizar item');
-            }
-        };
-
         function fmtDate(d) {
             if (!d) return '-';
             try {
@@ -2207,16 +1876,7 @@
                 }
 
                 planoData = { id: snap.id, ...snap.data() };
-                
-                // Verificar se é owner ou admin
-                let isAdmin = false;
-                try {
-                    const userGroups = JSON.parse(localStorage.getItem('userGroups') || '[]');
-                    isAdmin = userGroups.includes('admin');
-                } catch (e) {
-                    isAdmin = false;
-                }
-                isOwner = (planoData.criadoPor === currentUserId) || isAdmin;
+                isOwner = planoData.criadoPor === currentUserId;
 
                 renderPlano();
                 await loadAtualizacoes();
@@ -2305,9 +1965,6 @@
 
             // PDCA
             renderPDCA();
-            
-            // Etapas/Checklist
-            renderEtapas();
 
             // Controles do criador
             if (isOwner) {
@@ -2319,19 +1976,12 @@
                 
                 // Para itens já preenchidos, expandir e mostrar os campos
                 const pdca = planoData.pdca || {};
-                const hasEtapas = (planoData.etapas || []).length > 0;
-                
-                // DO: sempre expandido (mostra etapas)
-                const doItem = document.querySelector('.pdca-item[data-step="do"]');
-                doItem.classList.add('expanded');
-                document.getElementById('view-do').style.display = 'none';
-                
-                // CHECK e ACT: expandir se já tem valor preenchido
-                ['check', 'act'].forEach(step => {
+                ['do', 'check', 'act'].forEach(step => {
                     const item = document.querySelector(`.pdca-item[data-step="${step}"]`);
                     const wrapper = document.getElementById(`input-${step}-wrapper`);
                     const view = document.getElementById(`view-${step}`);
                     
+                    // Se já tem valor preenchido, expandir automaticamente
                     if (pdca[step]) {
                         item.classList.add('expanded');
                         wrapper.style.display = 'block';
@@ -2351,25 +2001,13 @@
                 
                 // Para não-owners, expandir itens que têm dados preenchidos para visualização
                 const pdca = planoData.pdca || {};
-                const hasEtapas = (planoData.etapas || []).length > 0;
-                
-                // Plan sempre expandido (vem do 5W2H)
-                const planItem = document.querySelector('.pdca-item[data-step="plan"]');
-                planItem.classList.add('expanded');
-                document.getElementById('view-plan').style.display = 'block';
-                
-                // DO: sempre expandido (mostra etapas)
-                const doItem = document.querySelector('.pdca-item[data-step="do"]');
-                doItem.classList.add('expanded');
-                document.getElementById('view-do').style.display = 'none';
-                
-                // CHECK e ACT: expandir se já tem valor preenchido
-                ['check', 'act'].forEach(step => {
+                ['plan', 'do', 'check', 'act'].forEach(step => {
                     const item = document.querySelector(`.pdca-item[data-step="${step}"]`);
                     const view = document.getElementById(`view-${step}`);
                     const wrapper = document.getElementById(`input-${step}-wrapper`);
                     
-                    if (pdca[step]) {
+                    // Plan sempre expandido (vem do 5W2H)
+                    if (step === 'plan' || pdca[step]) {
                         item.classList.add('expanded');
                         view.style.display = 'block';
                         if (wrapper) wrapper.style.display = 'none';
@@ -2401,25 +2039,15 @@
                     displayValue = 'Preenchido pelo planejamento 5W2H acima';
                 }
                 
-                // Para o DO, verificar se etapas estão 100% concluídas
-                if (step === 'do') {
-                    const etapas = planoData.etapas || [];
-                    let totalItens = 0;
-                    let itensConcluidos = 0;
-                    etapas.forEach(etapa => {
-                        const itens = etapa.itens || [];
-                        totalItens += itens.length;
-                        itensConcluidos += itens.filter(i => i.concluido).length;
-                    });
-                    
-                    if (totalItens > 0 && itensConcluidos === totalItens) {
-                        value = 'etapas_completas';
-                        displayValue = `<strong>Etapas concluídas:</strong> ${itensConcluidos}/${totalItens}`;
-                    } else if (totalItens > 0) {
-                        displayValue = `<strong>Etapas em andamento:</strong> ${itensConcluidos}/${totalItens}`;
-                    } else {
-                        displayValue = 'Nenhuma etapa cadastrada';
+                // Para o DO, mostrar data + descrição
+                if (step === 'do' && value) {
+                    let doDisplay = '';
+                    if (pdca.doData) {
+                        const dataFormatada = new Date(pdca.doData + 'T00:00:00').toLocaleDateString('pt-BR');
+                        doDisplay += `<strong>Data de Início:</strong> ${dataFormatada}<br><br>`;
                     }
+                    doDisplay += value;
+                    displayValue = doDisplay;
                 }
                 
                 // Para o CHECK, mostrar resultados + análise
@@ -2449,7 +2077,7 @@
                 }
                 
                 const viewEl = document.getElementById(`view-${step}`);
-                const inputEl = step !== 'do' ? document.getElementById(`input-${step}`) : null;
+                const inputEl = document.getElementById(`input-${step}`);
                 const badgeEl = document.getElementById(`badge-${step}`);
                 const itemEl = document.querySelector(`.pdca-item[data-step="${step}"]`);
                 
@@ -2473,9 +2101,14 @@
                     itemEl.classList.remove('filled');
                 }
                 
-                // Preencher inputs com dados salvos (exceto 'do' que usa etapas)
-                if (step !== 'plan' && step !== 'do') {
+                // Preencher inputs com dados salvos
+                if (step !== 'plan' || pdca[step]) {
                     inputEl.value = pdca[step] || '';
+                }
+                
+                // Preencher campos extras do DO
+                if (step === 'do' && pdca.doData) {
+                    document.getElementById('input-do-data').value = pdca.doData;
                 }
                 
                 // Preencher campos extras do CHECK
@@ -2500,23 +2133,13 @@
             const pdca = planoData.pdca || {};
             const has5W2H = has5W2HData();
             
-            // Verificar valores atuais
+            // Verificar valores atuais dos inputs
             const planFilled = has5W2H;
-            
-            // Verificar se etapas estão 100% concluídas (DO preenchido)
-            const etapas = planoData.etapas || [];
-            let totalItens = 0;
-            let itensConcluidos = 0;
-            etapas.forEach(etapa => {
-                const itens = etapa.itens || [];
-                totalItens += itens.length;
-                itensConcluidos += itens.filter(i => i.concluido).length;
-            });
-            const doFilled = totalItens > 0 && itensConcluidos === totalItens;
-            
+            const doFilled = document.getElementById('input-do').value.trim() !== '';
             const checkFilled = document.getElementById('input-check').value.trim() !== '';
             
             // Wrappers
+            const doWrapper = document.getElementById('input-do-wrapper');
             const checkWrapper = document.getElementById('input-check-wrapper');
             const actWrapper = document.getElementById('input-act-wrapper');
             
@@ -2524,6 +2147,17 @@
             const doItem = document.querySelector('.pdca-item[data-step="do"]');
             const checkItem = document.querySelector('.pdca-item[data-step="check"]');
             const actItem = document.querySelector('.pdca-item[data-step="act"]');
+            
+            // DO: habilitado se Plan estiver preenchido
+            if (planFilled) {
+                doWrapper.classList.remove('pdca-disabled');
+                doItem.classList.remove('pdca-locked');
+                enablePDCAInputs(doWrapper);
+            } else {
+                doWrapper.classList.add('pdca-disabled');
+                doItem.classList.add('pdca-locked');
+                disablePDCAInputs(doWrapper);
+            }
             
             // CHECK: habilitado se Do estiver preenchido
             if (doFilled) {
@@ -2566,19 +2200,11 @@
             
             // Plan vem do 5W2H automaticamente
             const has5W2H = has5W2HData();
+            
+            // Plan sempre vem do 5W2H (não é editável)
             let planValue = has5W2H ? 'filled_by_5w2h' : '';
             
-            // DO vem das etapas - verificar se 100% concluídas
-            const etapas = planoData.etapas || [];
-            let totalItens = 0;
-            let itensConcluidos = 0;
-            etapas.forEach(etapa => {
-                const itens = etapa.itens || [];
-                totalItens += itens.length;
-                itensConcluidos += itens.filter(i => i.concluido).length;
-            });
-            const doValue = (totalItens > 0 && itensConcluidos === totalItens) ? 'etapas_completas' : '';
-            
+            const doValue = isOwner ? document.getElementById('input-do').value.trim() : (pdca.do || '').trim();
             const checkValue = isOwner ? document.getElementById('input-check').value.trim() : (pdca.check || '').trim();
             const actValue = isOwner ? document.getElementById('input-act').value.trim() : (pdca.act || '').trim();
             
@@ -2598,34 +2224,7 @@
                     const badgeEl = document.getElementById(`badge-${step}`);
                     const itemEl = document.querySelector(`.pdca-item[data-step="${step}"]`);
                     
-                    // Para DO, mostrar progresso das etapas
-                    if (step === 'do') {
-                        const etapas = planoData.etapas || [];
-                        let totalItens = 0;
-                        let itensConcluidos = 0;
-                        etapas.forEach(etapa => {
-                            const itens = etapa.itens || [];
-                            totalItens += itens.length;
-                            itensConcluidos += itens.filter(i => i.concluido).length;
-                        });
-                        
-                        if (totalItens > 0 && itensConcluidos === totalItens) {
-                            badgeEl.textContent = 'Concluído';
-                            badgeEl.classList.remove('pending');
-                            badgeEl.classList.add('completed');
-                            itemEl.classList.add('filled');
-                        } else if (itensConcluidos > 0) {
-                            badgeEl.textContent = `${itensConcluidos}/${totalItens}`;
-                            badgeEl.classList.remove('completed');
-                            badgeEl.classList.add('pending');
-                            itemEl.classList.remove('filled');
-                        } else {
-                            badgeEl.textContent = 'Pendente';
-                            badgeEl.classList.remove('completed');
-                            badgeEl.classList.add('pending');
-                            itemEl.classList.remove('filled');
-                        }
-                    } else if (values[index]) {
+                    if (values[index]) {
                         badgeEl.textContent = 'Preenchido';
                         badgeEl.classList.remove('pending');
                         badgeEl.classList.add('completed');
@@ -2649,10 +2248,11 @@
         }
 
         // Atualizar progresso e sequência em tempo real enquanto digita
-        ['check', 'act'].forEach(step => {
+        ['do', 'check', 'act'].forEach(step => {
             document.getElementById(`input-${step}`).addEventListener('input', onPDCAInput);
         });
         // Campos extras também atualizam
+        document.getElementById('input-do-data').addEventListener('change', onPDCAInput);
         document.getElementById('input-check-analise').addEventListener('input', onPDCAInput);
         document.getElementById('input-act-decisao').addEventListener('change', onPDCAInput);
         document.getElementById('input-act-data').addEventListener('change', onPDCAInput);
@@ -2670,6 +2270,8 @@
             try {
                 const pdcaData = {
                     plan: document.getElementById('input-plan').value.trim(),
+                    do: document.getElementById('input-do').value.trim(),
+                    doData: document.getElementById('input-do-data').value || null,
                     check: document.getElementById('input-check').value.trim(),
                     checkAnalise: document.getElementById('input-check-analise').value.trim(),
                     act: document.getElementById('input-act').value.trim(),

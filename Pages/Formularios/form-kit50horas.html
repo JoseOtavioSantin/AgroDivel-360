@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="theme-color" content="#2c2f3f" />
+  <title>Formulário de Kit 50 Horas</title>
+  <link rel="icon" type="image/png" href="/assets/images/iconeaba.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- LIBS EXTERNAS -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  
+  <!-- CSS -->
+  <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+  <link rel="stylesheet" href="/assets/css/style.css">
+  <link rel="stylesheet" href="/assets/css/Pages/Formularios/style-forms.css">
+
+  <style>
+    /* Estilos unificados para o formulário */
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
+    .form-group { display: flex; flex-direction: column; }
+    .form-group label { margin-bottom: 8px; font-weight: 600; color: #333; }
+    .form-group input, .form-group select { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 6px; font-size: 1rem; font-family: inherit; background-color: #fff; box-sizing: border-box; }
+    .form-group input:focus, .form-group select:focus { outline: none; border-color: #193b7c; box-shadow: 0 0 0 2px rgba(25, 59, 124, 0.25 ); }
+    .form-actions { display: flex; justify-content: flex-end; gap: 12px; margin-top: 20px; padding-top: 20px; border-top: 1px solid #eee; }
+    .btn-primary, .btn-secondary { display: inline-flex; align-items: center; justify-content: center; padding: 10px 18px; border: none; border-radius: 6px; text-decoration: none; font-weight: 500; cursor: pointer; transition: background-color 0.3s ease; font-size: 1rem; }
+    .btn-primary { background-color: #193b7c; color: #fff; }
+    .btn-primary:hover { background-color: #132a5a; }
+    .btn-secondary { background-color: #6c757d; color: #fff; }
+    .btn-secondary:hover { background-color: #5a6268; }
+  </style>
+</head>
+<body>
+
+  <nav id="sidebar-placeholder"></nav>
+
+  <section class="home">
+    <div class="text">
+      <h1 id="form-title">Novo Kit 50 Horas</h1>
+      <p id="form-subtitle">Preencha os dados para registrar a entrega de um novo kit.</p>
+    </div>
+
+    <div class="content-card">
+      <div class="content-card-body">
+        <form id="formKit">
+          <div class="form-grid">
+            <div class="form-group"><label for="data-entrega">Data da Entrega</label><input type="date" id="data-entrega" required></div>
+            <div class="form-group"><label for="chassi">Chassi</label><input type="text" id="chassi" placeholder="Nº do Chassi" required></div>
+            <div class="form-group"><label for="modelo">Modelo</label><input type="text" id="modelo" placeholder="Modelo do Veículo"></div>
+            <div class="form-group"><label for="descricao">Descrição</label><input type="text" id="descricao" placeholder="Ex: Kit 50h, Filtro..."></div>
+            <div class="form-group"><label for="os">OS</label><input type="text" id="os" placeholder="Nº da Ordem de Serviço"></div>
+            <div class="form-group"><label for="nf">Nota Fiscal (NF)</label><input type="text" id="nf" placeholder="Nº da Nota Fiscal"></div>
+            <div class="form-group"><label for="quem-entregou">Quem Entregou</label><input type="text" id="quem-entregou" placeholder="Nome do funcionário"></div>
+            <div class="form-group"><label for="quem-pegou">Quem Retirou</label><input type="text" id="quem-pegou" placeholder="Nome do cliente/responsável"></div>
+            <div class="form-group"><label for="status">Status</label><select id="status"><option value="Em Andamento">Em Andamento</option><option value="Concluído">Concluído</option></select></div>
+          </div>
+
+          <div class="form-actions">
+            <a href="/Pages/Controles/Kits50Horas.html" class="btn-secondary">Cancelar</a> 
+            <button type="submit" class="btn-primary" id="btn-salvar">Salvar</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </section>
+
+  <script type="module">
+    import { garantirAutenticacao } from '/assets/js/auth-guard.js';
+    import { getApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getFirestore, collection, doc, addDoc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+    const kitsCollectionName = "kits50Horas";
+    let db;
+    let userData;
+    let editMode = false;
+    let docId = null;
+
+    async function salvarKit(event ) {
+        event.preventDefault();
+
+        const filial = (userData.filial || [])[0];
+        if (!filial && !editMode) {
+            return Swal.fire("Erro de Autenticação", "Filial do usuário não encontrada.", "error");
+        }
+
+        const dadosKit = {
+            dataEntrega: document.getElementById('data-entrega').value,
+            chassi: document.getElementById('chassi').value.trim(),
+            modelo: document.getElementById('modelo').value.trim(),
+            descricao: document.getElementById('descricao').value.trim(),
+            os: document.getElementById('os').value.trim(),
+            nf: document.getElementById('nf').value.trim(),
+            quemEntregou: document.getElementById('quem-entregou').value.trim(),
+            quemPegou: document.getElementById('quem-pegou').value.trim(),
+            status: document.getElementById('status').value,
+        };
+
+        if (!dadosKit.dataEntrega || !dadosKit.chassi) {
+            return Swal.fire("Atenção", "Os campos 'Data da Entrega' e 'Chassi' são obrigatórios.", "warning");
+        }
+
+        Swal.fire({ title: 'Salvando...', text: 'Aguarde...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+
+        try {
+            if (editMode) {
+                const docRef = doc(db, kitsCollectionName, docId);
+                await updateDoc(docRef, dadosKit);
+                await Swal.fire('Sucesso!', 'Kit atualizado com sucesso!', 'success');
+            } else {
+                dadosKit.filial = filial.toLowerCase().trim(); // Adiciona filial apenas na criação
+                await addDoc(collection(db, kitsCollectionName), dadosKit);
+                await Swal.fire('Sucesso!', 'Novo kit salvo com sucesso!', 'success');
+            }
+            window.location.href = '/Pages/Controles/Kits50Horas.html';
+        } catch (error) {
+            Swal.fire('Erro!', `Falha ao salvar: ${error.message}`, 'error');
+        }
+    }
+
+    async function carregarDadosParaEdicao(id) {
+        const docRef = doc(db, kitsCollectionName, id);
+        const docSnap = await getDoc(docRef);
+
+        if (docSnap.exists()) {
+            const data = docSnap.data();
+            document.getElementById('data-entrega').value = data.dataEntrega || '';
+            document.getElementById('chassi').value = data.chassi || '';
+            document.getElementById('modelo').value = data.modelo || '';
+            document.getElementById('descricao').value = data.descricao || '';
+            document.getElementById('os').value = data.os || '';
+            document.getElementById('nf').value = data.nf || '';
+            document.getElementById('quem-entregou').value = data.quemEntregou || '';
+            document.getElementById('quem-pegou').value = data.quemPegou || '';
+            document.getElementById('status').value = data.status || 'Em Andamento';
+        } else {
+            Swal.fire('Erro', 'Kit não encontrado. Redirecionando para a lista.', 'error');
+            window.location.href = '/Pages/Controles/Kits50Horas.html';
+        }
+    }
+
+    async function iniciarPagina() {
+        try {
+            userData = await garantirAutenticacao();
+            const app = getApp();
+            db = getFirestore(app);
+
+            const urlParams = new URLSearchParams(window.location.search);
+            docId = urlParams.get('id');
+
+            if (docId) {
+                editMode = true;
+                document.getElementById('form-title').textContent = 'Editar Kit 50 Horas';
+                document.getElementById('form-subtitle').textContent = 'Altere os dados do kit abaixo.';
+                document.getElementById('btn-salvar').textContent = 'Salvar Alterações';
+                await carregarDadosParaEdicao(docId);
+            } else {
+                document.getElementById('data-entrega').valueAsDate = new Date();
+            }
+
+            document.getElementById('formKit').addEventListener('submit', salvarKit);
+        } catch (error) {
+            console.error("Falha na inicialização da página:", error);
+            document.body.innerHTML = `<div class="error-container">Ocorreu um erro ao carregar. Verifique se está logado e tente novamente.</div>`;
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', iniciarPagina);
+  </script>
+
+  <!-- Scripts Globais -->
+  <script type="module" src="/assets/js/firebase-config.js"></script>
+  <script type="module" src="/assets/js/auth.js"></script>
+  <script src="/assets/js/main.js"></script> 
+  <script src="/assets/js/components/Sidebar.js"></script>
+
+</body>
+</html>

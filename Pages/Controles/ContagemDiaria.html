@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Controle e Análise de Estoque</title>
+    <link rel="icon" type="image/png" href="/assets/images/iconeaba.png">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#2c2f3f" />
+
+    <!-- LIBS EXTERNAS -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://npmcdn.com/flatpickr/dist/l10n/pt.js"></script>
+    
+    <!-- CSS -->
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <link rel="stylesheet" href="/assets/css/style.css">
+    <link rel="stylesheet" href="/assets/css/Pages/Dashboard/Principal.css">
+
+    <style>
+        /* Estilos específicos da página */
+        .sobra-estoque td { background-color: #2c4a3b !important; }
+        .falta-estoque td { background-color: #4a2c2c !important; }
+
+        .tabela-input {
+            background-color: transparent; color: white; border: 1px solid #555;
+            border-radius: 4px; padding: 4px 6px; width: 80px; text-align: center;
+        }
+        .tabela-input:focus { outline: none; border-color: #009bd6; background-color: #3a3f5c; }
+
+        /* Estilos para o modal de análise */
+        #analise-kpis {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr ));
+            gap: 15px; margin-bottom: 20px;
+        }
+        .kpi-card { background-color: #1e1e2f; padding: 15px; border-radius: 8px; text-align: center; }
+        .kpi-card .value { font-size: 24px; font-weight: bold; }
+        .kpi-card .value.positive { color: #40c057; }
+        .kpi-card .value.negative { color: #fa5252; }
+        .kpi-card .label { font-size: 12px; color: #aaa; margin-top: 5px; }
+
+        /* --- CORREÇÃO 1: Alinhamento do cabeçalho --- */
+        .content-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .card-percent {
+        font-size: 16px; /* Tamanho menor para a porcentagem */
+        font-weight: normal; /* Peso mais leve */
+        color: #bdc1d1; /* Cor um pouco mais suave */
+        margin-left: 8px; /* Espaçamento */
+        }
+
+
+    </style>
+</head>
+<body>
+
+    <nav id="sidebar-placeholder"></nav>
+
+    <!-- Conteúdo Principal da Página -->
+    <section class="home">
+        <div class="text">
+            <h1>Controle e Análise de Estoque</h1>
+            <p id="dynamic-title">Carregando...</p>
+        </div>
+
+        <!-- CARDS DE RESUMO -->
+        <div class="dashboard-cards">
+            <div class="dashboard-card blue-card">
+                <h2 id="total-itens">0</h2>
+                <p><i data-lucide="package"></i> Total de Itens</p>
+            </div>
+            
+            <div class="dashboard-card green-card">
+                <h2><span id="sobra-estoque">0</span> <span class="card-percent" id="sobra-percent"></span></h2>
+                <p><i data-lucide="arrow-up-circle"></i> Itens com Sobra</p>
+            </div>
+            
+            <div class="dashboard-card red-card">
+                <h2><span id="falta-estoque">0</span> <span class="card-percent" id="falta-percent"></span></h2>
+                <p><i data-lucide="arrow-down-circle"></i> Itens com Falta</p>
+            </div>
+
+            <div class="dashboard-card green-card">
+                <h2 id="valor-sobra">R$ 0,00</h2>
+                <p><i data-lucide="trending-up"></i> Valor em Sobra</p>
+            </div>
+
+            <div class="dashboard-card red-card">
+                <h2 id="valor-falta">R$ 0,00</h2>
+                <p><i data-lucide="trending-down"></i> Valor em Falta</p>
+            </div>
+        </div>
+
+        <!-- CONTAINER PRINCIPAL DO DASHBOARD -->
+        <div class="content-card">
+            <div class="content-card-header">
+                <h3>Contagem Diária</h3>
+                <div class="header-actions">
+                    <button class="btn-acao" id="btn-download-modelo" title="Baixar modelo de planilha"><i data-lucide="download"></i></button>
+                    <label for="file-input" class="btn-acao" title="Carregar Planilha"><i data-lucide="upload"></i></label>
+                    <input type="file" id="file-input" accept=".csv, .xlsx, .xls" style="display:none;">
+                </div>
+            </div>
+            <div class="content-card-body">
+                <div id="loader-overlay" class="loader-overlay"><div class="loader"></div></div>
+                <div class="filters">
+                    <input id="filtro-codigo" type="text" placeholder="Buscar código..." />
+                    <input id="filtro-descricao" type="text" placeholder="Buscar descrição..." />
+                    <select id="filtro-status">
+                        <option value="">Todos os Status</option>
+                        <option value="ok">Contagem OK</option>
+                        <option value="sobra">Sobra de Estoque (+)</option>
+                        <option value="falta">Falta de Estoque (-)</option>
+                    </select>
+                    <input type="text" id="filtro-data" placeholder="Selecione a data ou período">
+                </div>
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Cód. Produto</th><th>Descrição</th><th>Prateleira</th><th>Estoque Sistema</th>
+                                <th>Estoque Contado</th><th>Diferença</th><th>Valor Unitário</th><th>Valor Diferença</th><th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabela-estoque"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- MODAL DE ANÁLISE -->
+    <div id="analise-modal" class="modal-overlay">
+        <div class="modal-container" style="max-width: 800px;">
+            <div class="modal-header">
+                <h3>Análise de Item</h3>
+                <button class="modal-close-btn" onclick="fecharModal('analise-modal')">&times;</button>
+            </div>
+            <!-- --- CORREÇÃO 2: Adicionada barra de rolagem ao corpo do modal --- -->
+            <div class="modal-body" style="max-height: 70vh; overflow-y: auto; padding-right: 15px;">
+                <div id="analise-info"></div>
+                <div id="analise-kpis"></div>
+                <div id="grafico-container" style="position: relative; height: 300px; margin-bottom: 20px;">
+                    <canvas id="analise-grafico"></canvas>
+                </div>
+                <div id="analise-tabela-container" class="table-wrapper" style="max-height: 250px; overflow-y: auto;"></div>
+            </div>
+        </div>
+    </div>
+    
+    <script type="module">
+        // Seu script JavaScript completo aqui (o mesmo da resposta anterior, já corrigido)
+        import { garantirAutenticacao } from '/assets/js/auth-guard.js';
+        import { getApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+        import { getFirestore, collection, onSnapshot, query, where, doc, updateDoc, writeBatch } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+        const app = getApp( );
+        const db = getFirestore(app);
+        const inventarioCollection = collection(db, 'inventario');
+
+        const loaderOverlay = document.getElementById('loader-overlay');
+        const tabelaBody = document.getElementById('tabela-estoque');
+        let dadosLocais = {};
+        let unsubscribe = null;
+        let userData = null;
+        let graficoAnalise = null;
+
+        async function iniciarPagina() {
+            try {
+                userData = await garantirAutenticacao();
+                if (!userData?.filial?.length) throw new Error("Usuário não autenticado ou sem filial.");
+                
+                document.getElementById('dynamic-title').textContent = `Filial: ${userData.filial.join(', ')}`;
+                setupListeners();
+                escutarAtualizacoesInventario();
+            } catch (error) {
+                console.error("Falha na autenticação:", error);
+                window.location.href = '/index.html';
+            }
+        }
+        
+        function setupListeners() {
+            flatpickr("#filtro-data", { locale: "pt", dateFormat: "d/m/Y", mode: "range", onChange: aplicarFiltros });
+            document.getElementById('filtro-codigo').addEventListener('input', aplicarFiltros);
+            document.getElementById('filtro-descricao').addEventListener('input', aplicarFiltros);
+            document.getElementById('filtro-status').addEventListener('change', aplicarFiltros);
+            document.getElementById('file-input').addEventListener('change', handleFileUpload);
+            document.getElementById('btn-download-modelo').addEventListener('click', () => {
+                const csvContent = "Cod. produto,Descrição,Prateleira,Estoque Hoje Quantidade\n001,Produto Exemplo,A1,10\n002,Outro Produto,B2,5";
+                const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                const link = document.createElement("a");
+                const url = URL.createObjectURL(blob);
+                link.setAttribute("href", url);
+                link.setAttribute("download", "modelo_inventario.csv");
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            });
+            tabelaBody.addEventListener('change', handleTableInputChange);
+            tabelaBody.addEventListener('click', handleTableClick);
+        }
+
+        window.fecharModal = (modalId) => document.getElementById(modalId).classList.remove('visible');
+
+        function escutarAtualizacoesInventario() {
+            loaderOverlay.style.display = 'flex';
+            if (unsubscribe) unsubscribe();
+
+            const q = query(inventarioCollection, where('info.filial', 'in', userData.filial));
+            unsubscribe = onSnapshot(q, (snapshot) => {
+                dadosLocais = {};
+                snapshot.forEach(doc => { dadosLocais[doc.id] = doc.data(); });
+                console.log("Dados sincronizados para a(s) filial(is):", userData.filial.join(', '));
+                popularFiltroData();
+                aplicarFiltros();
+                loaderOverlay.style.display = 'none';
+            }, (error) => {
+                console.error("Erro ao escutar atualizações:", error);
+                loaderOverlay.style.display = 'none';
+            });
+        }
+
+async function handleFileUpload(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    
+    loaderOverlay.style.display = 'flex';
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+        try {
+            const data = new Uint8Array(e.target.result);
+            const workbook = XLSX.read(data, { type: 'array' });
+            const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+            
+            const dataRows = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: "" });
+            
+            const linhasParaProcessar = dataRows.slice(1); 
+
+            const matchData = file.name.match(/(\d{2}-\d{2}-\d{4})/);
+            const dataContagem = matchData ? matchData[0].replace(/-/g, '/') : new Date().toLocaleDateString('pt-BR');
+            
+            const batch = writeBatch(db);
+            linhasParaProcessar.forEach((row, index) => {
+                if (!row || !row[1]) return;
+
+                const codigoOriginal = (row[1] || '').toString().trim();
+
+                // --- SOLUÇÃO APLICADA AQUI ---
+                // 1. Lê o número como inteiro.
+                let estoqueLido = parseInt(String(row[12] || '0'), 10) || 0;
+                
+                // 2. Divide por 100 para corrigir a multiplicação.
+                const estoqueDoSistema = estoqueLido / 100;
+                // --- FIM DA SOLUÇÃO ---
+
+                const codigoSeguro = codigoOriginal.replace(/\//g, '-');
+                const docRef = doc(inventarioCollection, codigoSeguro);
+                
+                const itemLocal = dadosLocais[codigoSeguro];
+                const historico = itemLocal?.historico || [];
+                const registroIndex = historico.findIndex(h => h.data === dataContagem);
+
+                const novoRegistro = {
+                    data: dataContagem,
+                    estoqueSistema: estoqueDoSistema,
+                    estoqueContado: estoqueDoSistema,
+                    user: 'upload'
+                };
+
+                if (registroIndex > -1) {
+                    historico[registroIndex] = { ...historico[registroIndex], ...novoRegistro };
+                } else {
+                    historico.push(novoRegistro);
+}
+
+                batch.set(docRef, {
+                    info: {
+                        descricao: (row[2] || '').toString().trim(),
+                        prateleira: (row[3] || '').toString().trim(),
+                        codigoOriginal: codigoOriginal,
+                        filial: userData.filial[0]
+                    },
+                    historico: historico
+                }, { merge: true });
+            });
+
+            await batch.commit();
+            Swal.fire('Sucesso', 'Dados carregados e corrigidos!', 'success');
+        } catch (error) {
+            console.error("Erro ao processar o arquivo:", error);
+            Swal.fire('Erro', `Ocorreu um erro: ${error.message}`, 'error');
+        } finally {
+            loaderOverlay.style.display = 'none';
+            event.target.value = '';
+        }
+    };
+    reader.readAsArrayBuffer(file);
+}
+
+
+        
+        async function handleTableInputChange(e) {
+            if (!e.target.classList.contains('tabela-input')) return;
+            const codigoSeguro = e.target.dataset.codigo;
+            const dataContagem = e.target.dataset.data;
+            const item = dadosLocais[codigoSeguro];
+            if (!item) return;
+
+            const registroIndex = item.historico.findIndex(h => h.data === dataContagem);
+            if (registroIndex === -1) return;
+
+            const linha = e.target.closest('tr');
+            const novoEstoqueContado = parseInt(linha.querySelector('.quantidade-input').value) || 0;
+            const novoValorUnitario = parseFloat(linha.querySelector('.valor-input').value) || 0;
+
+            item.historico[registroIndex].estoqueContado = novoEstoqueContado;
+            item.historico[registroIndex].valorUnitario = novoValorUnitario;
+            item.historico[registroIndex].user = userData.nome || 'manual';
+            
+            const docRef = doc(inventarioCollection, codigoSeguro);
+            try {
+                await updateDoc(docRef, { historico: item.historico });
+                const diferenca = novoEstoqueContado - item.historico[registroIndex].estoqueSistema;
+                linha.querySelector('.diferenca-qtd').textContent = `${diferenca > 0 ? '+' : ''}${diferenca}`;
+                linha.querySelector('.diferenca-valor').textContent = formatarMoeda(diferenca * novoValorUnitario);
+                linha.className = diferenca > 0 ? 'sobra-estoque' : (diferenca < 0 ? 'falta-estoque' : '');
+                aplicarFiltros();
+            } catch (err) {
+                console.error("Erro ao atualizar:", err);
+            }
+        }
+
+        function handleTableClick(e) {
+            const btn = e.target.closest('.analise-btn');
+            if (btn) abrirModalAnalise(btn.dataset.codigo);
+        }
+
+        function popularFiltroData() {
+            const datas = new Set();
+            Object.values(dadosLocais).forEach(item => item.historico?.forEach(h => datas.add(h.data)));
+            const fp = document.getElementById("filtro-data")._flatpickr;
+            if (!fp) return;
+            fp.set("enable", [d => datas.has(d.toLocaleDateString('pt-BR'))]);
+            const ultimaData = Array.from(datas).sort((a, b) => new Date(b.split('/').reverse().join('-')) - new Date(a.split('/').reverse().join('-')))[0];
+            if (ultimaData && !fp.selectedDates.length) fp.setDate(ultimaData, true);
+        }
+        
+        function aplicarFiltros() {
+            const codigoFiltro = document.getElementById('filtro-codigo').value.toLowerCase();
+            const descricaoFiltro = document.getElementById('filtro-descricao').value.toLowerCase();
+            const statusFiltro = document.getElementById('filtro-status').value;
+            const periodoSelecionado = document.getElementById("filtro-data").value;
+            
+            let dadosParaFiltrar = [];
+            if (periodoSelecionado.includes(" até ")) {
+                const [inicio, fim] = periodoSelecionado.split(" até ").map(d => new Date(d.split('/').reverse().join('-')));
+                dadosParaFiltrar = Object.entries(dadosLocais).map(([codigo, item]) => {
+                    const registros = item.historico?.filter(h => {
+                        const dataH = new Date(h.data.split('/').reverse().join('-'));
+                        return dataH >= inicio && dataH <= fim;
+                    });
+                    if (!registros?.length) return null;
+                    const maisRecente = registros.sort((a, b) => new Date(b.data.split('/').reverse().join('-')) - new Date(a.data.split('/').reverse().join('-')))[0];
+                    return { codigoSeguro: codigo, ...item.info, ...maisRecente };
+                }).filter(Boolean);
+            } else if (periodoSelecionado) {
+                dadosParaFiltrar = Object.entries(dadosLocais).map(([codigo, item]) => {
+                    const registro = item.historico?.find(h => h.data === periodoSelecionado);
+                    return registro ? { codigoSeguro: codigo, ...item.info, ...registro } : null;
+                }).filter(Boolean);
+            }
+
+            const dadosFiltrados = dadosParaFiltrar.filter(item => {
+                const diff = (item.estoqueContado ?? item.estoqueSistema) - item.estoqueSistema;
+                const statusOk = (statusFiltro === 'ok' && diff === 0) || (statusFiltro === 'sobra' && diff > 0) || (statusFiltro === 'falta' && diff < 0) || !statusFiltro;
+                return statusOk && item.codigoOriginal.toLowerCase().includes(codigoFiltro) && item.descricao.toLowerCase().includes(descricaoFiltro);
+            });
+
+            renderizarTabela(dadosFiltrados);
+            atualizarCardsGeral(dadosFiltrados);
+        }
+
+        function renderizarTabela(dados) {
+            tabelaBody.innerHTML = '';
+            dados.forEach(item => {
+                const tr = document.createElement('tr');
+                const estoqueContado = item.estoqueContado ?? item.estoqueSistema;
+                const diferenca = estoqueContado - item.estoqueSistema;
+                const valorUnitario = item.valorUnitario || 0;
+                tr.className = diferenca > 0 ? 'sobra-estoque' : (diferenca < 0 ? 'falta-estoque' : '');
+                tr.innerHTML = `
+                    <td>${item.codigoOriginal}</td><td>${item.descricao}</td><td>${item.prateleira || '-'}</td>
+                    <td style="text-align: center;">${item.estoqueSistema}</td>
+                    <td style="text-align: center;"><input type="number" class="tabela-input quantidade-input" value="${estoqueContado}" data-codigo="${item.codigoSeguro}" data-data="${item.data}"></td>
+                    <td class="diferenca-qtd" style="text-align: center; font-weight: bold;">${diferenca > 0 ? '+' : ''}${diferenca}</td>
+                    <td style="text-align: center;"><input type="number" class="tabela-input valor-input" value="${valorUnitario.toFixed(2)}" step="0.01" data-codigo="${item.codigoSeguro}" data-data="${item.data}"></td>
+                    <td class="diferenca-valor" style="text-align: center; font-weight: bold;">${formatarMoeda(diferenca * valorUnitario)}</td>
+                    <td style="text-align: center;"><button class="btn-acao analise-btn" title="Analisar Histórico" data-codigo="${item.codigoSeguro}"><i data-lucide="area-chart"></i></button></td>`;
+                tabelaBody.appendChild(tr);
+            });
+            lucide.createIcons();
+        }
+
+        function atualizarCardsGeral(dadosExibidos) {
+            if (!dadosExibidos) return;
+
+            const totalItens = dadosExibidos.length;
+            const itensComSobra = dadosExibidos.filter(d => d.estoqueContado > d.estoqueSistema).length;
+            const itensComFalta = dadosExibidos.filter(d => d.estoqueContado < d.estoqueSistema).length;
+            const valorSobra = dadosExibidos.reduce((acc, d) => d.estoqueContado > d.estoqueSistema ? acc + (d.estoqueContado - d.estoqueSistema) * (d.valorUnitario || 0) : acc, 0);
+            const valorFalta = dadosExibidos.reduce((acc, d) => d.estoqueContado < d.estoqueSistema ? acc + (d.estoqueSistema - d.estoqueContado) * (d.valorUnitario || 0) : acc, 0);
+
+            // --- CÁLCULO E ATUALIZAÇÃO DAS PORCENTAGENS ---
+            // Calcula a porcentagem, tratando a divisão por zero (caso não haja itens)
+            const percentSobra = totalItens > 0 ? (itensComSobra / totalItens) * 100 : 0;
+            const percentFalta = totalItens > 0 ? (itensComFalta / totalItens) * 100 : 0;
+
+            // Atualiza os elementos no HTML
+            document.getElementById('total-itens').textContent = totalItens;
+            
+            document.getElementById('sobra-estoque').textContent = itensComSobra;
+            document.getElementById('falta-estoque').textContent = itensComFalta;
+            
+            // Exibe a porcentagem formatada (ex: "(87%)")
+            document.getElementById('sobra-percent').textContent = `(${percentSobra.toFixed(0)}%)`;
+            document.getElementById('falta-percent').textContent = `(${percentFalta.toFixed(0)}%)`;
+
+            document.getElementById('valor-sobra').textContent = formatarMoeda(valorSobra);
+            document.getElementById('valor-falta').textContent = formatarMoeda(valorFalta);
+        }
+
+        function formatarMoeda(valor) { return valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }); }
+
+        function abrirModalAnalise(codigoSeguro) {
+            const item = dadosLocais[codigoSeguro];
+            if (!item?.historico) return;
+
+            document.getElementById('analise-info').innerHTML = `<p><strong>Código:</strong> ${item.info.codigoOriginal}</p><p><strong>Descrição:</strong> ${item.info.descricao}</p><p><strong>Filial:</strong> ${item.info.filial || 'N/A'}</p>`;
+            
+            const historico = [...item.historico].sort((a, b) => new Date(a.data.split('/').reverse().join('-')) - new Date(b.data.split('/').reverse().join('-')));
+            const ultimo = historico[historico.length - 1];
+            const diffAtual = ultimo.estoqueContado - ultimo.estoqueSistema;
+            
+            document.getElementById('analise-kpis').innerHTML = `
+                <div class="kpi-card"><div class="value">${historico.length}</div><div class="label">Registros</div></div>
+                <div class="kpi-card"><div class="value ${diffAtual > 0 ? 'positive' : diffAtual < 0 ? 'negative' : ''}">${diffAtual > 0 ? '+' : ''}${diffAtual}</div><div class="label">Diferença Atual</div></div>
+                <div class="kpi-card"><div class="value">${(historico.reduce((s, h) => s + h.estoqueSistema, 0) / historico.length).toFixed(1)}</div><div class="label">Média Sistema</div></div>`;
+
+            document.getElementById('analise-tabela-container').innerHTML = `
+                <h4 style="margin-top: 20px; margin-bottom: 10px;">Histórico de Contagens</h4>
+                <table><thead><tr><th>Data</th><th>Sistema</th><th>Contado</th><th>Diferença</th></tr></thead><tbody>
+                ${[...historico].reverse().map(h => {
+                    const diff = h.estoqueContado - h.estoqueSistema;
+                    return `<tr class="${diff > 0 ? 'sobra-estoque' : diff < 0 ? 'falta-estoque' : ''}"><td>${h.data}</td><td style="text-align:center;">${h.estoqueSistema}</td><td style="text-align:center;">${h.estoqueContado}</td><td style="text-align:center;font-weight:bold;">${diff > 0 ? '+' : ''}${diff}</td></tr>`;
+                }).join('')}
+                </tbody></table>`;
+
+            const ctx = document.getElementById('analise-grafico').getContext('2d');
+            if (graficoAnalise) graficoAnalise.destroy();
+            graficoAnalise = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: historico.map(h => h.data),
+                    datasets: [
+                        { label: 'Estoque Sistema', data: historico.map(h => h.estoqueSistema), borderColor: '#36a2eb', tension: 0.1 },
+                        { label: 'Estoque Contado', data: historico.map(h => h.estoqueContado), borderColor: '#ff6384', tension: 0.1 }
+                    ]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: 'white' } } }, scales: { x: { ticks: { color: 'white' } }, y: { ticks: { color: 'white' } } } }
+            });
+
+            document.getElementById('analise-modal').classList.add('visible');
+        }
+
+        // Inicia a aplicação
+        iniciarPagina();
+    </script>
+    
+    <!-- Scripts Globais -->
+    <script type="module" src="/assets/js/firebase-config.js"></script>
+    <script src="/assets/js/main.js"></script> 
+    <script src="/assets/js/components/Sidebar.js"></script>
+    <script type="module" src="/assets/js/auth.js"></script>
+</body>
+</html>

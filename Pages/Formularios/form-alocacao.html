@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="theme-color" content="#2c2f3f" />
+  <title>Formulário de Alocação de Ferramenta</title>
+  <link rel="icon" type="image/png" href="/assets/images/iconeaba.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- LIBS EXTERNAS -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  
+  <!-- TOM SELECT (PARA BUSCA AVANÇADA ) -->
+  <link href="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/css/tom-select.bootstrap5.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/js/tom-select.complete.min.js"></script>
+  
+  <!-- CSS -->
+  <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+  <link rel="stylesheet" href="/assets/css/style.css">
+  <link rel="stylesheet" href="/assets/css/Pages/Formularios/style-forms.css">
+  <link rel="stylesheet" href="/assets/css/Pages/Formularios/form-alocacao.css"> <!-- CSS específico -->
+
+</head>
+<body>
+
+  <nav id="sidebar-placeholder"></nav>
+
+  <section class="home">
+    <div class="text">
+      <h1 id="form-title">Alocar Nova Ferramenta</h1>
+      <p id="form-subtitle">Preencha os dados abaixo para registrar a alocação.</p>
+    </div>
+
+    <div class="content-card">
+      <div class="content-card-body">
+        <form id="form-alocacao">
+          <!-- Linha 1: Filial (para filtrar ferramentas e técnicos ) -->
+          <div class="form-group">
+            <label for="filtro-filial">Filtrar por Filial</label>
+            <select id="filtro-filial">
+                <option value="">Todas as Filiais</option>
+                <option value="CAMPOS NOVOS">Campos Novos</option>
+                <option value="RIO DO SUL">Rio do Sul</option>
+                <option value="LAGES">Lages</option>
+            </select>
+          </div>
+
+          <!-- Linha 2: Ferramenta (com busca usando Tom Select) -->
+          <div class="form-group">
+            <label for="ferramenta-select">Ferramenta (digite o código ou nome)</label>
+            <select id="ferramenta-select" placeholder="Digite para buscar..." required></select>
+            <div id="info-disponibilidade"></div>
+          </div>
+
+          <!-- Área para exibir imagens da ferramenta -->
+          <div id="ferramenta-imagens-container" class="form-group" style="display: none;">
+            <label>Imagens da Ferramenta</label>
+            <div id="ferramenta-imagens">
+                <!-- As imagens serão inseridas aqui pelo JavaScript -->
+            </div>
+          </div>
+
+          <!-- Linha 3: Ordem de Serviço -->
+          <div class="form-group">
+            <label for="ordem-servico">Ordem de Serviço (OS)</label>
+            <input type="text" id="ordem-servico" required placeholder="Ex: 1050">
+          </div>
+
+          <!-- Linha 4: Técnico -->
+          <div class="form-group">
+            <label for="tecnico-select">Técnico Responsável</label>
+            <select id="tecnico-select" required>
+                <option value="">Selecione um técnico...</option>
+            </select>
+          </div>
+
+          <!-- Linha 5: Data da Alocação -->
+          <div class="form-group">
+            <label for="data-alocacao">Data da Alocação</label>
+            <input type="date" id="data-alocacao" required>
+          </div>
+
+          <!-- Linha 6: Responsável pelo Lançamento (Automático) -->
+          <div class="form-group">
+            <label for="responsavel-lancamento">Responsável pelo Lançamento</label>
+            <input type="text" id="responsavel-lancamento" readonly style="background-color: #adafb8; cursor: not-allowed;">
+          </div>
+
+          <!-- BOTÕES DE AÇÃO -->
+          <div class="form-actions">
+            <a href="/Pages/Controles/ControleFerramentas.html" class="btn-secondary">Cancelar</a> 
+            <button type="submit" class="btn-primary" id="btn-salvar">Alocar Ferramenta</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </section>
+
+  <!-- Scripts Globais -->
+  <script type="module" src="/assets/js/firebase-config.js"></script>
+  <script type="module" src="/assets/js/auth.js"></script>
+  <script src="/assets/js/main.js"></script> 
+  <script src="/assets/js/components/Sidebar.js"></script>
+
+  <!-- Script Específico da Página -->
+  <script type="module" src="/assets/js/Formularios/form-alocacao.js"></script>
+
+</body>
+</html>

@@ -174,40 +174,6 @@
       box-shadow: 0 4px 12px rgba(25, 59, 124, 0.25);
     }
 
-    .btn-enviar-email {
-      width: 100%;
-      padding: 10px;
-      background: linear-gradient(135deg, #059669 0%, #047857 100%);
-      color: white;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      font-weight: 600;
-      font-size: 11px;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      transition: all 0.3s;
-      margin-bottom: 12px;
-    }
-
-    .btn-enviar-email:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(5, 150, 105, 0.25);
-    }
-
-    .btn-enviar-email:disabled {
-      background: #9ca3af;
-      cursor: not-allowed;
-      transform: none;
-    }
-
-    .botoes-acoes {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      margin-bottom: 12px;
-    }
-
     /* CHAT */
     .chat-header {
       background: white;
@@ -240,11 +206,6 @@
       flex-direction: column;
       gap: 3px;
       margin-bottom: 8px;
-      position: relative;
-    }
-
-    .mensagem-grupo.selecionada .mensagem-bubble {
-      box-shadow: 0 0 0 2px #193b7c;
     }
 
     .mensagem-grupo.mensagem-usuario {
@@ -255,72 +216,12 @@
       align-items: flex-end;
     }
 
-    /* Container da mensagem com botão */
-    .mensagem-content-row {
-      display: flex;
-      align-items: flex-end;
-      gap: 6px;
-      max-width: 80%;
-    }
-
-    .mensagem-usuario .mensagem-content-row {
-      flex-direction: row;
-    }
-
-    .mensagem-suporte .mensagem-content-row {
-      flex-direction: row-reverse;
-    }
-
-    /* Botão de responder */
-    .btn-responder {
-      opacity: 0;
-      background: #f3f4f6;
-      border: none;
-      width: 28px;
-      height: 28px;
-      border-radius: 50%;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: all 0.2s;
-      flex-shrink: 0;
-    }
-
-    .mensagem-content-row:hover .btn-responder {
-      opacity: 1;
-    }
-
-    .btn-responder:hover {
-      background: #e5e7eb;
-    }
-
-    .btn-responder i {
-      font-size: 14px;
-      color: #6b7280;
-    }
-
     .mensagem-bubble {
-      max-width: 100%;
-      min-width: 100px;
+      max-width: 75%;
       padding: 10px 14px;
       border-radius: 12px;
       font-size: 13px;
       line-height: 1.4;
-      transition: all 0.2s;
-      overflow: hidden;
-      word-wrap: break-word;
-      flex-shrink: 1;
-    }
-
-    /* Quando tem áudio, aumenta a largura mínima */
-    .mensagem-bubble:has(.mensagem-audio) {
-      min-width: 260px;
-    }
-
-    /* Quando tem imagem, ajusta o tamanho */
-    .mensagem-bubble:has(.mensagem-imagem) {
-      padding: 6px;
     }
 
     .mensagem-usuario .mensagem-bubble {
@@ -333,175 +234,6 @@
       background: #193b7c;
       color: white;
       border-radius: 12px 12px 2px 12px;
-    }
-
-    /* Citação dentro da mensagem */
-    .mensagem-citacao {
-      background: rgba(0,0,0,0.1);
-      border-left: 3px solid rgba(255,255,255,0.5);
-      padding: 6px 10px;
-      margin-bottom: 8px;
-      border-radius: 4px;
-      font-size: 12px;
-      cursor: pointer;
-    }
-
-    .mensagem-usuario .mensagem-citacao {
-      background: rgba(25, 59, 124, 0.1);
-      border-left-color: #193b7c;
-    }
-
-    .mensagem-citacao-autor {
-      font-weight: 600;
-      font-size: 11px;
-      margin-bottom: 2px;
-      color: #193b7c;
-    }
-
-    .mensagem-suporte .mensagem-citacao-autor {
-      color: rgba(255,255,255,0.9);
-    }
-
-    .mensagem-citacao-texto {
-      opacity: 0.85;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      max-width: 200px;
-    }
-
-    /* Área de respondendo */
-    .respondendo-area {
-      display: none;
-      background: #f8fafc;
-      border-left: 4px solid #193b7c;
-      padding: 10px 12px;
-      margin-bottom: 8px;
-      border-radius: 0 8px 8px 0;
-      position: relative;
-    }
-
-    .respondendo-area.ativo {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .respondendo-thumb {
-      width: 40px;
-      height: 40px;
-      border-radius: 6px;
-      object-fit: cover;
-      flex-shrink: 0;
-    }
-
-    .respondendo-info {
-      flex: 1;
-      overflow: hidden;
-      min-width: 0;
-    }
-
-    .respondendo-autor {
-      font-size: 12px;
-      font-weight: 600;
-      color: #193b7c;
-      margin-bottom: 2px;
-    }
-
-    .respondendo-texto {
-      font-size: 12px;
-      color: #6b7280;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      display: flex;
-      align-items: center;
-      gap: 4px;
-    }
-
-    .respondendo-texto i {
-      font-size: 14px;
-    }
-
-    .respondendo-fechar {
-      background: none;
-      border: none;
-      color: #9ca3af;
-      cursor: pointer;
-      padding: 4px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: all 0.2s;
-      flex-shrink: 0;
-    }
-
-    .respondendo-fechar:hover {
-      background: #e5e7eb;
-      color: #4b5563;
-    }
-
-    .respondendo-fechar i {
-      font-size: 20px;
-    }
-
-    /* Citação dentro da mensagem melhorada */
-    .mensagem-citacao {
-      background: rgba(0,0,0,0.08);
-      border-left: 3px solid rgba(255,255,255,0.5);
-      padding: 8px 10px;
-      margin-bottom: 8px;
-      border-radius: 4px;
-      font-size: 12px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .mensagem-usuario .mensagem-citacao {
-      background: rgba(25, 59, 124, 0.1);
-      border-left-color: #193b7c;
-    }
-
-    .mensagem-citacao-thumb {
-      width: 32px;
-      height: 32px;
-      border-radius: 4px;
-      object-fit: cover;
-      flex-shrink: 0;
-    }
-
-    .mensagem-citacao-content {
-      flex: 1;
-      overflow: hidden;
-      min-width: 0;
-    }
-
-    .mensagem-citacao-autor {
-      font-weight: 600;
-      font-size: 11px;
-      margin-bottom: 2px;
-      color: #193b7c;
-    }
-
-    .mensagem-suporte .mensagem-citacao-autor {
-      color: rgba(255,255,255,0.9);
-    }
-
-    .mensagem-citacao-texto {
-      opacity: 0.85;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      display: flex;
-      align-items: center;
-      gap: 4px;
-    }
-
-    .mensagem-citacao-texto i {
-      font-size: 12px;
     }
 
     .mensagem-meta {
@@ -527,289 +259,49 @@
     }
 
     .chat-input-area {
-      padding: 12px 16px;
-      background: #f8f9fa;
-      border-top: 1px solid #e5e7eb;
-    }
-
-    .chat-input-wrapper {
+      padding: 16px 20px;
       background: white;
-      border-radius: 24px;
-      border: 1px solid #e5e7eb;
-      padding: 8px 16px;
+      border-top: 1px solid #e5e7eb;
       display: flex;
-      flex-direction: column;
-      gap: 8px;
-      transition: all 0.3s;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-    }
-
-    .chat-input-wrapper:focus-within {
-      border-color: #193b7c;
-      box-shadow: 0 0 0 3px rgba(25, 59, 124, 0.1);
-    }
-
-    .chat-input-row {
-      display: flex;
-      gap: 8px;
-      align-items: center;
+      gap: 10px;
     }
 
     .chat-textarea {
       flex: 1;
-      padding: 8px 0;
-      border: none;
+      padding: 10px 14px;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      font-size: 14px;
+      font-size: 13px;
       resize: none;
-      max-height: 100px;
-      background: transparent;
-      line-height: 1.4;
+      max-height: 90px;
+      transition: all 0.3s;
+      background: #f9fafb;
     }
 
     .chat-textarea:focus {
       outline: none;
-    }
-
-    .chat-textarea::placeholder {
-      color: #9ca3af;
-    }
-
-    .chat-actions-left {
-      display: flex;
-      gap: 4px;
-      border-right: 1px solid #e5e7eb;
-      padding-right: 12px;
-      margin-right: 4px;
-    }
-
-    .chat-btn-icon {
-      width: 36px;
-      height: 36px;
-      border-radius: 50%;
-      border: none;
-      background: transparent;
-      color: #6b7280;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: all 0.2s;
-    }
-
-    .chat-btn-icon:hover {
-      background: #f3f4f6;
-      color: #193b7c;
-    }
-
-    .chat-btn-icon.recording {
-      background: #fee2e2;
-      color: #dc2626;
-      animation: pulse-recording 1s infinite;
-    }
-
-    @keyframes pulse-recording {
-      0%, 100% { transform: scale(1); }
-      50% { transform: scale(1.1); }
-    }
-
-    .chat-btn-icon i {
-      font-size: 20px;
+      border-color: #193b7c;
+      background: white;
+      box-shadow: 0 0 0 3px rgba(25, 59, 124, 0.1);
     }
 
     .chat-button {
-      width: 42px;
-      height: 42px;
+      padding: 10px 16px;
       background: linear-gradient(135deg, #193b7c 0%, #00205b 100%);
       color: white;
       border: none;
-      border-radius: 50%;
+      border-radius: 8px;
       cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: all 0.2s;
-      flex-shrink: 0;
+      font-weight: 600;
+      font-size: 12px;
+      transition: all 0.3s;
+      white-space: nowrap;
     }
 
     .chat-button:hover {
-      transform: scale(1.05);
-      box-shadow: 0 4px 12px rgba(25, 59, 124, 0.3);
-    }
-
-    .chat-button i {
-      font-size: 18px;
-      margin-left: 2px;
-    }
-
-    .preview-anexos {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-      padding: 0 0 8px 0;
-      border-bottom: 1px solid #f3f4f6;
-    }
-
-    .preview-anexos:empty {
-      display: none;
-      padding: 0;
-      border: none;
-    }
-
-    .preview-item {
-      position: relative;
-      border-radius: 12px;
-      overflow: hidden;
-      background: #f3f4f6;
-    }
-
-    .preview-item img {
-      width: 64px;
-      height: 64px;
-      object-fit: cover;
-    }
-
-    .preview-item audio {
-      height: 36px;
-      max-width: 180px;
-    }
-
-    .preview-item .remove-anexo {
-      position: absolute;
-      top: 4px;
-      right: 4px;
-      width: 20px;
-      height: 20px;
-      background: rgba(0,0,0,0.6);
-      color: white;
-      border: none;
-      border-radius: 50%;
-      cursor: pointer;
-      font-size: 12px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: all 0.2s;
-    }
-
-    .preview-item .remove-anexo:hover {
-      background: #dc2626;
-    }
-
-    /* Estilos para mídia nas mensagens */
-    .mensagem-imagem {
-      max-width: 100%;
-      max-height: 300px;
-      width: auto;
-      height: auto;
-      border-radius: 8px;
-      margin-top: 6px;
-      cursor: pointer;
-      display: block;
-      object-fit: contain;
-    }
-
-    .mensagem-audio {
-      margin-top: 8px;
-      background: rgba(255, 255, 255, 0.15);
-      border-radius: 20px;
-      padding: 8px 12px;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      width: 100%;
-      max-width: 250px;
-      box-sizing: border-box;
-    }
-
-    .mensagem-usuario .mensagem-audio {
-      background: rgba(25, 59, 124, 0.1);
-    }
-
-    .mensagem-audio audio {
-      width: 100%;
-      height: 40px;
-      border-radius: 20px;
-    }
-
-    .mensagem-audio audio::-webkit-media-controls-panel {
-      background: transparent;
-    }
-
-    .audio-player-custom {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      width: 100%;
-    }
-
-    .audio-player-custom .play-btn {
-      width: 36px;
-      height: 36px;
-      border-radius: 50%;
-      background: #193b7c;
-      border: none;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
-      transition: all 0.2s;
-    }
-
-    .mensagem-usuario .audio-player-custom .play-btn {
-      background: #193b7c;
-    }
-
-    .audio-player-custom .play-btn:hover {
-      transform: scale(1.1);
-      background: #0d2a5c;
-    }
-
-    .audio-player-custom .play-btn i {
-      color: white;
-      font-size: 18px;
-    }
-
-    .audio-player-custom .audio-info {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
-
-    .audio-player-custom .audio-progress {
-      width: 100%;
-      height: 4px;
-      background: rgba(255, 255, 255, 0.3);
-      border-radius: 2px;
-      cursor: pointer;
-      position: relative;
-    }
-
-    .mensagem-usuario .audio-player-custom .audio-progress {
-      background: rgba(25, 59, 124, 0.2);
-    }
-
-    .audio-player-custom .audio-progress-bar {
-      height: 100%;
-      background: #fff;
-      border-radius: 2px;
-      width: 0%;
-      transition: width 0.1s linear;
-    }
-
-    .mensagem-usuario .audio-player-custom .audio-progress-bar {
-      background: #193b7c;
-    }
-
-    .audio-player-custom .audio-time {
-      font-size: 11px;
-      color: rgba(255, 255, 255, 0.8);
-    }
-
-    .mensagem-usuario .audio-player-custom .audio-time {
-      color: #666;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(25, 59, 124, 0.25);
     }
 
     .btn-voltar {
@@ -913,63 +405,29 @@
           <p class="vazio-aviso">Carregando mensagens...</p>
         </div>
         <div class="chat-input-area">
-          <div class="respondendo-area" id="respondendo-area">
-            <img id="respondendo-thumb" class="respondendo-thumb" style="display: none;">
-            <div class="respondendo-info">
-              <div class="respondendo-autor" id="respondendo-autor"></div>
-              <div class="respondendo-texto" id="respondendo-texto"></div>
-            </div>
-            <button class="respondendo-fechar" onclick="cancelarResposta()" title="Cancelar resposta">
-              <i class='bx bx-x'></i>
-            </button>
-          </div>
-          <div class="chat-input-wrapper">
-            <div class="preview-anexos" id="preview-anexos"></div>
-            <div class="chat-input-row">
-              <div class="chat-actions-left">
-                <input type="file" id="input-imagem" accept="image/*" style="display: none;" multiple>
-                <button class="chat-btn-icon" onclick="document.getElementById('input-imagem').click()" title="Anexar imagem">
-                  <i class='bx bx-image'></i>
-                </button>
-              </div>
-              <textarea class="chat-textarea" id="resposta-texto" placeholder="Digite sua mensagem..." rows="1"></textarea>
-              <button class="chat-button" onclick="enviarResposta()" title="Enviar">
-                <i class='bx bx-send'></i>
-              </button>
-            </div>
-          </div>
+          <textarea class="chat-textarea" id="resposta-texto" placeholder="Escreva sua resposta..."></textarea>
+          <button class="chat-button" onclick="enviarResposta()">
+            <i class='bx bx-send'></i> Enviar
+          </button>
         </div>
       </div>
     </div>
   </section>
 
   <!-- Scripts -->
-  <script type="module" src="/assets/js/firebase-config.js"></script>
-  <script type="module" src="/assets/js/auth.js"></script>
-  <script type="module" src="/assets/js/components/Sidebar.js"></script>
-  <script type="module" src="/assets/js/main.js"></script>
+  <script src="/assets/js/main.js"></script>
+  <script src="/assets/js/components/Sidebar.js"></script>
 
   <script type="module">
     import { garantirAutenticacao } from '/assets/js/auth-guard.js';
-    import { storage } from '/assets/js/firebase-config.js';
-    import { getApp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js";
-    import { getFirestore, collection, doc, getDoc, updateDoc, addDoc, serverTimestamp, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
-    import { ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-storage.js";
+    import { getApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getFirestore, collection, doc, getDoc, updateDoc, addDoc, serverTimestamp, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
     let userData;
     let solicitacaoId;
     let solicitacao;
     let db;
     let unsubscribe; // Para desinscrever do listener
-    
-    // Anexos pendentes
-    let anexosPendentes = {
-      imagens: [],
-      audios: []
-    };
-
-    // Mensagem sendo respondida
-    let mensagemRespondendo = null;
 
     // Inicializar
     (async () => {
@@ -991,8 +449,6 @@
         await carregarDetalhes();
         // Iniciar listener em tempo real para mensagens
         iniciarListenerChat();
-        // Configurar input de imagem
-        configurarInputImagem();
 
         lucide.createIcons();
 
@@ -1080,132 +536,84 @@
     });
 
     function renderizarInfo() {
-      // Verificar se o usuário é o solicitante (não pode alterar status)
-      const isSolicitante = userData && 
-        (userData.email === solicitacao.email || userData.nome === solicitacao.solicitante);
+      const data = solicitacao.dataAbertura?.toDate 
+        ? solicitacao.dataAbertura.toDate().toLocaleDateString('pt-BR')
+        : 'N/A';
 
       let statusClass = 'status-pendente';
       if (solicitacao.status === 'Em Andamento') statusClass = 'status-em-andamento';
       else if (solicitacao.status === 'Resolvido') statusClass = 'status-resolvido';
       else if (solicitacao.status === 'Cancelado') statusClass = 'status-cancelado';
 
-      // Mapeamento de campos para nomes amigáveis
-      const camposConfig = {
-        'solicitante': { label: 'Solicitante', tipo: 'texto' },
-        'email': { label: 'Email', tipo: 'texto', style: 'word-break: break-all;' },
-        'filial': { label: 'Filial', tipo: 'texto' },
-        'departamento': { label: 'Departamento', tipo: 'texto' },
-        'setor': { label: 'Setor', tipo: 'texto' },
-        'tipoErro': { label: 'Tipo do Erro', tipo: 'texto' },
-        'rotina': { label: 'Rotina', tipo: 'texto' },
-        'sistema': { label: 'Sistema', tipo: 'texto' },
-        'prioridade': { label: 'Prioridade', tipo: 'texto' },
-        'tipoSolicitacao': { label: 'Tipo de Solicitação', tipo: 'texto' },
-        'categoria': { label: 'Categoria', tipo: 'texto' },
-        'motivo': { label: 'Motivo', tipo: 'texto' },
-        'maquina': { label: 'Máquina', tipo: 'texto' },
-        'numSerie': { label: 'Nº Série', tipo: 'texto' },
-        'cliente': { label: 'Cliente', tipo: 'texto' },
-        'contrato': { label: 'Contrato', tipo: 'texto' },
-        'notaFiscal': { label: 'Nota Fiscal', tipo: 'texto' },
-        'valorEnvolvido': { label: 'Valor Envolvido', tipo: 'texto' },
-        'dataAbertura': { label: 'Data de Abertura', tipo: 'data' },
-        'respondidoPor': { label: 'Respondido Por', tipo: 'texto' },
-        'descricao': { label: 'Descrição', tipo: 'descricao' },
-        'observacao': { label: 'Observação', tipo: 'descricao' },
-        'imagens': { label: 'Anexos', tipo: 'imagens' }
-      };
+      const imagensHTML = solicitacao.imagens && solicitacao.imagens.length > 0
+        ? solicitacao.imagens.map(url => 
+            `<img src="${url}" class="imagem-thumb" onclick="visualizarImagem('${url}')" alt="Imagem">`
+          ).join('')
+        : '<p style="color: #a0aec0; font-size: 12px;">Nenhuma imagem anexada</p>';
 
-      // Montar HTML dinamicamente
-      let html = '';
+      const html = `
+        <div class="info-item">
+          <button class="btn-alterar-status" onclick="alterarStatus()">
+            <i class='bx bx-edit'></i> Alterar Status
+          </button>
+        </div>
 
-      // Botões de ação
-      html += `<div class="botoes-acoes">`;
-      
-      // Botão de alterar status e enviar email (só para quem NÃO é o solicitante)
-      if (!isSolicitante) {
-        html += `
-            <button class="btn-alterar-status" onclick="alterarStatus()">
-              <i class='bx bx-edit'></i> Alterar Status
-            </button>
-            <button class="btn-enviar-email" onclick="enviarPorEmail()">
-              <i class='bx bx-envelope'></i> Enviar por E-mail
-            </button>
-        `;
-      }
-      
-      html += `</div>`;
-
-      // Status sempre aparece
-      html += `
         <div class="info-item">
           <span class="info-label">Status</span>
           <div class="status-badge ${statusClass}">
             ${solicitacao.status || 'Pendente'}
           </div>
         </div>
-      `;
 
-      // Tipo da solicitação (se existir)
-      if (solicitacao.tipo) {
-        html += `
-          <div class="info-item">
-            <span class="info-label">Tipo</span>
-            <div class="info-value" style="font-weight: 600; color: #193b7c;">${solicitacao.tipo}</div>
+        <div class="info-item">
+          <span class="info-label">Solicitante</span>
+          <div class="info-value">${solicitacao.solicitante || 'N/A'}</div>
+        </div>
+
+        <div class="info-item">
+          <span class="info-label">Email</span>
+          <div class="info-value" style="word-break: break-all;">${solicitacao.email || 'N/A'}</div>
+        </div>
+
+        <div class="info-item">
+          <span class="info-label">Filial</span>
+          <div class="info-value">${solicitacao.filial || 'N/A'}</div>
+        </div>
+
+        <div class="info-item">
+          <span class="info-label">Departamento</span>
+          <div class="info-value">${solicitacao.departamento || 'N/A'}</div>
+        </div>
+
+        <div class="info-item">
+          <span class="info-label">Rotina</span>
+          <div class="info-value">${solicitacao.rotina || 'N/A'}</div>
+        </div>
+
+        <div class="info-item">
+          <span class="info-label">Data de Abertura</span>
+          <div class="info-value">${data}</div>
+        </div>
+
+        <div class="info-item">
+          <span class="info-label">Respondido Por</span>
+          <div class="info-value">${solicitacao.respondidoPor || '-'}</div>
+        </div>
+
+        <div class="info-item">
+          <span class="info-label">Descrição</span>
+          <div class="info-value" style="padding: 10px; background: white; border-radius: 6px; border: 1px solid #e5e7eb;">
+            ${solicitacao.descricao || 'Sem descrição'}
           </div>
-        `;
-      }
+        </div>
 
-      // Renderizar campos que existem na solicitação
-      for (const [campo, config] of Object.entries(camposConfig)) {
-        const valor = solicitacao[campo];
-        
-        // Pular campos vazios, nulos ou undefined
-        if (valor === undefined || valor === null || valor === '' || 
-            (Array.isArray(valor) && valor.length === 0)) {
-          continue;
-        }
-
-        if (config.tipo === 'texto') {
-          html += `
-            <div class="info-item">
-              <span class="info-label">${config.label}</span>
-              <div class="info-value" ${config.style ? `style="${config.style}"` : ''}>${valor}</div>
-            </div>
-          `;
-        } else if (config.tipo === 'data') {
-          const dataFormatada = valor?.toDate 
-            ? valor.toDate().toLocaleDateString('pt-BR')
-            : (valor ? new Date(valor).toLocaleDateString('pt-BR') : 'N/A');
-          html += `
-            <div class="info-item">
-              <span class="info-label">${config.label}</span>
-              <div class="info-value">${dataFormatada}</div>
-            </div>
-          `;
-        } else if (config.tipo === 'descricao') {
-          html += `
-            <div class="info-item">
-              <span class="info-label">${config.label}</span>
-              <div class="info-value" style="padding: 10px; background: white; border-radius: 6px; border: 1px solid #e5e7eb; white-space: pre-wrap;">
-                ${valor}
-              </div>
-            </div>
-          `;
-        } else if (config.tipo === 'imagens' && Array.isArray(valor) && valor.length > 0) {
-          const imagensHTML = valor.map(url => 
-            `<img src="${url}" class="imagem-thumb" onclick="visualizarImagem('${url}')" alt="Anexo">`
-          ).join('');
-          html += `
-            <div class="info-item">
-              <span class="info-label">${config.label}</span>
-              <div class="imagens-preview">
-                ${imagensHTML}
-              </div>
-            </div>
-          `;
-        }
-      }
+        <div class="info-item">
+          <span class="info-label">Imagens</span>
+          <div class="imagens-preview">
+            ${imagensHTML}
+          </div>
+        </div>
+      `;
 
       document.getElementById('info-content').innerHTML = html;
     }
@@ -1219,7 +627,7 @@
         return;
       }
 
-      const html = respostas.map((h, index) => {
+      const html = respostas.map(h => {
         const dataResposta = h.data?.toDate 
           ? h.data.toDate().toLocaleString('pt-BR')
           : (h.data ? new Date(h.data).toLocaleString('pt-BR') : 'N/A');
@@ -1227,80 +635,10 @@
         const isUsuario = h.respondidoPor === solicitacao.solicitante || h.respondidoPor === solicitacao.email;
         const classeMensagem = isUsuario ? 'mensagem-usuario' : 'mensagem-suporte';
 
-        // Renderizar citação se estiver respondendo outra mensagem
-        let citacaoHTML = '';
-        if (h.respondendoA) {
-          const thumbHTML = h.respondendoA.imagem 
-            ? `<img src="${h.respondendoA.imagem}" class="mensagem-citacao-thumb" alt="">` 
-            : '';
-          
-          let textoPreview = h.respondendoA.texto || '';
-          if (!textoPreview && h.respondendoA.imagem) {
-            textoPreview = '<i class="bx bx-image"></i> Foto';
-          } else if (!textoPreview && h.respondendoA.audio) {
-            textoPreview = '<i class="bx bx-microphone"></i> Áudio';
-          }
-
-          citacaoHTML = `
-            <div class="mensagem-citacao" onclick="scrollParaMensagem(${h.respondendoA.index}); event.stopPropagation();">
-              ${thumbHTML}
-              <div class="mensagem-citacao-content">
-                <div class="mensagem-citacao-autor">${h.respondendoA.autor || 'Usuário'}</div>
-                <div class="mensagem-citacao-texto">${textoPreview}</div>
-              </div>
-            </div>
-          `;
-        }
-
-        // Renderizar imagens da mensagem
-        let imagensHTML = '';
-        const primeiraImagem = (h.imagens && h.imagens.length > 0) ? h.imagens[0] : null;
-        if (h.imagens && h.imagens.length > 0) {
-          imagensHTML = h.imagens.map(url => 
-            `<img src="${url}" class="mensagem-imagem" onclick="visualizarImagem('${url}'); event.stopPropagation();" alt="Imagem">`
-          ).join('');
-        }
-
-        // Renderizar áudios da mensagem
-        let audiosHTML = '';
-        const primeiroAudio = (h.audios && h.audios.length > 0) ? h.audios[0] : null;
-        if (h.audios && h.audios.length > 0) {
-          audiosHTML = h.audios.map((url, idx) => 
-            `<div class="mensagem-audio" onclick="event.stopPropagation();">
-              <div class="audio-player-custom" data-audio-url="${url}">
-                <button class="play-btn" onclick="toggleAudioPlay(this); event.stopPropagation();">
-                  <i class="bx bx-play"></i>
-                </button>
-                <div class="audio-info">
-                  <div class="audio-progress" onclick="seekAudio(event, this); event.stopPropagation();">
-                    <div class="audio-progress-bar"></div>
-                  </div>
-                  <span class="audio-time">0:00 / --:--</span>
-                </div>
-              </div>
-              <audio src="${url}" preload="metadata" style="display:none;"></audio>
-            </div>`
-          ).join('');
-        }
-
-        // Preparar dados para o onclick (escapar aspas)
-        const msgTexto = (h.mensagem || '').replace(/'/g, "\\'").replace(/"/g, "&quot;").substring(0, 100);
-        const msgAutor = (h.respondidoPor || '').replace(/'/g, "\\'");
-        const msgImagem = primeiraImagem ? primeiraImagem.replace(/'/g, "\\'") : '';
-        const msgAudio = primeiroAudio ? 'true' : '';
-
         return `
-          <div class="mensagem-grupo ${classeMensagem}" id="msg-${index}">
-            <div class="mensagem-content-row">
-              <div class="mensagem-bubble">
-                ${citacaoHTML}
-                ${h.mensagem || ''}
-                ${imagensHTML}
-                ${audiosHTML}
-              </div>
-              <button class="btn-responder" onclick="selecionarMensagem(${index}, '${msgAutor}', '${msgTexto}', '${msgImagem}', '${msgAudio}')" title="Responder">
-                <i class='bx bx-reply'></i>
-              </button>
+          <div class="mensagem-grupo ${classeMensagem}">
+            <div class="mensagem-bubble">
+              ${h.mensagem || ''}
             </div>
             <div class="mensagem-meta">
               <span>${h.respondidoPor}</span>
@@ -1352,11 +690,6 @@
           renderizarInfo();
           Swal.fire('Sucesso!', 'Status atualizado', 'success');
 
-          // Enviar e-mail automático quando status for Resolvido
-          if (novoStatus === 'Resolvido' && solicitacao.email) {
-            await enviarEmailAutomatico(solicitacao.email);
-          }
-
         } catch (error) {
           console.error('Erro ao alterar status:', error);
           Swal.fire('Erro', 'Não foi possível alterar o status', 'error');
@@ -1364,316 +697,22 @@
       }
     };
 
-    // Função para montar o HTML do e-mail
-    function montarEmailHTML() {
-      const historico = solicitacao.historico || [];
-      const mensagens = historico.filter(h => h.tipo === 'resposta');
-
-      let historicoHTML = '';
-      mensagens.forEach((msg, idx) => {
-        const data = msg.data?.toDate 
-          ? msg.data.toDate().toLocaleString('pt-BR') 
-          : (msg.data ? new Date(msg.data).toLocaleString('pt-BR') : 'N/A');
-        
-        // Verificar se é mensagem do solicitante ou do suporte
-        const isSolicitante = msg.respondidoPor === solicitacao.solicitante || msg.respondidoPor === solicitacao.email;
-        
-        // Cores diferentes para solicitante e suporte
-        const bgColor = isSolicitante ? '#e3f2fd' : '#fff7ed';
-        const borderColor = isSolicitante ? '#1976d2' : '#f97316';
-        const nomeColor = isSolicitante ? '#1565c0' : '#ea580c';
-        const labelUsuario = isSolicitante ? '(Solicitante)' : '(Suporte)';
-
-        let imagensHTML = '';
-        if (msg.imagens && msg.imagens.length > 0) {
-          imagensHTML = msg.imagens.map(url => 
-            `<a href="${url}" target="_blank" style="display: inline-block; margin: 5px 5px 0 0;">
-              <img src="${url}" style="max-width: 180px; max-height: 180px; border-radius: 8px; border: 1px solid #ddd;" alt="Imagem anexada">
-            </a>`
-          ).join('');
-          imagensHTML = `<div style="margin-top: 10px;">${imagensHTML}</div>`;
-        }
-
-        let audiosHTML = '';
-        if (msg.audios && msg.audios.length > 0) {
-          audiosHTML = msg.audios.map((url, i) => 
-            `<a href="${url}" target="_blank" style="display: inline-flex; align-items: center; gap: 6px; margin: 5px 10px 0 0; padding: 8px 14px; background: #193b7c; color: white; text-decoration: none; border-radius: 20px; font-size: 12px;">
-              🎤 Ouvir áudio ${msg.audios.length > 1 ? (i + 1) : ''}
-            </a>`
-          ).join('');
-          audiosHTML = `<div style="margin-top: 10px;">${audiosHTML}</div>`;
-        }
-        
-        historicoHTML += `
-          <div style="margin-bottom: 20px; padding: 15px; background: ${bgColor}; border-left: 4px solid ${borderColor}; border-radius: 0 8px 8px 0;">
-            <div style="margin-bottom: 10px;">
-              <span style="font-weight: 700; color: ${nomeColor}; font-size: 14px;">${msg.respondidoPor || 'Usuário'}</span>
-              <span style="color: ${nomeColor}; font-size: 11px; margin-left: 6px; opacity: 0.8;">${labelUsuario}</span>
-              <span style="color: #888; font-size: 11px; margin-left: 10px;">${data}</span>
-            </div>
-            ${msg.mensagem ? `<div style="color: #333; font-size: 14px; line-height: 1.6;">${msg.mensagem}</div>` : ''}
-            ${imagensHTML}
-            ${audiosHTML}
-          </div>
-        `;
-      });
-
-      const dataAbertura = solicitacao.dataAbertura?.toDate 
-        ? solicitacao.dataAbertura.toDate().toLocaleString('pt-BR')
-        : 'N/A';
-
-      const statusCor = {
-        'Resolvido': '#10b981',
-        'Cancelado': '#ef4444',
-        'Em Andamento': '#f59e0b',
-        'Pendente': '#6b7280'
-      }[solicitacao.status] || '#6b7280';
-
-      // Mapeamento de campos para nomes amigáveis no e-mail
-      const camposEmail = {
-        'solicitante': 'Solicitante',
-        'email': 'E-mail',
-        'filial': 'Filial',
-        'departamento': 'Departamento',
-        'setor': 'Setor',
-        'tipoSolicitacao': 'Tipo de Solicitação',
-        'categoria': 'Categoria',
-        'rotina': 'Rotina',
-        'sistema': 'Sistema',
-        'prioridade': 'Prioridade',
-        'motivo': 'Motivo',
-        'maquina': 'Máquina',
-        'numSerie': 'Nº Série',
-        'cliente': 'Cliente',
-        'contrato': 'Contrato',
-        'notaFiscal': 'Nota Fiscal',
-        'numeroNF': 'Número NF',
-        'valorEnvolvido': 'Valor Envolvido',
-        'dataEmissao': 'Data de Emissão',
-        'horaEmissao': 'Hora de Emissão',
-        'mensagemErro': 'Mensagem de Erro'
-      };
-
-      // Montar linhas da tabela dinamicamente
-      let tabelaInfoHTML = '';
-      for (const [campo, label] of Object.entries(camposEmail)) {
-        if (solicitacao[campo] && solicitacao[campo] !== '') {
-          tabelaInfoHTML += `
-            <tr style="border-bottom: 1px solid #eef1f4;">
-              <td style="padding: 14px 16px; font-weight: 600; color: #555; width: 160px; font-size: 13px;">${label}</td>
-              <td style="padding: 14px 16px; color: #333; font-size: 14px;">${solicitacao[campo]}</td>
-            </tr>
-          `;
-        }
-      }
-      
-      // Adicionar data de abertura
-      tabelaInfoHTML += `
-        <tr>
-          <td style="padding: 14px 16px; font-weight: 600; color: #555; font-size: 13px;">Data de Abertura</td>
-          <td style="padding: 14px 16px; color: #333; font-size: 14px;">${dataAbertura}</td>
-        </tr>
-      `;
-
-      // Montar seção de descrição/observações
-      let descricaoHTML = '';
-      if (solicitacao.descricao) {
-        descricaoHTML += `
-          <div style="margin-bottom: 15px; padding: 20px; background: linear-gradient(135deg, #f8fafc 0%, #eef2f7 100%); border-radius: 10px; border-left: 4px solid #193b7c;">
-            <h3 style="margin: 0 0 12px 0; color: #193b7c; font-size: 15px; font-weight: 700;">Descrição</h3>
-            <p style="color: #444; line-height: 1.7; margin: 0; font-size: 14px;">${solicitacao.descricao}</p>
-          </div>
-        `;
-      }
-      if (solicitacao.observacoes) {
-        descricaoHTML += `
-          <div style="margin-bottom: 15px; padding: 20px; background: linear-gradient(135deg, #f8fafc 0%, #eef2f7 100%); border-radius: 10px; border-left: 4px solid #f59e0b;">
-            <h3 style="margin: 0 0 12px 0; color: #193b7c; font-size: 15px; font-weight: 700;">Observações</h3>
-            <p style="color: #444; line-height: 1.7; margin: 0; font-size: 14px;">${solicitacao.observacoes}</p>
-          </div>
-        `;
-      }
-
-      return `
-        <div style="margin: 0; padding: 0; background: #f0f2f5; font-family: 'Segoe UI', Arial, sans-serif;">
-        <div style="max-width: 650px; margin: 0 auto; background: #ffffff; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
-          
-          <!-- Header com Logo -->
-          <div style="background: linear-gradient(135deg, #193b7c 0%, #0d2454 100%); padding: 30px 20px; text-align: center;">
-            <img src="https://raw.githubusercontent.com/JoseOtavioSantin/AgroDivel-360/refs/heads/main/assets/images/Agro%20Divel%20Azul.png" alt="AgroDivel" style="max-width: 180px; height: auto; margin-bottom: 15px; filter: brightness(0) invert(1);">
-            <h1 style="margin: 0; color: white; font-size: 24px; font-weight: 600;">Resumo da Solicitação</h1>
-            <p style="margin: 8px 0 0; color: rgba(255,255,255,0.85); font-size: 14px;">Sistema de Suporte AgroDivel 360</p>
-          </div>
-          
-          <!-- Badge do Protocolo -->
-          <div style="background: #f8fafc; padding: 15px 25px; border-bottom: 1px solid #e5e7eb;">
-            <table style="width: 100%;"><tr>
-              <td style="text-align: left;">
-                <span style="color: #666; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px;">Protocolo</span>
-                <div style="font-family: 'Courier New', monospace; font-size: 16px; font-weight: 700; color: #193b7c;">${solicitacaoId}</div>
-              </td>
-              <td style="text-align: right;">
-                <span style="background: ${statusCor}; color: white; padding: 6px 16px; border-radius: 20px; font-size: 12px; font-weight: 600; text-transform: uppercase;">${solicitacao.status || 'Pendente'}</span>
-              </td>
-            </tr></table>
-          </div>
-          
-          <!-- Informações da Solicitação -->
-          <div style="padding: 25px;">
-            <table style="width: 100%; border-collapse: collapse; margin-bottom: 25px; background: #fafbfc; border-radius: 8px;">
-              ${tabelaInfoHTML}
-            </table>
-
-            ${descricaoHTML}
-
-            <!-- Histórico de Mensagens -->
-            <div style="margin-top: 30px;">
-              <h3 style="color: #193b7c; font-size: 16px; margin: 0 0 20px 0; padding-bottom: 12px; border-bottom: 2px solid #193b7c;">Histórico de Mensagens</h3>
-              ${historicoHTML || '<p style="color: #888; font-style: italic; text-align: center; padding: 30px;">Nenhuma mensagem registrada nesta solicitação.</p>'}
-            </div>
-          </div>
-
-          <!-- Footer -->
-          <div style="background: linear-gradient(135deg, #193b7c 0%, #0d2454 100%); padding: 25px; text-align: center;">
-            <p style="margin: 0 0 8px 0; color: rgba(255,255,255,0.9); font-size: 13px;">Este é um e-mail automático do Sistema de Suporte</p>
-            <p style="margin: 0; color: rgba(255,255,255,0.7); font-size: 12px;">AgroDivel 360</p>
-          </div>
-        </div>
-        </div>
-      `;
-    }
-
-    // Função para enviar e-mail automaticamente (sem perguntar)
-    async function enviarEmailAutomatico(emailDestino) {
-      try {
-        const { addDoc, collection } = await import('https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js');
-        
-        const emailHTML = montarEmailHTML();
-        
-        await addDoc(collection(db, 'mail'), {
-          to: emailDestino,
-          replyTo: userData.email || 'suporte@agrodivel.com.br',
-          message: {
-            subject: 'Agro Divel - Suporte',
-            html: emailHTML
-          }
-        });
-
-        console.log('E-mail automático enviado para:', emailDestino);
-      } catch (error) {
-        console.error('Erro ao enviar e-mail automático:', error);
-      }
-    }
-
-    // Função para enviar resumo da solicitação por e-mail (manual)
-    window.enviarPorEmail = async function() {
-      const { value: emailDestino } = await Swal.fire({
-        title: 'Enviar por E-mail',
-        input: 'email',
-        inputLabel: 'E-mail do destinatário',
-        inputValue: solicitacao.email || '',
-        inputPlaceholder: 'Digite o e-mail',
-        showCancelButton: true,
-        confirmButtonText: 'Enviar',
-        cancelButtonText: 'Cancelar',
-        inputValidator: (value) => {
-          if (!value) return 'Digite um e-mail válido';
-          if (!/\S+@\S+\.\S+/.test(value)) return 'E-mail inválido';
-        }
-      });
-
-      if (!emailDestino) return;
-
-      try {
-        Swal.fire({
-          title: 'Enviando...',
-          text: 'Preparando e-mail',
-          allowOutsideClick: false,
-          didOpen: () => Swal.showLoading()
-        });
-
-        const { addDoc, collection } = await import('https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js');
-        
-        const emailHTML = montarEmailHTML();
-        
-        await addDoc(collection(db, 'mail'), {
-          to: emailDestino,
-          replyTo: userData.email || 'suporte@agrodivel.com.br',
-          message: {
-            subject: 'Agro Divel - Suporte',
-            html: emailHTML
-          }
-        });
-
-        Swal.fire({
-          icon: 'success',
-          title: 'E-mail enviado!',
-          text: `Resumo enviado para ${emailDestino}`,
-          timer: 3000
-        });
-
-      } catch (error) {
-        console.error('Erro ao enviar e-mail:', error);
-        Swal.fire('Erro', 'Não foi possível enviar o e-mail: ' + error.message, 'error');
-      }
-    };
-
     window.enviarResposta = async function() {
       const mensagem = document.getElementById('resposta-texto').value.trim();
       
-      // Verificar se há mensagem ou anexos
-      if (!mensagem && anexosPendentes.imagens.length === 0 && anexosPendentes.audios.length === 0) {
+      if (!mensagem) {
+        Swal.showValidationMessage('Digite uma mensagem');
         return;
       }
 
       try {
-        // Desabilitar botão de envio temporariamente
-        const btnEnviar = document.querySelector('.chat-button');
-        btnEnviar.disabled = true;
-        btnEnviar.style.opacity = '0.6';
-
-        // Upload das imagens
-        const urlsImagens = [];
-        for (const file of anexosPendentes.imagens) {
-          const url = await uploadArquivo(file, 'imagens');
-          urlsImagens.push(url);
-        }
-
-        // Upload dos áudios
-        const urlsAudios = [];
-        for (const blob of anexosPendentes.audios) {
-          const url = await uploadArquivo(blob, 'audios');
-          urlsAudios.push(url);
-        }
-
         const historico = solicitacao.historico || [];
-        const novaMensagem = {
+        historico.push({
           data: new Date(),
           respondidoPor: userData.nome || userData.email,
           mensagem: mensagem,
-          imagens: urlsImagens,
-          audios: urlsAudios,
           tipo: 'resposta'
-        };
-
-        // Adicionar referência da mensagem respondida
-        if (mensagemRespondendo) {
-          novaMensagem.respondendoA = {
-            index: mensagemRespondendo.index,
-            autor: mensagemRespondendo.autor,
-            texto: mensagemRespondendo.texto,
-            imagem: mensagemRespondendo.imagem || null
-          };
-        }
-
-        // Verificar se é a primeira resposta do SUPORTE (não do solicitante)
-        const isRespostaSuporte = userData.email !== solicitacao.email;
-        const respostasAnteriores = historico.filter(h => h.tipo === 'resposta');
-        const tinhaRespostaSuporte = respostasAnteriores.slice(0, -1).some(h => 
-          h.respondidoPor !== solicitacao.solicitante && h.respondidoPor !== solicitacao.email
-        );
-
-        historico.push(novaMensagem);
+        });
 
         await updateDoc(doc(db, 'SolicitaçõesSuporte', solicitacaoId), {
           ultimaResposta: new Date(),
@@ -1681,124 +720,16 @@
           historico: historico
         });
 
-        // Enviar e-mail automático se for a PRIMEIRA resposta do suporte
-        if (isRespostaSuporte && !tinhaRespostaSuporte && solicitacao.email) {
-          solicitacao = { ...solicitacao, historico };
-          await enviarEmailAutomatico(solicitacao.email);
-          console.log('E-mail automático enviado - primeira resposta do suporte');
-        }
-
         solicitacao = { ...solicitacao, historico };
         document.getElementById('resposta-texto').value = '';
-        
-        // Limpar mensagem respondendo
-        cancelarResposta();
-        
-        // Limpar anexos pendentes
-        anexosPendentes = { imagens: [], audios: [] };
-        renderizarPreviewAnexos();
-        
         renderizarChat();
-
-        // Reabilitar botão
-        btnEnviar.disabled = false;
-        btnEnviar.style.opacity = '1';
+        // Popup removido conforme solicitado
 
       } catch (error) {
         console.error('Erro ao enviar resposta:', error);
-        Swal.fire('Erro', `Não foi possível enviar: ${error.message}`, 'error');
-        
-        // Reabilitar botão em caso de erro
-        const btnEnviar = document.querySelector('.chat-button');
-        btnEnviar.disabled = false;
-        btnEnviar.style.opacity = '1';
+        Swal.fire('Erro', 'Não foi possível enviar a resposta', 'error');
       }
     };
-
-    // Função para upload de arquivo
-    async function uploadArquivo(file, pasta) {
-      try {
-        console.log('Iniciando upload...', file, pasta);
-        console.log('Storage:', storage);
-        const timestamp = Date.now();
-        const nomeArquivo = `suporte/${pasta}/${solicitacaoId}/${timestamp}_${file.name || 'audio.webm'}`;
-        console.log('Nome arquivo:', nomeArquivo);
-        const storageRef = ref(storage, nomeArquivo);
-        console.log('StorageRef:', storageRef);
-        console.log('Iniciando uploadBytes...');
-        const snapshot = await uploadBytes(storageRef, file);
-        console.log('Upload concluído:', snapshot);
-        const url = await getDownloadURL(storageRef);
-        console.log('URL:', url);
-        return url;
-      } catch (error) {
-        console.error('Erro detalhado no upload:', error);
-        console.error('Código do erro:', error.code);
-        console.error('Mensagem:', error.message);
-        console.error('ServerResponse:', error.serverResponse);
-        throw error;
-      }
-    }
-
-    // Configurar input de imagem
-    function configurarInputImagem() {
-      document.getElementById('input-imagem').addEventListener('change', function(e) {
-        const files = Array.from(e.target.files);
-        files.forEach(file => {
-          if (file.type.startsWith('image/')) {
-            anexosPendentes.imagens.push(file);
-          }
-        });
-        renderizarPreviewAnexos();
-        e.target.value = ''; // Limpar input
-      });
-    }
-
-    // Renderizar preview dos anexos
-    function renderizarPreviewAnexos() {
-      const container = document.getElementById('preview-anexos');
-      let html = '';
-
-      // Preview de imagens
-      anexosPendentes.imagens.forEach((file, index) => {
-        const url = URL.createObjectURL(file);
-        html += `
-          <div class="preview-item">
-            <img src="${url}" alt="Preview">
-            <button class="remove-anexo" onclick="removerAnexo('imagem', ${index})">
-              <i class='bx bx-x'></i>
-            </button>
-          </div>
-        `;
-      });
-
-      // Preview de áudios
-      anexosPendentes.audios.forEach((blob, index) => {
-        const url = URL.createObjectURL(blob);
-        html += `
-          <div class="preview-item" style="padding: 8px;">
-            <audio controls src="${url}"></audio>
-            <button class="remove-anexo" onclick="removerAnexo('audio', ${index})">
-              <i class='bx bx-x'></i>
-            </button>
-          </div>
-        `;
-      });
-
-      container.innerHTML = html;
-    }
-
-    // Remover anexo
-    window.removerAnexo = function(tipo, index) {
-      if (tipo === 'imagem') {
-        anexosPendentes.imagens.splice(index, 1);
-      } else if (tipo === 'audio') {
-        anexosPendentes.audios.splice(index, 1);
-      }
-      renderizarPreviewAnexos();
-    };
-
-
 
     window.visualizarImagem = function(url) {
       Swal.fire({
@@ -1809,139 +740,6 @@
         width: '80%'
       });
     };
-
-    // Selecionar mensagem para responder
-    window.selecionarMensagem = function(index, autor, texto, imagem, audio) {
-      // Remover seleção anterior
-      document.querySelectorAll('.mensagem-grupo.selecionada').forEach(el => {
-        el.classList.remove('selecionada');
-      });
-
-      // Selecionar nova mensagem
-      const msgElement = document.getElementById(`msg-${index}`);
-      if (msgElement) {
-        msgElement.classList.add('selecionada');
-      }
-
-      // Atualizar área de respondendo
-      mensagemRespondendo = { index, autor, texto, imagem };
-
-      document.getElementById('respondendo-autor').textContent = autor;
-      
-      // Mostrar thumbnail se tiver imagem
-      const thumbEl = document.getElementById('respondendo-thumb');
-      if (imagem) {
-        thumbEl.src = imagem;
-        thumbEl.style.display = 'block';
-        document.getElementById('respondendo-texto').textContent = texto || 'Foto';
-      } else {
-        thumbEl.style.display = 'none';
-        if (audio === 'true') {
-          document.getElementById('respondendo-texto').innerHTML = '<i class="bx bx-microphone"></i> Áudio';
-        } else {
-          document.getElementById('respondendo-texto').textContent = texto || '[Mídia]';
-        }
-      }
-      
-      document.getElementById('respondendo-area').classList.add('ativo');
-
-      // Focar no campo de texto
-      document.getElementById('resposta-texto').focus();
-    };
-
-    // Cancelar resposta
-    window.cancelarResposta = function() {
-      mensagemRespondendo = null;
-      document.getElementById('respondendo-area').classList.remove('ativo');
-      document.querySelectorAll('.mensagem-grupo.selecionada').forEach(el => {
-        el.classList.remove('selecionada');
-      });
-    };
-
-    // Scroll para mensagem citada
-    window.scrollParaMensagem = function(index) {
-      const msgElement = document.getElementById(`msg-${index}`);
-      if (msgElement) {
-        msgElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        
-        // Highlight temporário
-        msgElement.style.background = 'rgba(25, 59, 124, 0.1)';
-        setTimeout(() => {
-          msgElement.style.background = '';
-        }, 1500);
-      }
-    };
-
-    // Funções do player de áudio customizado
-    let currentPlayingAudio = null;
-
-    window.toggleAudioPlay = function(btn) {
-      const container = btn.closest('.mensagem-audio');
-      const audio = container.querySelector('audio');
-      const icon = btn.querySelector('i');
-      
-      // Pausar outro áudio se estiver tocando
-      if (currentPlayingAudio && currentPlayingAudio !== audio) {
-        currentPlayingAudio.pause();
-        const otherBtn = currentPlayingAudio.closest('.mensagem-audio').querySelector('.play-btn i');
-        if (otherBtn) otherBtn.className = 'bx bx-play';
-      }
-
-      if (audio.paused) {
-        audio.play();
-        icon.className = 'bx bx-pause';
-        currentPlayingAudio = audio;
-        
-        // Atualizar progresso
-        audio.ontimeupdate = function() {
-          const progress = (audio.currentTime / audio.duration) * 100;
-          container.querySelector('.audio-progress-bar').style.width = progress + '%';
-          container.querySelector('.audio-time').textContent = formatAudioTime(audio.currentTime) + ' / ' + formatAudioTime(audio.duration);
-        };
-        
-        audio.onended = function() {
-          icon.className = 'bx bx-play';
-          container.querySelector('.audio-progress-bar').style.width = '0%';
-          currentPlayingAudio = null;
-        };
-      } else {
-        audio.pause();
-        icon.className = 'bx bx-play';
-        currentPlayingAudio = null;
-      }
-    };
-
-    window.seekAudio = function(event, progressBar) {
-      const container = progressBar.closest('.mensagem-audio');
-      const audio = container.querySelector('audio');
-      const rect = progressBar.getBoundingClientRect();
-      const pos = (event.clientX - rect.left) / rect.width;
-      audio.currentTime = pos * audio.duration;
-    };
-
-    function formatAudioTime(seconds) {
-      if (isNaN(seconds)) return '--:--';
-      const mins = Math.floor(seconds / 60);
-      const secs = Math.floor(seconds % 60);
-      return mins + ':' + (secs < 10 ? '0' : '') + secs;
-    }
-
-    // Inicializar duração dos áudios quando carregados
-    function initAudioPlayers() {
-      document.querySelectorAll('.mensagem-audio audio').forEach(audio => {
-        audio.addEventListener('loadedmetadata', function() {
-          const container = audio.closest('.mensagem-audio');
-          const timeSpan = container.querySelector('.audio-time');
-          if (timeSpan) {
-            timeSpan.textContent = '0:00 / ' + formatAudioTime(audio.duration);
-          }
-        });
-      });
-    }
-
-    // Observar mudanças no chat para inicializar novos players
-    const chatObserver = new MutationObserver(initAudioPlayers);
-    chatObserver.observe(document.getElementById('chat-messages'), { childList: true, subtree: true });
 
     // Enviar mensagem ao pressionar Enter (sem Shift)
     document.getElementById('resposta-texto').addEventListener('keydown', function(e) {

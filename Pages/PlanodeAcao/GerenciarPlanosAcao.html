@@ -224,19 +224,14 @@
             overflow: hidden;
         }
         .plan-card__meta {
-            display: flex;
-            flex-direction: column;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
             gap: 12px;
         }
         .meta-item {
             display: flex;
             flex-direction: column;
-            gap: 4px;
-        }
-        .meta-item--inline {
-            flex-direction: row;
-            align-items: center;
-            gap: 8px;
+            gap: 2px;
         }
         .meta-item__label {
             font-size: 11px;
@@ -244,21 +239,14 @@
             text-transform: uppercase;
             letter-spacing: 0.5px;
             font-weight: 600;
-            flex-shrink: 0;
         }
         .meta-item__value {
             font-size: 14px;
             color: #111827;
             font-weight: 600;
-        }
-        .meta-item__value--wrap {
-            word-break: break-word;
-            line-height: 1.4;
-        }
-        .meta-item__row {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 12px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         /* ========== PROGRESSO ========== */
@@ -513,23 +501,6 @@
     </style>
 </head>
 <body>
-    
-    <!-- Botão flutuante de suporte -->
-    <div id="chamar-suporte-placeholder"></div>
-    <script>
-            fetch('/assets/components/ChamarSuporte.html')
-                .then(r => r.text())
-                .then(html => {
-                    document.getElementById('chamar-suporte-placeholder').innerHTML = html;
-                    const scripts = document.getElementById('chamar-suporte-placeholder').querySelectorAll('script');
-                    scripts.forEach(oldScript => {
-                        const newScript = document.createElement('script');
-                        newScript.textContent = oldScript.textContent;
-                        document.body.appendChild(newScript);
-                    });
-                });
-    </script>
-
     <nav id="sidebar-placeholder"></nav>
 
     <section class="home">
@@ -564,7 +535,7 @@
 
                     <div style="display:flex; gap:12px; align-items:center;">
                         <a class="btn-secondary" href="/Pages/PlanodeAcao/form_PlanoAcao.html" title="Criar novo plano">
-                            <i data-lucide="plus-circle"></i>
+                            <i data-lucide="plus-circle"></i> Novo
                         </a>
                         <button id="btn-refresh" class="btn-action" title="Atualizar lista">
                             <i data-lucide="refresh-cw"></i>
@@ -592,7 +563,6 @@
         import { db, auth } from '/assets/js/firebase-config.js';
         import { collection, getDocs, query, orderBy, deleteDoc, doc } from 'https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js';
         import { garantirAutenticacao } from '/assets/js/auth-guard.js';
-        import { confirmar } from '/assets/js/confirm-dialog.js';
 
         // Sistema de notificação simplificado
         const notificacao = {
@@ -673,7 +643,6 @@
 
         let planos = [];
         let currentUserId = null;
-        let isAdmin = false;
 
         function fmtDate(d) {
             if (!d) return '-';
@@ -743,7 +712,7 @@
                 // Sanitizar dados para prevenir XSS
                 const nomeSanitizado = sanitizeHTML(p.nome) || 'Sem título';
                 const descricaoSanitizada = sanitizeHTML(p.what || p.descricao || 'Sem descrição disponível');
-                const responsavelSanitizado = sanitizeHTML(p.who) || '-';
+                const responsavelSanitizado = sanitizeHTML(p.responsavel) || '-';
                 const metaSanitizada = sanitizeHTML(p.meta || p.kpiNome) || '-';
 
                 el.innerHTML = `
@@ -760,9 +729,9 @@
                         <div class="plan-card__meta">
                             <div class="meta-item">
                                 <span class="meta-item__label">Responsável</span>
-                                <span class="meta-item__value meta-item__value--wrap">${responsavelSanitizado}</span>
+                                <span class="meta-item__value">${responsavelSanitizado}</span>
                             </div>
-                            <div class="meta-item meta-item--inline">
+                            <div class="meta-item">
                                 <span class="meta-item__label">Meta/KPI</span>
                                 <span class="meta-item__value">${metaSanitizada}</span>
                             </div>
@@ -787,8 +756,8 @@
                             </div>
                             <div class="plan-card__actions">
                                 <button type="button" class="btn-action" data-id="${p.id}" data-action="view" title="Ver detalhes"><i data-lucide="eye"></i></button>
-                                ${(p.criadoPor === currentUserId || isAdmin) ? `<button type="button" class="btn-action" data-id="${p.id}" data-action="edit" title="Editar"><i data-lucide="edit-2"></i></button>` : ''}
-                                ${(p.criadoPor === currentUserId || isAdmin) ? `<button type="button" class="btn-action btn-delete" data-id="${p.id}" data-action="delete" title="Excluir"><i data-lucide="trash-2"></i></button>` : ''}
+                                ${p.criadoPor === currentUserId ? `<button type="button" class="btn-action" data-id="${p.id}" data-action="edit" title="Editar"><i data-lucide="edit-2"></i></button>` : ''}
+                                ${p.criadoPor === currentUserId ? `<button type="button" class="btn-action btn-delete" data-id="${p.id}" data-action="delete" title="Excluir"><i data-lucide="trash-2"></i></button>` : ''}
                             </div>
                         </div>
                         ${isLate ? `<div class="late-alert">
@@ -868,7 +837,7 @@
 
             if (action === 'edit') {
                 const plano = planos.find(x => x.id === id);
-                if (!plano || (plano.criadoPor !== currentUserId && !isAdmin)) {
+                if (!plano || plano.criadoPor !== currentUserId) {
                     notificacao.aviso('Acesso negado', 'Você só pode editar planos criados por você.');
                     return;
                 }
@@ -882,16 +851,21 @@
 
             if (action === 'delete') {
                 const plano = planos.find(x => x.id === id);
-                if (!plano || (plano.criadoPor !== currentUserId && !isAdmin)) {
+                if (!plano || plano.criadoPor !== currentUserId) {
                     notificacao.aviso('Acesso negado', 'Você só pode excluir planos criados por você.');
                     return;
                 }
-                // NotificarSimNao (confirm-dialog.js)
-                const res = await confirmar.excluir(
-                    'Excluir plano?',
-                    'A remoção é irreversível.'
-                );
-                if (res) {
+                
+                const res = await Swal.fire({
+                    title: 'Deletar plano?',
+                    text: 'A remoção é irreversível.',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: 'Sim, deletar',
+                    cancelButtonText: 'Cancelar'
+                });
+                
+                if (res.isConfirmed) {
                     try {
                         await deleteDoc(doc(db, 'planos-acao', id));
                         notificacao.sucesso('Deletado', 'Plano removido com sucesso');
@@ -915,15 +889,6 @@
             try {
                 await garantirAutenticacao(auth);
                 currentUserId = auth.currentUser?.uid || null;
-                
-                // Verificar se é admin
-                try {
-                    const userGroups = JSON.parse(localStorage.getItem('userGroups') || '[]');
-                    isAdmin = userGroups.includes('admin');
-                } catch (e) {
-                    isAdmin = false;
-                }
-                
                 await carregarPlanos();
                 
                 // Inicializar ícones apenas uma vez

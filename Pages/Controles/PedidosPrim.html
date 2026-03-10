@@ -1,0 +1,85 @@
+<!-- /Pages/Controles/PedidosPrim.html -->
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="theme-color" content="#2c2f3f" />
+  <title>Controle de Peças PRIM</title>
+  <link rel="icon" type="image/png" href="/assets/images/iconeaba.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <!-- LIBS EXTERNAS -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+  <!-- CSS -->
+  <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+  <link rel="stylesheet" href="/assets/css/style.css">
+  <link rel="stylesheet" href="/assets/css/Pages/Dashboard/Principal.css">
+  <link rel="stylesheet" href="/assets/css/Pages/Controles/Pedidosprim.css">
+
+</head>
+<body>
+
+  <nav id="sidebar-placeholder"></nav>
+
+  <section class="home">
+    <div class="text">
+      <h1>Controle de Pedidos PRIM</h1>
+      <p id="dynamic-title">Carregando...</p>
+    </div>
+
+    <div class="dashboard-cards">
+      <div class="dashboard-card" style="background-color: #d60019;"><h2 id="total-pedidos">0</h2><p><i data-lucide="package"></i> Total de Pedidos</p></div>
+      <div class="dashboard-card" style="background-color: #d60019;"><h2 id="pedidos-aguardando">0</h2><p><i data-lucide="loader-circle"></i> Aguardando Peça</p></div>
+      <div class="dashboard-card" style="background-color: #d60019;"><h2 id="pedidos-concluidos">0</h2><p><i data-lucide="check-circle"></i> Pedidos Concluídos</p></div>
+    </div>
+
+    <div class="content-card">
+      <div class="content-card-header">
+        <h3>Acompanhamento de Pedidos PRIM</h3>
+        <div class="header-actions">
+            <button class="btn-acao" id="btn-importar-excel" title="Importar Pedidos via Excel">
+            <i data-lucide="file-spreadsheet"></i>
+        </button>
+
+        <input type="file" id="excel-uploader" accept=".xlsx,.xls" style="display: none;">
+        
+        <a href="/Pages/Formularios/form-prim.html" class="btn-acao" title="Adicionar Novo Pedido">
+        <i data-lucide="plus"></i>
+        </a>
+
+        </div>
+      </div>
+      <div class="content-card-body">
+        <div class="filters">
+          <input id="filtro-codigo" type="text" placeholder="Buscar por Código..." />
+          <input id="filtro-cidade" type="text" placeholder="Buscar por Cidade..." />
+        </div>
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>Código</th><th>Qtd.</th><th>Cidade</th><th>Status</th><th>Fornecedor</th><th>Data</th><th>Ações</th>
+              </tr>
+            </thead>
+            <tbody id="tabela-pedidos"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div id="loader-overlay" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 9999; align-items: center; justify-content: center; color: white; font-size: 1.2rem;">Carregando...</div>
+
+  <!-- Carrega o JavaScript da página -->
+  <script type="module" src="/assets/js/Controles/ControlePedidosPrim.js"></script>
+
+  <!-- Scripts Globais -->
+  <script type="module" src="/assets/js/auth.js"></script>
+  <script src="/assets/js/main.js"></script> 
+  <script src="/assets/js/components/Sidebar.js"></script>
+
+</body>
+</html>

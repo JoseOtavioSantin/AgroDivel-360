@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="theme-color" content="#2c2f3f" />
+  <title>Solicitação de Suporte</title>
+  <link rel="icon" type="image/png" href="/assets/images/iconeaba.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- LIBS EXTERNAS -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  
+  <!-- CSS -->
+  <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+  <link rel="stylesheet" href="/assets/css/style.css">
+  <link rel="stylesheet" href="/assets/css/Pages/Formularios/style-forms.css">
+
+  <style>
+    .upload-area {
+      border: 2px dashed #ccc;
+      border-radius: 10px;
+      padding: 30px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.3s;
+      background: #f9f9f9;
+    }
+    .upload-area:hover {
+      border-color: #193b7c;
+      background: #e8f0ff;
+    }
+    .upload-area.dragging {
+      border-color: #193b7c;
+      background: #e8f0ff;
+    }
+    .preview-images {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 15px;
+    }
+    .preview-item {
+      position: relative;
+      width: 120px;
+      height: 120px;
+    }
+    .preview-item img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: 8px;
+      border: 2px solid #ddd;
+    }
+    .preview-item .remove-btn {
+      position: absolute;
+      top: -8px;
+      right: -8px;
+      background: #dc3545;
+      color: white;
+      border: none;
+      border-radius: 50%;
+      width: 24px;
+      height: 24px;
+      cursor: pointer;
+      font-size: 14px;
+      line-height: 1;
+    }
+  </style>
+</head>
+<body>
+
+  <nav id="sidebar-placeholder"></nav>
+
+  <section class="home">
+    <div class="text">
+      <h1>Solicitação de Suporte</h1>
+      <p>Descreva seu problema ou solicitação detalhadamente</p>
+    </div>
+
+    <div class="content-card">
+      <div class="content-card-body">
+        <form id="form-suporte">
+          
+          <!-- Email (Automático) -->
+          <div class="form-group">
+            <label for="email">Seu email <span class="required">*</span></label>
+            <input type="email" id="email" readonly style="background-color: #adafb8; cursor: not-allowed;" required>
+          </div>
+
+          <!-- Solicitante (Automático) -->
+          <div class="form-group">
+            <label for="solicitante">Solicitante <span class="required">*</span></label>
+            <input type="text" id="solicitante" readonly style="background-color: #adafb8; cursor: not-allowed;" required>
+          </div>
+
+          <!-- Filial -->
+          <div class="form-group">
+            <label for="filial">Filial <span class="required">*</span></label>
+            <select id="filial" required>
+              <option value="">Selecione a filial</option>
+              <option value="Joaçaba">Joaçaba</option>
+              <option value="Campos Novos">Campos Novos</option>
+              <option value="Rio do Sul">Rio do Sul</option>
+              <option value="Lages">Lages</option>
+            </select>
+          </div>
+
+          <!-- Departamento -->
+          <div class="form-group">
+            <label for="departamento">Departamento <span class="required">*</span></label>
+            <select id="departamento" required>
+              <option value="">Selecione o departamento</option>
+              <option value="Serviços">Serviços</option>
+              <option value="Máquinas">Máquinas</option>
+              <option value="Peças">Peças</option>
+              <option value="Administrativo">Administrativo</option>
+            </select>
+          </div>
+
+          <!-- Rotina -->
+          <div class="form-group">
+            <label for="rotina">Rotina <span class="required">*</span></label>
+            <small style="color: #666; display: block; margin-bottom: 5px;">Inserir o número da rotina</small>
+            <input type="text" id="rotina" placeholder="Digite o número da rotina" required>
+          </div>
+
+          <!-- Descrição da Solicitação -->
+          <div class="form-group">
+            <label for="descricao">Descreva sua solicitação detalhadamente <span class="required">*</span></label>
+            <textarea id="descricao" rows="6" placeholder="Digite aqui" required></textarea>
+          </div>
+
+          <!-- Upload de Imagem -->
+          <div class="form-group">
+            <label>Imagem (Opcional)</label>
+            <small style="color: #666; display: block; margin-bottom: 10px;">Inserir print do erro ou do problema</small>
+            <div class="upload-area" id="upload-area">
+              <i data-lucide="upload-cloud" style="width: 48px; height: 48px; color: #193b7c; margin: 0 auto 10px;"></i>
+              <p style="color: #193b7c; font-weight: 600; margin: 0;">Insira arquivos clicando aqui ou arraste e solte eles nesta área</p>
+              <input type="file" id="file-input" accept="image/*" multiple style="display: none;">
+            </div>
+            <div class="preview-images" id="preview-images"></div>
+          </div>
+
+          <!-- BOTÕES DE AÇÃO -->
+          <div class="form-actions">
+            <button type="button" class="btn-secondary" onclick="window.history.back()">Cancelar</button>
+            <button type="submit" class="btn-primary">Enviar Solicitação</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </section>
+
+  <!-- Scripts Globais -->
+  <script type="module" src="/assets/js/firebase-config.js"></script>
+  <script type="module" src="/assets/js/auth.js"></script>
+  <script src="/assets/js/main.js"></script> 
+  <script src="/assets/js/components/Sidebar.js"></script>
+
+  <script type="module">
+    import { garantirAutenticacao } from '/assets/js/auth-guard.js';
+    import { getApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+    import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
+
+    let userData;
+    let selectedFiles = [];
+
+    // Inicializar após carregar
+    (async () => {
+      try {
+        userData = await garantirAutenticacao();
+        const app = getApp();
+        const db = getFirestore(app);
+        const storage = getStorage(app, 'gs://agro-divel.firebasestorage.app');
+
+        // Preencher campos automáticos
+        document.getElementById('email').value = userData.email || '';
+        document.getElementById('solicitante').value = userData.nome || '';
+        
+        // Auto-selecionar filial se houver apenas uma
+        if (userData.filial && userData.filial.length === 1) {
+          const filialSelect = document.getElementById('filial');
+          const filialNome = userData.filial[0];
+          // Tentar encontrar opção correspondente
+          for (let option of filialSelect.options) {
+            if (option.value.toLowerCase().includes(filialNome.toLowerCase()) || 
+                filialNome.toLowerCase().includes(option.value.toLowerCase())) {
+              option.selected = true;
+              break;
+            }
+          }
+        }
+
+        // Configurar upload de imagens
+        const uploadArea = document.getElementById('upload-area');
+        const fileInput = document.getElementById('file-input');
+        const previewImages = document.getElementById('preview-images');
+
+        uploadArea.addEventListener('click', () => fileInput.click());
+
+        uploadArea.addEventListener('dragover', (e) => {
+          e.preventDefault();
+          uploadArea.classList.add('dragging');
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+          uploadArea.classList.remove('dragging');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+          e.preventDefault();
+          uploadArea.classList.remove('dragging');
+          const files = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/'));
+          addFiles(files);
+        });
+
+        fileInput.addEventListener('change', (e) => {
+          const files = Array.from(e.target.files);
+          addFiles(files);
+        });
+
+        function addFiles(files) {
+          files.forEach(file => {
+            if (selectedFiles.length >= 5) {
+              Swal.fire('Limite atingido', 'Você pode enviar no máximo 5 imagens', 'warning');
+              return;
+            }
+            selectedFiles.push(file);
+            renderPreview();
+          });
+        }
+
+        function renderPreview() {
+          previewImages.innerHTML = '';
+          selectedFiles.forEach((file, index) => {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+              const div = document.createElement('div');
+              div.className = 'preview-item';
+              div.innerHTML = `
+                <img src="${e.target.result}" alt="Preview">
+                <button type="button" class="remove-btn" data-index="${index}">&times;</button>
+              `;
+              previewImages.appendChild(div);
+            };
+            reader.readAsDataURL(file);
+          });
+
+          // Adicionar evento de remoção
+          setTimeout(() => {
+            document.querySelectorAll('.remove-btn').forEach(btn => {
+              btn.addEventListener('click', (e) => {
+                const index = parseInt(e.target.dataset.index);
+                selectedFiles.splice(index, 1);
+                renderPreview();
+              });
+            });
+          }, 100);
+        }
+
+        // Submit do formulário
+        document.getElementById('form-suporte').addEventListener('submit', async (e) => {
+          e.preventDefault();
+
+          const filial = document.getElementById('filial').value;
+          const departamento = document.getElementById('departamento').value;
+          const rotina = document.getElementById('rotina').value.trim();
+          const descricao = document.getElementById('descricao').value.trim();
+
+          if (!filial || !departamento || !rotina || !descricao) {
+            Swal.fire('Atenção', 'Preencha todos os campos obrigatórios', 'warning');
+            return;
+          }
+
+          try {
+            Swal.fire({
+              title: 'Enviando...',
+              text: 'Aguarde enquanto processamos sua solicitação',
+              allowOutsideClick: false,
+              didOpen: () => Swal.showLoading()
+            });
+
+            // Upload das imagens
+            const imageUrls = [];
+            for (const file of selectedFiles) {
+              const timestamp = Date.now();
+              const filename = `SolicitacoesSuporte/${timestamp}_${file.name}`;
+              const storageRef = ref(storage, filename);
+              await uploadBytes(storageRef, file);
+              const url = await getDownloadURL(storageRef);
+              imageUrls.push(url);
+            }
+
+            // Salvar no Firestore
+            await addDoc(collection(db, 'SolicitaçõesSuporte'), {
+              email: userData.email,
+              solicitante: userData.nome,
+              filial: filial,
+              departamento,
+              rotina,
+              descricao,
+              imagens: imageUrls,
+              status: 'Pendente',
+              dataAbertura: serverTimestamp(),
+              userId: userData.uid || userData.id || ''
+            });
+
+            Swal.fire({
+              icon: 'success',
+              title: 'Solicitação enviada!',
+              text: 'Sua solicitação foi registrada com sucesso',
+              timer: 2000
+            }).then(() => {
+              // Limpar o formulário
+              document.getElementById('form-suporte').reset();
+              document.getElementById('filial').value = '';
+              document.getElementById('departamento').value = '';
+              selectedFiles = [];
+              previewImages.innerHTML = '';
+              
+              // Preencher novamente os campos automáticos
+              document.getElementById('email').value = userData.email || '';
+              document.getElementById('solicitante').value = userData.nome || '';
+              
+              // Auto-selecionar filial se houver apenas uma
+              if (userData.filial && userData.filial.length === 1) {
+                const filialSelect = document.getElementById('filial');
+                const filialNome = userData.filial[0];
+                for (let option of filialSelect.options) {
+                  if (option.value.toLowerCase().includes(filialNome.toLowerCase()) || 
+                      filialNome.toLowerCase().includes(option.value.toLowerCase())) {
+                    option.selected = true;
+                    break;
+                  }
+                }
+              }
+            });
+
+          } catch (error) {
+            console.error('Erro ao enviar solicitação:', error);
+            Swal.fire('Erro', 'Não foi possível enviar a solicitação. Tente novamente.', 'error');
+          }
+        });
+
+        // Inicializar ícones Lucide
+        lucide.createIcons();
+
+      } catch (error) {
+        console.error('Erro ao inicializar:', error);
+        Swal.fire('Erro', 'Não foi possível carregar os dados do usuário', 'error');
+      }
+    })();
+  </script>
+
+</body>
+</html>

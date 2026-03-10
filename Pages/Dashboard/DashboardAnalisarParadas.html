@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="theme-color" content="#2c2f3f" />
+  <title>Análise de Máquinas Paradas</title>
+  <link rel="icon" type="image/png" href="/assets/images/iconeaba.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- LIBS EXTERNAS -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- NOVO PLUGIN PARA RÓTULOS NOS GRÁFICOS -->
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/pt.js"></script>
+
+  <!-- CSS -->
+  <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+  <link rel="stylesheet" href="/assets/css/style.css">
+  <link rel="stylesheet" href="/assets/css/Pages/Dashboard/Principal.css">
+
+  <style>
+    .analysis-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(450px, 1fr ));
+      gap: 25px;
+      margin-top: 20px;
+    }
+    .chart-container {
+      background-color: #fff;
+      padding: 25px;
+      border-radius: 12px;
+      box-shadow: 0 6px 12px rgba(0,0,0,0.07);
+      position: relative; 
+      height: 480px; /* Altura ajustada para melhor visualização */
+      display: flex;
+      flex-direction: column;
+    }
+    .chart-header {
+      text-align: center;
+      margin-bottom: 15px;
+    }
+    .chart-header h3 {
+      margin: 0 0 5px 0;
+      color: #333;
+      font-size: 1.2rem;
+    }
+    .chart-header p {
+      margin: 0;
+      font-size: 0.9rem;
+      color: #666;
+    }
+    .chart-wrapper {
+        position: relative;
+        flex-grow: 1;
+    }
+    .filters {
+        background-color: #fff;
+        padding: 15px 25px;
+        border-radius: 12px;
+        margin-bottom: 20px;
+        display: flex;
+        gap: 15px;
+        align-items: center;
+    }
+    .filters input {
+        padding: 10px;
+        border: 1px solid #ccc;
+        border-radius: 6px;
+    }
+  </style>
+</head>
+<body>
+
+  <nav id="sidebar-placeholder"></nav>
+
+  <section class="home">
+    <div class="text">
+      <h1>Análise de Paradas</h1>
+      <p id="dynamic-title">Inteligência para identificar e resolver gargalos.</p>
+    </div>
+
+    <div class="filters">
+        <label for="filtro-periodo-analise">Filtrar Período de Análise:</label>
+        <input id="filtro-periodo-analise" placeholder="Selecione o período" style="width: 250px;"/>
+    </div>
+
+    <div class="analysis-grid">
+      <div class="chart-container">
+        <div class="chart-header">
+          <h3>Onde estão os gargalos agora?</h3>
+          <p>Distribuição das máquinas atualmente em status de "parada".</p>
+        </div>
+        <div class="chart-wrapper">
+            <canvas id="motivosAtuaisChart"></canvas>
+        </div>
+      </div>
+      <div class="chart-container">
+        <div class="chart-header">
+          <h3>Quais etapas mais consomem tempo?</h3>
+          <p>Tempo médio (em dias) que as máquinas ficam em cada status.</p>
+        </div>
+        <div class="chart-wrapper">
+            <canvas id="tempoMedioEtapaChart"></canvas>
+        </div>
+      </div>
+    </div>
+    
+    <div class="content-card" style="margin-top: 25px;">
+        <div class="content-card-header">
+            <h3>Desempenho por Técnico (Paradas Ativas)</h3>
+        </div>
+        <div class="content-card-body">
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Técnico</th>
+                            <th>Paradas Atribuídas</th>
+                            <th>Tempo Médio de Parada Atual (dias)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabela-tecnicos"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+  </section>
+
+<script type="module">
+  import { garantirAutenticacao } from '/assets/js/auth-guard.js';
+  import { getApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import { getFirestore, collection, getDocs, query, where } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+  // Registrar o novo plugin globalmente
+  Chart.register(ChartDataLabels );
+
+  let motivosChart = null;
+  let tempoMedioChart = null;
+
+  const CHART_COLORS = ['#193b7c', '#f39c12', '#e74c3c', '#27ae60', '#8e44ad', '#3498db', '#c0392b', '#16a085'];
+
+  async function iniciarPagina() {
+    // ... (código da função iniciarPagina permanece o mesmo)
+    try {
+      const userData = await garantirAutenticacao();
+      const app = getApp();
+      const db = getFirestore(app);
+      const filiaisLogadas = userData.filial || [];
+
+      document.getElementById('dynamic-title').textContent = `Filial: ${filiaisLogadas.join(", ")}`;
+
+      if (filiaisLogadas.length === 0) {
+        document.body.innerHTML += '<p>Nenhuma filial associada para análise.</p>';
+        return;
+      }
+
+      flatpickr("#filtro-periodo-analise", {
+        mode: "range",
+        dateFormat: "Y-m-d",
+        locale: "pt",
+        onChange: function(selectedDates) {
+          carregarEProcessarDados(db, filiaisLogadas, selectedDates);
+        }
+      });
+
+      await carregarEProcessarDados(db, filiaisLogadas, []);
+
+    } catch (error) {
+      console.error("Falha na inicialização:", error);
+      Swal.fire('Erro', `Falha ao carregar a página de análise: ${error.message}`, 'error');
+    }
+  }
+
+  async function carregarEProcessarDados(db, filiais, periodo) {
+    // ... (código da função carregarEProcessarDados permanece o mesmo)
+    Swal.fire({ title: 'Analisando Dados...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+    
+    try {
+        let qParadas = query(collection(db, "maquinasParadas"), where("filial", "in", filiais));
+        if (periodo.length === 2) {
+            const dataInicio = periodo[0].toISOString().split('T')[0];
+            const dataFim = periodo[1].toISOString().split('T')[0];
+            qParadas = query(qParadas, where("dataParada", ">=", dataInicio), where("dataParada", "<=", dataFim));
+        }
+        const paradasSnapshot = await getDocs(qParadas);
+        const paradas = paradasSnapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+
+        const todosHistoricos = {};
+        for (const parada of paradas) {
+            const historicoRef = collection(db, "maquinasParadas", parada.id, "historicoStatus");
+            const historicoSnapshot = await getDocs(historicoRef);
+            todosHistoricos[parada.id] = historicoSnapshot.docs.map(d => d.data());
+        }
+
+        processarMotivosAtuais(paradas);
+        processarTempoMedioPorEtapa(paradas, todosHistoricos);
+        processarDesempenhoTecnicos(paradas);
+
+        Swal.close();
+
+    } catch (error) {
+        console.error("Erro ao carregar e processar dados:", error);
+        Swal.fire('Erro!', `Ocorreu um problema ao analisar os dados: ${error.message}`, 'error');
+    }
+  }
+
+  function processarMotivosAtuais(paradas) {
+    // ... (código da função processarMotivosAtuais permanece o mesmo)
+    const paradasAtivas = paradas.filter(p => p.status === 'parada');
+    const contagemMotivos = paradasAtivas.reduce((acc, parada) => {
+      const motivo = parada.motivo || 'Não especificado';
+      acc[motivo] = (acc[motivo] || 0) + 1;
+      return acc;
+    }, {});
+
+    const labels = Object.keys(contagemMotivos);
+    const data = Object.values(contagemMotivos);
+
+    renderizarGraficoPizza('motivosAtuaisChart', 'motivosChart', labels, data);
+  }
+
+  function processarTempoMedioPorEtapa(paradas, todosHistoricos) {
+    // ... (código da função processarTempoMedioPorEtapa permanece o mesmo)
+    const duracaoPorMotivo = {};
+    const contagemPorMotivo = {};
+
+    paradas.forEach(parada => {
+        const historico = todosHistoricos[parada.id];
+        if (!historico || historico.length === 0) return;
+
+        historico.sort((a, b) => (a.data?.toMillis() || 0) - (b.data?.toMillis() || 0));
+
+        for (let i = 0; i < historico.length; i++) {
+            const etapaAtual = historico[i];
+            if (!etapaAtual.data) continue;
+
+            const motivo = etapaAtual.motivo || 'Não especificado';
+            const inicio = etapaAtual.data.toDate();
+            let fim;
+
+            if (i + 1 < historico.length) {
+                fim = historico[i+1].data.toDate();
+            } else if (parada.status !== 'parada') {
+                fim = parada.dataFinal ? new Date(parada.dataFinal + "T00:00:00") : new Date();
+            } else {
+                fim = new Date();
+            }
+
+            const duracaoMs = fim.getTime() - inicio.getTime();
+            const duracaoDias = duracaoMs / (1000 * 60 * 60 * 24);
+
+            duracaoPorMotivo[motivo] = (duracaoPorMotivo[motivo] || 0) + duracaoDias;
+            contagemPorMotivo[motivo] = (contagemPorMotivo[motivo] || 0) + 1;
+        }
+    });
+
+    const labels = Object.keys(duracaoPorMotivo);
+    const data = labels.map(motivo => parseFloat((duracaoPorMotivo[motivo] / contagemPorMotivo[motivo]).toFixed(1)));
+
+    renderizarGraficoBarras('tempoMedioEtapaChart', 'tempoMedioChart', labels, data, 'Tempo Médio (dias)');
+  }
+  
+  function processarDesempenhoTecnicos(paradas) {
+    // ... (código da função processarDesempenhoTecnicos permanece o mesmo)
+    const paradasAtivas = paradas.filter(p => p.status === 'parada');
+    const dadosTecnicos = {};
+
+    paradasAtivas.forEach(parada => {
+        const tecnico = parada.tecnico || 'Não atribuído';
+        if (!dadosTecnicos[tecnico]) {
+            dadosTecnicos[tecnico] = { count: 0, totalDays: 0 };
+        }
+        const diasParada = (new Date() - new Date(parada.dataParada + "T00:00:00")) / (1000 * 60 * 60 * 24);
+        dadosTecnicos[tecnico].count++;
+        dadosTecnicos[tecnico].totalDays += diasParada;
+    });
+
+    const tabela = document.getElementById('tabela-tecnicos');
+    tabela.innerHTML = '';
+    
+    if (Object.keys(dadosTecnicos).length === 0) {
+        tabela.innerHTML = '<tr><td colspan="3" style="text-align:center;">Nenhuma parada ativa encontrada.</td></tr>';
+        return;
+    }
+
+    const sortedTecnicos = Object.keys(dadosTecnicos).sort((a, b) => dadosTecnicos[b].count - dadosTecnicos[a].count);
+
+    sortedTecnicos.forEach(tecnico => {
+        const mediaDias = (dadosTecnicos[tecnico].totalDays / dadosTecnicos[tecnico].count).toFixed(1);
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td>${tecnico}</td>
+            <td>${dadosTecnicos[tecnico].count}</td>
+            <td>${mediaDias}</td>
+        `;
+        tabela.appendChild(tr);
+    });
+  }
+
+  // --- FUNÇÕES DE RENDERIZAÇÃO SEPARADAS E MELHORADAS ---
+
+  function renderizarGraficoPizza(canvasId, chartVar, labels, data) {
+    const ctx = document.getElementById(canvasId).getContext('2d');
+    if (window[chartVar]) window[chartVar].destroy();
+
+    window[chartVar] = new Chart(ctx, {
+      type: 'pie',
+      data: {
+        labels: labels,
+        datasets: [{ data: data, backgroundColor: CHART_COLORS }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { position: 'top', align: 'center' },
+          // Configuração do plugin de rótulos
+          datalabels: {
+            color: '#fff',
+            font: { weight: 'bold', size: 14 },
+            formatter: (value, context) => {
+              const total = context.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
+              const percentage = (value / total * 100).toFixed(0) + '%';
+              // Mostra o valor absoluto e a porcentagem
+              return `${value}\n(${percentage})`; 
+            }
+          }
+        }
+      }
+    });
+  }
+
+  function renderizarGraficoBarras(canvasId, chartVar, labels, data, label) {
+    const ctx = document.getElementById(canvasId).getContext('2d');
+    if (window[chartVar]) window[chartVar].destroy();
+
+    window[chartVar] = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: labels,
+        datasets: [{ label: label, data: data, backgroundColor: CHART_COLORS[0] }]
+      },
+      options: {
+        indexAxis: 'y', // Deixa o gráfico na horizontal, melhor para ler os rótulos
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          datalabels: {
+            color: '#333',
+            anchor: 'end',
+            align: 'end',
+            font: { weight: 'bold' },
+            formatter: (value) => `${value} dias` // Adiciona 'dias' ao valor
+          }
+        },
+        scales: { x: { beginAtZero: true } }
+      }
+    });
+  }
+
+  document.addEventListener('DOMContentLoaded', iniciarPagina);
+  lucide.createIcons();
+</script>
+
+<!-- Scripts Globais -->
+<script type="module" src="/assets/js/firebase-config.js"></script>
+<script type="module" src="/assets/js/auth.js"></script>
+<script src="/assets/js/main.js"></script> 
+<script src="/assets/js/components/Sidebar.js"></script>
+
+</body>
+</html>

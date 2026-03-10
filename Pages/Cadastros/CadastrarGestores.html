@@ -120,16 +120,6 @@
         import '/assets/js/components/Sidebar.js';
         // Proteger página por autenticação
         import { garantirAutenticacao } from '/assets/js/auth-guard.js';
-        garantirAutenticacao().then(() => {
-            // Checagem se o Gantt está configurado (exemplo: localStorage, pode ser Firestore)
-            const ganttConfigurado = localStorage.getItem('ganttConfigurado');
-            if (!ganttConfigurado || ganttConfigurado !== 'true') {
-                alert('O Gantt precisa estar configurado para acessar esta página.');
-                window.location.href = '/Pages/Menu.html';
-            }
-        });
-        // Proteger página por autenticação
-        import { garantirAutenticacao } from '/assets/js/auth-guard.js';
         garantirAutenticacao();
     </script>
 
@@ -280,7 +270,7 @@
             'ctrl-Tempario': ['admin', 'diretoria', 'servicos', 'pecas'],
             
             // --- LUBRIFICANTES ---
-            'lubri-AnaliseLubrificantes': ['admin', 'diretoria', 'servicos'],
+            'lubri-AnaliseLubrificantes': ['admin', 'diretoria', 'pecas'],
             
             // --- PLANEJAMENTO ---
             'plan-Gerenciar': ['admin', 'diretoria'],
@@ -291,12 +281,11 @@
             'acao-Gerenciar': ['admin', 'diretoria', 'comercial', 'pecas', 'servicos'],
             'acao-Novo': ['admin', 'diretoria', 'comercial', 'pecas', 'servicos'],
             'acao-KPIs': ['admin', 'diretoria'],
-            'acao-Gantt': ['admin', 'diretoria', 'comercial', 'pecas', 'servicos'],
-
 
             // --- SUPORTE ---
-            'suporte-GerenciarSuporte': ['admin'],
+            'suporte-SolicitacaoSuporte': ['admin', 'diretoria', 'comercial', 'pecas', 'servicos'],
             'suporte-MinhasSolicitacoes': ['admin', 'diretoria', 'comercial', 'pecas', 'servicos'],
+            'suporte-GerenciarSolicitacoes': ['admin'],
         };
 
         // --- NOMES AMIGÁVEIS PARA AS PERMISSÕES ---
@@ -326,16 +315,16 @@
             'ctrl-MaquinaParada': 'Máquina Parada',
             'ctrl-Tempario': 'Tempario',
             'ctrl-Telemetria': 'Telemetria',
-            'lubrificantes': 'Análise de Lubrificantes',
+            'lubri-AnaliseLubrificantes': 'Análise de Lubrificantes',
             'plan-Gerenciar': 'Gerenciar Planejamento',
             'plan-Permissoes': 'Gerenciar Permissões de Planejamento',
             'plan-Preencher': 'Preencher Planejamento',
             'acao-Gerenciar': 'Gerenciar Planos de Ação',
             'acao-Novo': 'Novo Plano de Ação',
             'acao-KPIs': 'Cadastrar KPIs',
-            'acao-Gantt': 'Gantt',
-            'suporte-GerenciarSuporte': 'Gerenciar Suporte',
+            'suporte-SolicitacaoSuporte': 'Nova Solicitação de Suporte',
             'suporte-MinhasSolicitacoes': 'Minhas Solicitações',
+            'suporte-GerenciarSolicitacoes': 'Gerenciar Solicitações'
         };
 
         // --- Elementos do DOM ---

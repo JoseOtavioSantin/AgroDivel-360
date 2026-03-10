@@ -156,33 +156,6 @@
         
         .empty-state { text-align: center; padding: 60px 20px; color: #999; }
         .empty-state i { font-size: 48px; margin-bottom: 15px; opacity: 0.5; }
-
-        /* === ETAPAS DENTRO DO CAMPO COMO === */
-        .etapas-container { margin-top: 16px; border-top: 1px dashed #dee2e6; padding-top: 16px; }
-        .etapas-header-inline { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
-        .etapas-header-inline span { font-size: 14px; color: #666; font-weight: 500; }
-        .btn-add-etapa { display: flex; align-items: center; gap: 6px; padding: 6px 12px; background: #193b7c; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 500; transition: background 0.2s; }
-        .btn-add-etapa:hover { background: #142f63; }
-        .etapa-card { background: #f8f9fa; border: 1px solid #e0e0e0; border-radius: 10px; margin-bottom: 12px; overflow: hidden; }
-        .etapa-header { background: #e8eef7; padding: 10px 14px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #d0dae8; }
-        .etapa-header input { flex: 1; padding: 6px 10px; border: 1px solid #ced4da; border-radius: 5px; font-size: 14px; font-weight: 600; background: white; }
-        .etapa-header input:focus { outline: none; border-color: #193b7c; }
-        .btn-remove-etapa { width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; background: #193b7c; color: white; border: none; border-radius: 5px; cursor: pointer; margin-left: 10px; transition: background 0.2s; }
-        .btn-remove-etapa:hover { background: #c82333; }
-        .etapa-body { padding: 12px; }
-        .checklist-items { margin-bottom: 10px; }
-        .checklist-item { display: flex; align-items: center; gap: 10px; padding: 8px 10px; background: white; border: 1px solid #dee2e6; border-radius: 6px; margin-bottom: 6px; }
-        .checklist-item:hover { border-color: #193b7c; }
-        .item-texto { flex: 1; padding: 4px 8px; border: 1px solid transparent; border-radius: 4px; font-size: 13px; background: transparent; }
-        .item-texto:focus { outline: none; border-color: #193b7c; background: white; }
-        .btn-remove-item { width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; background: transparent; color: #64748b; border: 1px solid #cbd5e1; border-radius: 4px; cursor: pointer; transition: all 0.2s; }
-        .btn-remove-item:hover { background: #193b7c; color: white; border-color: #193b7c; }
-        .add-item-row { display: flex; gap: 8px; }
-        .add-item-row input { flex: 1; padding: 8px 12px; border: 1px dashed #ced4da; border-radius: 6px; font-size: 13px; }
-        .add-item-row input:focus { outline: none; border-color: #193b7c; border-style: solid; }
-        .btn-add-item { padding: 8px 12px; background: #193b7c; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 500; display: flex; align-items: center; gap: 4px; transition: background 0.2s; }
-        .btn-add-item:hover { background: #142f63; }
-        .empty-checklist { text-align: center; padding: 15px; color: #999; font-style: italic; font-size: 13px; }
     </style>
 </head>
 <body>
@@ -215,23 +188,7 @@
                         <div class="form-group" style="grid-column: 1 / -1;"><label for="plano-where">Onde? (Where) - Local/Departamento *</label><input type="text" id="plano-where" required placeholder="Ex: Departamento de Vendas"></div>
                         <div class="form-group"><label for="plano-whenInicio">Data Início (When) *</label><input type="date" id="plano-whenInicio" required></div>
                         <div class="form-group"><label for="plano-whenFim">Data Fim (When) *</label><input type="date" id="plano-whenFim" required></div>
-                        <div class="form-group" style="grid-column: 1 / -1;">
-                            <label for="plano-how">Como? (How) - Metodologia/Processo *</label>
-                            <textarea id="plano-how" required placeholder="Descreva o método..." style="min-height: 80px; resize: vertical;"></textarea>
-                            
-                            <!-- Etapas dentro do campo Como -->
-                            <div class="etapas-container">
-                                <div class="etapas-header-inline">
-                                    <span><i data-lucide="list-checks" style="width:16px;height:16px;display:inline;vertical-align:middle;"></i> Etapas do Processo</span>
-                                    <button type="button" class="btn-add-etapa" onclick="adicionarEtapa()">
-                                        <i data-lucide="plus"></i> Nova Etapa
-                                    </button>
-                                </div>
-                                <div id="etapas-container">
-                                    <!-- Etapas serão adicionadas aqui -->
-                                </div>
-                            </div>
-                        </div>
+                        <div class="form-group" style="grid-column: 1 / -1;"><label for="plano-how">Como? (How) - Metodologia/Processo *</label><textarea id="plano-how" required placeholder="Descreva o método..." style="min-height: 80px; resize: vertical;"></textarea></div>
                         <div class="form-group" style="grid-column: 1 / -1;"><label for="plano-howMuch">Quanto custa? (How Much) - Recursos/Investimento</label><input type="text" id="plano-howMuch" placeholder="Ex: R$ 5000 ou 40 horas"></div>
                     </div>
                     
@@ -254,135 +211,11 @@
         let planoEmEdicao = null;
         let todosPlanos = [];
         let todosKPIs = [];
-        let etapasData = []; // Array para armazenar etapas e seus itens
 
         const form = document.getElementById('form-plano-acao');
         const btnSalvar = document.getElementById('btn-salvar');
         const selectKPI = document.getElementById('plano-kpi');
         const inputMeta = document.getElementById('plano-meta');
-        const etapasContainer = document.getElementById('etapas-container');
-
-        // --- FUNÇÕES DE ETAPAS ---
-        let etapaCounter = 0;
-
-        window.adicionarEtapa = function(nome = '', itens = []) {
-            const etapaId = etapaCounter++;
-            const etapaHtml = `
-                <div class="etapa-card" data-etapa-id="${etapaId}">
-                    <div class="etapa-header">
-                        <input type="text" class="etapa-nome" placeholder="Nome da etapa (ex: Primeira Etapa)" value="${nome}">
-                        <button type="button" class="btn-remove-etapa" onclick="removerEtapa(${etapaId})" title="Remover etapa">
-                            <i data-lucide="trash-2"></i>
-                        </button>
-                    </div>
-                    <div class="etapa-body">
-                        <div class="checklist-items" id="checklist-${etapaId}">
-                            ${itens.length === 0 ? '<div class="empty-checklist">Nenhum item adicionado ainda</div>' : ''}
-                        </div>
-                        <div class="add-item-row">
-                            <input type="text" id="novo-item-${etapaId}" placeholder="Digite um item..." onkeypress="if(event.key==='Enter'){event.preventDefault();adicionarItem(${etapaId});}">
-                            <button type="button" class="btn-add-item" onclick="adicionarItem(${etapaId})">
-                                <i data-lucide="plus"></i> Adicionar
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            `;
-            etapasContainer.insertAdjacentHTML('beforeend', etapaHtml);
-            lucide.createIcons();
-
-            // Se tiver itens pré-existentes, adicionar
-            if (itens.length > 0) {
-                itens.forEach(item => {
-                    const texto = typeof item === 'string' ? item : item.texto;
-                    adicionarItemExistente(etapaId, texto);
-                });
-            }
-        };
-
-        window.removerEtapa = function(etapaId) {
-            const etapaCard = document.querySelector(`.etapa-card[data-etapa-id="${etapaId}"]`);
-            if (etapaCard) {
-                etapaCard.remove();
-            }
-        };
-
-        window.adicionarItem = function(etapaId) {
-            const input = document.getElementById(`novo-item-${etapaId}`);
-            const texto = input.value.trim();
-            if (!texto) return;
-
-            adicionarItemExistente(etapaId, texto);
-            input.value = '';
-            input.focus();
-        };
-
-        function adicionarItemExistente(etapaId, texto) {
-            const checklistContainer = document.getElementById(`checklist-${etapaId}`);
-            
-            // Remover mensagem de vazio se existir
-            const emptyMsg = checklistContainer.querySelector('.empty-checklist');
-            if (emptyMsg) emptyMsg.remove();
-
-            const itemId = Date.now() + Math.random();
-            const itemHtml = `
-                <div class="checklist-item" data-item-id="${itemId}">
-                    <input type="text" class="item-texto" value="${texto}" placeholder="Descrição do item">
-                    <button type="button" class="btn-remove-item" onclick="removerItem(this, ${etapaId})" title="Remover item">
-                        <i data-lucide="x"></i>
-                    </button>
-                </div>
-            `;
-            checklistContainer.insertAdjacentHTML('beforeend', itemHtml);
-            lucide.createIcons();
-        }
-
-        window.removerItem = function(btn, etapaId) {
-            const item = btn.closest('.checklist-item');
-            if (item) {
-                item.remove();
-                
-                // Verificar se ficou vazio
-                const checklistContainer = document.getElementById(`checklist-${etapaId}`);
-                if (checklistContainer && checklistContainer.children.length === 0) {
-                    checklistContainer.innerHTML = '<div class="empty-checklist">Nenhum item adicionado ainda</div>';
-                }
-            }
-        };
-
-        function coletarEtapas() {
-            const etapas = [];
-            const etapaCards = etapasContainer.querySelectorAll('.etapa-card');
-            
-            etapaCards.forEach(card => {
-                const nome = card.querySelector('.etapa-nome').value.trim();
-                const itens = [];
-                const checklistItems = card.querySelectorAll('.checklist-item');
-                
-                checklistItems.forEach(item => {
-                    const texto = item.querySelector('.item-texto').value.trim();
-                    if (texto) {
-                        itens.push({ texto });
-                    }
-                });
-                
-                if (nome || itens.length > 0) {
-                    etapas.push({ nome: nome || 'Etapa sem nome', itens });
-                }
-            });
-            
-            return etapas;
-        }
-
-        function carregarEtapas(etapas) {
-            etapasContainer.innerHTML = '';
-            etapaCounter = 0;
-            if (etapas && etapas.length > 0) {
-                etapas.forEach(etapa => {
-                    adicionarEtapa(etapa.nome, etapa.itens || []);
-                });
-            }
-        }
 
         // Retorna o nome do usuário usado pelo app (prioriza sources locais para evitar 'Usuário' genérico)
         function getAppUserName() {
@@ -475,9 +308,6 @@
             document.getElementById('plano-how').value = plano.how || '';
             document.getElementById('plano-howMuch').value = plano.howMuch || '';
 
-            // Carregar etapas
-            carregarEtapas(plano.etapas || []);
-
             planoEmEdicao = id;
             document.getElementById('form-title').textContent = 'Editar Plano de Ação';
             document.getElementById('form-subtitle').textContent = 'Altere os dados do plano de ação abaixo.';
@@ -520,8 +350,6 @@
 
             try {
                 const kpiSelecionado = todosKPIs.find(k => k.id === document.getElementById('plano-kpi').value);
-                const etapas = coletarEtapas();
-                
                 const dados = {
                     nome: document.getElementById('plano-nome').value,
                     kpiId: document.getElementById('plano-kpi').value,
@@ -537,8 +365,7 @@
                     whenFim: document.getElementById('plano-whenFim').value,
                     where: document.getElementById('plano-where').value,
                     how: document.getElementById('plano-how').value,
-                    howMuch: document.getElementById('plano-howMuch').value,
-                    etapas: etapas
+                    howMuch: document.getElementById('plano-howMuch').value
                 };
 
                 if (planoEmEdicao) {
@@ -559,6 +386,7 @@
                     dados.dataCriacao = new Date();
                     dados.criadoPor = auth.currentUser?.uid || null;
                     dados.criadoPorNome = getAppUserName();
+                    dados.progresso = 0; // Progresso inicial
                     await addDoc(collection(db, 'planos-acao'), dados);
                     Swal.fire('Sucesso!', 'Plano de ação cadastrado com sucesso!', 'success');
                 }
@@ -566,8 +394,6 @@
                 form.reset();
                 planoEmEdicao = null;
                 inputMeta.value = '';
-                etapasContainer.innerHTML = ''; // Limpar etapas
-                etapaCounter = 0;
                 const _resp = document.getElementById('plano-responsavel');
                 if (_resp) _resp.value = getAppUserName();
                 document.getElementById('form-title').textContent = 'Novo Plano de Ação';
@@ -615,17 +441,9 @@
                         if (snap && snap.exists()) {
                             const plano = { id: snap.id, ...snap.data() };
 
-                            // Verificar se o usuário é o criador do plano ou admin
+                            // Verificar se o usuário é o criador do plano
                             const currentUserId = auth.currentUser?.uid || null;
-                            let isAdmin = false;
-                            try {
-                                const userGroups = JSON.parse(localStorage.getItem('userGroups') || '[]');
-                                isAdmin = userGroups.includes('admin');
-                            } catch (e) {
-                                isAdmin = false;
-                            }
-                            
-                            if (plano.criadoPor && plano.criadoPor !== currentUserId && !isAdmin) {
+                            if (plano.criadoPor && plano.criadoPor !== currentUserId) {
                                 Swal.fire('Acesso negado', 'Você só pode editar planos criados por você.', 'warning');
                                 sessionStorage.removeItem('planToEditId');
                                 location.href = '/Pages/PlanodeAcao/GerenciarPlanosAcao.html';
@@ -652,9 +470,6 @@
                             document.getElementById('plano-howMuch').value = plano.howMuch || '';
                             if(document.getElementById('plano-objetivos')) document.getElementById('plano-objetivos').value = plano.objetivos || '';
                             if(document.getElementById('plano-criteriosSucesso')) document.getElementById('plano-criteriosSucesso').value = plano.criteriosSucesso || '';
-
-                            // Carregar etapas
-                            carregarEtapas(plano.etapas || []);
 
                             document.getElementById('form-title').textContent = 'Editar Plano de Ação';
                             document.getElementById('form-subtitle').textContent = 'Altere os dados do plano de ação abaixo.';

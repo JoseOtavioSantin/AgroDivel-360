@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Partes - Agro Divel</title>
+    <link rel="icon" type="image/png" href="/assets/images/iconeaba.png">
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <link rel="stylesheet" href="/assets/css/style.css">
+    
+    <style>
+        .partes-section {
+            margin: 30px 0;
+            padding: 20px;
+        }
+
+        .partes-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 25px;
+            margin-top: 30px;
+        }
+
+        .parte-card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+            text-decoration: none;
+            color: inherit;
+            display: block;
+            position: relative;
+        }
+
+        .parte-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+            border-color: #193b7c;
+        }
+
+        .parte-icon {
+            width: 100%;
+            height: 120px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .parte-icon img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+
+        .parte-name {
+            font-size: 18px;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+
+        /* Removido bloco .parte-valor (não exibimos valores monetários) */
+
+        .parte-info {
+            font-size: 14px;
+            color: #666;
+            margin-top: 8px;
+        }
+
+        .breadcrumb {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+
+        .breadcrumb a {
+            color: #193b7c;
+            text-decoration: none;
+        }
+
+        .breadcrumb span {
+            color: #666;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+
+        .error-message {
+            text-align: center;
+            color: #dc3545;
+            padding: 20px;
+            background: #f8d7da;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+
+        /* Botão de editar */
+        .btn-editar-parte {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: #193b7c;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 8px 12px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            display: none; /* Inicialmente escondido */
+        }
+
+        .btn-editar-parte:hover {
+            background: #132a5a;
+        }
+
+        .parte-card:hover .btn-editar-parte {
+            display: block;
+        }
+
+        .parte-card-com-botao {
+            padding-top: 50px; /* Espaço para o botão flutuante */
+        }
+
+        /* Checkbox de seleção */
+        .checkbox-selecao {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            width: 24px;
+            height: 24px;
+            cursor: pointer;
+            z-index: 10;
+            accent-color: #193b7c;
+            pointer-events: auto !important; /* Força o checkbox a ser clicável */
+        }
+
+        /* Barra de ações */
+        .barra-acoes {
+            position: fixed;
+            bottom: -100px;
+            left: 0;
+            right: 0;
+            background: #193b7c;
+            color: white;
+            padding: 20px;
+            box-shadow: 0 -4px 12px rgba(0,0,0,0.3);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 1000;
+            transition: bottom 0.3s ease;
+        }
+
+        .barra-acoes.ativa {
+            bottom: 0;
+        }
+
+        .info-selecao {
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .botoes-acoes {
+            display: flex;
+            gap: 15px;
+        }
+
+        .btn-acao {
+            background: white;
+            color: #193b7c;
+            border: none;
+            border-radius: 6px;
+            padding: 12px 24px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-acao:hover {
+            background: #f0f0f0;
+            transform: translateY(-2px);
+        }
+
+        .btn-acao.btn-exportar {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-acao.btn-exportar:hover {
+            background: #218838;
+        }
+
+        .btn-acao.btn-cancelar {
+            background: #dc3545;
+            color: white;
+        }
+
+        .btn-acao.btn-cancelar:hover {
+            background: #c82333;
+        }
+
+        /* Ajuste no card quando checkbox está visível */
+        .parte-card.selecionavel {
+            padding-top: 50px;
+        }
+
+        /* Estilo para card selecionado */
+        .parte-card.selecionado {
+            border-color: #193b7c;
+            background: #f0f4ff;
+        }
+    </style>
+</head>
+<body>
+    <nav id="sidebar-placeholder"></nav>
+
+    <section class="home">
+        <div class="text">
+            <div class="breadcrumb">
+                <a href="Tempario.html">Tempario</a>
+                <span>></span>
+                <a href="#" id="breadcrumb-tipo">Máquinas</a>
+                <span>></span>
+                <span id="current-maquina">Partes</span>
+            </div>
+            <h1 id="page-title">Partes da Máquina</h1>
+            <p id="page-subtitle">Selecione uma parte para ver suas peças cadastradas.</p>
+            <button class="btn-acao" id="btn-modo-selecao" style="margin-top: 15px;">
+                <i class='bx bx-check-square'></i> Selecionar Múltiplas Partes
+            </button>
+        </div>
+
+        <div class="partes-section">
+            <div class="partes-grid" id="partes-grid">
+                <div class="loading">Carregando partes...</div>
+            </div>
+        </div>
+        
+        <!-- Barra de ações para seleção múltipla -->
+        <div class="barra-acoes" id="barra-acoes">
+            <div class="info-selecao">
+                <i class='bx bx-check-circle'></i>
+                <span id="contador-selecao">0 partes selecionadas</span>
+            </div>
+            <div class="botoes-acoes">
+                <button class="btn-acao btn-cancelar" id="btn-cancelar-selecao">
+                    <i class='bx bx-x'></i> Cancelar
+                </button>
+                <button class="btn-acao btn-exportar" id="btn-exportar-txt">
+                    <i class='bx bx-download'></i> Exportar TXT
+                </button>
+            </div>
+        </div>
+    </section>
+
+<script type="module">
+    // --- LISTA DE PERMISSÕES ---
+    const EMAILS_AUTORIZADOS = [
+        'admin@gmail.com',
+        'matheus.rodrigues@agrodivel.com',
+        'angelo.murilo@agrodivel.com'
+    ];
+    // --- FIM DA LISTA DE PERMISSÕES ---
+
+    // Variáveis para controle de seleção
+    let modoSelecao = false;
+    let partesSelecionadas = new Set();
+    let todasPartes = []; // Armazenar todas as partes carregadas
+
+    // Função para alternar modo de seleção
+    function toggleModoSelecao() {
+        modoSelecao = !modoSelecao;
+        const btn = document.getElementById('btn-modo-selecao');
+        const checkboxes = document.querySelectorAll('.checkbox-selecao');
+        const cards = document.querySelectorAll('.parte-card');
+        
+        if (modoSelecao) {
+            btn.innerHTML = '<i class=\'bx bx-x\'></i> Cancelar Seleção';
+            btn.style.background = '#dc3545';
+            btn.style.color = 'white';
+            checkboxes.forEach(cb => cb.style.display = 'block');
+            
+            // Modificar comportamento dos cards para seleção
+            cards.forEach(card => {
+                card.classList.add('selecionavel');
+                
+                // Remover o href para evitar navegação
+                card.dataset.originalHref = card.href;
+                card.removeAttribute('href');
+                card.style.cursor = 'pointer';
+                
+                // Adicionar evento de clique no card para alternar checkbox
+                card.addEventListener('click', handleCardClick);
+            });
+        } else {
+            btn.innerHTML = '<i class=\'bx bx-check-square\'></i> Selecionar Múltiplas Partes';
+            btn.style.background = 'white';
+            btn.style.color = '#193b7c';
+            checkboxes.forEach(cb => {
+                cb.style.display = 'none';
+                cb.checked = false;
+            });
+            
+            // Restaurar comportamento normal dos cards
+            cards.forEach(card => {
+                card.classList.remove('selecionavel', 'selecionado');
+                
+                // Restaurar o href
+                if (card.dataset.originalHref) {
+                    card.href = card.dataset.originalHref;
+                }
+                card.style.cursor = '';
+                
+                // Remover evento de clique
+                card.removeEventListener('click', handleCardClick);
+            });
+            partesSelecionadas.clear();
+            atualizarBarraAcoes();
+        }
+    }
+
+    // Função para lidar com clique no card (modo seleção)
+    function handleCardClick(e) {
+        // Não fazer nada se clicar no botão de editar
+        if (e.target.closest('.btn-editar-parte')) {
+            return;
+        }
+        
+        e.preventDefault();
+        const card = e.currentTarget;
+        const checkbox = card.querySelector('.checkbox-selecao');
+        
+        if (checkbox) {
+            // Alternar estado do checkbox
+            checkbox.checked = !checkbox.checked;
+            
+            // Disparar evento change manualmente
+            const event = new Event('change', { bubbles: true });
+            checkbox.dispatchEvent(event);
+        }
+    }
+
+    // Função para atualizar a barra de ações
+    function atualizarBarraAcoes() {
+        const barra = document.getElementById('barra-acoes');
+        const contador = document.getElementById('contador-selecao');
+        const qtd = partesSelecionadas.size;
+        
+        if (qtd > 0) {
+            barra.classList.add('ativa');
+            contador.textContent = `${qtd} parte${qtd > 1 ? 's' : ''} selecionada${qtd > 1 ? 's' : ''}`;
+        } else {
+            barra.classList.remove('ativa');
+        }
+    }
+
+    // Função para exportar partes selecionadas em TXT
+    async function exportarPartesTXT() {
+        if (partesSelecionadas.size === 0) {
+            alert('Selecione pelo menos uma parte para exportar.');
+            return;
+        }
+
+        try {
+            const { db } = await import('/assets/js/firebase-config.js');
+            const { doc, getDoc } = await import("https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js");
+            
+            let conteudoTXT = 'Código;Quantidade\n';
+            
+            // Buscar dados de cada parte selecionada
+            for (const parteId of partesSelecionadas) {
+                const parteDoc = await getDoc(doc(db, "equipamentosPartes", parteId));
+                
+                if (parteDoc.exists()) {
+                    const data = parteDoc.data();
+                    
+                    if (data.pecas && Array.isArray(data.pecas) && data.pecas.length > 0) {
+                        // Formato simples: Código;Quantidade
+                        data.pecas.forEach((peca) => {
+                            const codigo = peca.codigo || '';
+                            const quantidade = peca.quantidade || '0';
+                            conteudoTXT += `${codigo};${quantidade}\n`;
+                        });
+                    }
+                }
+            }
+            
+            // Criar e baixar o arquivo
+            const blob = new Blob([conteudoTXT], { type: 'text/plain;charset=utf-8' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            const urlParams = new URLSearchParams(window.location.search);
+            const maquina = urlParams.get('maquina');
+            a.href = url;
+            a.download = `${maquina}_${new Date().toISOString().split('T')[0]}.txt`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+            
+            // Resetar seleção
+            toggleModoSelecao();
+            
+            alert(`Arquivo TXT exportado com sucesso!\n${partesSelecionadas.size} parte(s) incluída(s).`);
+            
+        } catch (error) {
+            console.error('Erro ao exportar TXT:', error);
+            alert('Erro ao exportar arquivo TXT: ' + error.message);
+        }
+    }
+
+    async function carregarPartes() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const tipo = urlParams.get('tipo');
+        const maquina = urlParams.get('maquina');
+        
+        if (!tipo || !maquina) {
+            window.location.href = 'Tempario.html';
+            return;
+        }
+
+        // Atualizar breadcrumb e títulos
+        const tipoFormatado = tipo.charAt(0).toUpperCase() + tipo.slice(1);
+        document.getElementById('breadcrumb-tipo').href = `Maquinas.html?tipo=${tipo}`;
+        document.getElementById('breadcrumb-tipo').textContent = tipoFormatado + 's';
+        document.getElementById('current-maquina').textContent = maquina;
+        document.getElementById('page-title').textContent = `Partes - ${maquina}`;
+        document.getElementById('page-subtitle').textContent = `Partes disponíveis para ${maquina}`;
+
+        try {
+            // Importar usando a mesma versão do seu firebase-config.js (9.22.1)
+            const { db } = await import('/assets/js/firebase-config.js');
+            const { getDocs, collection } = await import("https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js");
+
+            // Buscar todos os documentos da coleção
+            const querySnapshot = await getDocs(collection(db, "equipamentosPartes"));
+            const grid = document.getElementById('partes-grid');
+            grid.innerHTML = '';
+
+            // Filtrar partes localmente (já que o Firestore não suporta múltiplos where)
+            const partesFiltradas = [];
+            
+            querySnapshot.forEach((doc) => {
+                const data = doc.data();
+                
+                // Usando os campos exatos do seu documento
+                const nomeEquipamento = data.nomeEquipamento;
+                const tipoEquipamento = data.tipoEquipamento;
+                const parteEquipamento = data.parteEquipamento;
+                
+                if (nomeEquipamento && tipoEquipamento && parteEquipamento) {
+                    // Normalizar strings para comparação
+                    const tipoNormalizado = tipoEquipamento.toLowerCase()
+                        .normalize("NFD")
+                        .replace(/[\u0300-\u036f]/g, "")
+                        .replace(/[^a-z0-9]/g, "");
+                    
+                    const tipoBuscado = tipo.toLowerCase()
+                        .normalize("NFD")
+                        .replace(/[\u0300-\u036f]/g, "")
+                        .replace(/[^a-z0-9]/g, "");
+                    
+                    // Verificar se corresponde ao tipo e máquina
+                    if (tipoNormalizado.includes(tipoBuscado) && nomeEquipamento === maquina) {
+                        partesFiltradas.push({
+                            id: doc.id,
+                            ...data
+                        });
+                    }
+                }
+            });
+
+            if (partesFiltradas.length === 0) {
+                grid.innerHTML = `
+                    <div style="text-align: center; grid-column: 1/-1; color: #666;">
+                        <h3>Nenhuma parte encontrada para ${maquina}</h3>
+                        <p>Não foram encontradas partes cadastradas para esta máquina.</p>
+                    </div>
+                `;
+                return;
+            }
+
+
+            // Agrupar partes por nome (para evitar duplicatas)
+            const partesUnicas = {};
+            partesFiltradas.forEach(parte => {
+                if (!partesUnicas[parte.parteEquipamento]) {
+                    partesUnicas[parte.parteEquipamento] = parte;
+                }
+            });
+
+            // FILTRAR: Remover partes que são checklists
+            const partesSemChecklist = Object.values(partesUnicas).filter(parte => {
+                // Considera checklist se o nome da parte contém "checklist" (case insensitive)
+                return !parte.parteEquipamento.toLowerCase().includes('checklist');
+            });
+
+            // Ordenar partes: Revisões primeiro (ordenadas por número de horas) e depois as outras alfabeticamente
+            const partesOrdenadas = partesSemChecklist.sort((a, b) => {
+                const nomeA = a.parteEquipamento.toLowerCase();
+                const nomeB = b.parteEquipamento.toLowerCase();
+                
+                const isRevisaoA = nomeA.includes('revisão') || nomeA.includes('revisao');
+                const isRevisaoB = nomeB.includes('revisão') || nomeB.includes('revisao');
+                
+                // Se ambas são revisões, ordenar por número de horas
+                if (isRevisaoA && isRevisaoB) {
+                    // Extrair números do nome (ex: "Revisão 50 horas" -> 50)
+                    const horasA = parseInt(nomeA.match(/\d+/)?.[0] || '0');
+                    const horasB = parseInt(nomeB.match(/\d+/)?.[0] || '0');
+                    return horasA - horasB;
+                }
+                
+                // Revisões sempre vêm primeiro
+                if (isRevisaoA) return -1;
+                if (isRevisaoB) return 1;
+                
+                // Caso contrário, ordem alfabética
+                return nomeA.localeCompare(nomeB);
+            });
+
+            // Verificar se o usuário atual está autorizado
+            let isAutorizado = false;
+            try {
+                const { garantirAutenticacao } = await import('/assets/js/auth-guard.js');
+                const userData = await garantirAutenticacao();
+                const emailUsuarioLogado = userData.email.toLowerCase();
+                isAutorizado = EMAILS_AUTORIZADOS.includes(emailUsuarioLogado);
+            } catch (error) {
+                console.log('Usuário não autorizado para edição');
+            }
+
+            // Criar cards para cada parte única
+            partesOrdenadas.forEach(parte => {
+                const card = document.createElement('a');
+                card.href = `Pecas.html?id=${parte.id}&maquina=${encodeURIComponent(maquina)}&parte=${encodeURIComponent(parte.parteEquipamento)}`;
+                card.className = 'parte-card';
+                card.dataset.parteId = parte.id; // Adicionar ID como data attribute
+                
+                // Adicionar classe especial se tiver botão de editar
+                if (isAutorizado) {
+                    card.classList.add('parte-card-com-botao');
+                }
+                
+                const quantidadePecas = parte.pecas ? parte.pecas.length : 0;
+                
+                // Extrair a primeira palavra do nome da parte para a imagem
+                const primeiraPalavra = parte.parteEquipamento.split(' ')[0];
+                const imagemParte = primeiraPalavra.charAt(0).toUpperCase() + primeiraPalavra.slice(1).toLowerCase();
+                
+                // Valores monetários removidos (form simplificado)
+                card.innerHTML = `
+                    <input type="checkbox" class="checkbox-selecao" style="display: none;" data-parte-id="${parte.id}">
+                    ${isAutorizado ? `
+                        <button class="btn-editar-parte" onclick="event.preventDefault(); event.stopPropagation(); window.editarParte('${parte.id}')" title="Editar Parte">
+                            <i class='bx bx-edit'></i> Editar
+                        </button>
+                    ` : ''}
+                    <div class="parte-icon">
+                        <img src="/assets/images/${imagemParte}.png" alt="${parte.parteEquipamento}" 
+                            onerror="this.onerror=null; this.src='/assets/images/Parte.png';">
+                    </div>
+                    <h3 class="parte-name">${parte.parteEquipamento}</h3>
+                    <div class="parte-info">${quantidadePecas} peça(s) cadastrada(s)</div>
+                `;
+                grid.appendChild(card);
+            });
+            
+            // Armazenar partes para uso posterior
+            todasPartes = partesOrdenadas;
+            
+            // Adicionar event listeners para checkboxes
+            document.querySelectorAll('.checkbox-selecao').forEach(checkbox => {
+                checkbox.addEventListener('change', function(e) {
+                    e.stopPropagation();
+                    const parteId = this.dataset.parteId;
+                    const card = this.closest('.parte-card');
+                    
+                    if (this.checked) {
+                        partesSelecionadas.add(parteId);
+                        card.classList.add('selecionado');
+                    } else {
+                        partesSelecionadas.delete(parteId);
+                        card.classList.remove('selecionado');
+                    }
+                    
+                    atualizarBarraAcoes();
+                });
+            });
+
+        } catch (error) {
+            console.error('Erro ao carregar partes:', error);
+            document.getElementById('partes-grid').innerHTML = `
+                <div class="error-message">
+                    <h3>Erro ao carregar partes</h3>
+                    <p><strong>Mensagem:</strong> ${error.message}</p>
+                    <p style="margin-top: 15px;">
+                        <a href="Maquinas.html?tipo=${tipo}" style="color: #193b7c; text-decoration: underline; font-weight: bold;">
+                            ↩️ Voltar para a seleção de máquinas
+                        </a>
+                    </p>
+                </div>
+            `;
+        }
+    }
+
+// Função para editar parte - CORRIGIDA
+async function editarParte(parteId) {
+    try {
+        console.log('Editando parte ID:', parteId);
+        
+        // Buscar os dados completos da parte para obter a parteEquipamento
+        const { db } = await import('/assets/js/firebase-config.js');
+        const { doc, getDoc } = await import("https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js");
+        
+        const parteDoc = await getDoc(doc(db, "equipamentosPartes", parteId));
+        
+        if (parteDoc.exists()) {
+            const parteData = parteDoc.data();
+            const parteEquipamento = parteData.parteEquipamento || '';
+            const nomeEquipamento = parteData.nomeEquipamento || '';
+            const tipoEquipamento = parteData.tipoEquipamento || '';
+            
+            console.log('Dados da parte:', { parteEquipamento, nomeEquipamento, tipoEquipamento });
+            
+            // Redirecionar para o formulário passando TODOS os parâmetros necessários
+            const params = new URLSearchParams({
+                id: parteId,
+                parte: encodeURIComponent(parteEquipamento),
+                maquina: encodeURIComponent(nomeEquipamento),
+                tipo: encodeURIComponent(tipoEquipamento),
+                modo: 'edicao'
+            });
+            
+            window.location.href = `/Pages/Tempario/form-cadastropacote.html?${params.toString()}`;
+            
+        } else {
+            throw new Error('Parte não encontrada');
+        }
+        
+    } catch (error) {
+        console.error('Erro ao redirecionar para edição:', error);
+        // Usar alerta nativo se SweetAlert não estiver disponível
+        if (typeof Swal !== 'undefined') {
+            Swal.fire('Erro', 'Não foi possível abrir a edição da parte.', 'error');
+        } else {
+            alert('Erro: Não foi possível abrir a edição da parte.');
+        }
+    }
+}
+
+    // Tornar a função global para ser acessível pelo onclick
+    window.editarParte = editarParte;
+
+    document.addEventListener('DOMContentLoaded', () => {
+        carregarPartes();
+        
+        // Event listeners para botões de seleção
+        document.getElementById('btn-modo-selecao').addEventListener('click', toggleModoSelecao);
+        document.getElementById('btn-cancelar-selecao').addEventListener('click', toggleModoSelecao);
+        document.getElementById('btn-exportar-txt').addEventListener('click', exportarPartesTXT);
+    });
+</script>
+
+    <script type="module" src="/assets/js/firebase-config.js"></script>
+    <script type="module" src="/assets/js/auth-guard.js"></script>
+    <script type="module" src="/assets/js/auth.js"></script>
+    <script src="/assets/js/main.js"></script>
+    <script src="/assets/js/components/Sidebar.js"></script>
+</body>
+
+</html>

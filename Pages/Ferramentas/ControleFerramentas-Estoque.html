@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Controle de Ferramentas - Estoque</title>
+    <link rel="icon" type="image/png" href="/assets/images/iconeaba.png">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#2c2f3f" />
+
+    <!-- LIBS EXTERNAS -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <!-- CSS -->
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <link rel="stylesheet" href="/assets/css/style.css">
+    <link rel="stylesheet" href="/assets/css/Pages/Dashboard/Principal.css">
+    <link rel="stylesheet" href="/assets/css/Pages/Controles/ControleFerramentas.css">
+
+    <!-- ========== CSS PARA OS MODAIS E SPINNER DE CARREGAMENTO ========== -->
+    <style>
+        .error-container { padding: 20px; background-color: #ffdddd; border: 1px solid #ff0000; color: #D8000C; border-radius: 8px; margin: 20px; }
+
+        /* Estilo do Overlay (fundo escuro) */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        /* Conteúdo do Modal de Imagem */
+        .image-modal-content {
+            background-color: #2c2f3f;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.4);
+            width: 90%;
+            max-width: 800px;
+            max-height: 90vh;
+            display: flex;
+            flex-direction: column;
+            transform: scale(0.9);
+            transition: transform 0.3s ease;
+        }
+
+        .modal-overlay.active .image-modal-content {
+            transform: scale(1);
+        }
+
+        .image-modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #444;
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+            color: #fff;
+        }
+
+        .image-modal-header h3 { margin: 0; font-size: 1.2rem; }
+        .image-modal-header .close-button { cursor: pointer; font-size: 1.8rem; color: #aaa; transition: color 0.2s; }
+        .image-modal-header .close-button:hover { color: #fff; }
+
+        /* Container da Imagem Principal */
+        .main-image-container {
+            flex-grow: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            margin-bottom: 15px;
+            min-height: 200px;
+        }
+
+        .main-image-container img {
+            max-width: 100%;
+            max-height: 60vh;
+            object-fit: contain;
+            border-radius: 8px;
+        }
+
+        /* Galeria de Miniaturas (Thumbnails) */
+        .thumbnail-gallery {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+            padding-top: 10px;
+            border-top: 1px solid #444;
+        }
+
+        .thumbnail-gallery img {
+            width: 80px;
+            height: 80px;
+            object-fit: cover;
+            border-radius: 6px;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: border-color 0.2s, transform 0.2s;
+        }
+
+        .thumbnail-gallery img:hover {
+            transform: scale(1.05);
+        }
+
+        .thumbnail-gallery img.active-thumb {
+            border-color: var(--cor-primaria);
+        }
+        
+        .no-image-message { color: #888; text-align: center; padding: 40px 0; }
+
+        /* Spinner de carregamento */
+        .image-loading-placeholder {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+            height: 100%;
+            color: #fff;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        .spinner {
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top-color: var(--cor-primaria, #fff);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+
+        /* Indicador visual de ferramenta inativa */
+        .ferramenta-inativa {
+            background-color: #ffebee !important;
+            opacity: 0.7;
+        }
+
+        .status-inativa {
+            display: inline-block;
+            background: #d32f2f;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-left: 8px;
+        }
+
+        /* Botão de status na tabela */
+        .btn-status {
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .btn-status:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+
+        .btn-status:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+        }
+    </style>
+</head>
+<body>
+
+    <nav id="sidebar-placeholder"></nav>
+
+    <section class="home">
+        <div class="text">
+            <h1>Controle de Ferramentas - Estoque</h1>
+            <p id="dynamic-title">Gestão de inventário de ferramentas</p>
+        </div>
+        
+        <!-- ABA ESTOQUE -->
+        <div class="tab-content active">
+            <div class="content-card">
+                <div class="content-card-header">
+                    <h3>Estoque de Ferramentas</h3>
+                    <div class="header-actions">
+                        <a href="/Pages/Formularios/form_cadastroferramenta.html" class="btn-acao" title="Adicionar Nova Ferramenta">
+                            <i data-lucide="plus"></i>
+                        </a>
+                    </div>
+                </div>
+                <div class="content-card-body">
+                    <div class="filters">
+                        <select id="filtro-filial">
+                            <option value="">Todas as Filiais</option>
+                            <option value="Campos Novos">Campos Novos</option>
+                            <option value="Rio do Sul">Rio do Sul</option>
+                            <option value="Lages">Lages</option>
+                        </select>
+                        <input id="filtro-codigo" type="text" placeholder="Buscar por código..." />
+                        <input id="filtro-descricao" type="text" placeholder="Buscar por descrição..." />
+                        <select id="filtro-grupo"></select>
+                        <select id="filtro-reparo">
+                            <option value="">Todos os Status</option>
+                            <option value="ativa">Ativa</option>
+                            <option value="inativa">Inativa/Avaria</option>
+                            <option value="reparo">Em Reparo</option>
+                        </select>
+                    </div>
+                    <div class="table-wrapper">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Filial</th>
+                                    <th>Código</th>
+                                    <th>Descrição</th>
+                                    <th>Grupo</th>
+                                    <th>Localização</th>
+                                    <th style="text-align: center;">Qtd.</th>
+                                    <th style="text-align: center;">Status</th>
+                                    <th style="text-align: center;">Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tabela-ferramentas"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- MODAL DE IMAGEM COM GALERIA -->
+    <div id="modal-imagem-overlay" class="modal-overlay">
+        <div class="image-modal-content">
+            <div class="image-modal-header">
+                <h3 id="modal-imagem-titulo">Imagem da Ferramenta</h3>
+                <span class="close-button">&times;</span>
+            </div>
+            <div class="main-image-container">
+                <!-- O conteúdo aqui (spinner ou imagem) será gerenciado pelo JS -->
+            </div>
+            <div id="thumbnail-gallery-container" class="thumbnail-gallery">
+                <!-- As miniaturas serão inseridas aqui pelo JavaScript -->
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL DE STATUS DA FERRAMENTA -->
+    <div id="modal-status-ferramenta" class="modal-ferramentas">
+        <div class="modal-content" style="max-width: 600px;">
+            <div class="modal-header">
+                <h3>Status da Ferramenta</h3>
+                <span class="close-button" onclick="fecharModalStatus()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div id="info-status-ferramenta" style="background: #f5f5f5; padding: 15px; border-radius: 8px; margin-bottom: 20px; color: #333;">
+                    <!-- Informações da ferramenta -->
+                </div>
+
+                <div id="status-atual-container" style="margin-bottom: 20px;">
+                    <!-- Status atual será inserido aqui -->
+                </div>
+
+                <div id="acoes-status-container">
+                    <!-- Ações disponíveis serão inseridas aqui -->
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="toast-container" id="toast-container"></div>
+
+    <!-- SCRIPT COMPLETO -->
+    <script type="module">
+        import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js";
+        import { getFirestore, collection, getDocs, query, orderBy, deleteDoc, doc, updateDoc } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
+        import { getAuth } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-auth.js";
+        import { garantirAutenticacao } from '/assets/js/auth-guard.js';
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDcjPa9jXsCCu6lNc1fjVg4Bzz1toKWAGY",
+            authDomain: "agro-divel.firebaseapp.com",
+            projectId: "agro-divel",
+            storageBucket: "agro-divel.appspot.com",
+            messagingSenderId: "583977436505",
+            appId: "1:583977436505:web:3754ec029aebb3d9d67848"
+        };
+
+        let app, db, auth;
+        let todosGrupos = [], todasFerramentas = [];
+
+        async function iniciarPagina() {
+            try {
+                if (!getApps().length) { 
+                    app = initializeApp(firebaseConfig); 
+                } else { 
+                    app = getApp(); 
+                }
+                db = getFirestore(app);
+                auth = getAuth(app);
+                await garantirAutenticacao(auth);
+                carregarDados();
+                configurarEventListeners();
+                lucide.createIcons();
+            } catch (error) {
+                console.error("Falha na inicialização:", error);
+                const homeSection = document.querySelector('.home');
+                if (homeSection) {
+                    homeSection.innerHTML = `<div class="error-container"><h1>Erro</h1><p>Não foi possível carregar os dados.</p></div>`;
+                }
+            }
+        }
+
+        // FUNÇÃO PARA RENDERIZAR FERRAMENTAS
+        function renderizarTabelaFerramentas(ferramentas) {
+            const tabelaBody = document.getElementById('tabela-ferramentas');
+            tabelaBody.innerHTML = '';
+            ferramentas.forEach(f => {
+                const grupo = todosGrupos.find(g => g.id === f.grupoId);
+                const tr = document.createElement('tr');
+                const temImagem = f.fotosURLs && Array.isArray(f.fotosURLs) && f.fotosURLs.length > 0;
+
+                // Se a ferramenta está inativa, destacar visualmente
+                if (f.inativa) {
+                    tr.style.backgroundColor = '#ffebee';
+                    tr.style.opacity = '0.85';
+                }
+
+                const acoesHTML = `
+                    <td style="text-align: center; display: flex; gap: 5px; justify-content: center;">
+                        <button class="btn btn-secundario btn-ver-imagem" data-ferramenta-id="${f.id}" title="Ver Imagem(ns)" ${!temImagem ? 'disabled' : ''}>
+                            <i data-lucide="image"></i>
+                        </button>
+                        <a href="/Pages/Formularios/form_cadastroferramenta.html?id=${f.id}" class="btn btn-aviso" title="Editar">
+                            <i data-lucide="edit"></i>
+                        </a>
+                        <button class="btn btn-alerta btn-remover-ferramenta" data-id="${f.id}" title="Remover">
+                            <i data-lucide="trash-2"></i>
+                        </button>
+                    </td>
+                `;
+
+                // Determinar status e cor
+                let statusHTML = '';
+                let statusTexto = 'Ativa';
+                let statusCor = '#4caf50';
+                let statusIcon = '✓';
+                
+                if (f.inativa) {
+                    statusTexto = 'Inativa';
+                    statusCor = '#d32f2f';
+                    statusIcon = '⚠️';
+                } else if (f.reparo) {
+                    statusTexto = 'Em Reparo';
+                    statusCor = '#ff9800';
+                    statusIcon = '🔧';
+                }
+
+                statusHTML = `
+                    <button class="btn-status" 
+                            data-ferramenta-id="${f.id}" 
+                            style="background: ${statusCor}; color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.85rem; display: flex; align-items: center; gap: 5px; justify-content: center; min-width: 110px;"
+                            title="Ver detalhes do status">
+                        <span>${statusIcon}</span>
+                        <span>${statusTexto}</span>
+                    </button>
+                `;
+
+                tr.innerHTML = `
+                    <td>${f.filial}</td>
+                    <td>${f.codigo}</td>
+                    <td>${f.descricao}</td>
+                    <td>${grupo ? grupo.nome : 'Sem grupo'}</td>
+                    <td>${f.localizacao}</td>
+                    <td style="text-align: center;">${f.quantidade}</td>
+                    <td style="text-align: center;">${statusHTML}</td>
+                    ${acoesHTML}
+                `;
+                tabelaBody.appendChild(tr);
+            });
+            lucide.createIcons();
+        }
+
+        // FUNÇÃO PARA FILTRAR ESTOQUE
+        function aplicarFiltrosEstoque() {
+            const f = document.getElementById('filtro-filial').value;
+            const c = document.getElementById('filtro-codigo').value.toLowerCase();
+            const d = document.getElementById('filtro-descricao').value.toLowerCase();
+            const g = document.getElementById('filtro-grupo').value;
+            const r = document.getElementById('filtro-reparo').value;
+            
+            const filtrado = todasFerramentas.filter(i => {
+                // Filtros básicos
+                const passaFilial = !f || i.filial === f;
+                const passaGrupo = !g || i.grupoId === g;
+                const passaCodigo = i.codigo.toLowerCase().includes(c);
+                const passaDescricao = i.descricao.toLowerCase().includes(d);
+                
+                // Filtro de status
+                let passaStatus = true;
+                if (r === 'ativa') {
+                    passaStatus = !i.inativa && !i.reparo;
+                } else if (r === 'inativa') {
+                    passaStatus = i.inativa === true;
+                } else if (r === 'reparo') {
+                    passaStatus = i.reparo === true && !i.inativa;
+                }
+                
+                return passaFilial && passaGrupo && passaCodigo && passaDescricao && passaStatus;
+            });
+            renderizarTabelaFerramentas(filtrado);
+        }
+
+        // FUNÇÃO PARA CARREGAR DADOS (apenas ferramentas e grupos)
+        async function carregarDados() {
+            try {
+                // Carregar grupos
+                const qGrupos = query(collection(db, 'grupos'), orderBy('nome'));
+                const snapshotGrupos = await getDocs(qGrupos);
+                todosGrupos = snapshotGrupos.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                atualizarSelectsDeGrupo();
+
+                // Carregar ferramentas
+                const qFerramentas = query(collection(db, 'ferramentas'), orderBy('codigo'));
+                const snapshotFerramentas = await getDocs(qFerramentas);
+                todasFerramentas = snapshotFerramentas.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+                aplicarFiltrosEstoque();
+            } catch (error) {
+                console.error('Erro ao carregar dados:', error);
+            }
+        }
+
+        // FUNÇÃO PARA CONFIGURAR EVENT LISTENERS
+        function configurarEventListeners() {
+            // Fechar modais
+            document.querySelectorAll('.modal-ferramentas .close-button').forEach(btn => {
+                btn.addEventListener('click', () => fecharModal(btn.closest('.modal-ferramentas')));
+            });
+
+            // Ações na tabela de ferramentas
+            document.getElementById('tabela-ferramentas').addEventListener('click', (e) => {
+                // Botão de status
+                const btnStatus = e.target.closest('.btn-status');
+                if (btnStatus) {
+                    const ferramentaId = btnStatus.dataset.ferramentaId;
+                    const ferramenta = todasFerramentas.find(f => f.id === ferramentaId);
+                    if (ferramenta) {
+                        abrirModalStatus(ferramenta);
+                    }
+                    return;
+                }
+
+                const btnImg = e.target.closest('.btn-ver-imagem');
+                if (btnImg) {
+                    const ferramentaId = btnImg.dataset.ferramentaId;
+                    const ferramenta = todasFerramentas.find(f => f.id === ferramentaId);
+                    if (ferramenta) {
+                        abrirModalImagem(ferramenta);
+                    }
+                }
+
+                const btnRem = e.target.closest('.btn-remover-ferramenta');
+                if (btnRem) {
+                    if (confirm('Remover esta ferramenta?')) {
+                        deleteDoc(doc(db, 'ferramentas', btnRem.dataset.id)).then(() => carregarDados());
+                    }
+                }
+            });
+
+            // Filtros
+            document.querySelectorAll('#filtro-filial, #filtro-codigo, #filtro-descricao, #filtro-grupo, #filtro-reparo').forEach(el => {
+                el.addEventListener('input', aplicarFiltrosEstoque);
+                el.addEventListener('change', aplicarFiltrosEstoque);
+            });
+
+            // Modal de imagem
+            const modalOverlay = document.getElementById('modal-imagem-overlay');
+            modalOverlay.querySelector('.close-button').addEventListener('click', fecharModalImagem);
+            modalOverlay.addEventListener('click', (e) => {
+                if (e.target === modalOverlay) {
+                    fecharModalImagem();
+                }
+            });
+
+            // Auto-refresh a cada 120 segundos
+            setInterval(carregarDados, 120000);
+        }
+
+        // FUNÇÃO PARA ABRIR MODAL DE IMAGEM
+        function abrirModalImagem(ferramenta) {
+            const modalOverlay = document.getElementById('modal-imagem-overlay');
+            const tituloModal = document.getElementById('modal-imagem-titulo');
+            const imagemPrincipalContainer = document.querySelector('.main-image-container');
+            const galeria = document.getElementById('thumbnail-gallery-container');
+
+            tituloModal.textContent = ferramenta.descricao;
+            galeria.innerHTML = '';
+            
+            imagemPrincipalContainer.innerHTML = '<div class="image-loading-placeholder"><div class="spinner"></div></div>';
+
+            const urls = ferramenta.fotosURLs;
+            if (urls && urls.length > 0) {
+                const carregarImagem = (url) => {
+                    imagemPrincipalContainer.innerHTML = '<div class="image-loading-placeholder"><div class="spinner"></div></div>';
+                    
+                    const img = new Image();
+                    img.src = url;
+                    img.id = 'main-modal-image';
+                    img.alt = 'Imagem principal da ferramenta';
+                    
+                    img.onload = () => {
+                        imagemPrincipalContainer.innerHTML = '';
+                        imagemPrincipalContainer.appendChild(img);
+                    };
+                    img.onerror = () => {
+                        imagemPrincipalContainer.innerHTML = '<p class="no-image-message">Erro ao carregar a imagem.</p>';
+                    };
+                };
+
+                carregarImagem(urls[0]);
+
+                urls.forEach((url, index) => {
+                    const thumb = document.createElement('img');
+                    thumb.src = url;
+                    if (index === 0) {
+                        thumb.classList.add('active-thumb');
+                    }
+                    thumb.addEventListener('click', () => {
+                        carregarImagem(url);
+                        galeria.querySelector('.active-thumb')?.classList.remove('active-thumb');
+                        thumb.classList.add('active-thumb');
+                    });
+                    galeria.appendChild(thumb);
+                });
+                
+                galeria.style.display = urls.length > 1 ? 'flex' : 'none';
+
+            } else {
+                imagemPrincipalContainer.innerHTML = '<p class="no-image-message">Nenhuma imagem cadastrada.</p>';
+            }
+            
+            modalOverlay.classList.add('active');
+        }
+
+        // FUNÇÃO PARA FECHAR MODAL DE IMAGEM
+        function fecharModalImagem() {
+            const modalOverlay = document.getElementById('modal-imagem-overlay');
+            modalOverlay.classList.remove('active');
+            modalOverlay.querySelector('.main-image-container').innerHTML = '';
+        }
+
+        // FUNÇÕES UTILITÁRIAS
+        function showToast(message, type = 'info') {
+            const c = document.getElementById('toast-container');
+            if (!c) return;
+            const t = document.createElement('div');
+            t.className = `toast ${type}`;
+            t.textContent = message;
+            c.appendChild(t);
+            setTimeout(() => t.classList.add('show'), 100);
+            setTimeout(() => {
+                t.classList.remove('show');
+                setTimeout(() => c.removeChild(t), 300);
+            }, 3000);
+        }
+
+        function formatarDataHora(timestamp) {
+            if (!timestamp) return 'Data inválida';
+            const data = timestamp.seconds ? new Date(timestamp.seconds * 1000) : new Date(timestamp);
+            return data.toLocaleString('pt-BR');
+        }
+
+        // FUNÇÕES PARA MODAL DE STATUS
+        window.abrirModalStatus = function(ferramenta) {
+            // Preencher informações da ferramenta
+            const infoContainer = document.getElementById('info-status-ferramenta');
+            infoContainer.innerHTML = `
+                <div style="display: flex; align-items: center; gap: 15px;">
+                    <div style="font-size: 2.5rem;">🔧</div>
+                    <div style="flex: 1;">
+                        <h4 style="margin: 0 0 5px 0; color: #333;">${ferramenta.descricao}</h4>
+                        <p style="margin: 0; color: #666; font-size: 0.9rem;">
+                            <strong>Código:</strong> ${ferramenta.codigo} | 
+                            <strong>Filial:</strong> ${ferramenta.filial}
+                        </p>
+                    </div>
+                </div>
+            `;
+
+            // Preencher status atual
+            const statusContainer = document.getElementById('status-atual-container');
+            let statusHTML = '';
+            
+            if (ferramenta.inativa) {
+                const dataInativa = ferramenta.dataInativa ? formatarDataHora(ferramenta.dataInativa) : 'Não informada';
+                statusHTML = `
+                    <div style="background: #ffebee; padding: 15px; border-radius: 8px; border-left: 4px solid #d32f2f;">
+                        <h4 style="margin: 0 0 10px 0; color: #c62828;">⚠️ Ferramenta Inativa</h4>
+                        <p style="margin: 5px 0; color: #333;"><strong>Motivo:</strong> ${ferramenta.motivoInativa || 'Não especificado'}</p>
+                        <p style="margin: 5px 0; color: #666; font-size: 0.85rem;"><strong>Data:</strong> ${dataInativa}</p>
+                    </div>
+                `;
+            } else if (ferramenta.reparo) {
+                statusHTML = `
+                    <div style="background: #fff3e0; padding: 15px; border-radius: 8px; border-left: 4px solid #ff9800;">
+                        <h4 style="margin: 0 0 10px 0; color: #e65100;">🔧 Em Reparo</h4>
+                        <p style="margin: 5px 0; color: #333;">Esta ferramenta está marcada como em reparo.</p>
+                    </div>
+                `;
+            } else {
+                statusHTML = `
+                    <div style="background: #e8f5e9; padding: 15px; border-radius: 8px; border-left: 4px solid #4caf50;">
+                        <h4 style="margin: 0 0 10px 0; color: #2e7d32;">✓ Ferramenta Ativa</h4>
+                        <p style="margin: 5px 0; color: #333;">Esta ferramenta está disponível para uso.</p>
+                    </div>
+                `;
+            }
+            statusContainer.innerHTML = statusHTML;
+
+            // Preencher ações
+            const acoesContainer = document.getElementById('acoes-status-container');
+            let acoesHTML = '';
+            
+            if (ferramenta.inativa) {
+                acoesHTML = `
+                    <div style="margin-top: 20px;">
+                        <h4 style="margin-bottom: 15px; color: #333;">Ações Disponíveis:</h4>
+                        <button class="btn btn-sucesso" onclick="marcarComoResolvido('${ferramenta.id}')" style="width: 100%; padding: 12px;">
+                            <i data-lucide="check-circle"></i> Marcar Problema como Resolvido
+                        </button>
+                        <p style="margin-top: 10px; font-size: 0.85rem; color: #666; text-align: center;">
+                            A ferramenta voltará a ficar disponível para alocação
+                        </p>
+                    </div>
+                `;
+            } else {
+                acoesHTML = `
+                    <div style="margin-top: 20px; text-align: center;">
+                        <button class="btn btn-secundario" onclick="fecharModalStatus()">
+                            Fechar
+                        </button>
+                    </div>
+                `;
+            }
+            acoesContainer.innerHTML = acoesHTML;
+
+            // Abrir modal
+            abrirModal(document.getElementById('modal-status-ferramenta'));
+            lucide.createIcons();
+        };
+
+        window.fecharModalStatus = function() {
+            fecharModal(document.getElementById('modal-status-ferramenta'));
+        };
+
+        window.marcarComoResolvido = async function(ferramentaId) {
+            if (!confirm('Confirma que o problema foi resolvido? A ferramenta voltará a ficar disponível para alocação.')) {
+                return;
+            }
+
+            try {
+                const ferramentaRef = doc(db, 'ferramentas', ferramentaId);
+                
+                await updateDoc(ferramentaRef, {
+                    inativa: false,
+                    motivoInativa: null,
+                    dataInativa: null,
+                    dataResolucao: new Date()
+                });
+
+                showToast('Ferramenta reativada com sucesso!', 'success');
+                fecharModalStatus();
+                await carregarDados();
+            } catch (error) {
+                console.error('Erro ao reativar ferramenta:', error);
+                showToast('Erro ao reativar ferramenta', 'error');
+            }
+        };
+
+        function abrirModal(modal) {
+            modal.classList.add('active');
+        }
+
+        function fecharModal(modal) {
+            modal.classList.remove('active');
+        }
+
+        function atualizarSelectsDeGrupo() {
+            const s = document.getElementById('filtro-grupo');
+            if (!s) return;
+            const v = s.value;
+            s.innerHTML = `<option value="">Todos os Grupos</option>`;
+            todosGrupos.forEach(g => {
+                s.innerHTML += `<option value="${g.id}">${g.nome}</option>`;
+            });
+            s.value = v;
+        }
+
+        // INICIALIZAÇÃO
+        document.addEventListener('DOMContentLoaded', iniciarPagina);
+    </script>
+
+    <!-- Scripts Globais -->
+    <script type="module" src="/assets/js/auth.js"></script>
+    <script src="/assets/js/main.js"></script> 
+    <script src="/assets/js/components/Sidebar.js"></script>
+</body>
+</html>
