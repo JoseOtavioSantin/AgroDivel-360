@@ -206,6 +206,11 @@
       flex-direction: column;
       gap: 3px;
       margin-bottom: 8px;
+      position: relative;
+    }
+
+    .mensagem-grupo.selecionada .mensagem-bubble {
+      box-shadow: 0 0 0 2px #193b7c;
     }
 
     .mensagem-grupo.mensagem-usuario {
@@ -216,12 +221,57 @@
       align-items: flex-end;
     }
 
+    /* Container da mensagem com botão */
+    .mensagem-content-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .mensagem-usuario .mensagem-content-row {
+      flex-direction: row;
+    }
+
+    .mensagem-suporte .mensagem-content-row {
+      flex-direction: row-reverse;
+    }
+
+    /* Botão de responder */
+    .btn-responder {
+      opacity: 0;
+      background: #f3f4f6;
+      border: none;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+      flex-shrink: 0;
+    }
+
+    .mensagem-content-row:hover .btn-responder {
+      opacity: 1;
+    }
+
+    .btn-responder:hover {
+      background: #e5e7eb;
+    }
+
+    .btn-responder i {
+      font-size: 14px;
+      color: #6b7280;
+    }
+
     .mensagem-bubble {
       max-width: 75%;
       padding: 10px 14px;
       border-radius: 12px;
       font-size: 13px;
       line-height: 1.4;
+      transition: all 0.2s;
     }
 
     .mensagem-usuario .mensagem-bubble {
@@ -234,6 +284,175 @@
       background: #193b7c;
       color: white;
       border-radius: 12px 12px 2px 12px;
+    }
+
+    /* Citação dentro da mensagem */
+    .mensagem-citacao {
+      background: rgba(0,0,0,0.1);
+      border-left: 3px solid rgba(255,255,255,0.5);
+      padding: 6px 10px;
+      margin-bottom: 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      cursor: pointer;
+    }
+
+    .mensagem-usuario .mensagem-citacao {
+      background: rgba(25, 59, 124, 0.1);
+      border-left-color: #193b7c;
+    }
+
+    .mensagem-citacao-autor {
+      font-weight: 600;
+      font-size: 11px;
+      margin-bottom: 2px;
+      color: #193b7c;
+    }
+
+    .mensagem-suporte .mensagem-citacao-autor {
+      color: rgba(255,255,255,0.9);
+    }
+
+    .mensagem-citacao-texto {
+      opacity: 0.85;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 200px;
+    }
+
+    /* Área de respondendo */
+    .respondendo-area {
+      display: none;
+      background: #f8fafc;
+      border-left: 4px solid #193b7c;
+      padding: 10px 12px;
+      margin-bottom: 8px;
+      border-radius: 0 8px 8px 0;
+      position: relative;
+    }
+
+    .respondendo-area.ativo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .respondendo-thumb {
+      width: 40px;
+      height: 40px;
+      border-radius: 6px;
+      object-fit: cover;
+      flex-shrink: 0;
+    }
+
+    .respondendo-info {
+      flex: 1;
+      overflow: hidden;
+      min-width: 0;
+    }
+
+    .respondendo-autor {
+      font-size: 12px;
+      font-weight: 600;
+      color: #193b7c;
+      margin-bottom: 2px;
+    }
+
+    .respondendo-texto {
+      font-size: 12px;
+      color: #6b7280;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .respondendo-texto i {
+      font-size: 14px;
+    }
+
+    .respondendo-fechar {
+      background: none;
+      border: none;
+      color: #9ca3af;
+      cursor: pointer;
+      padding: 4px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+      flex-shrink: 0;
+    }
+
+    .respondendo-fechar:hover {
+      background: #e5e7eb;
+      color: #4b5563;
+    }
+
+    .respondendo-fechar i {
+      font-size: 20px;
+    }
+
+    /* Citação dentro da mensagem melhorada */
+    .mensagem-citacao {
+      background: rgba(0,0,0,0.08);
+      border-left: 3px solid rgba(255,255,255,0.5);
+      padding: 8px 10px;
+      margin-bottom: 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .mensagem-usuario .mensagem-citacao {
+      background: rgba(25, 59, 124, 0.1);
+      border-left-color: #193b7c;
+    }
+
+    .mensagem-citacao-thumb {
+      width: 32px;
+      height: 32px;
+      border-radius: 4px;
+      object-fit: cover;
+      flex-shrink: 0;
+    }
+
+    .mensagem-citacao-content {
+      flex: 1;
+      overflow: hidden;
+      min-width: 0;
+    }
+
+    .mensagem-citacao-autor {
+      font-weight: 600;
+      font-size: 11px;
+      margin-bottom: 2px;
+      color: #193b7c;
+    }
+
+    .mensagem-suporte .mensagem-citacao-autor {
+      color: rgba(255,255,255,0.9);
+    }
+
+    .mensagem-citacao-texto {
+      opacity: 0.85;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .mensagem-citacao-texto i {
+      font-size: 12px;
     }
 
     .mensagem-meta {
@@ -259,139 +478,173 @@
     }
 
     .chat-input-area {
-      padding: 16px 20px;
-      background: white;
+      padding: 12px 16px;
+      background: #f8f9fa;
       border-top: 1px solid #e5e7eb;
+    }
+
+    .chat-input-wrapper {
+      background: white;
+      border-radius: 24px;
+      border: 1px solid #e5e7eb;
+      padding: 8px 16px;
       display: flex;
       flex-direction: column;
-      gap: 10px;
+      gap: 8px;
+      transition: all 0.3s;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+
+    .chat-input-wrapper:focus-within {
+      border-color: #193b7c;
+      box-shadow: 0 0 0 3px rgba(25, 59, 124, 0.1);
     }
 
     .chat-input-row {
       display: flex;
-      gap: 10px;
-      align-items: flex-end;
+      gap: 8px;
+      align-items: center;
     }
 
     .chat-textarea {
       flex: 1;
-      padding: 10px 14px;
-      border: 1px solid #e5e7eb;
-      border-radius: 8px;
+      padding: 8px 0;
+      border: none;
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      font-size: 13px;
+      font-size: 14px;
       resize: none;
-      max-height: 90px;
-      transition: all 0.3s;
-      background: #f9fafb;
+      max-height: 100px;
+      background: transparent;
+      line-height: 1.4;
     }
 
     .chat-textarea:focus {
       outline: none;
-      border-color: #193b7c;
-      background: white;
-      box-shadow: 0 0 0 3px rgba(25, 59, 124, 0.1);
     }
 
-    .chat-actions {
+    .chat-textarea::placeholder {
+      color: #9ca3af;
+    }
+
+    .chat-actions-left {
       display: flex;
-      gap: 8px;
+      gap: 4px;
+      border-right: 1px solid #e5e7eb;
+      padding-right: 12px;
+      margin-right: 4px;
     }
 
     .chat-btn-icon {
-      width: 40px;
-      height: 40px;
-      border-radius: 8px;
-      border: 1px solid #e5e7eb;
-      background: #f9fafb;
-      color: #4b5563;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      border: none;
+      background: transparent;
+      color: #6b7280;
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
-      transition: all 0.3s;
+      transition: all 0.2s;
     }
 
     .chat-btn-icon:hover {
-      background: #e5e7eb;
+      background: #f3f4f6;
       color: #193b7c;
     }
 
     .chat-btn-icon.recording {
-      background: #ff5252;
-      color: white;
-      border-color: #ff5252;
+      background: #fee2e2;
+      color: #dc2626;
       animation: pulse-recording 1s infinite;
     }
 
     @keyframes pulse-recording {
       0%, 100% { transform: scale(1); }
-      50% { transform: scale(1.05); }
+      50% { transform: scale(1.1); }
     }
 
     .chat-btn-icon i {
-      font-size: 18px;
+      font-size: 20px;
     }
 
     .chat-button {
-      padding: 10px 16px;
+      width: 42px;
+      height: 42px;
       background: linear-gradient(135deg, #193b7c 0%, #00205b 100%);
       color: white;
       border: none;
-      border-radius: 8px;
+      border-radius: 50%;
       cursor: pointer;
-      font-weight: 600;
-      font-size: 12px;
-      transition: all 0.3s;
-      white-space: nowrap;
-      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+      flex-shrink: 0;
     }
 
     .chat-button:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(25, 59, 124, 0.25);
+      transform: scale(1.05);
+      box-shadow: 0 4px 12px rgba(25, 59, 124, 0.3);
+    }
+
+    .chat-button i {
+      font-size: 18px;
+      margin-left: 2px;
     }
 
     .preview-anexos {
       display: flex;
       gap: 8px;
       flex-wrap: wrap;
-      padding: 8px 0;
+      padding: 0 0 8px 0;
+      border-bottom: 1px solid #f3f4f6;
+    }
+
+    .preview-anexos:empty {
+      display: none;
+      padding: 0;
+      border: none;
     }
 
     .preview-item {
       position: relative;
-      border-radius: 8px;
+      border-radius: 12px;
       overflow: hidden;
-      border: 1px solid #e5e7eb;
+      background: #f3f4f6;
     }
 
     .preview-item img {
-      width: 60px;
-      height: 60px;
+      width: 64px;
+      height: 64px;
       object-fit: cover;
     }
 
     .preview-item audio {
-      height: 40px;
-      max-width: 200px;
+      height: 36px;
+      max-width: 180px;
     }
 
     .preview-item .remove-anexo {
       position: absolute;
-      top: 2px;
-      right: 2px;
-      width: 18px;
-      height: 18px;
-      background: #ff5252;
+      top: 4px;
+      right: 4px;
+      width: 20px;
+      height: 20px;
+      background: rgba(0,0,0,0.6);
       color: white;
       border: none;
       border-radius: 50%;
       cursor: pointer;
-      font-size: 10px;
+      font-size: 12px;
       display: flex;
       align-items: center;
       justify-content: center;
+      transition: all 0.2s;
+    }
+
+    .preview-item .remove-anexo:hover {
+      background: #dc2626;
     }
 
     /* Estilos para mídia nas mensagens */
@@ -605,21 +858,33 @@
           <p class="vazio-aviso">Carregando mensagens...</p>
         </div>
         <div class="chat-input-area">
-          <div class="preview-anexos" id="preview-anexos"></div>
-          <div class="chat-input-row">
-            <div class="chat-actions">
-              <input type="file" id="input-imagem" accept="image/*" style="display: none;" multiple>
-              <button class="chat-btn-icon" onclick="document.getElementById('input-imagem').click()" title="Anexar imagem">
-                <i class='bx bx-image'></i>
-              </button>
-              <button class="chat-btn-icon" id="btn-audio" onclick="toggleGravacaoAudio()" title="Gravar áudio">
-                <i class='bx bx-microphone'></i>
+          <div class="respondendo-area" id="respondendo-area">
+            <img id="respondendo-thumb" class="respondendo-thumb" style="display: none;">
+            <div class="respondendo-info">
+              <div class="respondendo-autor" id="respondendo-autor"></div>
+              <div class="respondendo-texto" id="respondendo-texto"></div>
+            </div>
+            <button class="respondendo-fechar" onclick="cancelarResposta()" title="Cancelar resposta">
+              <i class='bx bx-x'></i>
+            </button>
+          </div>
+          <div class="chat-input-wrapper">
+            <div class="preview-anexos" id="preview-anexos"></div>
+            <div class="chat-input-row">
+              <div class="chat-actions-left">
+                <input type="file" id="input-imagem" accept="image/*" style="display: none;" multiple>
+                <button class="chat-btn-icon" onclick="document.getElementById('input-imagem').click()" title="Anexar imagem">
+                  <i class='bx bx-image'></i>
+                </button>
+                <button class="chat-btn-icon" id="btn-audio" onclick="toggleGravacaoAudio()" title="Gravar áudio">
+                  <i class='bx bx-microphone'></i>
+                </button>
+              </div>
+              <textarea class="chat-textarea" id="resposta-texto" placeholder="Digite sua mensagem..." rows="1"></textarea>
+              <button class="chat-button" onclick="enviarResposta()" title="Enviar">
+                <i class='bx bx-send'></i>
               </button>
             </div>
-            <textarea class="chat-textarea" id="resposta-texto" placeholder="Escreva sua resposta..."></textarea>
-            <button class="chat-button" onclick="enviarResposta()">
-              <i class='bx bx-send'></i> Enviar
-            </button>
           </div>
         </div>
       </div>
@@ -655,6 +920,9 @@
       imagens: [],
       audios: []
     };
+
+    // Mensagem sendo respondida
+    let mensagemRespondendo = null;
 
     // Inicializar
     (async () => {
@@ -765,84 +1033,126 @@
     });
 
     function renderizarInfo() {
-      const data = solicitacao.dataAbertura?.toDate 
-        ? solicitacao.dataAbertura.toDate().toLocaleDateString('pt-BR')
-        : 'N/A';
+      // Verificar se o usuário é o solicitante (não pode alterar status)
+      const isSolicitante = userData && 
+        (userData.email === solicitacao.email || userData.nome === solicitacao.solicitante);
 
       let statusClass = 'status-pendente';
       if (solicitacao.status === 'Em Andamento') statusClass = 'status-em-andamento';
       else if (solicitacao.status === 'Resolvido') statusClass = 'status-resolvido';
       else if (solicitacao.status === 'Cancelado') statusClass = 'status-cancelado';
 
-      const imagensHTML = solicitacao.imagens && solicitacao.imagens.length > 0
-        ? solicitacao.imagens.map(url => 
-            `<img src="${url}" class="imagem-thumb" onclick="visualizarImagem('${url}')" alt="Imagem">`
-          ).join('')
-        : '<p style="color: #a0aec0; font-size: 12px;">Nenhuma imagem anexada</p>';
+      // Mapeamento de campos para nomes amigáveis
+      const camposConfig = {
+        'solicitante': { label: 'Solicitante', tipo: 'texto' },
+        'email': { label: 'Email', tipo: 'texto', style: 'word-break: break-all;' },
+        'filial': { label: 'Filial', tipo: 'texto' },
+        'departamento': { label: 'Departamento', tipo: 'texto' },
+        'setor': { label: 'Setor', tipo: 'texto' },
+        'tipoErro': { label: 'Tipo do Erro', tipo: 'texto' },
+        'rotina': { label: 'Rotina', tipo: 'texto' },
+        'sistema': { label: 'Sistema', tipo: 'texto' },
+        'prioridade': { label: 'Prioridade', tipo: 'texto' },
+        'tipoSolicitacao': { label: 'Tipo de Solicitação', tipo: 'texto' },
+        'categoria': { label: 'Categoria', tipo: 'texto' },
+        'motivo': { label: 'Motivo', tipo: 'texto' },
+        'maquina': { label: 'Máquina', tipo: 'texto' },
+        'numSerie': { label: 'Nº Série', tipo: 'texto' },
+        'cliente': { label: 'Cliente', tipo: 'texto' },
+        'contrato': { label: 'Contrato', tipo: 'texto' },
+        'notaFiscal': { label: 'Nota Fiscal', tipo: 'texto' },
+        'valorEnvolvido': { label: 'Valor Envolvido', tipo: 'texto' },
+        'dataAbertura': { label: 'Data de Abertura', tipo: 'data' },
+        'respondidoPor': { label: 'Respondido Por', tipo: 'texto' },
+        'descricao': { label: 'Descrição', tipo: 'descricao' },
+        'observacao': { label: 'Observação', tipo: 'descricao' },
+        'imagens': { label: 'Anexos', tipo: 'imagens' }
+      };
 
-      const html = `
-        <div class="info-item">
-          <button class="btn-alterar-status" onclick="alterarStatus()">
-            <i class='bx bx-edit'></i> Alterar Status
-          </button>
-        </div>
+      // Montar HTML dinamicamente
+      let html = '';
 
+      // Botão de alterar status (só para quem NÃO é o solicitante)
+      if (!isSolicitante) {
+        html += `
+          <div class="info-item">
+            <button class="btn-alterar-status" onclick="alterarStatus()">
+              <i class='bx bx-edit'></i> Alterar Status
+            </button>
+          </div>
+        `;
+      }
+
+      // Status sempre aparece
+      html += `
         <div class="info-item">
           <span class="info-label">Status</span>
           <div class="status-badge ${statusClass}">
             ${solicitacao.status || 'Pendente'}
           </div>
         </div>
-
-        <div class="info-item">
-          <span class="info-label">Solicitante</span>
-          <div class="info-value">${solicitacao.solicitante || 'N/A'}</div>
-        </div>
-
-        <div class="info-item">
-          <span class="info-label">Email</span>
-          <div class="info-value" style="word-break: break-all;">${solicitacao.email || 'N/A'}</div>
-        </div>
-
-        <div class="info-item">
-          <span class="info-label">Filial</span>
-          <div class="info-value">${solicitacao.filial || 'N/A'}</div>
-        </div>
-
-        <div class="info-item">
-          <span class="info-label">Departamento</span>
-          <div class="info-value">${solicitacao.departamento || 'N/A'}</div>
-        </div>
-
-        <div class="info-item">
-          <span class="info-label">Rotina</span>
-          <div class="info-value">${solicitacao.rotina || 'N/A'}</div>
-        </div>
-
-        <div class="info-item">
-          <span class="info-label">Data de Abertura</span>
-          <div class="info-value">${data}</div>
-        </div>
-
-        <div class="info-item">
-          <span class="info-label">Respondido Por</span>
-          <div class="info-value">${solicitacao.respondidoPor || '-'}</div>
-        </div>
-
-        <div class="info-item">
-          <span class="info-label">Descrição</span>
-          <div class="info-value" style="padding: 10px; background: white; border-radius: 6px; border: 1px solid #e5e7eb;">
-            ${solicitacao.descricao || 'Sem descrição'}
-          </div>
-        </div>
-
-        <div class="info-item">
-          <span class="info-label">Imagens</span>
-          <div class="imagens-preview">
-            ${imagensHTML}
-          </div>
-        </div>
       `;
+
+      // Tipo da solicitação (se existir)
+      if (solicitacao.tipo) {
+        html += `
+          <div class="info-item">
+            <span class="info-label">Tipo</span>
+            <div class="info-value" style="font-weight: 600; color: #193b7c;">${solicitacao.tipo}</div>
+          </div>
+        `;
+      }
+
+      // Renderizar campos que existem na solicitação
+      for (const [campo, config] of Object.entries(camposConfig)) {
+        const valor = solicitacao[campo];
+        
+        // Pular campos vazios, nulos ou undefined
+        if (valor === undefined || valor === null || valor === '' || 
+            (Array.isArray(valor) && valor.length === 0)) {
+          continue;
+        }
+
+        if (config.tipo === 'texto') {
+          html += `
+            <div class="info-item">
+              <span class="info-label">${config.label}</span>
+              <div class="info-value" ${config.style ? `style="${config.style}"` : ''}>${valor}</div>
+            </div>
+          `;
+        } else if (config.tipo === 'data') {
+          const dataFormatada = valor?.toDate 
+            ? valor.toDate().toLocaleDateString('pt-BR')
+            : (valor ? new Date(valor).toLocaleDateString('pt-BR') : 'N/A');
+          html += `
+            <div class="info-item">
+              <span class="info-label">${config.label}</span>
+              <div class="info-value">${dataFormatada}</div>
+            </div>
+          `;
+        } else if (config.tipo === 'descricao') {
+          html += `
+            <div class="info-item">
+              <span class="info-label">${config.label}</span>
+              <div class="info-value" style="padding: 10px; background: white; border-radius: 6px; border: 1px solid #e5e7eb; white-space: pre-wrap;">
+                ${valor}
+              </div>
+            </div>
+          `;
+        } else if (config.tipo === 'imagens' && Array.isArray(valor) && valor.length > 0) {
+          const imagensHTML = valor.map(url => 
+            `<img src="${url}" class="imagem-thumb" onclick="visualizarImagem('${url}')" alt="Anexo">`
+          ).join('');
+          html += `
+            <div class="info-item">
+              <span class="info-label">${config.label}</span>
+              <div class="imagens-preview">
+                ${imagensHTML}
+              </div>
+            </div>
+          `;
+        }
+      }
 
       document.getElementById('info-content').innerHTML = html;
     }
@@ -856,7 +1166,7 @@
         return;
       }
 
-      const html = respostas.map(h => {
+      const html = respostas.map((h, index) => {
         const dataResposta = h.data?.toDate 
           ? h.data.toDate().toLocaleString('pt-BR')
           : (h.data ? new Date(h.data).toLocaleString('pt-BR') : 'N/A');
@@ -864,25 +1174,52 @@
         const isUsuario = h.respondidoPor === solicitacao.solicitante || h.respondidoPor === solicitacao.email;
         const classeMensagem = isUsuario ? 'mensagem-usuario' : 'mensagem-suporte';
 
+        // Renderizar citação se estiver respondendo outra mensagem
+        let citacaoHTML = '';
+        if (h.respondendoA) {
+          const thumbHTML = h.respondendoA.imagem 
+            ? `<img src="${h.respondendoA.imagem}" class="mensagem-citacao-thumb" alt="">` 
+            : '';
+          
+          let textoPreview = h.respondendoA.texto || '';
+          if (!textoPreview && h.respondendoA.imagem) {
+            textoPreview = '<i class="bx bx-image"></i> Foto';
+          } else if (!textoPreview && h.respondendoA.audio) {
+            textoPreview = '<i class="bx bx-microphone"></i> Áudio';
+          }
+
+          citacaoHTML = `
+            <div class="mensagem-citacao" onclick="scrollParaMensagem(${h.respondendoA.index}); event.stopPropagation();">
+              ${thumbHTML}
+              <div class="mensagem-citacao-content">
+                <div class="mensagem-citacao-autor">${h.respondendoA.autor || 'Usuário'}</div>
+                <div class="mensagem-citacao-texto">${textoPreview}</div>
+              </div>
+            </div>
+          `;
+        }
+
         // Renderizar imagens da mensagem
         let imagensHTML = '';
+        const primeiraImagem = (h.imagens && h.imagens.length > 0) ? h.imagens[0] : null;
         if (h.imagens && h.imagens.length > 0) {
           imagensHTML = h.imagens.map(url => 
-            `<img src="${url}" class="mensagem-imagem" onclick="visualizarImagem('${url}')" alt="Imagem">`
+            `<img src="${url}" class="mensagem-imagem" onclick="visualizarImagem('${url}'); event.stopPropagation();" alt="Imagem">`
           ).join('');
         }
 
         // Renderizar áudios da mensagem
         let audiosHTML = '';
+        const primeiroAudio = (h.audios && h.audios.length > 0) ? h.audios[0] : null;
         if (h.audios && h.audios.length > 0) {
           audiosHTML = h.audios.map((url, idx) => 
-            `<div class="mensagem-audio">
+            `<div class="mensagem-audio" onclick="event.stopPropagation();">
               <div class="audio-player-custom" data-audio-url="${url}">
-                <button class="play-btn" onclick="toggleAudioPlay(this)">
+                <button class="play-btn" onclick="toggleAudioPlay(this); event.stopPropagation();">
                   <i class="bx bx-play"></i>
                 </button>
                 <div class="audio-info">
-                  <div class="audio-progress" onclick="seekAudio(event, this)">
+                  <div class="audio-progress" onclick="seekAudio(event, this); event.stopPropagation();">
                     <div class="audio-progress-bar"></div>
                   </div>
                   <span class="audio-time">0:00 / --:--</span>
@@ -893,12 +1230,24 @@
           ).join('');
         }
 
+        // Preparar dados para o onclick (escapar aspas)
+        const msgTexto = (h.mensagem || '').replace(/'/g, "\\'").replace(/"/g, "&quot;").substring(0, 100);
+        const msgAutor = (h.respondidoPor || '').replace(/'/g, "\\'");
+        const msgImagem = primeiraImagem ? primeiraImagem.replace(/'/g, "\\'") : '';
+        const msgAudio = primeiroAudio ? 'true' : '';
+
         return `
-          <div class="mensagem-grupo ${classeMensagem}">
-            <div class="mensagem-bubble">
-              ${h.mensagem || ''}
-              ${imagensHTML}
-              ${audiosHTML}
+          <div class="mensagem-grupo ${classeMensagem}" id="msg-${index}">
+            <div class="mensagem-content-row">
+              <div class="mensagem-bubble">
+                ${citacaoHTML}
+                ${h.mensagem || ''}
+                ${imagensHTML}
+                ${audiosHTML}
+              </div>
+              <button class="btn-responder" onclick="selecionarMensagem(${index}, '${msgAutor}', '${msgTexto}', '${msgImagem}', '${msgAudio}')" title="Responder">
+                <i class='bx bx-reply'></i>
+              </button>
             </div>
             <div class="mensagem-meta">
               <span>${h.respondidoPor}</span>
@@ -962,17 +1311,14 @@
       
       // Verificar se há mensagem ou anexos
       if (!mensagem && anexosPendentes.imagens.length === 0 && anexosPendentes.audios.length === 0) {
-        Swal.fire('Atenção', 'Digite uma mensagem ou anexe um arquivo', 'warning');
         return;
       }
 
       try {
-        // Mostrar loading
-        Swal.fire({
-          title: 'Enviando...',
-          allowOutsideClick: false,
-          didOpen: () => Swal.showLoading()
-        });
+        // Desabilitar botão de envio temporariamente
+        const btnEnviar = document.querySelector('.chat-button');
+        btnEnviar.disabled = true;
+        btnEnviar.style.opacity = '0.6';
 
         // Upload das imagens
         const urlsImagens = [];
@@ -989,14 +1335,26 @@
         }
 
         const historico = solicitacao.historico || [];
-        historico.push({
+        const novaMensagem = {
           data: new Date(),
           respondidoPor: userData.nome || userData.email,
           mensagem: mensagem,
           imagens: urlsImagens,
           audios: urlsAudios,
           tipo: 'resposta'
-        });
+        };
+
+        // Adicionar referência da mensagem respondida
+        if (mensagemRespondendo) {
+          novaMensagem.respondendoA = {
+            index: mensagemRespondendo.index,
+            autor: mensagemRespondendo.autor,
+            texto: mensagemRespondendo.texto,
+            imagem: mensagemRespondendo.imagem || null
+          };
+        }
+
+        historico.push(novaMensagem);
 
         await updateDoc(doc(db, 'SolicitaçõesSuporte', solicitacaoId), {
           ultimaResposta: new Date(),
@@ -1007,16 +1365,27 @@
         solicitacao = { ...solicitacao, historico };
         document.getElementById('resposta-texto').value = '';
         
+        // Limpar mensagem respondendo
+        cancelarResposta();
+        
         // Limpar anexos pendentes
         anexosPendentes = { imagens: [], audios: [] };
         renderizarPreviewAnexos();
         
         renderizarChat();
-        Swal.close();
+
+        // Reabilitar botão
+        btnEnviar.disabled = false;
+        btnEnviar.style.opacity = '1';
 
       } catch (error) {
         console.error('Erro ao enviar resposta:', error);
         Swal.fire('Erro', `Não foi possível enviar: ${error.message}`, 'error');
+        
+        // Reabilitar botão em caso de erro
+        const btnEnviar = document.querySelector('.chat-button');
+        btnEnviar.disabled = false;
+        btnEnviar.style.opacity = '1';
       }
     };
 
@@ -1156,6 +1525,68 @@
         showConfirmButton: false,
         width: '80%'
       });
+    };
+
+    // Selecionar mensagem para responder
+    window.selecionarMensagem = function(index, autor, texto, imagem, audio) {
+      // Remover seleção anterior
+      document.querySelectorAll('.mensagem-grupo.selecionada').forEach(el => {
+        el.classList.remove('selecionada');
+      });
+
+      // Selecionar nova mensagem
+      const msgElement = document.getElementById(`msg-${index}`);
+      if (msgElement) {
+        msgElement.classList.add('selecionada');
+      }
+
+      // Atualizar área de respondendo
+      mensagemRespondendo = { index, autor, texto, imagem };
+
+      document.getElementById('respondendo-autor').textContent = autor;
+      
+      // Mostrar thumbnail se tiver imagem
+      const thumbEl = document.getElementById('respondendo-thumb');
+      if (imagem) {
+        thumbEl.src = imagem;
+        thumbEl.style.display = 'block';
+        document.getElementById('respondendo-texto').textContent = texto || 'Foto';
+      } else {
+        thumbEl.style.display = 'none';
+        if (audio === 'true') {
+          document.getElementById('respondendo-texto').innerHTML = '<i class="bx bx-microphone"></i> Áudio';
+        } else {
+          document.getElementById('respondendo-texto').textContent = texto || '[Mídia]';
+        }
+      }
+      
+      document.getElementById('respondendo-area').classList.add('ativo');
+
+      // Focar no campo de texto
+      document.getElementById('resposta-texto').focus();
+    };
+
+    // Cancelar resposta
+    window.cancelarResposta = function() {
+      mensagemRespondendo = null;
+      document.getElementById('respondendo-area').classList.remove('ativo');
+      document.querySelectorAll('.mensagem-grupo.selecionada').forEach(el => {
+        el.classList.remove('selecionada');
+      });
+    };
+
+    // Scroll para mensagem citada
+    window.scrollParaMensagem = function(index) {
+      const msgElement = document.getElementById(`msg-${index}`);
+      if (msgElement) {
+        msgElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        
+        // Highlight temporário
+        msgElement.style.background = 'rgba(25, 59, 124, 0.1)';
+        setTimeout(() => {
+          msgElement.style.background = '';
+        }, 1500);
+      }
     };
 
     // Funções do player de áudio customizado
