@@ -174,6 +174,40 @@
       box-shadow: 0 4px 12px rgba(25, 59, 124, 0.25);
     }
 
+    .btn-enviar-email {
+      width: 100%;
+      padding: 10px;
+      background: linear-gradient(135deg, #059669 0%, #047857 100%);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      transition: all 0.3s;
+      margin-bottom: 12px;
+    }
+
+    .btn-enviar-email:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(5, 150, 105, 0.25);
+    }
+
+    .btn-enviar-email:disabled {
+      background: #9ca3af;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .botoes-acoes {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
     /* CHAT */
     .chat-header {
       background: white;
@@ -224,8 +258,9 @@
     /* Container da mensagem com botão */
     .mensagem-content-row {
       display: flex;
-      align-items: center;
+      align-items: flex-end;
       gap: 6px;
+      max-width: 80%;
     }
 
     .mensagem-usuario .mensagem-content-row {
@@ -266,12 +301,26 @@
     }
 
     .mensagem-bubble {
-      max-width: 75%;
+      max-width: 100%;
+      min-width: 100px;
       padding: 10px 14px;
       border-radius: 12px;
       font-size: 13px;
       line-height: 1.4;
       transition: all 0.2s;
+      overflow: hidden;
+      word-wrap: break-word;
+      flex-shrink: 1;
+    }
+
+    /* Quando tem áudio, aumenta a largura mínima */
+    .mensagem-bubble:has(.mensagem-audio) {
+      min-width: 260px;
+    }
+
+    /* Quando tem imagem, ajusta o tamanho */
+    .mensagem-bubble:has(.mensagem-imagem) {
+      padding: 6px;
     }
 
     .mensagem-usuario .mensagem-bubble {
@@ -649,10 +698,15 @@
 
     /* Estilos para mídia nas mensagens */
     .mensagem-imagem {
-      max-width: 200px;
+      max-width: 100%;
+      max-height: 300px;
+      width: auto;
+      height: auto;
       border-radius: 8px;
       margin-top: 6px;
       cursor: pointer;
+      display: block;
+      object-fit: contain;
     }
 
     .mensagem-audio {
@@ -663,8 +717,9 @@
       display: flex;
       align-items: center;
       gap: 10px;
-      min-width: 220px;
-      max-width: 280px;
+      width: 100%;
+      max-width: 250px;
+      box-sizing: border-box;
     }
 
     .mensagem-usuario .mensagem-audio {
@@ -876,9 +931,6 @@
                 <button class="chat-btn-icon" onclick="document.getElementById('input-imagem').click()" title="Anexar imagem">
                   <i class='bx bx-image'></i>
                 </button>
-                <button class="chat-btn-icon" id="btn-audio" onclick="toggleGravacaoAudio()" title="Gravar áudio">
-                  <i class='bx bx-microphone'></i>
-                </button>
               </div>
               <textarea class="chat-textarea" id="resposta-texto" placeholder="Digite sua mensagem..." rows="1"></textarea>
               <button class="chat-button" onclick="enviarResposta()" title="Enviar">
@@ -909,11 +961,6 @@
     let solicitacao;
     let db;
     let unsubscribe; // Para desinscrever do listener
-    
-    // Variáveis para gravação de áudio
-    let mediaRecorder;
-    let audioChunks = [];
-    let isRecording = false;
     
     // Anexos pendentes
     let anexosPendentes = {
@@ -1072,16 +1119,22 @@
       // Montar HTML dinamicamente
       let html = '';
 
-      // Botão de alterar status (só para quem NÃO é o solicitante)
+      // Botões de ação
+      html += `<div class="botoes-acoes">`;
+      
+      // Botão de alterar status e enviar email (só para quem NÃO é o solicitante)
       if (!isSolicitante) {
         html += `
-          <div class="info-item">
             <button class="btn-alterar-status" onclick="alterarStatus()">
               <i class='bx bx-edit'></i> Alterar Status
             </button>
-          </div>
+            <button class="btn-enviar-email" onclick="enviarPorEmail()">
+              <i class='bx bx-envelope'></i> Enviar por E-mail
+            </button>
         `;
       }
+      
+      html += `</div>`;
 
       // Status sempre aparece
       html += `
@@ -1299,10 +1352,269 @@
           renderizarInfo();
           Swal.fire('Sucesso!', 'Status atualizado', 'success');
 
+          // Enviar e-mail automático quando status for Resolvido
+          if (novoStatus === 'Resolvido' && solicitacao.email) {
+            await enviarEmailAutomatico(solicitacao.email);
+          }
+
         } catch (error) {
           console.error('Erro ao alterar status:', error);
           Swal.fire('Erro', 'Não foi possível alterar o status', 'error');
         }
+      }
+    };
+
+    // Função para montar o HTML do e-mail
+    function montarEmailHTML() {
+      const historico = solicitacao.historico || [];
+      const mensagens = historico.filter(h => h.tipo === 'resposta');
+
+      let historicoHTML = '';
+      mensagens.forEach((msg, idx) => {
+        const data = msg.data?.toDate 
+          ? msg.data.toDate().toLocaleString('pt-BR') 
+          : (msg.data ? new Date(msg.data).toLocaleString('pt-BR') : 'N/A');
+        
+        // Verificar se é mensagem do solicitante ou do suporte
+        const isSolicitante = msg.respondidoPor === solicitacao.solicitante || msg.respondidoPor === solicitacao.email;
+        
+        // Cores diferentes para solicitante e suporte
+        const bgColor = isSolicitante ? '#e3f2fd' : '#fff7ed';
+        const borderColor = isSolicitante ? '#1976d2' : '#f97316';
+        const nomeColor = isSolicitante ? '#1565c0' : '#ea580c';
+        const labelUsuario = isSolicitante ? '(Solicitante)' : '(Suporte)';
+
+        let imagensHTML = '';
+        if (msg.imagens && msg.imagens.length > 0) {
+          imagensHTML = msg.imagens.map(url => 
+            `<a href="${url}" target="_blank" style="display: inline-block; margin: 5px 5px 0 0;">
+              <img src="${url}" style="max-width: 180px; max-height: 180px; border-radius: 8px; border: 1px solid #ddd;" alt="Imagem anexada">
+            </a>`
+          ).join('');
+          imagensHTML = `<div style="margin-top: 10px;">${imagensHTML}</div>`;
+        }
+
+        let audiosHTML = '';
+        if (msg.audios && msg.audios.length > 0) {
+          audiosHTML = msg.audios.map((url, i) => 
+            `<a href="${url}" target="_blank" style="display: inline-flex; align-items: center; gap: 6px; margin: 5px 10px 0 0; padding: 8px 14px; background: #193b7c; color: white; text-decoration: none; border-radius: 20px; font-size: 12px;">
+              🎤 Ouvir áudio ${msg.audios.length > 1 ? (i + 1) : ''}
+            </a>`
+          ).join('');
+          audiosHTML = `<div style="margin-top: 10px;">${audiosHTML}</div>`;
+        }
+        
+        historicoHTML += `
+          <div style="margin-bottom: 20px; padding: 15px; background: ${bgColor}; border-left: 4px solid ${borderColor}; border-radius: 0 8px 8px 0;">
+            <div style="margin-bottom: 10px;">
+              <span style="font-weight: 700; color: ${nomeColor}; font-size: 14px;">${msg.respondidoPor || 'Usuário'}</span>
+              <span style="color: ${nomeColor}; font-size: 11px; margin-left: 6px; opacity: 0.8;">${labelUsuario}</span>
+              <span style="color: #888; font-size: 11px; margin-left: 10px;">${data}</span>
+            </div>
+            ${msg.mensagem ? `<div style="color: #333; font-size: 14px; line-height: 1.6;">${msg.mensagem}</div>` : ''}
+            ${imagensHTML}
+            ${audiosHTML}
+          </div>
+        `;
+      });
+
+      const dataAbertura = solicitacao.dataAbertura?.toDate 
+        ? solicitacao.dataAbertura.toDate().toLocaleString('pt-BR')
+        : 'N/A';
+
+      const statusCor = {
+        'Resolvido': '#10b981',
+        'Cancelado': '#ef4444',
+        'Em Andamento': '#f59e0b',
+        'Pendente': '#6b7280'
+      }[solicitacao.status] || '#6b7280';
+
+      // Mapeamento de campos para nomes amigáveis no e-mail
+      const camposEmail = {
+        'solicitante': 'Solicitante',
+        'email': 'E-mail',
+        'filial': 'Filial',
+        'departamento': 'Departamento',
+        'setor': 'Setor',
+        'tipoSolicitacao': 'Tipo de Solicitação',
+        'categoria': 'Categoria',
+        'rotina': 'Rotina',
+        'sistema': 'Sistema',
+        'prioridade': 'Prioridade',
+        'motivo': 'Motivo',
+        'maquina': 'Máquina',
+        'numSerie': 'Nº Série',
+        'cliente': 'Cliente',
+        'contrato': 'Contrato',
+        'notaFiscal': 'Nota Fiscal',
+        'numeroNF': 'Número NF',
+        'valorEnvolvido': 'Valor Envolvido',
+        'dataEmissao': 'Data de Emissão',
+        'horaEmissao': 'Hora de Emissão',
+        'mensagemErro': 'Mensagem de Erro'
+      };
+
+      // Montar linhas da tabela dinamicamente
+      let tabelaInfoHTML = '';
+      for (const [campo, label] of Object.entries(camposEmail)) {
+        if (solicitacao[campo] && solicitacao[campo] !== '') {
+          tabelaInfoHTML += `
+            <tr style="border-bottom: 1px solid #eef1f4;">
+              <td style="padding: 14px 16px; font-weight: 600; color: #555; width: 160px; font-size: 13px;">${label}</td>
+              <td style="padding: 14px 16px; color: #333; font-size: 14px;">${solicitacao[campo]}</td>
+            </tr>
+          `;
+        }
+      }
+      
+      // Adicionar data de abertura
+      tabelaInfoHTML += `
+        <tr>
+          <td style="padding: 14px 16px; font-weight: 600; color: #555; font-size: 13px;">Data de Abertura</td>
+          <td style="padding: 14px 16px; color: #333; font-size: 14px;">${dataAbertura}</td>
+        </tr>
+      `;
+
+      // Montar seção de descrição/observações
+      let descricaoHTML = '';
+      if (solicitacao.descricao) {
+        descricaoHTML += `
+          <div style="margin-bottom: 15px; padding: 20px; background: linear-gradient(135deg, #f8fafc 0%, #eef2f7 100%); border-radius: 10px; border-left: 4px solid #193b7c;">
+            <h3 style="margin: 0 0 12px 0; color: #193b7c; font-size: 15px; font-weight: 700;">Descrição</h3>
+            <p style="color: #444; line-height: 1.7; margin: 0; font-size: 14px;">${solicitacao.descricao}</p>
+          </div>
+        `;
+      }
+      if (solicitacao.observacoes) {
+        descricaoHTML += `
+          <div style="margin-bottom: 15px; padding: 20px; background: linear-gradient(135deg, #f8fafc 0%, #eef2f7 100%); border-radius: 10px; border-left: 4px solid #f59e0b;">
+            <h3 style="margin: 0 0 12px 0; color: #193b7c; font-size: 15px; font-weight: 700;">Observações</h3>
+            <p style="color: #444; line-height: 1.7; margin: 0; font-size: 14px;">${solicitacao.observacoes}</p>
+          </div>
+        `;
+      }
+
+      return `
+        <div style="margin: 0; padding: 0; background: #f0f2f5; font-family: 'Segoe UI', Arial, sans-serif;">
+        <div style="max-width: 650px; margin: 0 auto; background: #ffffff; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+          
+          <!-- Header com Logo -->
+          <div style="background: linear-gradient(135deg, #193b7c 0%, #0d2454 100%); padding: 30px 20px; text-align: center;">
+            <img src="https://raw.githubusercontent.com/JoseOtavioSantin/AgroDivel-360/refs/heads/main/assets/images/Agro%20Divel%20Azul.png" alt="AgroDivel" style="max-width: 180px; height: auto; margin-bottom: 15px; filter: brightness(0) invert(1);">
+            <h1 style="margin: 0; color: white; font-size: 24px; font-weight: 600;">Resumo da Solicitação</h1>
+            <p style="margin: 8px 0 0; color: rgba(255,255,255,0.85); font-size: 14px;">Sistema de Suporte AgroDivel 360</p>
+          </div>
+          
+          <!-- Badge do Protocolo -->
+          <div style="background: #f8fafc; padding: 15px 25px; border-bottom: 1px solid #e5e7eb;">
+            <table style="width: 100%;"><tr>
+              <td style="text-align: left;">
+                <span style="color: #666; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px;">Protocolo</span>
+                <div style="font-family: 'Courier New', monospace; font-size: 16px; font-weight: 700; color: #193b7c;">${solicitacaoId}</div>
+              </td>
+              <td style="text-align: right;">
+                <span style="background: ${statusCor}; color: white; padding: 6px 16px; border-radius: 20px; font-size: 12px; font-weight: 600; text-transform: uppercase;">${solicitacao.status || 'Pendente'}</span>
+              </td>
+            </tr></table>
+          </div>
+          
+          <!-- Informações da Solicitação -->
+          <div style="padding: 25px;">
+            <table style="width: 100%; border-collapse: collapse; margin-bottom: 25px; background: #fafbfc; border-radius: 8px;">
+              ${tabelaInfoHTML}
+            </table>
+
+            ${descricaoHTML}
+
+            <!-- Histórico de Mensagens -->
+            <div style="margin-top: 30px;">
+              <h3 style="color: #193b7c; font-size: 16px; margin: 0 0 20px 0; padding-bottom: 12px; border-bottom: 2px solid #193b7c;">Histórico de Mensagens</h3>
+              ${historicoHTML || '<p style="color: #888; font-style: italic; text-align: center; padding: 30px;">Nenhuma mensagem registrada nesta solicitação.</p>'}
+            </div>
+          </div>
+
+          <!-- Footer -->
+          <div style="background: linear-gradient(135deg, #193b7c 0%, #0d2454 100%); padding: 25px; text-align: center;">
+            <p style="margin: 0 0 8px 0; color: rgba(255,255,255,0.9); font-size: 13px;">Este é um e-mail automático do Sistema de Suporte</p>
+            <p style="margin: 0; color: rgba(255,255,255,0.7); font-size: 12px;">AgroDivel 360</p>
+          </div>
+        </div>
+        </div>
+      `;
+    }
+
+    // Função para enviar e-mail automaticamente (sem perguntar)
+    async function enviarEmailAutomatico(emailDestino) {
+      try {
+        const { addDoc, collection } = await import('https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js');
+        
+        const emailHTML = montarEmailHTML();
+        
+        await addDoc(collection(db, 'mail'), {
+          to: emailDestino,
+          replyTo: userData.email || 'suporte@agrodivel.com.br',
+          message: {
+            subject: 'Agro Divel - Suporte',
+            html: emailHTML
+          }
+        });
+
+        console.log('E-mail automático enviado para:', emailDestino);
+      } catch (error) {
+        console.error('Erro ao enviar e-mail automático:', error);
+      }
+    }
+
+    // Função para enviar resumo da solicitação por e-mail (manual)
+    window.enviarPorEmail = async function() {
+      const { value: emailDestino } = await Swal.fire({
+        title: 'Enviar por E-mail',
+        input: 'email',
+        inputLabel: 'E-mail do destinatário',
+        inputValue: solicitacao.email || '',
+        inputPlaceholder: 'Digite o e-mail',
+        showCancelButton: true,
+        confirmButtonText: 'Enviar',
+        cancelButtonText: 'Cancelar',
+        inputValidator: (value) => {
+          if (!value) return 'Digite um e-mail válido';
+          if (!/\S+@\S+\.\S+/.test(value)) return 'E-mail inválido';
+        }
+      });
+
+      if (!emailDestino) return;
+
+      try {
+        Swal.fire({
+          title: 'Enviando...',
+          text: 'Preparando e-mail',
+          allowOutsideClick: false,
+          didOpen: () => Swal.showLoading()
+        });
+
+        const { addDoc, collection } = await import('https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js');
+        
+        const emailHTML = montarEmailHTML();
+        
+        await addDoc(collection(db, 'mail'), {
+          to: emailDestino,
+          replyTo: userData.email || 'suporte@agrodivel.com.br',
+          message: {
+            subject: 'Agro Divel - Suporte',
+            html: emailHTML
+          }
+        });
+
+        Swal.fire({
+          icon: 'success',
+          title: 'E-mail enviado!',
+          text: `Resumo enviado para ${emailDestino}`,
+          timer: 3000
+        });
+
+      } catch (error) {
+        console.error('Erro ao enviar e-mail:', error);
+        Swal.fire('Erro', 'Não foi possível enviar o e-mail: ' + error.message, 'error');
       }
     };
 
@@ -1354,6 +1666,13 @@
           };
         }
 
+        // Verificar se é a primeira resposta do SUPORTE (não do solicitante)
+        const isRespostaSuporte = userData.email !== solicitacao.email;
+        const respostasAnteriores = historico.filter(h => h.tipo === 'resposta');
+        const tinhaRespostaSuporte = respostasAnteriores.slice(0, -1).some(h => 
+          h.respondidoPor !== solicitacao.solicitante && h.respondidoPor !== solicitacao.email
+        );
+
         historico.push(novaMensagem);
 
         await updateDoc(doc(db, 'SolicitaçõesSuporte', solicitacaoId), {
@@ -1361,6 +1680,13 @@
           respondidoPor: userData.nome || userData.email,
           historico: historico
         });
+
+        // Enviar e-mail automático se for a PRIMEIRA resposta do suporte
+        if (isRespostaSuporte && !tinhaRespostaSuporte && solicitacao.email) {
+          solicitacao = { ...solicitacao, historico };
+          await enviarEmailAutomatico(solicitacao.email);
+          console.log('E-mail automático enviado - primeira resposta do suporte');
+        }
 
         solicitacao = { ...solicitacao, historico };
         document.getElementById('resposta-texto').value = '';
@@ -1472,50 +1798,7 @@
       renderizarPreviewAnexos();
     };
 
-    // Gravação de áudio
-    window.toggleGravacaoAudio = async function() {
-      const btnAudio = document.getElementById('btn-audio');
 
-      if (!isRecording) {
-        // Iniciar gravação
-        try {
-          const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-          mediaRecorder = new MediaRecorder(stream);
-          audioChunks = [];
-
-          mediaRecorder.ondataavailable = (e) => {
-            audioChunks.push(e.data);
-          };
-
-          mediaRecorder.onstop = () => {
-            const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
-            audioBlob.name = `audio_${Date.now()}.webm`;
-            anexosPendentes.audios.push(audioBlob);
-            renderizarPreviewAnexos();
-            
-            // Parar todas as tracks
-            stream.getTracks().forEach(track => track.stop());
-          };
-
-          mediaRecorder.start();
-          isRecording = true;
-          btnAudio.classList.add('recording');
-          btnAudio.innerHTML = '<i class="bx bx-stop"></i>';
-          btnAudio.title = 'Parar gravação';
-
-        } catch (error) {
-          console.error('Erro ao acessar microfone:', error);
-          Swal.fire('Erro', 'Não foi possível acessar o microfone. Verifique as permissões.', 'error');
-        }
-      } else {
-        // Parar gravação
-        mediaRecorder.stop();
-        isRecording = false;
-        btnAudio.classList.remove('recording');
-        btnAudio.innerHTML = '<i class="bx bx-microphone"></i>';
-        btnAudio.title = 'Gravar áudio';
-      }
-    };
 
     window.visualizarImagem = function(url) {
       Swal.fire({
