@@ -130,5 +130,3 @@ function inicializarInterface() {
     });
 
 } // Fim da função
-
-window.inicializarInterface = inicializarInterface;

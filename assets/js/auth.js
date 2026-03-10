@@ -9,8 +9,6 @@ document.head.appendChild(trackerScript);
 
 // --- MAPA DE PERMISSÕES ---
 const menuPermissions = {
-        // --- LUBRIFICANTES ---
-        'lubri-AnaliseLubrificantes': ['admin', 'diretoria', 'pecas'],
     // --- CHECKLIST ---
     'checklist-inicio': ['admin', 'diretoria', 'pecas', 'servicos'],
     
@@ -76,14 +74,13 @@ const menuPermissions = {
     'acao-KPIs': ['admin', 'diretoria'],
 
     // --- SUPORTE ---
-    'suporte-GerenciarSuporte': ['admin'],
+    'suporte-SolicitacaoSuporte': ['admin', 'diretoria', 'comercial', 'pecas', 'servicos'],
     'suporte-MinhasSolicitacoes': ['admin', 'diretoria', 'comercial', 'pecas', 'servicos'],
+    'suporte-GerenciarSolicitacoes': ['admin'],
 };
 
 // --- MAPA DE PÁGINAS PARA VERIFICAÇÃO ---
 const pagePermissions = {
-        '/Pages/Lubrificantes/AnaliseLubrificantes.html': ['admin', 'diretoria', 'pecas'],
-        '/Pages/PlanodeAcao/Gantt.html': ['admin', 'diretoria', 'comercial', 'pecas', 'servicos'],
     '/Pages/Dashboard/DashboardGeral.html': ['admin', 'diretoria'],
     '/Pages/Dashboard/DashboardAnalisarParadas.html': ['admin', 'diretoria'],
     '/Pages/Dashboard/DashboardComercial.html': ['admin', 'diretoria', 'comercial'],
@@ -116,66 +113,10 @@ const pagePermissions = {
     '/Pages/Cadastros/CadastroGestores.html': ['admin'],
     '/Pages/Cadastros/CadastroTecnicos.html': ['admin'],
     '/Pages/Cadastros/UsuariosOnline.html': ['admin'],
+    '/Pages/Suporte/SolicitacaoSuporte.html': ['admin', 'diretoria', 'comercial', 'pecas', 'servicos'],
     '/Pages/Suporte/MinhasSolicitacoes.html': ['admin', 'diretoria', 'comercial', 'pecas', 'servicos'],
-    '/Pages/Suporte/SelecionarTipoSuporte.html': ['admin'],
-    '/Pages/Suporte/GerenciarCancelamento.html': ['admin'],
-    '/Pages/Suporte/GerenciarFaturamento.html': ['admin'],
-    '/Pages/Suporte/GerenciarErros.html': ['admin'],
-    '/Pages/Suporte/GerenciarDuvidas.html': ['admin'],
-    '/Pages/Suporte/GerenciarTI.html': ['admin'],
-    '/Pages/Suporte/DetalhessolicitacaoSuporte.html': ['admin']
+    '/Pages/Suporte/GerenciarSolicitacoes.html': ['admin']
 };
-
-// --- MAPA DE QUAIS ITENS PERTENCEM A CADA MENU ---
-const menuItems = {
-    'menu-ferramentas': ['ctrl-ControleAlocacao', 'ctrl-ControleEstoque', 'ctrl-ControleGrupos', 'ctrl-ControleHistorico'],
-    'menu-checklist': ['checklist-inicio'],
-    'menu-controles': ['ctrl-MaquinaParada', 'ctrl-Kit50', 'ctrl-ContagemDiaria', 'ctrl-PedidosPecas'],
-    'menu-planos': ['ctrl-PlanosVigentes'],
-    'menu-tempario': ['ctrl-Tempario'],
-    'menu-telemetria': ['ctrl-Telemetria'],
-    'menu-planejamento': ['plan-Preencher', 'plan-Gerenciar', 'plan-Permissoes'],
-    'menu-plano-acao': ['acao-Gerenciar', 'acao-Novo', 'acao-KPIs'],
-    'menu-suporte': ['suporte-GerenciarSuporte', 'suporte-MinhasSolicitacoes'],
-    'menu-lubrificantes': ['lubri-AnaliseLubrificantes'],
-    'menu-cadastros': ['admin-CadastroGestores', 'admin-CadastroTecnicos', 'admin-UsuariosOnline'],
-    'menu-dashboards': ['dash-geral', 'dash-AnalisarParadas', 'dash-comercial', 'dash-Seguro', 'dash-Consorcio', 'dash-pecas', 'dash-servicos', 'dash-PLM', 'dash-planos-manutencao']
-};
-
-// Função que verifica se o usuário tem acesso a um item de menu
-function hasPermission(menuItemId, userGroup, permissoesIndividuais = []) {
-    // Se for um item de menu (começa com 'menu-'), verifica seus subitens
-    if (menuItemId.startsWith('menu-') && menuItems[menuItemId]) {
-        // Verifica se algum subitem tem permissão
-        for (const subItemId of menuItems[menuItemId]) {
-            if (hasPermission(subItemId, userGroup, permissoesIndividuais)) {
-                return true;
-            }
-        }
-        // Se nenhum subitem tem permissão, o menu não deve ser mostrado
-        return false;
-    }
-    
-    // Para itens normais (não menus), verifica as permissões
-    const allowedGroups = menuPermissions[menuItemId];
-    
-    // Se não tem definição de permissão, não mostra
-    if (!allowedGroups) {
-        return false;
-    }
-    
-    // Verifica acesso por grupo
-    if (userGroup !== 'nenhum' && allowedGroups.includes(userGroup)) {
-        return true;
-    }
-    
-    // Verifica acesso por permissão individual
-    if (permissoesIndividuais.includes(menuItemId)) {
-        return true;
-    }
-    
-    return false;
-}
 
 // Função para verificar se o usuário tem acesso à página atual
 function checkPageAccess(userGroup, permissoesIndividuais) {
@@ -235,19 +176,12 @@ function checkPageAccess(userGroup, permissoesIndividuais) {
         '/Pages/PlanodeAcao/GerenciarPlanosAcao.html': 'acao-Gerenciar',
         '/Pages/PlanodeAcao/form_PlanoAcao.html': 'acao-Novo',
         '/Pages/PlanodeAcao/DetalhesPlanoAcao.html': 'acao-Gerenciar',
-        '/Pages/PlanodeAcao/Gantt.html': 'acao-Gantt',
         '/Pages/Cadastros/CadastroGestores.html': 'admin-CadastroGestores',
         '/Pages/Cadastros/CadastroTecnicos.html': 'admin-CadastroTecnicos',
         '/Pages/Cadastros/UsuariosOnline.html': 'admin-UsuariosOnline',
+        '/Pages/Suporte/SolicitacaoSuporte.html': 'suporte-SolicitacaoSuporte',
         '/Pages/Suporte/MinhasSolicitacoes.html': 'suporte-MinhasSolicitacoes',
-        '/Pages/Suporte/SelecionarTipoSuporte.html': 'suporte-GerenciarSuporte',
-        '/Pages/Suporte/GerenciarCancelamento.html': 'suporte-GerenciarSuporte',
-        '/Pages/Suporte/GerenciarFaturamento.html': 'suporte-GerenciarSuporte',
-        '/Pages/Suporte/GerenciarErros.html': 'suporte-GerenciarSuporte',
-        '/Pages/Suporte/GerenciarDuvidas.html': 'suporte-GerenciarSuporte',
-        '/Pages/Suporte/GerenciarTI.html': 'suporte-GerenciarSuporte',
-        '/Pages/Suporte/DetalhessolicitacaoSuporte.html': 'suporte-GerenciarSuporte',
-        '/Pages/Lubrificantes/AnaliseLubrificantes.html': 'lubri-AnaliseLubrificantes'
+        '/Pages/Suporte/GerenciarSolicitacoes.html': 'suporte-GerenciarSolicitacoes'
     };
     const menuId = pageMap[currentPage];
     if (menuId && permissoesIndividuais.includes(menuId)) {
@@ -259,6 +193,48 @@ function checkPageAccess(userGroup, permissoesIndividuais) {
     console.log("Acesso NEGADO para página:", currentPage);
     alert("Você não tem permissão para acessar esta página.");
     window.location.href = '/Pages/Menu.html';
+    return false;
+}
+
+// Função que verifica se o usuário tem acesso a um item de menu
+// --- MAPA DE QUAIS ITENS PERTENCEM A CADA MENU ---
+const menuItems = {
+    'menu-ferramentas': ['ctrl-ControleAlocacao', 'ctrl-ControleEstoque', 'ctrl-ControleGrupos', 'ctrl-ControleHistorico'],
+    'menu-checklist': ['checklist-inicio'],
+    'menu-controles': ['ctrl-MaquinaParada', 'ctrl-Kit50', 'ctrl-ContagemDiaria', 'ctrl-PedidosPecas'],
+    'menu-planos': ['ctrl-PlanosVigentes', 'ctrl-OportunidadeFabrica'],
+    'menu-tempario': ['ctrl-Tempario'],
+    'menu-telemetria': ['ctrl-Telemetria'],
+    'menu-planejamento': ['plan-Preencher', 'plan-Gerenciar', 'plan-Permissoes'],
+    'menu-plano-acao': ['acao-Gerenciar', 'acao-Novo', 'acao-KPIs'],
+    'menu-suporte': ['suporte-SolicitacaoSuporte', 'suporte-MinhasSolicitacoes', 'suporte-GerenciarSolicitacoes'],
+    'menu-lubrificantes': ['lubri-AnaliseLubrificantes'],
+    'menu-cadastros': ['admin-CadastroGestores', 'admin-CadastroTecnicos', 'admin-UsuariosOnline'],
+    'menu-dashboards': ['dash-geral', 'dash-AnalisarParadas', 'dash-comercial', 'dash-Seguro', 'dash-Consorcio', 'dash-pecas', 'dash-servicos', 'dash-PLM', 'dash-planos-manutencao']
+};
+
+function hasPermission(menuItemId, userGroup, permissoesIndividuais) {
+    const allowedGroups = menuPermissions[menuItemId];
+    
+    // Verifica se o grupo principal tem acesso
+    if (userGroup !== 'nenhum' && allowedGroups && allowedGroups.includes(userGroup)) {
+        return true;
+    }
+    
+    // Verifica se tem permissão individual específica
+    if (permissoesIndividuais.includes(menuItemId)) {
+        return true;
+    }
+
+    // Para menus (menu-*), verifica se tem permissão em ALGUM dos itens dentro
+    if (menuItemId.startsWith('menu-') && menuItems[menuItemId]) {
+        for (const itemId of menuItems[menuItemId]) {
+            if (hasPermission(itemId, userGroup, permissoesIndividuais)) {
+                return true;
+            }
+        }
+    }
+    
     return false;
 }
 
@@ -428,3 +404,8 @@ document.addEventListener('click', async () => {
         // Silenciar erros de atualização
     }
 });
+
+
+
+
+
