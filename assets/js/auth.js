@@ -76,9 +76,8 @@ const menuPermissions = {
     'acao-KPIs': ['admin', 'diretoria'],
 
     // --- SUPORTE ---
-    'suporte-SolicitacaoSuporte': ['admin', 'diretoria', 'comercial', 'pecas', 'servicos'],
+    'suporte-GerenciarSuporte': ['admin'],
     'suporte-MinhasSolicitacoes': ['admin', 'diretoria', 'comercial', 'pecas', 'servicos'],
-    'suporte-GerenciarSolicitacoes': ['admin'],
 };
 
 // --- MAPA DE PÁGINAS PARA VERIFICAÇÃO ---
@@ -117,9 +116,14 @@ const pagePermissions = {
     '/Pages/Cadastros/CadastroGestores.html': ['admin'],
     '/Pages/Cadastros/CadastroTecnicos.html': ['admin'],
     '/Pages/Cadastros/UsuariosOnline.html': ['admin'],
-    '/Pages/Suporte/SolicitacaoSuporte.html': ['admin', 'diretoria', 'comercial', 'pecas', 'servicos'],
     '/Pages/Suporte/MinhasSolicitacoes.html': ['admin', 'diretoria', 'comercial', 'pecas', 'servicos'],
-    '/Pages/Suporte/GerenciarSolicitacoes.html': ['admin']
+    '/Pages/Suporte/SelecionarTipoSuporte.html': ['admin'],
+    '/Pages/Suporte/GerenciarCancelamento.html': ['admin'],
+    '/Pages/Suporte/GerenciarFaturamento.html': ['admin'],
+    '/Pages/Suporte/GerenciarErros.html': ['admin'],
+    '/Pages/Suporte/GerenciarDuvidas.html': ['admin'],
+    '/Pages/Suporte/GerenciarTI.html': ['admin'],
+    '/Pages/Suporte/DetalhessolicitacaoSuporte.html': ['admin']
 };
 
 // --- MAPA DE QUAIS ITENS PERTENCEM A CADA MENU ---
@@ -132,7 +136,7 @@ const menuItems = {
     'menu-telemetria': ['ctrl-Telemetria'],
     'menu-planejamento': ['plan-Preencher', 'plan-Gerenciar', 'plan-Permissoes'],
     'menu-plano-acao': ['acao-Gerenciar', 'acao-Novo', 'acao-KPIs'],
-    'menu-suporte': ['suporte-SolicitacaoSuporte', 'suporte-MinasSolicitacoes', 'suporte-GerenciarSolicitacoes'],
+    'menu-suporte': ['suporte-GerenciarSuporte', 'suporte-MinhasSolicitacoes'],
     'menu-lubrificantes': ['lubri-AnaliseLubrificantes'],
     'menu-cadastros': ['admin-CadastroGestores', 'admin-CadastroTecnicos', 'admin-UsuariosOnline'],
     'menu-dashboards': ['dash-geral', 'dash-AnalisarParadas', 'dash-comercial', 'dash-Seguro', 'dash-Consorcio', 'dash-pecas', 'dash-servicos', 'dash-PLM', 'dash-planos-manutencao']
@@ -235,9 +239,14 @@ function checkPageAccess(userGroup, permissoesIndividuais) {
         '/Pages/Cadastros/CadastroGestores.html': 'admin-CadastroGestores',
         '/Pages/Cadastros/CadastroTecnicos.html': 'admin-CadastroTecnicos',
         '/Pages/Cadastros/UsuariosOnline.html': 'admin-UsuariosOnline',
-        '/Pages/Suporte/SolicitacaoSuporte.html': 'suporte-SolicitacaoSuporte',
         '/Pages/Suporte/MinhasSolicitacoes.html': 'suporte-MinhasSolicitacoes',
-        '/Pages/Suporte/GerenciarSolicitacoes.html': 'suporte-GerenciarSolicitacoes',
+        '/Pages/Suporte/SelecionarTipoSuporte.html': 'suporte-GerenciarSuporte',
+        '/Pages/Suporte/GerenciarCancelamento.html': 'suporte-GerenciarSuporte',
+        '/Pages/Suporte/GerenciarFaturamento.html': 'suporte-GerenciarSuporte',
+        '/Pages/Suporte/GerenciarErros.html': 'suporte-GerenciarSuporte',
+        '/Pages/Suporte/GerenciarDuvidas.html': 'suporte-GerenciarSuporte',
+        '/Pages/Suporte/GerenciarTI.html': 'suporte-GerenciarSuporte',
+        '/Pages/Suporte/DetalhessolicitacaoSuporte.html': 'suporte-GerenciarSuporte',
         '/Pages/Lubrificantes/AnaliseLubrificantes.html': 'lubri-AnaliseLubrificantes'
     };
     const menuId = pageMap[currentPage];
