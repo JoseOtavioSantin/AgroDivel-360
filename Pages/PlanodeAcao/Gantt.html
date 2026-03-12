@@ -25,24 +25,66 @@
         .gantt-left { display: none; }
         .gantt-left .gantt-label { display: none; }
         .gantt-right { flex:1; background:#fff; border-radius:8px; padding:24px 12px 12px 12px; box-shadow: 0 6px 20px rgba(2,6,23,0.04); border:1px solid #eef2f7; overflow:auto; position:relative; }
-        .gantt-timeline { position:relative; min-height:60px; }
+        .gantt-timeline { position:relative; min-height:60px; margin-top:32px; }
         .gantt-grid-container { position:absolute; left:0; top:0; right:0; bottom:0; z-index:0; pointer-events:none; }
         .gantt-grid-column { position:absolute; top:0; bottom:0; border-right:1px solid #f1f5f9; pointer-events:none; }
         .gantt-gridline { position:absolute; top:0; bottom:0; width:1px; background:transparent; border-left:1px solid rgba(2,6,23,0.03); z-index:1; }
         /* month header sits above tick labels; tick labels slightly lower to make room */
-        .gantt-months { position:absolute; left:0; right:0; top:-42px; height:20px; z-index:6; pointer-events:none; }
+        .gantt-months { position:absolute; left:0; right:0; top:-42px; height:22px; z-index:6; pointer-events:none; }
         /* remoção do rótulo central do mês — exibiremos apenas o rótulo no início do mês */
         .gantt-month-segment { display: none; position:absolute; top:0; height:20px; align-items:center; justify-content:center; font-weight:700; color:#374151; pointer-events:none; }
         .gantt-start-line { position:absolute; top:0; bottom:0; width:2px; background:rgba(59,130,246,0.95); box-shadow: 0 0 6px rgba(59,130,246,0.12); z-index:2; pointer-events:none; }
         /* month boundary marker (vertical line at 1st day of month) */
         .gantt-month-boundary { position:absolute; top:0; bottom:0; width:2px; background:rgba(148,163,184,0.6); box-shadow: 0 0 6px rgba(148,163,184,0.06); z-index:2; pointer-events:none; }
         /* mostrar o rótulo da quebra com estilo idêntico ao rótulo do segmento do mês (ex.: "fevereiro") */
-        .gantt-month-boundary-label { position:absolute; top:0; transform:translateX(-50%); font-size:13px; color:#374151; background:transparent; padding:0 6px; border-radius:4px; z-index:8; pointer-events:none; font-weight:700; display:flex; align-items:center; justify-content:center; height:20px; }
-        .gantt-tick-label { position:absolute; top:-12px; transform:translateX(-50%); font-size:12px; color:#6b7280; z-index:4; white-space:nowrap; }
+        .gantt-month-boundary-label { position:absolute; top:0; transform:translateX(-50%); font-size:14px; color:#222; background:rgba(255,255,255,0.85); padding:0 8px; border-radius:6px; z-index:8; pointer-events:none; font-weight:700; display:flex; align-items:center; justify-content:center; height:22px; }
+        .gantt-tick-label { position:absolute; top:38px; transform:translateX(-50%); font-size:13px; color:#6b7280; z-index:4; white-space:nowrap; font-weight:500; }
         .gantt-row { position:relative; height:30px; margin-bottom:6px; z-index:2; }
-        .gantt-bar { position:absolute; height:20px; border-radius:8px; box-shadow: 0 6px 20px rgba(2,6,23,0.06); display:flex; align-items:center; overflow:hidden; cursor:pointer; z-index:3; padding:0 8px; }
-        .gantt-bar .progress { height:100%; background: transparent; border-radius:inherit; }
-        .gantt-bar .pct { margin-left:auto; padding:2px 6px; color:#fff; font-weight:700; font-size:11px; background: rgba(0,0,0,0.15); border-radius:6px; cursor:help; pointer-events:auto; }        /* bolinha de prioridade (na frente da barra) */
+        .gantt-bar {
+            position: absolute;
+            height: 20px;
+            border-radius: 8px;
+            box-shadow: 0 6px 20px rgba(2,6,23,0.06);
+            display: flex;
+            align-items: center;
+            overflow: visible;
+            cursor: pointer;
+            z-index: 3;
+            padding: 0 0px;
+            background: transparent;
+        }
+        .gantt-bar .bar-bg {
+            position: absolute;
+            left: 0; top: 0; bottom: 0; right: 0;
+            width: 100%;
+            height: 100%;
+            border-radius: 8px;
+            background: var(--gantt-bar-bg, #bfdbfe);
+            z-index: 1;
+        }
+        .gantt-bar .progress {
+            position: absolute;
+            left: 0; top: 0; bottom: 0;
+            height: 100%;
+            border-radius: 8px 0 0 8px;
+            background: var(--gantt-bar-progress, #2563eb);
+            z-index: 2;
+            pointer-events: auto;
+            transition: width 0.2s;
+        }
+        .gantt-bar .pct {
+            position: relative;
+            margin-left: auto;
+            padding: 2px 6px;
+            color: #fff;
+            font-weight: 700;
+            font-size: 11px;
+            background: rgba(0,0,0,0.15);
+            border-radius: 6px;
+            pointer-events: auto;
+            cursor: pointer;
+            z-index: 3;
+        }
         .gantt-priority-dot { position:absolute; width:12px; height:12px; border-radius:50%; box-shadow:0 2px 6px rgba(2,6,23,0.12); border:2px solid #fff; z-index:5; pointer-events:none; transform:translateX(-50%); }
         .gantt-priority-dot.small { width:10px; height:10px; }
         /* .gantt-update-badge removed — last-update description is shown only inside the bar tooltip */
@@ -72,19 +114,11 @@
         
         <div id="gantt-container" style="margin: 32px auto; max-width: 1900px; min-height: 550px; background: #fff; border-radius: 16px; box-shadow: 0 4px 24px rgba(0,0,0,0.06); padding: 24px;">
             <div id="gantt-controls" style="display:flex;gap:12px;align-items:center;margin-bottom:12px;flex-wrap:wrap">
-                <select id="gantt-viewmode" style="padding:6px 10px;border-radius:8px;border:1px solid #e6edf3;background:#fff;color:#374151">
-                    <option value="Month">Month</option>
-                    <option value="Week">Week</option>
-                    <option value="Day">Day</option>
-                </select>
-                <select id="gantt-filter-month" style="padding:6px 10px;border-radius:8px;border:1px solid #e6edf3;background:#fff;color:#374151">
-                    <option value="all">Todos os meses</option>
-                </select>
                 <select id="gantt-filter-priority" style="padding:6px 10px;border-radius:8px;border:1px solid #e6edf3;background:#fff;color:#374151">
                     <option value="all">Todas prioridades</option>
                 </select>
                 <select id="gantt-filter-where" style="padding:6px 10px;border-radius:8px;border:1px solid #e6edf3;background:#fff;color:#374151">
-                    <option value="all">Todos departamentos</option>
+                    <option value="all">Todos os planos</option>
                 </select>
                 <div id="gantt-status-legend" style="margin-left:auto;display:flex;gap:12px;align-items:center;color:#374151;font-size:13px"></div>
                 <div id="gantt-legend" style="display:flex;gap:8px;align-items:center;opacity:0.9"></div>
@@ -92,7 +126,6 @@
             <div id="gantt-chart"></div>
         </div>
     </section>
-
 
     <!-- Scripts auxiliares -->
     <script type="module" src="/assets/js/auth.js"></script>
@@ -153,6 +186,9 @@
                 console.warn('Plano sem datas válidas:', plano.id);
                 return null;
             }
+            // LOG do checklist para debug
+            const checklist = plano.etapas || plano._checklistResumo || [];
+            console.log('[Gantt][DEBUG] checklist do plano', plano.id, checklist);
             return {
                 id: plano.id,
                 name: plano.nome || plano.titulo || 'Plano sem nome',
@@ -170,7 +206,9 @@
                 kpiNome: plano.kpiNome || '',
                 meta: plano.meta || '',
                 // data da última atualização (pode ser preenchida a partir da subcollection 'atualizacoes')
-                dataAtualizacao: plano.dataAtualizacao || null
+                dataAtualizacao: plano.dataAtualizacao || null,
+                _checklistResumo: checklist,
+                _historicoAtualizacoes: Array.isArray(plano._historicoAtualizacoes) ? plano._historicoAtualizacoes : []
             };
         }).filter(task => task !== null);
     }
@@ -191,10 +229,7 @@
         // Header / legenda
         // (badge "Visão" removido a pedido — controles externos já existem acima)
 
-        const legend = document.createElement('div');
-        legend.className = 'gantt-legend';
-        legend.textContent = `${tasks.length} atividade(s)`;
-        right.appendChild(legend);
+        // Removido: não exibir mais a quantidade de atividades
 
         // Compute timeline range
         const msPerDay = 24 * 60 * 60 * 1000;
@@ -271,6 +306,7 @@
                 const lbl = document.createElement('div');
                 lbl.className = 'gantt-tick-label';
                 lbl.style.left = pos + '%';
+                lbl.style.top = '-20px'; // move o número do dia para cima, afastando da barra
                 if (view === 'Day') {
                     // mostrar apenas o número do dia (1,2,3...)
                     lbl.textContent = String(tick.getDate());
@@ -423,6 +459,7 @@
             const row = document.createElement('div');
             row.className = 'gantt-row';
             row.style.top = (i * rowEstimate) + 'px';
+            row.style.cursor = 'pointer';
 
             const taskStart = new Date(t.start);
             const taskEnd = new Date(t.end);
@@ -444,6 +481,7 @@
             bar.style.left = leftPct + '%';
             bar.style.width = widthPct + '%';
             bar.style.height = '22px';
+            bar.style.background = 'transparent';
 
             // cores por status/urgência (barra)
             const statusColors = {
@@ -463,8 +501,30 @@
                 if (daysToEnd <= 7) urgencyKey = 'em-risco';
             }
             const sc = statusColors[urgencyKey] || statusColors.dentro;
-            // bar background = cor fraca (fundo), progress (fill) = cor forte
-            bar.style.background = sc[0];
+
+            // fundo da barra (ocupa 100%)
+            const barBgEl = document.createElement('div');
+            barBgEl.className = 'bar-bg';
+            barBgEl.style.setProperty('--gantt-bar-bg', sc[0]);
+            bar.appendChild(barBgEl);
+
+            // progresso (ocupa % do progresso)
+            const progressEl = document.createElement('div');
+            progressEl.className = 'progress';
+            progressEl.style.width = Math.max(4, Math.min(100, t.progress)) + '%';
+            progressEl.style.setProperty('--gantt-bar-progress', sc[1]);
+            // borda arredondada só no início e fim se progresso = 100%
+            if (Math.round(t.progress) >= 100) {
+                progressEl.style.borderRadius = '8px';
+            } else {
+                progressEl.style.borderRadius = '8px 0 0 8px';
+            }
+            bar.appendChild(progressEl);
+
+            const pctEl = document.createElement('div');
+            pctEl.className = 'pct';
+            pctEl.textContent = `${Math.round(t.progress)}%`;
+            bar.appendChild(pctEl);
 
             // bolinha de prioridade (na frente da barra) — usa paleta de prioridade
             const priorityColors = {
@@ -487,18 +547,6 @@
 
             bar.setAttribute('data-id', t.id);
 
-            const progress = document.createElement('div');
-            progress.className = 'progress';
-            progress.style.width = Math.max(4, Math.min(100, t.progress)) + '%';
-            // usar a cor forte (segunda cor do par) como preenchimento de progresso
-            try { progress.style.background = (sc && sc[1]) ? sc[1] : '#2563eb'; } catch(e) { progress.style.background = '#2563eb'; }
-            bar.appendChild(progress);
-
-            const pct = document.createElement('div');
-            pct.className = 'pct';
-            pct.textContent = `${Math.round(t.progress)}%`;
-            bar.appendChild(pct);
-
             /* update badge removed — última atualização (incl. descrição) aparece apenas no tooltip da barra */
 
             // tooltip handlers - agora posicionam o card onde o mouse estiver sobre a barra
@@ -508,14 +556,48 @@
                 const rawDesc = (t.lastUpdateDescricao || '').toString().trim();
                 const safeDesc = rawDesc.replace(/</g,'&lt;').replace(/>/g,'&gt;');
                 const shortDesc = safeDesc.length > 220 ? (safeDesc.slice(0,220) + '...') : safeDesc;
+                // Montar checklist detalhado com cabeçalho de datas
+                let checklistHtml = '';
+                if (t._checklistResumo && t._checklistResumo.length) {
+                    checklistHtml = t._checklistResumo.map(etapa => {
+                        // Cabeçalho de datas
+                        let header = `<div style=\"display:flex;gap:6px;margin-left:8px;font-size:11px;color:#a3e635;font-weight:700;min-width:600px;\"><span style=\"width:18px\"></span><span style=\"flex:2;min-width:180px;max-width:320px;word-break:break-word;\">\\/</span><span style=\"flex:1;min-width:90px;max-width:120px;text-align:center;\">Início</span><span style=\"flex:1;min-width:90px;max-width:120px;text-align:center;\">Fim</span><span style=\"flex:1;min-width:90px;max-width:120px;text-align:center;\">Data Real Final</span></div>`;
+                        const itens = etapa.itens.map(item => {
+                            const status = item.concluido ? '✅' : '⬜';
+                            const d1 = item.dataInicio || '-';
+                            const d2 = item.dataFinal || '-';
+                            const d3 = item.dataRealFinal || '-';
+                            return `<div style=\"display:flex;align-items:center;gap:6px;min-width:600px;\">${status}<span style=\"flex:2;min-width:180px;max-width:320px;word-break:break-word;\">${item.texto}</span><span style=\"flex:1;min-width:90px;max-width:120px;text-align:center;\">${d1}</span><span style=\"flex:1;min-width:90px;max-width:120px;text-align:center;\">${d2}</span><span style=\"flex:1;min-width:90px;max-width:120px;text-align:center;\">${d3}</span></div>`;
+                        }).join('');
+                        return `<div style=\"margin-bottom:4px;overflow-x:auto;\"><span style=\"color:#fbbf24;font-size:12px;font-weight:700;\">Etapas: ${etapa.nome || 'Etapa'}</span>${itens ? header + itens : ''}</div>`;
+                    }).join('');
+                } else {
+                    checklistHtml = '<div style=\"color:#f87171;font-size:12px;\">Sem checklist cadastrado</div>';
+                }
+                // Cores para prioridade
+                const prioridadeCores = {
+                    'Alto': '#ef4444',
+                    'Médio': '#f59e0b',
+                    'Baixo': '#22c55e',
+                    'Não definida': '#64748b'
+                };
+                const corPrioridade = prioridadeCores[t.prioridade] || '#64748b';
+
+                // ...histórico de atualizações removido...
+
                 tooltip.innerHTML = `
                     <div style="min-width:260px;padding:6px 8px;">
                         <div style="font-weight:800;color:#fff;margin-bottom:6px">${t.name || '—'}</div>
-                        <div style="font-size:12px;color:#d1d5db;margin-bottom:4px"><strong style=\"color:#cbd5e1\">Meta/KPI:</strong> ${t.kpiNome ? (t.kpiNome + (t.meta ? ' — ' + t.meta : '')) : (t.meta || '-')}</div>
-                        <div style="font-size:12px;color:#d1d5db;margin-bottom:4px"><strong style=\"color:#cbd5e1\">Responsável:</strong> ${t.responsavel || '-'}</div>
-                        <div style="font-size:12px;color:#d1d5db;margin-bottom:6px"><strong style=\"color:#cbd5e1\">Última atualização:</strong> ${formatDateTime(t.dataAtualizacao) || '-'}${t.lastUpdateTitle ? (' — ' + t.lastUpdateTitle) : ''}${t.lastUpdateUser ? (' • ' + t.lastUpdateUser) : ''}</div>
-                        ${rawDesc ? `<div style="margin:6px 0 0 0;padding:8px;border-radius:6px;background:rgba(255,255,255,0.03);font-size:12px;color:#ffe7d6"><strong style=\"color:#ffd\">Detalhe:</strong> ${shortDesc}</div>` : ''}
-                        <div style="border-top:1px solid rgba(255,255,255,0.06);margin-top:8px;padding-top:6px;font-size:12px;color:#d1d5db">${t.start} → ${t.end} • Progresso: ${Math.round(t.progress)}%</div>
+                        <div style="font-size:12px;color:#d1d5db;margin-bottom:4px"><strong style=\"color:#cbd5e1\">Meta/KPI:</strong> ${t.kpiNome ? (t.kpiNome + (t.meta ? ' — ' + t.meta : '')) : (t.meta || '—')}</div>
+                        <div style="font-size:12px;margin-bottom:4px"><strong style=\"color:#cbd5e1\">Prioridade:</strong> <span style=\"color:${corPrioridade};font-weight:700\">${t.prioridade || '—'}</span></div>
+                        <div style="font-size:12px;color:#d1d5db;margin-bottom:4px"><strong style=\"color:#cbd5e1\">Status:</strong> ${t.custom_class || t.status || '—'}</div>
+                        <div style="font-size:12px;color:#d1d5db;margin-bottom:4px"><strong style=\"color:#cbd5e1\">Departamento:</strong> ${t.where || '—'}</div>
+                        <div style="font-size:12px;color:#d1d5db;margin-bottom:4px"><strong style=\"color:#cbd5e1\">Responsável:</strong> ${t.responsavel || '—'}</div>
+                        <div style="font-size:12px;color:#d1d5db;margin-bottom:6px"><strong style=\"color:#cbd5e1\">Última atualização:</strong> ${formatDateTime(t.dataAtualizacao) || '—'}${t.lastUpdateTitle ? (' — ' + t.lastUpdateTitle) : ''}${t.lastUpdateUser ? (' • ' + t.lastUpdateUser) : ''}</div>
+                        ${t.lastUpdateDescricao ? `<div style=\"margin:6px 0 0 0;padding:8px;border-radius:6px;background:rgba(255,255,255,0.03);font-size:12px;color:#ffe7d6\"><strong style=\"color:#ffd\">Observação:</strong> ${t.lastUpdateDescricao}</div>` : ''}
+                        <div style=\"margin:8px 0 0 0;padding:8px 6px 6px 6px;border-radius:6px;background:rgba(255,255,255,0.04);font-size:12px;\"><strong style=\"color:#a3e635\">Etapas:</strong>${checklistHtml}</div>
+                        
+                        <div style="border-top:1px solid rgba(255,255,255,0.06);margin-top:8px;padding-top:6px;font-size:12px;color:#d1d5db">${t.start || '—'} → ${t.end || '—'} • Progresso: ${Math.round(t.progress) || 0}%</div>
                     </div>`;
                 // posiciona usando o evento do mouse
                 positionTooltipAtMouse(ev);
@@ -526,11 +608,40 @@
             });
             bar.addEventListener('mouseleave', () => { tooltip.style.display = 'none'; });
 
-            /* pct hover removed — use the full-bar tooltip instead (reduces duplicate UI) */
+            /* ===== CORREÇÃO DOS EVENTOS DE CLIQUE ===== */
+            // Evento de clique na barra - VAI PARA DETALHES
+            bar.addEventListener('click', function(ev) {
+                ev.stopPropagation(); // Evita conflitos com outros listeners
+                console.log('[Gantt] Barra clicada, navegando para detalhes do plano:', t.id);
+                window.location.href = `/Pages/PlanodeAcao/DetalhesPlanoAcao.html?id=${t.id}`;
+            });
 
-            // click / dblclick
-            bar.addEventListener('click', () => window.location.href = `/Pages/PlanodeAcao/DetalhesPlanoAcao.html?id=${t.id}`);
-            bar.addEventListener('dblclick', () => { sessionStorage.setItem('planToEditId', t.id); window.location.href = '/Pages/PlanodeAcao/form_PlanoAcao.html'; });
+            // Garantir que o percentual também navegue (removendo listeners antigos e adicionando novo)
+            const pctElement = bar.querySelector('.pct');
+            if (pctElement) {
+                // Remove qualquer listener antigo (se existir) para evitar duplicação
+                if (pctElement._clickHandler) {
+                    pctElement.removeEventListener('click', pctElement._clickHandler);
+                }
+                
+                // Adiciona novo listener que navega diretamente
+                pctElement._clickHandler = function(ev) {
+                    ev.stopPropagation(); // Não precisa propagar, vamos navegar diretamente
+                    console.log('[Gantt] Percentual clicado, navegando para detalhes do plano:', t.id);
+                    window.location.href = `/Pages/PlanodeAcao/DetalhesPlanoAcao.html?id=${t.id}`;
+                };
+                pctElement.addEventListener('click', pctElement._clickHandler);
+            }
+
+            // Duplo clique vai para edição
+            bar.addEventListener('dblclick', (ev) => {
+                ev.stopPropagation();
+                sessionStorage.setItem('planToEditId', t.id);
+                window.location.href = '/Pages/PlanodeAcao/form_PlanoAcao.html';
+            });
+
+            // REMOVIDO: listener de clique na linha que poderia causar conflito
+            // A linha não deve ter listener de clique, apenas a barra
 
             timeline.appendChild(row);
             row.appendChild(bar);
@@ -599,18 +710,38 @@
                 await Promise.all(planos.map(async (plano) => {
                     try {
                         const updatesRef = window.collection(window.db, 'planos-acao', String(plano.id), 'atualizacoes');
-                        const q = window.query(updatesRef, window.orderBy('data', 'desc'), window.limit(1));
+                        const q = window.query(updatesRef, window.orderBy('data', 'desc'));
                         const snap = await window.getDocs(q);
-                        if (!snap.empty && snap.docs[0]) {
+                        plano._historicoAtualizacoes = [];
+                        if (!snap.empty) {
+                            snap.docs.forEach(doc => {
+                                const d = doc.data();
+                                let rawData = d.dataAtualizacao || d.dataAtualizacaoUTC || d.data || d.dataCriacao || d.dataCriado || null;
+                                let dataConv = null;
+                                if (rawData) {
+                                    if (typeof rawData.toDate === 'function') {
+                                        dataConv = rawData.toDate();
+                                    } else if (typeof rawData === 'string' || typeof rawData === 'number') {
+                                        dataConv = new Date(rawData);
+                                    } else if (rawData instanceof Date) {
+                                        dataConv = rawData;
+                                    }
+                                }
+                                console.log('[Gantt][DEBUG] Data bruta do histórico:', rawData, 'Convertida:', dataConv);
+                                plano._historicoAtualizacoes.push({
+                                    data: dataConv,
+                                    usuario: d.usuario || d.usuarioNome || d.usuarioId || d.criadoPorNome || d.criadoPor || null,
+                                    titulo: d.titulo || null,
+                                    descricao: (typeof d.descricao === 'string' && d.descricao.trim()) ? d.descricao.trim() : null
+                                });
+                            });
+                            // última atualização (mais recente)
                             const d = snap.docs[0].data();
-                            // campo usado no histórico é `data` (Timestamp)
                             plano.dataAtualizacao = d.data || d.dataCriacao || plano.dataAtualizacao || null;
-                            // capturar também autor/título/descrição da última atualização (quando presente)
                             plano.lastUpdateUser = d.usuario || d.usuarioNome || d.usuarioId || null;
                             plano.lastUpdateTitle = d.titulo || null;
                             plano.lastUpdateDescricao = (typeof d.descricao === 'string' && d.descricao.trim()) ? d.descricao.trim() : null;
                         } else {
-                            // fallback para o campo no documento principal
                             plano.dataAtualizacao = plano.dataAtualizacao || plano.updatedAt || plano._updatedAt || null;
                             plano.lastUpdateUser = plano.lastUpdateUser || plano.usuario || null;
                             plano.lastUpdateTitle = plano.lastUpdateTitle || null;
@@ -629,6 +760,8 @@
                 container.innerHTML = '<div class="loading-message">Nenhum plano de ação encontrado.</div>';
                 return;
             }
+            // DEBUG: log planos antes do mapeamento para garantir que _historicoAtualizacoes está presente
+            console.log('[Gantt][DEBUG] Planos antes do mapeamento para tasks:', JSON.stringify(planos, null, 2));
             const tasks = mapPlanosToGanttTasks(planos);
             console.log('[Gantt] Planos válidos para o gráfico (antes validação):', tasks.length, tasks);
 
@@ -710,7 +843,8 @@
                 dataAtualizacao: t.dataAtualizacao || null,
                 lastUpdateUser: t.lastUpdateUser || null,
                 lastUpdateTitle: t.lastUpdateTitle || null,
-                lastUpdateDescricao: t.lastUpdateDescricao || null
+                lastUpdateDescricao: t.lastUpdateDescricao || null,
+                _checklistResumo: t._checklistResumo || []
             }));
 
             // Corrige intervals invertidos (start > end) — trocar ou ajustar automaticamente
@@ -765,7 +899,7 @@
                         monthsSet.set(key, raw.charAt(0).toUpperCase() + raw.slice(1));
                     }
                 });
-                const monthsHtml = ['<option value="all">Todos os meses</option>'].concat(Array.from(monthsSet.entries()).map(([k,label]) => `<option value="${k}">${label}</option>`)).join('');
+                const monthsHtml = ['<option value="all">Todos os planos</option>'].concat(Array.from(monthsSet.entries()).map(([k,label]) => `<option value="${k}">${label}</option>`)).join('');
                 if (monthSelect) monthSelect.innerHTML = monthsHtml;
 
                 // priorities
@@ -774,9 +908,10 @@
                 prioSelect.innerHTML = '<option value="all">Todas prioridades</option>' + prios.map(p => `<option value="${p}">${p}</option>`).join('');
 
                 // where / departamentos
-                const whs = Array.from(new Set(ganttTasks.map(t => (t.where || '').trim()).filter(Boolean)));
-                whs.sort((a,b) => a.localeCompare(b));
-                whereSelect.innerHTML = '<option value="all">Todos departamentos</option>' + whs.map(w => `<option value="${w}">${w}</option>`).join('');
+                // Agora exibe o nome do Plano de Ação no select
+                const planNames = Array.from(new Set(ganttTasks.map(t => (t.name || '').trim()).filter(Boolean)));
+                planNames.sort((a,b) => a.localeCompare(b));
+                whereSelect.innerHTML = '<option value="all">Todos os planos</option>' + planNames.map(n => `<option value="${n}">${n}</option>`).join('');
 
                 // legenda de prioridades (cores)
                 const priorityColors = {
@@ -951,8 +1086,8 @@
         } catch (e) {
             console.error('[Gantt] Erro inesperado ao renderizar:', e);
             container.innerHTML = `
-                <div class=\"error-message\">
-                    <i class='bx bx-error-circle' style=\"font-size: 24px; margin-right: 8px;\"></i>
+                <div class="error-message">
+                    <i class='bx bx-error-circle' style="font-size: 24px; margin-right: 8px;\"></i>
                     <span>Erro ao carregar planos: ${e.message}</span>
                 </div>
             `;

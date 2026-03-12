@@ -1,3 +1,35 @@
+        // Atualiza datas de início/final do checklist e registra no histórico
+        window.atualizarDataChecklist = async function(etapaIndex, itemIndex, campo, valor) {
+            if (!isOwner) {
+                notificacao.aviso('Atenção', 'Apenas o criador ou admin pode editar datas');
+                return;
+            }
+            const etapas = planoData.etapas || [];
+            const etapa = etapas[etapaIndex];
+            if (!etapa || !etapa.itens || !etapa.itens[itemIndex]) return;
+            const item = etapa.itens[itemIndex];
+            const valorAntigo = item[campo] || '';
+            etapas[etapaIndex].itens[itemIndex][campo] = valor;
+            planoData.etapas = etapas;
+            try {
+                await updateDoc(doc(db, 'planos-acao', planoId), {
+                    etapas: etapas,
+                    dataAtualizacao: new Date()
+                });
+                // Registrar no histórico
+                await addDoc(collection(db, 'planos-acao', planoId, 'atualizacoes'), {
+                    tipo: 'checklist',
+                    titulo: `Data alterada (${campo})`,
+                    descricao: `${etapa.nome || 'Etapa ' + (etapaIndex + 1)}: "${item.texto}" - ${campo} de "${valorAntigo}" para "${valor}"`,
+                    usuario: getUserName(),
+                    data: Timestamp.now()
+                });
+                await loadAtualizacoes();
+            } catch (err) {
+                console.error('Erro ao atualizar data do checklist:', err);
+                notificacao.erro('Erro', 'Não foi possível atualizar a data.');
+            }
+        }
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -1175,13 +1207,13 @@
         }
         .etapas-progress-fill {
             height: 100%;
-            background: linear-gradient(90deg, #22c55e 0%, #16a34a 100%);
+            background: linear-gradient(90deg, #142f63 0%, #142f63 100%);
             transition: width 0.3s;
         }
         .etapas-progress-text {
             font-size: 13px;
             font-weight: 700;
-            color: #16a34a;
+            color: #142f63;
         }
         .etapa-card {
             background: #f8fafc;
@@ -1945,14 +1977,39 @@
                         const completedClass = item.concluido ? 'completed' : '';
                         const disabled = !isOwner ? 'disabled' : '';
                         const readonlyClass = !isOwner ? 'readonly' : '';
-                        const onclickDiv = isOwner ? `onclick="toggleChecklistItem(${etapaIndex}, ${itemIndex})"` : '';
-                        const onclickCheckbox = isOwner ? `onclick="event.stopPropagation(); toggleChecklistItem(${etapaIndex}, ${itemIndex})"` : 'onclick="event.preventDefault(); event.stopPropagation();"';
-                        
+                        // Clique só na caixinha, não na linha
+                        const onclickDiv = '';
+                        const onclickCheckbox = isOwner ? `onclick=\"event.stopPropagation(); toggleChecklistItem(${etapaIndex}, ${itemIndex})\"` : 'onclick=\"event.preventDefault(); event.stopPropagation();\"';
+
+                        // Campos de data de início e final
+                        const dataInicio = item.dataInicio ? item.dataInicio.split('T')[0] : '';
+                        const dataFinal = item.dataFinal ? item.dataFinal.split('T')[0] : '';
+                        const dataRealFinal = item.dataRealFinal ? item.dataRealFinal.split('T')[0] : '';
+
                         itensHtml += `
                             <div class="checklist-item-detail ${completedClass} ${readonlyClass}" ${onclickDiv}>
                                 <input type="checkbox" class="checklist-checkbox-detail" ${checked} ${disabled} 
                                     ${onclickCheckbox}>
                                 <span class="checklist-texto">${item.texto}</span>
+                                <div style="display:flex; flex-direction:row; align-items:center; gap:10px; margin-left:16px; min-width:320px;">
+                                    <label style="font-size:11px; color:#555; display:flex; flex-direction:column; align-items:flex-start; gap:2px;">
+                                        Início
+                                        <input type="date" value="${dataInicio}" ${disabled}
+                                            style="font-size:13px; padding:2px 6px; border-radius:5px; border:1px solid #d1d5db; background:#fff; color:#222; min-width:110px;"
+                                            onchange="atualizarDataChecklist(${etapaIndex}, ${itemIndex}, 'dataInicio', this.value)">
+                                    </label>
+                                    <label style="font-size:11px; color:#555; display:flex; flex-direction:column; align-items:flex-start; gap:2px;">
+                                        Final
+                                        <input type="date" value="${dataFinal}" ${disabled}
+                                            style="font-size:13px; padding:2px 6px; border-radius:5px; border:1px solid #d1d5db; background:#fff; color:#222; min-width:110px;"
+                                            onchange="atualizarDataChecklist(${etapaIndex}, ${itemIndex}, 'dataFinal', this.value)">
+                                    </label>
+                                    <label style="font-size:11px; color:#555; display:flex; flex-direction:column; align-items:flex-start; gap:2px;">
+                                        Data Real Conclusão
+                                        <input type="date" value="${dataRealFinal}" disabled
+                                            style="font-size:13px; padding:2px 6px; border-radius:5px; border:1px solid #e5e7eb; background:#f3f4f6; color:#555; min-width:110px;">
+                                    </label>
+                                </div>
                                 <i data-lucide="check-circle-2" class="checklist-icon"></i>
                             </div>
                         `;
@@ -1965,7 +2022,7 @@
                             <span class="etapa-card__title">${etapa.nome || 'Etapa ' + (etapaIndex + 1)}</span>
                             <span class="etapa-card__badge ${isComplete ? 'complete' : ''}">${concluidos}/${total}</span>
                         </div>
-                        <div class="etapa-card__body">
+                        <div class="etapa-card__body" style="max-height:340px; overflow-y:auto; padding-right:4px;">
                             ${itensHtml}
                         </div>
                     </div>
@@ -2038,6 +2095,13 @@
             
             // Atualizar localmente
             etapas[etapaIndex].itens[itemIndex].concluido = novoStatus;
+            // Se está concluindo, registra data real de finalização
+            if (novoStatus) {
+                const hoje = new Date().toISOString().split('T')[0];
+                etapas[etapaIndex].itens[itemIndex].dataRealFinal = hoje;
+            } else {
+                etapas[etapaIndex].itens[itemIndex].dataRealFinal = '';
+            }
             planoData.etapas = etapas;
             
             // Calcular novo progresso das etapas (0-100%)
@@ -2684,6 +2748,17 @@
             btn.innerHTML = '<i data-lucide="loader-2" class="spin"></i> Salvando...';
 
             try {
+                // Atualizar etapas com valores atuais dos inputs de data
+                const etapas = planoData.etapas || [];
+                etapas.forEach((etapa, etapaIndex) => {
+                    (etapa.itens || []).forEach((item, itemIndex) => {
+                        const inputInicio = document.querySelector(`input[type=date][onchange*="atualizarDataChecklist(${etapaIndex}, ${itemIndex}, 'dataInicio'"]`);
+                        const inputFinal = document.querySelector(`input[type=date][onchange*="atualizarDataChecklist(${etapaIndex}, ${itemIndex}, 'dataFinal'"]`);
+                        if (inputInicio) item.dataInicio = inputInicio.value;
+                        if (inputFinal) item.dataFinal = inputFinal.value;
+                    });
+                });
+                planoData.etapas = etapas;
                 const pdcaData = {
                     plan: document.getElementById('input-plan').value.trim(),
                     check: document.getElementById('input-check').value.trim(),
@@ -2711,6 +2786,7 @@
                     pdca: pdcaData,
                     progresso: pdcaProgress,
                     status: novoStatus,
+                    etapas: planoData.etapas || [],
                     dataAtualizacao: new Date()
                 });
 
