@@ -379,8 +379,9 @@
   </div>
 
 <script type="module">
-  import { auth, signInWithEmailAndPassword } from '../../assets/js/firebase-config.js';
-  import { OAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+  import { auth } from '../../assets/js/firebase-config.js';
+  import { OAuthProvider, signInWithPopup, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
   const microsoftBtn = document.getElementById('microsoft-login-btn');
   const provider = new OAuthProvider('microsoft.com');
