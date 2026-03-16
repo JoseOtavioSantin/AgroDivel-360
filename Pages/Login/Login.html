@@ -355,8 +355,34 @@
     <!-- Right Section -->
     <div class="right-section">
 
+
       <h2 class="form-title">Entrar</h2>
-      <p class="form-subtitle">Acesse com sua conta Microsoft</p>
+      <p class="form-subtitle">Acesse com login e senha ou com sua conta Microsoft</p>
+
+      <form id="login-form" onsubmit="event.preventDefault(); loginEmailSenha();">
+        <div class="form-group">
+          <label for="email">E-mail</label>
+          <input type="email" id="email" placeholder="seu.email@empresa.com" required />
+        </div>
+
+        <div class="form-group">
+          <label for="senha">Senha</label>
+          <input type="password" id="senha" placeholder="Digite sua senha" required />
+        </div>
+
+        <div class="form-options">
+          <div class="remember-me">
+            <input type="checkbox" id="lembrar" />
+            <label for="lembrar">Lembrar minha senha</label>
+          </div>
+          <a href="/Pages/Login/Recuperar.html" class="forgot-password">Esqueci minha senha</a>
+        </div>
+
+        <button type="submit" class="login-btn">Entrar</button>
+      </form>
+
+      <div style="margin: 24px 0; text-align: center; font-weight: 600; color: #888;">OU</div>
+
       <button id="microsoft-login-btn" class="login-btn" style="background: linear-gradient(135deg, #2F2F2F 0%, #0078D4 100%); display: flex; align-items: center; justify-content: center; gap: 10px;">
         <img src="https://upload.wikimedia.org/wikipedia/commons/4/44/Microsoft_logo.svg" alt="Microsoft" style="width: 24px; height: 24px; background: white; border-radius: 4px; padding: 2px;">Entrar com Microsoft
       </button>
@@ -368,18 +394,18 @@
   </div>
 
 <script type="module">
-  import { getAuth, signInWithPopup, OAuthProvider } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+  import { getAuth, signInWithPopup, OAuthProvider, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
   const auth = window.auth || getAuth();
   const microsoftBtn = document.getElementById('microsoft-login-btn');
   const provider = new OAuthProvider('microsoft.com');
 
+  // Login Microsoft
   microsoftBtn.addEventListener('click', async () => {
     microsoftBtn.disabled = true;
     microsoftBtn.textContent = 'Entrando...';
     try {
       const result = await signInWithPopup(auth, provider);
-      // Usuário autenticado com Microsoft
       window.location.href = '/Pages/Menu.html';
     } catch (error) {
       console.error('Erro no login Microsoft:', error);
@@ -388,6 +414,35 @@
       microsoftBtn.textContent = 'Entrar com Microsoft';
     }
   });
+
+  // Login E-mail/Senha
+  window.loginEmailSenha = async function () {
+    const email = document.getElementById("email").value.trim();
+    const senha = document.getElementById("senha").value.trim();
+    const loginButton = document.querySelector('#login-form .login-btn');
+
+    if (!email || !senha) {
+      alert("Por favor, preencha o e-mail e a senha.");
+      return;
+    }
+
+    loginButton.disabled = true;
+    loginButton.textContent = "ENTRANDO...";
+
+    try {
+      const userCredential = await signInWithEmailAndPassword(auth, email, senha);
+      window.location.href = '/Pages/Menu.html';
+    } catch (err) {
+      console.error("Erro no login:", err.code);
+      if (err.code === 'auth/invalid-credential' || err.code === 'auth/wrong-password' || err.code === 'auth/user-not-found') {
+        alert("E-mail ou senha inválidos. Verifique seus dados e tente novamente.");
+      } else {
+        alert("Ocorreu um erro inesperado durante o login. Tente novamente mais tarde.");
+      }
+      loginButton.disabled = false;
+      loginButton.textContent = "Entrar";
+    }
+  }
 </script>
 </body>
 </html>
