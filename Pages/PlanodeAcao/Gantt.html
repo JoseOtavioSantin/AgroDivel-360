@@ -92,7 +92,77 @@
         /* timeline header removed (user request) */
         .gantt-legend { font-size:13px; color:#374151; margin-bottom:12px; }
         .gantt-empty { padding:32px; text-align:center; color:#6b7280; }
-        .gantt-tooltip { position:fixed; display:none; z-index:9999; background:rgba(2,6,23,0.9); color:#fff; padding:8px 10px; border-radius:6px; box-shadow: 0 6px 24px rgba(2,6,23,0.25); font-size:13px; min-width:140px; }
+        .gantt-tooltip {
+            position:fixed;
+            display:none;
+            z-index:9999;
+            background:rgba(15,23,42,0.88);
+            color:#f8fafc;
+            padding:14px 16px;
+            border-radius:16px;
+            border:1px solid rgba(148,163,184,0.35);
+            box-shadow: 0 14px 34px rgba(15,23,42,0.45);
+            font-size:13px;
+            min-width:320px;
+            max-width:920px;
+            max-height:80vh;
+            overflow:auto;
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            scrollbar-width: thin;
+            scrollbar-color: rgba(255,255,255,0.18) rgba(255,255,255,0.08);
+        }
+        .gantt-tooltip::-webkit-scrollbar {
+            width: 10px;
+            height: 10px;
+        }
+        .gantt-tooltip::-webkit-scrollbar-track {
+            background: rgba(255,255,255,0.08);
+            border-radius: 12px;
+        }
+        .gantt-tooltip::-webkit-scrollbar-thumb {
+            background: rgba(255,255,255,0.18);
+            border-radius: 12px;
+            border: 2px solid rgba(15,23,42,0.9);
+        }
+        .gantt-tooltip::-webkit-scrollbar-thumb:hover {
+            background: rgba(255,255,255,0.32);
+        }
+
+        .gantt-tooltip-scroll {
+            scrollbar-width: thin;
+            scrollbar-color: rgba(255,255,255,0.18) rgba(255,255,255,0.08);
+        }
+        .gantt-tooltip-scroll::-webkit-scrollbar {
+            width: 10px;
+            height: 10px;
+        }
+        .gantt-tooltip-scroll::-webkit-scrollbar-track {
+            background: rgba(255,255,255,0.08);
+            border-radius: 12px;
+        }
+        .gantt-tooltip-scroll::-webkit-scrollbar-thumb {
+            background: rgba(255,255,255,0.18);
+            border-radius: 12px;
+            border: 2px solid rgba(15,23,42,0.9);
+        }
+        .gantt-tooltip-scroll::-webkit-scrollbar-thumb:hover {
+            background: rgba(255,255,255,0.32);
+        }
+
+        .gantt-priority-tooltip {
+            position: fixed;
+            display: none;
+            z-index: 10000;
+            padding: 6px 10px;
+            border-radius: 12px;
+            background: rgba(15,23,42,0.92);
+            color: #f8fafc;
+            font-size: 12px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.35);
+            pointer-events: none;
+            white-space: nowrap;
+        }
 
         /* linha e rótulo de HOJE (central) */
         .gantt-today-center { position:absolute; left:50%; top:0; bottom:0; width:2px; background:rgba(59,130,246,0.95); box-shadow: 0 0 8px rgba(59,130,246,0.08); z-index:12; pointer-events:none; transform:translateX(-50%); }
@@ -114,7 +184,7 @@
         
         <div id="gantt-container" style="margin: 32px auto; max-width: 1900px; min-height: 550px; background: #fff; border-radius: 16px; box-shadow: 0 4px 24px rgba(0,0,0,0.06); padding: 24px;">
             <div id="gantt-controls" style="display:flex;gap:12px;align-items:center;margin-bottom:12px;flex-wrap:wrap">
-                <select id="gantt-filter-priority" style="padding:6px 10px;border-radius:8px;border:1px solid #e6edf3;background:#fff;color:#374151">
+                <select id="gantt-filter-priority" style="display:none;padding:6px 10px;border-radius:8px;border:1px solid #e6edf3;background:#fff;color:#374151">
                     <option value="all">Todas prioridades</option>
                 </select>
                 <select id="gantt-filter-where" style="padding:6px 10px;border-radius:8px;border:1px solid #e6edf3;background:#fff;color:#374151">
@@ -145,6 +215,16 @@
             return new Date(dateValue).toISOString().split('T')[0];
         } catch (e) {
             console.warn('Erro ao formatar data:', e);
+            return '';
+        }
+    }
+
+    function formatDateBR(dateValue) {
+        if (!dateValue) return '';
+        try {
+            const d = dateValue.toDate ? dateValue.toDate() : new Date(dateValue);
+            return d.toLocaleDateString('pt-BR');
+        } catch (e) {
             return '';
         }
     }
@@ -433,6 +513,27 @@
         let tooltip = document.getElementById('gantt-tooltip');
         if (!tooltip) { tooltip = document.createElement('div'); tooltip.id = 'gantt-tooltip'; tooltip.className = 'gantt-tooltip'; document.body.appendChild(tooltip); }
 
+        // tooltip hover state (permite scroll dentro do tooltip)
+        let tooltipHovered = false;
+        let barHovered = false;
+        let tooltipHideTimeout = null;
+        const scheduleTooltipHide = () => {
+            clearTimeout(tooltipHideTimeout);
+            tooltipHideTimeout = setTimeout(() => {
+                if (!tooltipHovered && !barHovered) {
+                    tooltip.style.display = 'none';
+                }
+            }, 140);
+        };
+        tooltip.addEventListener('mouseenter', () => {
+            tooltipHovered = true;
+            clearTimeout(tooltipHideTimeout);
+        });
+        tooltip.addEventListener('mouseleave', () => {
+            tooltipHovered = false;
+            scheduleTooltipHide();
+        });
+
         // helper: posiciona o tooltip próximo ao ponteiro, evitando overflow
         function positionTooltipAtMouse(ev) {
             if (!tooltip) return;
@@ -493,12 +594,17 @@
             // determinar status de cor com base em datas + progresso
             const today = new Date(); today.setHours(0,0,0,0);
             const endDt = new Date(t.end);
+            endDt.setHours(0,0,0,0);
             let urgencyKey = 'dentro';
-            if ((Number(t.progress) || 0) >= 100 || (t.custom_class || '').toLowerCase().includes('conclu')) urgencyKey = 'concluido';
-            else if (endDt < today) urgencyKey = 'atrasado';
-            else {
-                const daysToEnd = Math.ceil((endDt - today) / msPerDay);
-                if (daysToEnd <= 7) urgencyKey = 'em-risco';
+            if ((Number(t.progress) || 0) >= 100 || (t.custom_class || '').toLowerCase().includes('conclu')) {
+                urgencyKey = 'concluido';
+            } else {
+                const diffDays = Math.round((endDt - today) / msPerDay);
+                if (diffDays < 0) {
+                    urgencyKey = 'atrasado';
+                } else if (diffDays <= 7) {
+                    urgencyKey = 'em-risco';
+                }
             }
             const sc = statusColors[urgencyKey] || statusColors.dentro;
 
@@ -528,10 +634,10 @@
 
             // bolinha de prioridade (na frente da barra) — usa paleta de prioridade
             const priorityColors = {
-                'Crítico': ['#ef4444','#dc2626'],
-                'Alto': ['#fb923c','#f97316'],
-                'Médio': ['#f59e0b','#f97316'],
-                'Baixo': ['#34d399','#10b981'],
+                'Crítico': ['#dc2626','#b91c1c'],  // vermelho escuro
+                'Alto': ['#ef4444','#b91c1c'],     // vermelho
+                'Médio': ['#f59e0b','#f97316'],    // laranja
+                'Baixo': ['#22c55e','#16a34a'],    // verde
                 'Não definida': ['#94a3b8','#64748b']
             };
             const pr = (t.prioridade || 'Não definida');
@@ -542,8 +648,28 @@
             dot.style.top = Math.max(6, (row.offsetTop ? 9 : 9)) + 'px';
             const pcol = (priorityColors[pr] && priorityColors[pr][0]) || '#94a3b8';
             dot.style.background = pcol;
-            dot.title = 'Prioridade: ' + pr;
+            dot.setAttribute('data-priority', pr);
             row.appendChild(dot);
+
+            // tooltip pequeno para prioridade
+            let prioTip = document.getElementById('gantt-priority-tooltip');
+            if (!prioTip) {
+                prioTip = document.createElement('div');
+                prioTip.id = 'gantt-priority-tooltip';
+                prioTip.className = 'gantt-priority-tooltip';
+                document.body.appendChild(prioTip);
+            }
+            const showPrioTip = (ev) => {
+                prioTip.textContent = `Prioridade: ${pr}`;
+                const rect = ev.target.getBoundingClientRect();
+                prioTip.style.left = (rect.left + rect.width / 2) + 'px';
+                prioTip.style.top = (rect.top - 10) + 'px';
+                prioTip.style.transform = 'translate(-50%, -100%)';
+                prioTip.style.display = 'block';
+            };
+            const hidePrioTip = () => { prioTip.style.display = 'none'; };
+            dot.addEventListener('mouseenter', showPrioTip);
+            dot.addEventListener('mouseleave', hidePrioTip);
 
             bar.setAttribute('data-id', t.id);
 
@@ -551,6 +677,9 @@
 
             // tooltip handlers - agora posicionam o card onde o mouse estiver sobre a barra
             bar.addEventListener('mouseenter', (ev) => {
+                barHovered = true;
+                tooltipHovered = false;
+                clearTimeout(tooltipHideTimeout);
                 tooltip.style.display = 'block';
                 // sanitizar e truncar a descricao (se existir)
                 const rawDesc = (t.lastUpdateDescricao || '').toString().trim();
@@ -561,7 +690,7 @@
                 if (t._checklistResumo && t._checklistResumo.length) {
                     checklistHtml = t._checklistResumo.map(etapa => {
                         // Cabeçalho de datas
-                        let header = `<div style=\"display:flex;gap:6px;margin-left:8px;font-size:11px;color:#a3e635;font-weight:700;min-width:600px;\"><span style=\"width:18px\"></span><span style=\"flex:2;min-width:180px;max-width:320px;word-break:break-word;\">\\/</span><span style=\"flex:1;min-width:90px;max-width:120px;text-align:center;\">Início</span><span style=\"flex:1;min-width:90px;max-width:120px;text-align:center;\">Fim</span><span style=\"flex:1;min-width:90px;max-width:120px;text-align:center;\">Data Real Final</span></div>`;
+                        let header = `<div style=\"display:flex;gap:6px;margin-left:8px;font-size:11px;color:#60a5fa;font-weight:700;min-width:600px;\"><span style=\"width:18px\"></span><span style=\"flex:2;min-width:180px;max-width:320px;word-break:break-word;\">\\/</span><span style=\"flex:1;min-width:90px;max-width:120px;text-align:center;\">Início</span><span style=\"flex:1;min-width:90px;max-width:120px;text-align:center;\">Fim</span><span style=\"flex:1;min-width:90px;max-width:120px;text-align:center;\">Data Real Final</span></div>`;
                         const itens = etapa.itens.map(item => {
                             const status = item.concluido ? '✅' : '⬜';
                             const d1 = item.dataInicio || '-';
@@ -569,7 +698,7 @@
                             const d3 = item.dataRealFinal || '-';
                             return `<div style=\"display:flex;align-items:center;gap:6px;min-width:600px;\">${status}<span style=\"flex:2;min-width:180px;max-width:320px;word-break:break-word;\">${item.texto}</span><span style=\"flex:1;min-width:90px;max-width:120px;text-align:center;\">${d1}</span><span style=\"flex:1;min-width:90px;max-width:120px;text-align:center;\">${d2}</span><span style=\"flex:1;min-width:90px;max-width:120px;text-align:center;\">${d3}</span></div>`;
                         }).join('');
-                        return `<div style=\"margin-bottom:4px;overflow-x:auto;\"><span style=\"color:#fbbf24;font-size:12px;font-weight:700;\">Etapas: ${etapa.nome || 'Etapa'}</span>${itens ? header + itens : ''}</div>`;
+                        return `<div style=\"margin-bottom:4px;overflow-x:auto;\"><span style=\"color:#fbbf24;font-size:12px;font-weight:700;background:rgba(251,191,36,0.15);padding:2px 8px;border-radius:999px;display:inline-block;\">${etapa.nome || 'Etapa'}</span>${itens ? header + itens : ''}</div>`;
                     }).join('');
                 } else {
                     checklistHtml = '<div style=\"color:#f87171;font-size:12px;\">Sem checklist cadastrado</div>';
@@ -586,18 +715,32 @@
                 // ...histórico de atualizações removido...
 
                 tooltip.innerHTML = `
-                    <div style="min-width:260px;padding:6px 8px;">
-                        <div style="font-weight:800;color:#fff;margin-bottom:6px">${t.name || '—'}</div>
-                        <div style="font-size:12px;color:#d1d5db;margin-bottom:4px"><strong style=\"color:#cbd5e1\">Meta/KPI:</strong> ${t.kpiNome ? (t.kpiNome + (t.meta ? ' — ' + t.meta : '')) : (t.meta || '—')}</div>
-                        <div style="font-size:12px;margin-bottom:4px"><strong style=\"color:#cbd5e1\">Prioridade:</strong> <span style=\"color:${corPrioridade};font-weight:700\">${t.prioridade || '—'}</span></div>
-                        <div style="font-size:12px;color:#d1d5db;margin-bottom:4px"><strong style=\"color:#cbd5e1\">Status:</strong> ${t.custom_class || t.status || '—'}</div>
-                        <div style="font-size:12px;color:#d1d5db;margin-bottom:4px"><strong style=\"color:#cbd5e1\">Departamento:</strong> ${t.where || '—'}</div>
-                        <div style="font-size:12px;color:#d1d5db;margin-bottom:4px"><strong style=\"color:#cbd5e1\">Responsável:</strong> ${t.responsavel || '—'}</div>
-                        <div style="font-size:12px;color:#d1d5db;margin-bottom:6px"><strong style=\"color:#cbd5e1\">Última atualização:</strong> ${formatDateTime(t.dataAtualizacao) || '—'}${t.lastUpdateTitle ? (' — ' + t.lastUpdateTitle) : ''}${t.lastUpdateUser ? (' • ' + t.lastUpdateUser) : ''}</div>
-                        ${t.lastUpdateDescricao ? `<div style=\"margin:6px 0 0 0;padding:8px;border-radius:6px;background:rgba(255,255,255,0.03);font-size:12px;color:#ffe7d6\"><strong style=\"color:#ffd\">Observação:</strong> ${t.lastUpdateDescricao}</div>` : ''}
-                        <div style=\"margin:8px 0 0 0;padding:8px 6px 6px 6px;border-radius:6px;background:rgba(255,255,255,0.04);font-size:12px;\"><strong style=\"color:#a3e635\">Etapas:</strong>${checklistHtml}</div>
-                        
-                        <div style="border-top:1px solid rgba(255,255,255,0.06);margin-top:8px;padding-top:6px;font-size:12px;color:#d1d5db">${t.start || '—'} → ${t.end || '—'} • Progresso: ${Math.round(t.progress) || 0}%</div>
+                    <div style="display:flex;flex-direction:column;gap:14px;min-width:320px;max-width:920px;">
+                        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:14px;">
+                            <div style="flex:1;min-width:0;">
+                                <div style="font-size:18px;font-weight:900;color:#e2e8f0;line-height:1.1;">${t.name || '—'}</div>
+                                <div style="margin-top:6px;font-size:12px;color:#cbd5e1;line-height:1.4;max-width:680px;">${t.kpiNome ? (t.kpiNome + (t.meta ? ' — ' + t.meta : '')) : (t.meta || '—')}</div>
+                            </div>
+                            <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;">
+                                <span style="font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:0.08em;">Prioridade</span>
+                                <span style="font-size:13px;font-weight:800;color:${corPrioridade};background:rgba(37,99,235,0.15);padding:4px 12px;border-radius:999px;">${t.prioridade || '—'}</span>
+                            </div>
+                        </div>
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:13px;color:#e2e8f0;">
+                            <div><strong style="color:#60a5fa">Status:</strong> ${t.custom_class || t.status || '—'}</div>
+                            <div><strong style="color:#60a5fa">Departamento:</strong> ${t.where || '—'}</div>
+                            <div><strong style="color:#60a5fa">Responsável:</strong> ${t.responsavel || '—'}</div>
+                            <div><strong style="color:#60a5fa">Última atualização:</strong> ${formatDateTime(t.dataAtualizacao) || '—'}${t.lastUpdateTitle ? (' — ' + t.lastUpdateTitle) : ''}${t.lastUpdateUser ? (' • ' + t.lastUpdateUser) : ''}</div>
+                        </div>
+                        ${t.lastUpdateDescricao ? `<div style="padding:12px;border-radius:12px;background:rgba(37,99,235,0.12);color:#e2e8f0;font-size:13px;line-height:1.4;box-shadow:0 4px 10px rgba(15,23,42,0.2);"><strong style="color:#60a5fa">Observação:</strong> ${t.lastUpdateDescricao}</div>` : ''}
+                        <div class="gantt-tooltip-scroll" style="padding:12px;border-radius:12px;background:rgba(255,255,255,0.08);max-height:260px;overflow-y:auto;box-shadow:0 4px 10px rgba(15,23,42,0.14);">
+                            <div style="font-size:14px;font-weight:900;color:#fbbf24;margin-bottom:8px;">Etapas</div>
+                            ${checklistHtml}
+                        </div>
+                        <div style="display:flex;justify-content:space-between;align-items:center;font-size:13px;color:#cbd5e1;padding-top:10px;border-top:1px solid rgba(148,163,184,0.25);">
+                            <span>${formatDateBR(t.start) || '—'} → ${formatDateBR(t.end) || '—'}</span>
+                            <span style="font-weight:700;color:#fbbf24;">Progresso: ${Math.round(t.progress) || 0}%</span>
+                        </div>
                     </div>`;
                 // posiciona usando o evento do mouse
                 positionTooltipAtMouse(ev);
@@ -606,7 +749,10 @@
                 // reposiciona o tooltip onde o mouse está
                 positionTooltipAtMouse(ev);
             });
-            bar.addEventListener('mouseleave', () => { tooltip.style.display = 'none'; });
+            bar.addEventListener('mouseleave', () => {
+                barHovered = false;
+                scheduleTooltipHide();
+            });
 
             /* ===== CORREÇÃO DOS EVENTOS DE CLIQUE ===== */
             // Evento de clique na barra - VAI PARA DETALHES
@@ -902,29 +1048,16 @@
                 const monthsHtml = ['<option value="all">Todos os planos</option>'].concat(Array.from(monthsSet.entries()).map(([k,label]) => `<option value="${k}">${label}</option>`)).join('');
                 if (monthSelect) monthSelect.innerHTML = monthsHtml;
 
-                // priorities
-                const prios = Array.from(new Set(ganttTasks.map(t => (t.prioridade || 'Não definida'))));
-                prios.sort((a,b) => a.localeCompare(b));
-                prioSelect.innerHTML = '<option value="all">Todas prioridades</option>' + prios.map(p => `<option value="${p}">${p}</option>`).join('');
-
+                // priorities (não exibidas)
+                const prios = ['Não definida'];
                 // where / departamentos
                 // Agora exibe o nome do Plano de Ação no select
                 const planNames = Array.from(new Set(ganttTasks.map(t => (t.name || '').trim()).filter(Boolean)));
                 planNames.sort((a,b) => a.localeCompare(b));
                 whereSelect.innerHTML = '<option value="all">Todos os planos</option>' + planNames.map(n => `<option value="${n}">${n}</option>`).join('');
 
-                // legenda de prioridades (cores)
-                const priorityColors = {
-                    'Crítico': ['#ef4444','#dc2626'],
-                    'Alto': ['#fb923c','#f97316'],
-                    'Médio': ['#f59e0b','#f97316'],
-                    'Baixo': ['#34d399','#10b981'],
-                    'Não definida': ['#94a3b8','#64748b']
-                };
-                legendEl.innerHTML = prios.map(p => {
-                    const c = priorityColors[p] || ['#60a5fa','#2563eb'];
-                    return `<div style=\"display:flex;align-items:center;gap:6px;\"><span style=\"width:12px;height:12px;border-radius:6px;background:linear-gradient(90deg,${c[0]},${c[1]});display:inline-block;\"></span><small style=\"color:#374151\">${p}</small></div>`;
-                }).join('&nbsp;&nbsp;');
+                // legenda de prioridades removida (não exibimos mais)
+                legendEl.innerHTML = '';
 
                 // legenda de status/urgência (cores de barra)
                 const statusLegendEl = document.getElementById('gantt-status-legend');
@@ -935,7 +1068,7 @@
                         'Atrasado': ['#ef4444','#dc2626'],
                         'Concluído': ['#16a34a','#059669']
                     };
-                    statusLegendEl.innerHTML = Object.entries(statusColorsLegend).map(([label,c]) => `\n                        <div style=\"display:flex;align-items:center;gap:6px;\"><span style=\"width:10px;height:10px;border-radius:999px;background:linear-gradient(90deg,${c[0]},${c[1]});display:inline-block;box-shadow:0 2px 6px rgba(2,6,23,0.05);\"></span><small style=\"color:#374151\">${label}</small></div>`).join('&nbsp;&nbsp;');
+                    statusLegendEl.innerHTML = Object.entries(statusColorsLegend).map(([label,c]) => `\n                        <div style=\"display:flex;align-items:center;gap:6px;\"><span style=\"width:46px;height:20px;border-radius:8px;background:linear-gradient(90deg,${c[0]},${c[1]});display:inline-block;box-shadow:0 2px 6px rgba(2,6,23,0.08);\"></span><small style=\"color:#374151\">${label}</small></div>`).join('&nbsp;&nbsp;');
                 }
 
             } catch (e) {
@@ -1008,7 +1141,7 @@
 
                     // department/where filter
                     const whereKey = whereSelectEl?.value || 'all';
-                    if (whereKey && whereKey !== 'all') filtered = filtered.filter(t => (t.where || '').toLowerCase() === whereKey.toLowerCase());
+                    if (whereKey && whereKey !== 'all') filtered = filtered.filter(t => (t.name || '').toLowerCase() === whereKey.toLowerCase());
 
                     renderCustomGantt(container, filtered, forcedView, { forceStart: windowStart.toISOString(), windowDays });
                 }
