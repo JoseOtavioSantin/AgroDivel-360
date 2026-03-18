@@ -144,6 +144,10 @@
                 <h2 id="form-title">Novo Usuários</h2>
             </div>
             <div class="content-card-body">
+                <div style="margin-bottom:16px;">
+                    <input id="gestor-search" type="text" list="gestor-datalist" placeholder="Pesquisar por nome..." style="width:100%;padding:12px 14px;border:1px solid #d1d5db;border-radius:10px;" />
+                    <datalist id="gestor-datalist"></datalist>
+                </div>
                 <form id="form-cadastro-gestor" class="form-layout">
                     <input type="hidden" id="gestor-id">
                     
@@ -162,6 +166,22 @@
                         <input type="email" id="email-gestor" placeholder="Ex: joao.silva@email.com" required>
                     </div>
                     
+                    <div class="form-group">
+                        <label for="departamento-gestor">Departamento</label>
+                        <select id="departamento-gestor" required>
+                            <option value="" disabled selected>Selecione um departamento</option>
+                            <option value="Comercial">Comercial</option>
+                            <option value="Peças">Peças</option>
+                            <option value="Serviços">Serviços</option>
+                            <option value="Pós-Vendas">Pós-Vendas</option>
+                            <option value="Marketing">Marketing</option>
+                            <option value="Backoffice">Backoffice</option>
+                            <option value="Administração">Administração</option>
+                            <option value="TI">TI</option>
+                            <option value="Nenhum">Nenhum</option>
+                        </select>
+                    </div>
+
                     <div class="form-group">
                         <label for="grupo-gestor">Grupo de Permissão</label>
                         <select id="grupo-gestor" required>
@@ -220,6 +240,7 @@
                         <tr>
                             <th>Nome</th>
                             <th>Email</th>
+                            <th>Departamento</th>
                             <th>Grupo</th>
                             <th>Filiais</th>
                             <th>Permissões Extras</th>
@@ -346,6 +367,8 @@
         const tableBody = document.getElementById('gestor-table-body');
         const loadingMessage = document.getElementById('loading-message');
         const emptyMessage = document.getElementById('empty-message');
+        const searchInput = document.getElementById('gestor-search');
+        let allGestores = [];
         const permissionsGrid = document.getElementById('permissions-grid');
         const selectAllBtn = document.getElementById('select-all-permissions');
         
@@ -353,6 +376,7 @@
         const uidInput = document.getElementById('uid-gestor'); 
         const nomeInput = document.getElementById('nome-gestor');
         const emailInput = document.getElementById('email-gestor');
+        const departamentoSelect = document.getElementById('departamento-gestor');
         const grupoSelect = document.getElementById('grupo-gestor');
         const filiaisCheckboxes = document.querySelectorAll('input[name="filial"]');
 
@@ -413,22 +437,34 @@
         }
 
         // --- RENDERIZAR TABELA ---
+        const gestorDatalist = document.getElementById('gestor-datalist');
         const renderTable = (gestores) => {
+            // Atualiza lista de sugestões do datalist
+            if (gestorDatalist) {
+                gestorDatalist.innerHTML = gestores
+                    .map(g => `<option value="${(g.nome||'').replace(/"/g,'&quot;')}"></option>`)
+                    .join('');
+            }
+
+            const filter = (searchInput.value || '').trim().toLowerCase();
+            const filtered = filter ? gestores.filter(g => (g.nome || '').toLowerCase().includes(filter)) : gestores;
+
             tableBody.innerHTML = '';
             loadingMessage.style.display = 'none';
-            if (gestores.length === 0) {
+            if (filtered.length === 0) {
                 emptyMessage.style.display = 'block';
                 return;
             }
             emptyMessage.style.display = 'none';
-            gestores.sort((a, b) => (a.nome || '').localeCompare(b.nome || ''));
-            gestores.forEach(gestor => {
+            filtered.sort((a, b) => (a.nome || '').localeCompare(b.nome || ''));
+            filtered.forEach(gestor => {
                 const permissoesExtras = gestor.permissoes || [];
                 const row = document.createElement('tr');
                 row.dataset.id = gestor.id;
                 row.innerHTML = `
                     <td>${gestor.nome || 'N/A'}</td>
                     <td>${gestor.email || 'N/A'}</td>
+                    <td>${gestor.departamento || 'N/A'}</td>
                     <td>${gestor.grupo || 'N/A'}</td>
                     <td>${Array.isArray(gestor.filial) ? gestor.filial.join(', ') : 'N/A'}</td>
                     <td>${permissoesExtras.length > 0 ? permissoesExtras.length + ' permissão(ões)' : 'Nenhuma'}</td>
@@ -454,6 +490,7 @@
                 nomeInput.disabled = false;
                 emailInput.value = data.email || '';
                 emailInput.disabled = true;
+                departamentoSelect.value = data.departamento || '';
                 grupoSelect.value = data.grupo || '';
                 
                 // Filiais
@@ -501,6 +538,7 @@
             const docId = uidInput.value.trim();
             const nome = nomeInput.value.trim();
             const email = emailInput.value.trim();
+            const departamento = departamentoSelect.value;
             const grupo = grupoSelect.value;
             const filiaisSelecionadas = Array.from(filiaisCheckboxes)
                                             .filter(cb => cb.checked)
@@ -510,8 +548,8 @@
             const permissionCheckboxes = document.querySelectorAll('input[name="permissoes"]:checked');
             const permissoesSelecionadas = Array.from(permissionCheckboxes).map(cb => cb.value);
 
-            if (!docId || !nome || !email || !grupo) {
-                alert('Por favor, preencha todos os campos: UID, Nome, Email e Grupo.');
+            if (!docId || !nome || !email || !grupo || !departamento) {
+                alert('Por favor, preencha todos os campos: UID, Nome, Email, Grupo e Departamento.');
                 return;
             }
 
@@ -523,6 +561,7 @@
                 const dados = { 
                     nome, 
                     email, 
+                    departamento, 
                     grupo, 
                     filial: filiaisSelecionadas,
                     permissoes: permissoesSelecionadas // NOVO CAMPO
@@ -584,14 +623,29 @@
 
         // --- CARREGAMENTO EM TEMPO REAL ---
         onSnapshot(collection(db, "gestores"), (querySnapshot) => {
-            const gestores = [];
+            allGestores = [];
             querySnapshot.forEach((doc) => {
-                gestores.push({ id: doc.id, ...doc.data() });
+                allGestores.push({ id: doc.id, ...doc.data() });
             });
-            renderTable(gestores);
+            renderTable(allGestores);
         }, (error) => {
             console.error("Erro ao buscar gestores: ", error);
             loadingMessage.textContent = 'Erro ao carregar dados.';
+        });
+
+        // Filtrar conforme o usuário digita
+        searchInput.addEventListener('input', () => {
+            renderTable(allGestores);
+        });
+
+        // Ao selecionar um nome sugerido, carrega o usuário para edição
+        searchInput.addEventListener('change', () => {
+            const value = (searchInput.value || '').trim().toLowerCase();
+            if (!value) return;
+            const match = allGestores.find(g => (g.nome || '').toLowerCase() === value);
+            if (match && match.id) {
+                setupEditForm(match.id);
+            }
         });
     </script>
 
@@ -603,6 +657,3 @@
     
 </body>
 </html>
-
-
-
