@@ -1,35 +1,3 @@
-        // Atualiza datas de início/final do checklist e registra no histórico
-        window.atualizarDataChecklist = async function(etapaIndex, itemIndex, campo, valor) {
-            if (!isOwner) {
-                notificacao.aviso('Atenção', 'Apenas o criador ou admin pode editar datas');
-                return;
-            }
-            const etapas = planoData.etapas || [];
-            const etapa = etapas[etapaIndex];
-            if (!etapa || !etapa.itens || !etapa.itens[itemIndex]) return;
-            const item = etapa.itens[itemIndex];
-            const valorAntigo = item[campo] || '';
-            etapas[etapaIndex].itens[itemIndex][campo] = valor;
-            planoData.etapas = etapas;
-            try {
-                await updateDoc(doc(db, 'planos-acao', planoId), {
-                    etapas: etapas,
-                    dataAtualizacao: new Date()
-                });
-                // Registrar no histórico
-                await addDoc(collection(db, 'planos-acao', planoId, 'atualizacoes'), {
-                    tipo: 'checklist',
-                    titulo: `Data alterada (${campo})`,
-                    descricao: `${etapa.nome || 'Etapa ' + (etapaIndex + 1)}: "${item.texto}" - ${campo} de "${valorAntigo}" para "${valor}"`,
-                    usuario: getUserName(),
-                    data: Timestamp.now()
-                });
-                await loadAtualizacoes();
-            } catch (err) {
-                console.error('Erro ao atualizar data do checklist:', err);
-                notificacao.erro('Erro', 'Não foi possível atualizar a data.');
-            }
-        }
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -662,7 +630,7 @@
             margin-top: 16px;
             width: 100%;
             padding: 12px;
-            background: linear-gradient(135deg, #3b82f6 0%, #3b82f6 100%);
+            background: linear-gradient(135deg, #001439 0%, #001439 100%);
             color: white;
             border: none;
             border-radius: 10px;
@@ -677,7 +645,7 @@
         }
         .btn-save-pdca:hover {
             transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(139, 92, 246, 0.4);
+            box-shadow: 0 4px 12px rgba(0, 20, 57, 0.4);
         }
         .btn-save-pdca:disabled {
             opacity: 0.6;
@@ -1173,6 +1141,8 @@
             margin-top: 20px;
             padding-top: 20px;
             border-top: 2px dashed #e2e8f0;
+            max-height: 420px;
+            overflow-y: auto;
         }
         .etapas-section__header {
             display: flex;
@@ -1226,9 +1196,10 @@
             padding: 14px 16px;
             background: #193b7c;
             border-bottom: 1px solid #142f63;
-            display: flex;
-            justify-content: space-between;
+            display: grid;
+            grid-template-columns: 1fr auto auto;
             align-items: center;
+            gap: 10px;
         }
         .etapa-card__title {
             font-size: 14px;
@@ -1236,12 +1207,16 @@
             color: #ffffff;
         }
         .etapa-card__badge {
+            min-width: 48px;
             padding: 4px 10px;
             border-radius: 20px;
             font-size: 11px;
             font-weight: 700;
             background: rgba(255, 255, 255, 0.2);
             color: #ffffff;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
         }
         .etapa-card__badge.complete {
             background: #22c55e;
@@ -1967,7 +1942,7 @@
                 const total = itens.length;
                 const percentual = total > 0 ? Math.round((concluidos / total) * 100) : 0;
                 const isComplete = total > 0 && concluidos === total;
-                
+
                 let itensHtml = '';
                 if (itens.length === 0) {
                     itensHtml = '<div class="etapa-empty">Nenhum item nesta etapa</div>';
@@ -1977,11 +1952,9 @@
                         const completedClass = item.concluido ? 'completed' : '';
                         const disabled = !isOwner ? 'disabled' : '';
                         const readonlyClass = !isOwner ? 'readonly' : '';
-                        // Clique só na caixinha, não na linha
                         const onclickDiv = '';
                         const onclickCheckbox = isOwner ? `onclick=\"event.stopPropagation(); toggleChecklistItem(${etapaIndex}, ${itemIndex})\"` : 'onclick=\"event.preventDefault(); event.stopPropagation();\"';
 
-                        // Campos de data de início e final
                         const dataInicio = item.dataInicio ? item.dataInicio.split('T')[0] : '';
                         const dataFinal = item.dataFinal ? item.dataFinal.split('T')[0] : '';
                         const dataRealFinal = item.dataRealFinal ? item.dataRealFinal.split('T')[0] : '';
@@ -2015,19 +1988,40 @@
                         `;
                     });
                 }
-                
+
                 etapasContainer.innerHTML += `
                     <div class="etapa-card" data-etapa="${etapaIndex}">
-                        <div class="etapa-card__header">
+                        <div class="etapa-card__header etapa-toggle" style="cursor:pointer;" onclick="toggleEtapa(${etapaIndex})">
                             <span class="etapa-card__title">${etapa.nome || 'Etapa ' + (etapaIndex + 1)}</span>
                             <span class="etapa-card__badge ${isComplete ? 'complete' : ''}">${concluidos}/${total}</span>
+                            <span class="etapa-toggle-icon" id="etapa-toggle-icon-${etapaIndex}" style="margin-left:10px;transition:transform 0.3s;"><svg width='18' height='18' viewBox='0 0 24 24'><path d='M6 9l6 6 6-6'/></svg></span>
                         </div>
-                        <div class="etapa-card__body" style="max-height:340px; overflow-y:auto; padding-right:4px;">
+                        <div class="etapa-card__body etapa-body" id="etapa-body-${etapaIndex}" style="display:none; max-height:340px; overflow-y:auto; padding-right:4px;">
                             ${itensHtml}
                         </div>
                     </div>
                 `;
             });
+            // Abrir a primeira etapa por padrão
+            if (etapas.length > 0) {
+                document.getElementById('etapa-body-0').style.display = 'block';
+                document.getElementById('etapa-toggle-icon-0').style.transform = 'rotate(180deg)';
+            }
+            // Função global para expandir/recolher etapas (accordion)
+            window.toggleEtapa = function(etapaIndex) {
+                const body = document.getElementById('etapa-body-' + etapaIndex);
+                const icon = document.getElementById('etapa-toggle-icon-' + etapaIndex);
+                if (!body || !icon) return;
+                const isOpen = body.style.display === 'block';
+                // Fecha todas as etapas
+                document.querySelectorAll('.etapa-body').forEach(b => b.style.display = 'none');
+                document.querySelectorAll('.etapa-toggle-icon').forEach(i => i.style.transform = '');
+                // Abre a selecionada se estava fechada
+                if (!isOpen) {
+                    body.style.display = 'block';
+                    icon.style.transform = 'rotate(180deg)';
+                }
+            }
             
             atualizarProgressoEtapas();
             lucide.createIcons();
@@ -2387,6 +2381,7 @@
             renderPDCA();
             
             // Etapas/Checklist
+            console.log('Etapas carregadas:', planoData.etapas);
             renderEtapas();
 
             // Controles do criador
